@@ -159,7 +159,9 @@ fun Greeting(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = name
+                text = name,
+                modifier = Modifier
+                    .weight(1f)
             )
 
             Spacer(modifier = Modifier.weight(1f))

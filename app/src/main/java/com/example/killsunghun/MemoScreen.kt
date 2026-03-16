@@ -26,9 +26,10 @@ import androidx.compose.ui.unit.sp
 import com.example.killsunghun.ui.theme.KillSungHunTheme
 
 @Composable
-fun MemoScreen(onSave: (String) -> Unit, existingMemo: String = "",) {
+fun MemoScreen(onSave: (String) -> Unit, existingMemo: String = "") {
 
     var memoText by remember { mutableStateOf(existingMemo) }
+    var enabled by remember { mutableStateOf(existingMemo.isNotBlank()) }
 
     Scaffold { innerPadding ->
 
@@ -42,7 +43,14 @@ fun MemoScreen(onSave: (String) -> Unit, existingMemo: String = "",) {
             // 메모입력칸
             TextField(
                 value = memoText,
-                onValueChange = { text -> memoText = text },
+                onValueChange = { text ->
+                    memoText = text
+                    if (text.isNotBlank()) {
+                        enabled = true
+                    } else {
+                        enabled = false
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(8f)
@@ -61,8 +69,10 @@ fun MemoScreen(onSave: (String) -> Unit, existingMemo: String = "",) {
                     .border(1.dp, Color.Gray)
                     .background(Color.White)
                     .padding(30.dp)
-                    .clickable{
-                        onSave(memoText)
+                    .clickable {
+                        if (enabled) {
+                            onSave(memoText)
+                        }
                     },
                 contentAlignment = Alignment.Center
             ) {
@@ -81,6 +91,6 @@ fun MemoScreen(onSave: (String) -> Unit, existingMemo: String = "",) {
 @Composable
 fun MemoScreenPreview() {
     KillSungHunTheme {
-        MemoScreen(onSave = {},)
+        MemoScreen(onSave = {})
     }
 }
