@@ -26,9 +26,9 @@ import androidx.compose.ui.unit.sp
 import com.example.killsunghun.ui.theme.KillSungHunTheme
 
 @Composable
-fun MemoScreen(onSave: (String) -> Unit) {
+fun MemoScreen(onSave: (String) -> Unit, existingMemo: String = "",) {
 
-    var memoText by remember { mutableStateOf("") }
+    var memoText by remember { mutableStateOf(existingMemo) }
 
     Scaffold { innerPadding ->
 
@@ -81,6 +81,6 @@ fun MemoScreen(onSave: (String) -> Unit) {
 @Composable
 fun MemoScreenPreview() {
     KillSungHunTheme {
-        MemoScreen(onSave = {})
+        MemoScreen(onSave = {},)
     }
 }
