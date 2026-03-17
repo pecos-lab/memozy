@@ -54,7 +54,8 @@ fun MemoScreen(onSave: (Memo) -> Unit, existingMemo: Memo = Memo("", "", "")) {
                     .border(1.dp, Color.Gray),
                 placeholder = { Text("메모 제목") },
                 colors = androidx.compose.material3.TextFieldDefaults.colors(
-                    focusedContainerColor = Color.White, unfocusedContainerColor = Color.White
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White
                 )
             )
 
@@ -70,7 +71,8 @@ fun MemoScreen(onSave: (Memo) -> Unit, existingMemo: Memo = Memo("", "", "")) {
                     .border(1.dp, Color.Gray),
                 placeholder = { Text("메모 본문") },
                 colors = androidx.compose.material3.TextFieldDefaults.colors(
-                    focusedContainerColor = Color.White, unfocusedContainerColor = Color.White
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White
                 )
             )
 
@@ -90,7 +92,8 @@ fun MemoScreen(onSave: (Memo) -> Unit, existingMemo: Memo = Memo("", "", "")) {
                         .padding(16.dp),
                     contentAlignment = Alignment.Center) {
                     Text(
-                        text = "MAN", color = if (sexText == "MAN") Color.White else Color.Black
+                        text = "MAN",
+                        color = if (sexText == "MAN") Color.White else Color.Black
                     )
                 }
 
@@ -103,7 +106,8 @@ fun MemoScreen(onSave: (Memo) -> Unit, existingMemo: Memo = Memo("", "", "")) {
                         .padding(16.dp),
                     contentAlignment = Alignment.Center) {
                     Text(
-                        text = "WOMAN", color = if (sexText == "WOMAN") Color.White else Color.Black
+                        text = "WOMAN",
+                        color = if (sexText == "WOMAN") Color.White else Color.Black
                     )
                 }
             }
@@ -119,7 +123,10 @@ fun MemoScreen(onSave: (Memo) -> Unit, existingMemo: Memo = Memo("", "", "")) {
                         if (enabled) onSave(Memo(nameText, sexText, bodyText))
                     }, contentAlignment = Alignment.Center
             ) {
-                Text(text = "저장", fontSize = 18.sp)
+                Text(
+                    text = "저장",
+                    fontSize = 18.sp
+                )
             }
         }
     }
@@ -130,7 +137,8 @@ fun MemoScreen(onSave: (Memo) -> Unit, existingMemo: Memo = Memo("", "", "")) {
 fun MemoScreenPreview() {
     KillSungHunTheme {
         MemoScreen(
-            onSave = {}, existingMemo = Memo("테스트 제목", "MAN", "테스트 내용")
+            onSave = {},
+            existingMemo = Memo("테스트 제목", "MAN", "테스트 내용")
         )
     }
 }

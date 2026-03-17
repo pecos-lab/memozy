@@ -130,7 +130,8 @@ fun HomeScreen(
                     .size(60.dp)
                     .background(Color.White)
                     .border(1.dp, Color.Gray, RectangleShape)
-                    .clickable { onNavigateToMemo() }, contentAlignment = Alignment.Center
+                    .clickable { onNavigateToMemo() },
+                contentAlignment = Alignment.Center
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.icon_add),
@@ -146,7 +147,9 @@ fun HomeScreen(
 // Greeting: String → Memo
 @Composable
 fun Greeting(
-    memo: Memo, onDelete: () -> Unit, onEdit: () -> Unit
+    memo: Memo,
+    onDelete: () -> Unit,
+    onEdit: () -> Unit
 ) {
     Card(
         shape = RectangleShape,
@@ -169,14 +172,25 @@ fun Greeting(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(text = memo.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Text(text = memo.sex, fontSize = 14.sp, color = Color.Gray)
+                    Text(
+                        text = memo.name,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+
+                    Text(
+                        text = memo.sex,
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text = memo.killThePecos, fontSize = 13.sp, maxLines = 2
+                    text = memo.killThePecos,
+                    fontSize = 13.sp,
+                    maxLines = 2
                 )
             }
 
@@ -195,7 +209,8 @@ fun Greeting(
                             Color.Gray,
                             shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
                         )
-                        .clickable { onDelete() }, contentAlignment = Alignment.Center
+                        .clickable { onDelete() },
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Default.Delete,
@@ -213,7 +228,8 @@ fun Greeting(
                             Color.Gray,
                             shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
                         )
-                        .clickable { onEdit() }, contentAlignment = Alignment.Center
+                        .clickable { onEdit() },
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Default.Edit,
@@ -232,8 +248,11 @@ fun GreetingPreview() {
         // navController 직접 넘기지 말고, 버튼 동작을 빈 람다로 대체
         HomeScreen(
             memoList = listOf(
-                Memo("제목1", "Man", "내용1"), Memo("제목2", "Woman", "내용2")
-            ), onDelete = {}, onEdit = {}, //추가
+                Memo("제목1", "Man", "내용1"),
+                Memo("제목2", "Woman", "내용2")
+            ),
+            onDelete = {},
+            onEdit = {}, //추가
             onNavigateToMemo = {})
     }
 }
