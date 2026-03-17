@@ -39,43 +39,57 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.height
 
 //
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         setContent {
+            val memoList = remember { mutableStateListOf<Memo>() }
 
-            val memoList = remember { mutableStateListOf<String>() }
-
-            KillSungHunTheme() {
+            KillSungHunTheme {
                 val navController = rememberNavController()
 
                 NavHost(
                     navController = navController, startDestination = "main"
                 ) {
 
+                    // 메인 화면
                     composable("main") {
                         HomeScreen(
                             memoList = memoList,
                             onDelete = { index -> memoList.removeAt(index) },
-                            onEdit = { index -> navController.navigate("Memo/$index") }, // 추가
-                            onNavigateToMemo = { navController.navigate("Memo/-1") } //
-                            // 여기서 navigate
-                        )
+                            onEdit = { index ->
+                                navController.navigate("Memo/$index")
+                            },
+                            onNavigateToMemo = {
+                                navController.navigate("Memo/-1")
+                            })
                     }
+
+                    // 메모 화면
                     composable("Memo/{editIndex}") { backStackEntry ->
                         val editIndex =
                             backStackEntry.arguments?.getString("editIndex")?.toIntOrNull() ?: -1
-                        val existingMemo = if (editIndex >= 0) memoList[editIndex] else ""
+
+                        val existingMemo = if (editIndex >= 0) memoList[editIndex]
+                        else Memo("", "", "")
+
                         MemoScreen(
-                            existingMemo = existingMemo,
-                            onSave = { memo ->
+                            existingMemo = existingMemo, onSave = { memo ->
                                 if (editIndex >= 0) {
-                                    memoList[editIndex] = memo // 수정
+                                    memoList[editIndex] = memo
                                 } else {
-                                    memoList.add(memo) // 새로 추가
+                                    memoList.add(memo)
                                 }
                                 navController.popBackStack()
                             })
@@ -86,33 +100,29 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// HomeScreen: 타입만 Memo로 교체
 @Composable
 fun HomeScreen(
-    memoList: List<String> = emptyList(),
+    memoList: List<Memo> = emptyList(),
     onDelete: (Int) -> Unit,
-    onEdit: (Int) -> Unit = {},// 추가
-    onNavigateToMemo: () -> Unit, // navController 대신 사용
-
+    onEdit: (Int) -> Unit = {},
+    onNavigateToMemo: () -> Unit,
 ) {
-
-    Scaffold(modifier = Modifier) { innerPadding ->
+    Scaffold { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            LazyColumn(
-                modifier = Modifier.padding(top = 15.dp)
-            ) {
+            LazyColumn(modifier = Modifier.padding(top = 15.dp)) {
                 items(memoList.size) { index ->
                     Greeting(
-                        name = memoList[index], sex = "", killSunghun = "", onDelete = {
-                            onDelete(index)
-                        },
-                        onEdit = { onEdit(index) } // 추가
-                    )
+                        memo = memoList[index],
+                        onDelete = { onDelete(index) },
+                        onEdit = { onEdit(index) })
                 }
             }
+            // FAB (기존과 동일)
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
@@ -120,9 +130,7 @@ fun HomeScreen(
                     .size(60.dp)
                     .background(Color.White)
                     .border(1.dp, Color.Gray, RectangleShape)
-                    .clickable {
-                        onNavigateToMemo() // 여기도 교체
-                    }, contentAlignment = Alignment.Center
+                    .clickable { onNavigateToMemo() }, contentAlignment = Alignment.Center
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.icon_add),
@@ -135,71 +143,87 @@ fun HomeScreen(
     }
 }
 
+// Greeting: String → Memo
 @Composable
 fun Greeting(
-    name: String, sex: String, killSunghun: String, onDelete: () -> Unit, onEdit: () -> Unit // 추가
+    memo: Memo, onDelete: () -> Unit, onEdit: () -> Unit
 ) {
-
     Card(
         shape = RectangleShape,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 10.dp)
-            .background(Color.White)
             .border(1.dp, Color.Gray),
         elevation = CardDefaults.cardElevation(4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = androidx.compose.ui.graphics.Color.White
-        )
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = name,
-                modifier = Modifier
-                    .weight(1f)
-            )
+        Box(modifier = Modifier.fillMaxWidth()) {
 
-            Spacer(modifier = Modifier.weight(1f))
-
-// 삭제 버튼
-            Box(
+            Column(
                 modifier = Modifier
-                    .size(40.dp)
-                    .border(1.dp, Color.Gray)
-                    .clickable { onDelete() },
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .padding(12.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "삭제",
-                    modifier = Modifier.size(24.dp)
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = memo.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(text = memo.sex, fontSize = 14.sp, color = Color.Gray)
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = memo.killThePecos, fontSize = 13.sp, maxLines = 2
                 )
             }
 
-// 수정 버튼
-            Box(
+            // 🔥 버튼들 우하단 고정
+            Row(
                 modifier = Modifier
-                    .padding(start = 8.dp)
-                    .size(40.dp)
-                    .border(1.dp, Color.Gray)
-                    .clickable { onEdit() },
-                contentAlignment = Alignment.Center
+                    .align(Alignment.BottomEnd)
+                    .padding(8.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "수정",
-                    modifier = Modifier.size(24.dp)
-                )
+
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .border(
+                            1.dp,
+                            Color.Gray,
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                        )
+                        .clickable { onDelete() }, contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "삭제",
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .border(
+                            1.dp,
+                            Color.Gray,
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                        )
+                        .clickable { onEdit() }, contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "수정",
+                    )
+                }
             }
         }
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable
@@ -207,11 +231,10 @@ fun GreetingPreview() {
     KillSungHunTheme {
         // navController 직접 넘기지 말고, 버튼 동작을 빈 람다로 대체
         HomeScreen(
-            memoList = listOf("테스트메모1", "테스트메모2"), // 미리보기용 가짜 데이터
-            onDelete = {},
-            onEdit = {}, //추가
-            onNavigateToMemo = {}
-        )
+            memoList = listOf(
+                Memo("제목1", "Man", "내용1"), Memo("제목2", "Woman", "내용2")
+            ), onDelete = {}, onEdit = {}, //추가
+            onNavigateToMemo = {})
     }
 }
 
