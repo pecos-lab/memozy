@@ -1,5 +1,6 @@
 package com.example.killsunghun
 
+import MemoViewModel
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -21,8 +22,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -43,9 +42,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.height
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 //
 class MainActivity : ComponentActivity() {
@@ -54,7 +53,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            val memoList = remember { mutableStateListOf<Memo>() }
+            val viewModel: MemoViewModel = viewModel()
 
             KillSungHunTheme {
                 val navController = rememberNavController()
@@ -66,8 +65,8 @@ class MainActivity : ComponentActivity() {
                     // 메인 화면
                     composable("main") {
                         HomeScreen(
-                            memoList = memoList,
-                            onDelete = { index -> memoList.removeAt(index) },
+                            memoList = viewModel.memoList,
+                            onDelete = { index -> viewModel.deleteMemo(index) },
                             onEdit = { index ->
                                 navController.navigate("Memo/$index")
                             },
@@ -81,18 +80,20 @@ class MainActivity : ComponentActivity() {
                         val editIndex =
                             backStackEntry.arguments?.getString("editIndex")?.toIntOrNull() ?: -1
 
-                        val existingMemo = if (editIndex >= 0) memoList[editIndex]
+                        val existingMemo = if (editIndex >= 0) viewModel.memoList[editIndex]
                         else Memo("", "", "")
 
                         MemoScreen(
-                            existingMemo = existingMemo, onSave = { memo ->
+                            existingMemo = existingMemo,
+                            onSave = { memo ->
                                 if (editIndex >= 0) {
-                                    memoList[editIndex] = memo
+                                    viewModel.updateMemo(editIndex, memo)
                                 } else {
-                                    memoList.add(memo)
+                                    viewModel.addMemo(memo)
                                 }
                                 navController.popBackStack()
-                            })
+                            }
+                        )
                     }
                 }
             }
