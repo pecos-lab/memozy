@@ -66,12 +66,13 @@ class MainActivity : ComponentActivity() {
                         val editIndex =
                             backStackEntry.arguments?.getString("editIndex")?.toIntOrNull() ?: -1
 
-                        val existingMemo = if (editIndex >= 0 && editIndex < memoList.size) {
-                            val ui = memoList[editIndex]
-                            Memo(ui.id, ui.name, ui.sex, ui.killThePecos)
-                        } else {
-                            Memo(0, "", "", "")
-                        }
+                        val existingMemo: MemoUiState =
+                            if (editIndex >= 0 && editIndex < memoList.size) {
+                                val ui = memoList[editIndex]
+                                MemoUiState(ui.id, ui.name, ui.sex, ui.killThePecos)
+                            } else {
+                                MemoUiState(0, "", "", "")
+                            }
 
                         MemoScreen(
                             existingMemo = existingMemo,
@@ -173,12 +174,14 @@ fun Greeting(
             Row(
                 modifier = Modifier.align(Alignment.End)
             ) {
-                Icon(Icons.Default.Delete, contentDescription = null,
+                Icon(
+                    Icons.Default.Delete, contentDescription = null,
                     modifier = Modifier.clickable { onDelete() })
 
                 Spacer(modifier = Modifier.width(10.dp))
 
-                Icon(Icons.Default.Edit, contentDescription = null,
+                Icon(
+                    Icons.Default.Edit, contentDescription = null,
                     modifier = Modifier.clickable { onEdit() })
             }
         }
