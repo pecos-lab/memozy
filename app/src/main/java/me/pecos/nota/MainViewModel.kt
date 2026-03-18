@@ -1,12 +1,12 @@
-package com.example.killsunghun.ui.viewmodel
+package me.pecos.nota.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.example.killsunghun.Memo
+import me.pecos.nota.Memo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import com.example.killsunghun.MemoRepository
-import com.example.killsunghun.MemoRepositoryImpl
-import com.example.killsunghun.MemoUiState
+import me.pecos.nota.MemoRepository
+import me.pecos.nota.MemoRepositoryImpl
+import me.pecos.nota.MemoUiState
 
 class MainViewModel : ViewModel() {
 

@@ -1,6 +1,6 @@
-package com.example.killsunghun
+package me.pecos.nota
 
-data class Memo(
+data class MemoUiState(
     val id: Int,
     val name: String,
     val sex: String,

@@ -1,4 +1,4 @@
-package com.example.killsunghun
+package me.pecos.nota
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,7 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.killsunghun.ui.theme.KillSungHunTheme
+import me.pecos.nota.ui.theme.KillSungHunTheme
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize

@@ -1,4 +1,4 @@
-package com.example.killsunghun
+package me.pecos.nota
 
 import org.junit.Test
 
