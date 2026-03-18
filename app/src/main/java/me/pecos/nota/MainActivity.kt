@@ -1,4 +1,4 @@
-package com.example.killsunghun
+package me.pecos.nota
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -26,8 +26,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
-import com.example.killsunghun.ui.theme.KillSungHunTheme
-import com.example.killsunghun.ui.viewmodel.MainViewModel
+import me.pecos.nota.ui.theme.KillSungHunTheme
+import me.pecos.nota.ui.viewmodel.MainViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
