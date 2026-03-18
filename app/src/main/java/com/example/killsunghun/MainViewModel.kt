@@ -1,23 +1,72 @@
-import androidx.compose.runtime.mutableStateListOf
+package com.example.killsunghun.ui.viewmodel
+
 import androidx.lifecycle.ViewModel
 import com.example.killsunghun.Memo
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import com.example.killsunghun.MemoRepository
+import com.example.killsunghun.MemoRepositoryImpl
+import com.example.killsunghun.MemoUiState
 
-class MemoViewModel : ViewModel() {
+class MainViewModel : ViewModel() {
 
-    var memoList = mutableStateListOf<Memo>()
-        private set
+    // 🔥 Repository 연결 (핵심)
+    private val repository: MemoRepository = MemoRepositoryImpl()
 
+    // 🔥 UI 상태
+    private val _uiState = MutableStateFlow<List<MemoUiState>>(emptyList())
+    val uiState: StateFlow<List<MemoUiState>> = _uiState
 
-    // add update delete = 비즈니스 모델
-    fun addMemo(memo: Memo) {
-        memoList.add(memo)
+    // 🔥 처음 실행될 때 데이터 로드
+    init {
+        loadMemos()
     }
 
-    fun updateMemo(index: Int, memo: Memo) {
-        memoList[index] = memo
+    // 🔥 데이터 불러오기
+    fun loadMemos() {
+        val memos = repository.getMemos()
+
+        _uiState.value = memos.map {
+            MemoUiState(
+                id = it.id,
+                name = it.name,
+                sex = it.sex,
+                killThePecos = it.killThePecos
+            )
+        }
     }
 
-    fun deleteMemo(index: Int) {
-        memoList.removeAt(index)
+    // 🔥 메모 추가
+    fun addMemo(name: String, sex: String, killThePecos: String) {
+        val memo = MemoUiState(
+            id = System.currentTimeMillis().toInt(),
+            name = name,
+            sex = sex,
+            killThePecos = killThePecos
+        )
+
+        repository.addMemo(memo.toMemo())
+        loadMemos()
     }
+
+    // 🔥 메모 삭제
+    fun deleteMemo(id: Int) {
+        repository.deleteMemo(id)
+        loadMemos()
+    }
+
+    // 🔥 메모 수정
+    fun updateMemo(memo: MemoUiState) {
+        repository.updateMemo(memo.toMemo())
+        loadMemos()
+    }
+}
+
+fun MemoUiState.toMemo(): Memo{
+    return Memo(
+        id = this.id,
+        name = this.name,
+        sex = this.sex,
+        killThePecos = this.killThePecos
+    )
 }

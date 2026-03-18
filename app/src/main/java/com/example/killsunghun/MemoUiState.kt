@@ -1,6 +1,6 @@
 package com.example.killsunghun
 
-data class Memo(
+data class MemoUiState(
     val id: Int,
     val name: String,
     val sex: String,
