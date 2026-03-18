@@ -30,8 +30,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 
 @Composable
 fun MemoScreen(
-    onSave: (Memo) -> Unit,
-    existingMemo: Memo = Memo(0, "", "", "")
+    onSave: (MemoUiState) -> Unit,
+    existingMemo: MemoUiState = MemoUiState(0, "", "", "")
 ) {
 
     var nameText by remember { mutableStateOf(existingMemo.name) }
@@ -117,7 +117,7 @@ fun MemoScreen(
                     .clickable {
                         if (enabled) {
                             onSave(
-                                Memo(
+                                MemoUiState(
                                     id = existingMemo.id,   // ⭐ 이거 중요
                                     name = nameText,
                                     sex = sexText,
@@ -140,7 +140,7 @@ fun MemoScreenPreview() {
     KillSungHunTheme {
         MemoScreen(
             onSave = {},
-            existingMemo = Memo(1, "테스트 제목", "MAN", "테스트 내용")
+            existingMemo = MemoUiState (1, "테스트 제목", "MAN", "테스트 내용")
         )
     }
 }
