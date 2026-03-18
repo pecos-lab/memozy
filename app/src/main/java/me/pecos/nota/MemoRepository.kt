@@ -1,10 +1,10 @@
 package me.pecos.nota
 
-interface MemoRepository {
-    fun getMemos(): List<Memo>
-    fun addMemo(memo: Memo)
-    fun deleteMemo(id: Int)
+import kotlinx.coroutines.flow.Flow
 
-    // 🔥 이거 추가
-    fun updateMemo(memo: Memo)
+interface MemoRepository {
+    fun getMemos(): Flow<List<Memo>>
+    suspend fun addMemo(memo: Memo)
+    suspend fun deleteMemo(id: Int)
+    suspend fun updateMemo(memo: Memo)
 }

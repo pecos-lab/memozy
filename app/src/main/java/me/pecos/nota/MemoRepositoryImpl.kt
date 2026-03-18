@@ -1,25 +1,20 @@
 package me.pecos.nota
 
-class MemoRepositoryImpl : MemoRepository {
+import kotlinx.coroutines.flow.Flow
 
-    private val memoList = mutableListOf<Memo>()
+class MemoRepositoryImpl(private val memoDao: MemoDao) : MemoRepository {
 
-    override fun getMemos(): List<Memo> {
-        return memoList
+    override fun getMemos(): Flow<List<Memo>> = memoDao.getAllMemos()
+
+    override suspend fun addMemo(memo: Memo) {
+        memoDao.insertMemo(memo)
     }
 
-    override fun addMemo(memo: Memo) {
-        memoList.add(memo)
+    override suspend fun deleteMemo(id: Int) {
+        memoDao.deleteMemoById(id)
     }
 
-    override fun deleteMemo(id: Int) {
-        memoList.removeIf { it.id == id }
-    }
-
-    override fun updateMemo(memo: Memo) {
-        val index = memoList.indexOfFirst { it.id == memo.id }
-        if (index != -1) {
-            memoList[index] = memo
-        }
+    override suspend fun updateMemo(memo: Memo) {
+        memoDao.updateMemo(memo)
     }
 }
