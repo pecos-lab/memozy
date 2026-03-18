@@ -61,3 +61,12 @@ class MainViewModel : ViewModel() {
         loadMemos()
     }
 }
+
+fun MemoUiState.toMemo(): Memo{
+    return Memo(
+        id = this.id,
+        name = this.name,
+        sex = this.sex,
+        killThePecos = this.killThePecos
+    )
+}
