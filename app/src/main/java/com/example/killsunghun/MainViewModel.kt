@@ -1,9 +1,9 @@
 package com.example.killsunghun.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
+import com.example.killsunghun.Memo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import com.example.killsunghun.Memo
 import com.example.killsunghun.MemoRepository
 import com.example.killsunghun.MemoRepositoryImpl
 import com.example.killsunghun.MemoUiState
@@ -38,14 +38,14 @@ class MainViewModel : ViewModel() {
 
     // 🔥 메모 추가
     fun addMemo(name: String, sex: String, killThePecos: String) {
-        val memo = Memo(
+        val memo = MemoUiState(
             id = System.currentTimeMillis().toInt(),
             name = name,
             sex = sex,
             killThePecos = killThePecos
         )
 
-        repository.addMemo(memo)
+        repository.addMemo(memo.toMemo())
         loadMemos()
     }
 
@@ -56,8 +56,8 @@ class MainViewModel : ViewModel() {
     }
 
     // 🔥 메모 수정
-    fun updateMemo(memo: Memo) {
-        repository.updateMemo(memo)
+    fun updateMemo(memo: MemoUiState) {
+        repository.updateMemo(memo.toMemo())
         loadMemos()
     }
 }
