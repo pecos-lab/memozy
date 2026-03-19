@@ -51,7 +51,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import me.pecos.nota.ui.theme.KillSungHunTheme
+import me.pecos.nota.ui.theme.PecosNotaTheme
 import me.pecos.nota.ui.viewmodel.MainViewModel
 
 class MainActivity : ComponentActivity() {
@@ -60,7 +60,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            KillSungHunTheme {
+            PecosNotaTheme {
 
                 val viewModel: MainViewModel = viewModel()
                 val memoList by viewModel.uiState.collectAsState()
@@ -191,7 +191,7 @@ fun CustomBottomNavBar(
 @Preview(showBackground = true, backgroundColor = 0xFFF5F5F5)
 @Composable
 fun CustomBottomNavBarPreview() {
-    KillSungHunTheme {
+    PecosNotaTheme {
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.Bottom
@@ -211,12 +211,38 @@ fun HomeScreen(
     onEdit: (Int) -> Unit,
     onNavigateToMemo: () -> Unit
 ) {
-    Scaffold { innerPadding ->
+    Scaffold(
+        topBar = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White)
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.logo_wordmark),
+                    contentDescription = "pecos.nota",
+                    modifier = Modifier.height(28.dp)
+                )
+            }
+        }
+    ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            if (memoList.isEmpty()) {
+                Image(
+                    painter = painterResource(id = R.drawable.logo_full),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(200.dp)
+                        .align(Alignment.Center),
+                    alpha = 0.15f
+                )
+            }
 
             LazyColumn {
                 items(memoList) { memo ->
@@ -299,7 +325,7 @@ fun Greeting(
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-    KillSungHunTheme {
+    PecosNotaTheme {
         HomeScreen(
             memoList = listOf(
                 MemoUiState(1, "제목1", "Man", "내용1"),
