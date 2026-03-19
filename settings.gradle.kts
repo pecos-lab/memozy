@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Kill sung hun"
+rootProject.name = "pecos.nota"
 include(":app")
