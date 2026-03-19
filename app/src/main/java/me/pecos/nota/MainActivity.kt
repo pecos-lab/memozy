@@ -51,8 +51,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import me.pecos.nota.ui.theme.PecosNotaTheme
-import me.pecos.nota.ui.viewmodel.MainViewModel
+import com.wanted.android.wanted.design.theme.DesignSystemTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,7 +59,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            PecosNotaTheme {
+            DesignSystemTheme {
 
                 val viewModel: MainViewModel = viewModel()
                 val memoList by viewModel.uiState.collectAsState()
@@ -191,7 +190,7 @@ fun CustomBottomNavBar(
 @Preview(showBackground = true, backgroundColor = 0xFFF5F5F5)
 @Composable
 fun CustomBottomNavBarPreview() {
-    PecosNotaTheme {
+    DesignSystemTheme {
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.Bottom
@@ -325,7 +324,7 @@ fun Greeting(
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-    PecosNotaTheme {
+    DesignSystemTheme {
         HomeScreen(
             memoList = listOf(
                 MemoUiState(1, "제목1", "Man", "내용1"),

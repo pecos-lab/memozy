@@ -23,10 +23,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import me.pecos.nota.ui.theme.PecosNotaTheme
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
+import com.wanted.android.wanted.design.theme.DesignSystemTheme
 
 @Composable
 fun MemoScreen(
@@ -137,7 +137,7 @@ fun MemoScreen(
 @Preview(showBackground = true)
 @Composable
 fun MemoScreenPreview() {
-    PecosNotaTheme {
+    DesignSystemTheme {
         MemoScreen(
             onSave = {},
             existingMemo = MemoUiState (1, "테스트 제목", "MAN", "테스트 내용")

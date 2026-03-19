@@ -1,4 +1,4 @@
-package me.pecos.nota.ui.viewmodel
+package me.pecos.nota
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -7,10 +7,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import me.pecos.nota.Memo
-import me.pecos.nota.MemoDatabase
-import me.pecos.nota.MemoRepositoryImpl
-import me.pecos.nota.MemoUiState
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 

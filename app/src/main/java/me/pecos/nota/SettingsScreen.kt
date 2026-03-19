@@ -27,7 +27,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import me.pecos.nota.ui.viewmodel.SettingsViewModel
 
 @Composable
 fun SettingsScreen(
