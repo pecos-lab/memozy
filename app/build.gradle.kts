@@ -15,7 +15,7 @@ android {
 
     defaultConfig {
         applicationId = "me.pecos.nota"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -56,6 +56,7 @@ dependencies {
     implementation(libs.androidx.compose.foundation.layout)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
+    implementation("com.github.wanteddev:montage-android:3.3.0")
     ksp(libs.room.compiler)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
