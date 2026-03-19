@@ -19,4 +19,7 @@ interface MemoDao {
 
     @Query("DELETE FROM memo WHERE id = :id")
     suspend fun deleteMemoById(id: Int)
+
+    @Query("DELETE FROM memo")
+    suspend fun clearAllMemos()
 }

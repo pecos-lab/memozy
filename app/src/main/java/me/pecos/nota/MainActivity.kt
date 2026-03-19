@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -32,8 +33,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
@@ -41,9 +45,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import me.pecos.nota.ui.theme.KillSungHunTheme
 import me.pecos.nota.ui.viewmodel.MainViewModel
@@ -59,48 +65,141 @@ class MainActivity : ComponentActivity() {
                 val viewModel: MainViewModel = viewModel()
                 val memoList by viewModel.uiState.collectAsState()
                 val navController = rememberNavController()
+                val currentRoute by navController.currentBackStackEntryAsState()
+                val showBottomNav = remember(currentRoute) {
+                    currentRoute?.destination?.route in listOf("main", "settings")
+                }
 
-                NavHost(
-                    navController = navController,
-                    startDestination = "main"
-                ) {
-
-                    // 메인 화면
-                    composable("main") {
-                        HomeScreen(
-                            memoList = memoList,
-                            onDelete = { id -> viewModel.deleteMemo(id) },
-                            onEdit = { id -> navController.navigate("Memo/$id") },
-                            onNavigateToMemo = { navController.navigate("Memo/-1") }
-                        )
-                    }
-
-                    // 메모 화면
-                    composable("Memo/{memoId}") { backStackEntry ->
-                        val memoId =
-                            backStackEntry.arguments?.getString("memoId")?.toIntOrNull() ?: -1
-
-                        val existingMemo: MemoUiState =
-                            if (memoId > 0) {
-                                memoList.find { it.id == memoId } ?: MemoUiState(0, "", "", "")
-                            } else {
-                                MemoUiState(0, "", "", "")
-                            }
-
-                        MemoScreen(
-                            existingMemo = existingMemo,
-                            onSave = { memo ->
-                                if (memoId > 0) {
-                                    viewModel.updateMemo(memo)
-                                } else {
-                                    viewModel.addMemo(memo.name, memo.sex, memo.killThePecos)
+                Scaffold(
+                    bottomBar = {
+                        if (showBottomNav) {
+                            CustomBottomNavBar(
+                                selectedRoute = currentRoute?.destination?.route ?: "main",
+                                onItemSelected = { route ->
+                                    navController.navigate(route) {
+                                        popUpTo("main") { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
                                 }
-                                navController.popBackStack()
-                            }
-                        )
+                            )
+                        }
+                    }
+                ) { innerPadding ->
+                    NavHost(
+                        navController = navController,
+                        startDestination = "main",
+                        modifier = Modifier.padding(innerPadding)
+                    ) {
+
+                        // 메인 화면
+                        composable("main") {
+                            HomeScreen(
+                                memoList = memoList,
+                                onDelete = { id -> viewModel.deleteMemo(id) },
+                                onEdit = { id -> navController.navigate("Memo/$id") },
+                                onNavigateToMemo = { navController.navigate("Memo/-1") }
+                            )
+                        }
+
+                        // 설정 화면
+                        composable("settings") {
+                            SettingsScreen()
+                        }
+
+                        // 메모 작성/수정 화면
+                        composable("Memo/{memoId}") { backStackEntry ->
+                            val memoId =
+                                backStackEntry.arguments?.getString("memoId")?.toIntOrNull() ?: -1
+
+                            val existingMemo: MemoUiState =
+                                if (memoId > 0) {
+                                    memoList.find { it.id == memoId } ?: MemoUiState(0, "", "", "")
+                                } else {
+                                    MemoUiState(0, "", "", "")
+                                }
+
+                            MemoScreen(
+                                existingMemo = existingMemo,
+                                onSave = { memo ->
+                                    if (memoId > 0) {
+                                        viewModel.updateMemo(memo)
+                                    } else {
+                                        viewModel.addMemo(memo.name, memo.sex, memo.killThePecos)
+                                    }
+                                    navController.popBackStack()
+                                }
+                            )
+                        }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun CustomBottomNavBar(
+    selectedRoute: String,
+    onItemSelected: (String) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = 8.dp,
+                shape = RectangleShape,
+                ambientColor = Color.Black.copy(alpha = 0.1f),
+                spotColor = Color.Black.copy(alpha = 0.1f)
+            )
+            .background(Color.White)
+    ) {
+        bottomNavItems.forEach { item ->
+            val selected = selectedRoute == item.route
+            val bgColor = if (selected) Color(0xFFEEEEEE) else Color.White
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .background(bgColor)
+                    .clickable { onItemSelected(item.route) }
+                    .padding(vertical = 2.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = item.iconRes),
+                        contentDescription = item.label,
+                        modifier = Modifier.size(96.dp)
+                    )
+                    Spacer(modifier = Modifier.height(1.dp))
+                    Text(
+                        text = item.label,
+                        fontSize = 16.sp,
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                        color = if (selected) Color.Black else Color.Gray
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFFF5F5F5)
+@Composable
+fun CustomBottomNavBarPreview() {
+    KillSungHunTheme {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.Bottom
+        ) {
+            CustomBottomNavBar(
+                selectedRoute = "main",
+                onItemSelected = {}
+            )
         }
     }
 }

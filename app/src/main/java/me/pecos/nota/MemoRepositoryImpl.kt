@@ -17,4 +17,8 @@ class MemoRepositoryImpl(private val memoDao: MemoDao) : MemoRepository {
     override suspend fun updateMemo(memo: Memo) {
         memoDao.updateMemo(memo)
     }
+
+    override suspend fun clearAllMemos() {
+        memoDao.clearAllMemos()
+    }
 }
