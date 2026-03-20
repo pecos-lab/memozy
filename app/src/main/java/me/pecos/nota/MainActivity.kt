@@ -412,9 +412,16 @@ fun Greeting(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(memo.name, fontWeight = FontWeight.Bold, color = colorResource(R.color.text_title))
+                Text(
+                    memo.name,
+                    fontWeight = FontWeight.Bold,
+                    color = colorResource(R.color.text_title)
+                )
                 Column(horizontalAlignment = Alignment.End) {
-                    Text(formatMemoTime(memo.createdAt, languageCode), color = colorResource(R.color.text_secondary))
+                    Text(
+                        formatMemoTime(memo.createdAt, languageCode),
+                        color = colorResource(R.color.text_secondary)
+                    )
                     if (memo.sex.isNotBlank()) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
@@ -422,7 +429,10 @@ fun Greeting(
                             fontSize = 11.sp,
                             color = Color(0xFF1D6BF3),
                             modifier = Modifier
-                                .background(colorResource(R.color.chip_background), RoundedCornerShape(50))
+                                .background(
+                                    colorResource(R.color.chip_background),
+                                    RoundedCornerShape(50)
+                                )
                                 .padding(horizontal = 8.dp, vertical = 2.dp)
                         )
                     }
@@ -489,7 +499,8 @@ fun formatMemoTime(createdAt: Long, languageCode: String): String {
     val sameDay = now.get(java.util.Calendar.YEAR) == created.get(java.util.Calendar.YEAR) &&
             now.get(java.util.Calendar.DAY_OF_YEAR) == created.get(java.util.Calendar.DAY_OF_YEAR)
     val yesterday = run {
-        val y = java.util.Calendar.getInstance(tz).apply { timeInMillis = createdAt; add(java.util.Calendar.DAY_OF_YEAR, 1) }
+        val y = java.util.Calendar.getInstance(tz)
+            .apply { timeInMillis = createdAt; add(java.util.Calendar.DAY_OF_YEAR, 1) }
         y.get(java.util.Calendar.YEAR) == now.get(java.util.Calendar.YEAR) &&
                 y.get(java.util.Calendar.DAY_OF_YEAR) == now.get(java.util.Calendar.DAY_OF_YEAR)
     }
@@ -504,11 +515,13 @@ fun formatMemoTime(createdAt: Long, languageCode: String): String {
                     val h = if (hour % 12 == 0) 12 else hour % 12
                     "$h:${minute.toString().padStart(2, '0')} $ampm"
                 }
+
                 "ja" -> {
                     val ampm = if (hour < 12) "午前" else "午後"
                     val h = if (hour % 12 == 0) 12 else hour % 12
                     "$ampm${h}:${minute.toString().padStart(2, '0')}"
                 }
+
                 else -> {
                     val ampm = if (hour < 12) "오전" else "오후"
                     val h = if (hour % 12 == 0) 12 else hour % 12
@@ -516,11 +529,13 @@ fun formatMemoTime(createdAt: Long, languageCode: String): String {
                 }
             }
         }
+
         yesterday -> when (languageCode) {
             "en" -> "Yesterday"
             "ja" -> "昨日"
             else -> "어제"
         }
+
         else -> {
             val year = created.get(java.util.Calendar.YEAR)
             val month = created.get(java.util.Calendar.MONTH) + 1
