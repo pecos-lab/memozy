@@ -25,4 +25,5 @@
     <color name="text_body">#616161</color>
     <color name="text_secondary">#9E9E9E</color>
     <color name="chip_background">#E8F0FE</color>
+    <color name="chip_text">#1D6BF3</color>
 </resources>
