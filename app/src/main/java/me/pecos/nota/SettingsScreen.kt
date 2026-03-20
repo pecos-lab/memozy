@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wanted.android.wanted.design.actions.button.WantedButton
+import com.wanted.android.wanted.design.actions.button.config.WantedButtonDefaults
 import com.wanted.android.wanted.design.util.ButtonType
 import com.wanted.android.wanted.design.util.ButtonVariant
 
@@ -225,8 +226,10 @@ fun SettingsScreen(
                 WantedButton(
                     text = stringResource(R.string.reset_memos),
                     modifier = Modifier.fillMaxWidth(),
-                    type = ButtonType.PRIMARY,
-                    variant = ButtonVariant.OUTLINED,
+                    buttonDefault = WantedButtonDefaults.getDefault(
+                        type = ButtonType.ASSISTIVE,
+                        variant = ButtonVariant.OUTLINED
+                    ).copy(contentColor = Color(0xFFE24B4A)),
                     onClick = { showClearDialog = true }
                 )
             }
