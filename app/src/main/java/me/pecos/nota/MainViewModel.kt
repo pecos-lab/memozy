@@ -1,4 +1,4 @@
-package me.pecos.nota.ui.viewmodel
+package me.pecos.nota
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -7,10 +7,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import me.pecos.nota.Memo
-import me.pecos.nota.MemoDatabase
-import me.pecos.nota.MemoRepositoryImpl
-import me.pecos.nota.MemoUiState
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -24,7 +20,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun addMemo(name: String, sex: String, killThePecos: String) {
         viewModelScope.launch {
-            repository.addMemo(Memo(name = name, sex = sex, killThePecos = killThePecos))
+            repository.addMemo(
+                Memo(
+                    name = name,
+                    sex = sex,
+                    killThePecos = killThePecos,
+                    createdAt = System.currentTimeMillis()
+                )
+            )
         }
     }
 
@@ -45,12 +48,14 @@ fun MemoUiState.toMemo(): Memo = Memo(
     id = this.id,
     name = this.name,
     sex = this.sex,
-    killThePecos = this.killThePecos
+    killThePecos = this.killThePecos,
+    createdAt = this.createdAt
 )
 
 fun Memo.toUiState(): MemoUiState = MemoUiState(
     id = this.id,
     name = this.name,
     sex = this.sex,
-    killThePecos = this.killThePecos
+    killThePecos = this.killThePecos,
+    createdAt = this.createdAt
 )

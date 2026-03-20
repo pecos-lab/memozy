@@ -9,5 +9,6 @@ data class Memo(
     val id: Int = 0,
     val name: String,
     val sex: String,
-    val killThePecos: String
+    val killThePecos: String,
+    val createdAt: Long = System.currentTimeMillis()
 )

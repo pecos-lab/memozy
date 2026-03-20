@@ -1,19 +1,24 @@
 package me.pecos.nota
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.ui.graphics.vector.ImageVector
+
 sealed class BottomNavItem(
     val route: String,
     val label: String,
-    val iconRes: Int  // TODO: 아이콘 추가 후 R.drawable.xxx 넣기
+    val icon: ImageVector
 ) {
     object Memo : BottomNavItem(
         route = "main",
         label = "Memo",
-        iconRes = R.drawable.memo
+        icon = Icons.Default.Edit
     )
     object Settings : BottomNavItem(
         route = "settings",
         label = "Settings",
-        iconRes = R.drawable.setting
+        icon = Icons.Default.Settings
     )
 }
 

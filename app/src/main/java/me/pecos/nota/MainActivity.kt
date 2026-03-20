@@ -1,5 +1,7 @@
 package me.pecos.nota
 
+import android.content.Context
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,18 +18,26 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.ui.res.colorResource
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,16 +61,43 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import me.pecos.nota.ui.theme.PecosNotaTheme
-import me.pecos.nota.ui.viewmodel.MainViewModel
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import com.wanted.android.wanted.design.theme.DesignSystemTheme
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
+
+    override fun attachBaseContext(newBase: Context) {
+        val prefs = newBase.getSharedPreferences("settings", Context.MODE_PRIVATE)
+        val languageCode = prefs.getString("language_code", "ko") ?: "ko"
+        val locale = java.util.Locale(languageCode)
+        java.util.Locale.setDefault(locale)
+        val config = Configuration(newBase.resources.configuration)
+        config.setLocale(locale)
+        super.attachBaseContext(newBase.createConfigurationContext(config))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val themePrefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
+        val nightMode = when (themePrefs.getString("theme_mode", "system")) {
+            "light" -> AppCompatDelegate.MODE_NIGHT_NO
+            "dark" -> AppCompatDelegate.MODE_NIGHT_YES
+            else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+        }
+        AppCompatDelegate.setDefaultNightMode(nightMode)
+
         enableEdgeToEdge()
 
         setContent {
-            PecosNotaTheme {
+            DesignSystemTheme {
 
                 val viewModel: MainViewModel = viewModel()
                 val memoList by viewModel.uiState.collectAsState()
@@ -70,26 +107,20 @@ class MainActivity : ComponentActivity() {
                     currentRoute?.destination?.route in listOf("main", "settings")
                 }
 
-                Scaffold(
-                    bottomBar = {
-                        if (showBottomNav) {
-                            CustomBottomNavBar(
-                                selectedRoute = currentRoute?.destination?.route ?: "main",
-                                onItemSelected = { route ->
-                                    navController.navigate(route) {
-                                        popUpTo("main") { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                }
-                            )
-                        }
-                    }
-                ) { innerPadding ->
+                val hazeState = rememberHazeState()
+                val glassStyle = HazeStyle(
+                    blurRadius = 20.dp,
+                    backgroundColor = Color.White,
+                    tints = listOf(HazeTint(color = Color.White.copy(alpha = 0.4f)))
+                )
+
+                Box(modifier = Modifier.fillMaxSize()) {
                     NavHost(
                         navController = navController,
                         startDestination = "main",
-                        modifier = Modifier.padding(innerPadding)
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .hazeSource(hazeState)
                     ) {
 
                         // 메인 화면
@@ -97,8 +128,7 @@ class MainActivity : ComponentActivity() {
                             HomeScreen(
                                 memoList = memoList,
                                 onDelete = { id -> viewModel.deleteMemo(id) },
-                                onEdit = { id -> navController.navigate("Memo/$id") },
-                                onNavigateToMemo = { navController.navigate("Memo/-1") }
+                                onEdit = { id -> navController.navigate("Memo/$id") }
                             )
                         }
 
@@ -132,6 +162,62 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
+
+                    if (showBottomNav) {
+                        Row(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth()
+                                .navigationBarsPadding()
+                                .padding(horizontal = 12.dp, vertical = 4.dp)
+                                .height(IntrinsicSize.Max),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            FloatingNavPill(
+                                selectedRoute = currentRoute?.destination?.route ?: "main",
+                                onItemSelected = { route ->
+                                    navController.navigate(route) {
+                                        popUpTo("main") { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                },
+                                hazeState = hazeState,
+                                glassStyle = glassStyle,
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            // 플로팅 메모 추가 버튼
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .aspectRatio(1f)
+                                    .shadow(
+                                        elevation = 16.dp,
+                                        shape = CircleShape,
+                                        ambientColor = Color.Black.copy(alpha = 0.28f),
+                                        spotColor = Color.Black.copy(alpha = 0.18f)
+                                    )
+                                    .clip(CircleShape)
+                                    .hazeEffect(state = hazeState, style = glassStyle)
+                                    .border(1.dp, Color(0xFFE0E0E0), CircleShape)
+                                    .clickable { navController.navigate("Memo/-1") },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = "메모 추가",
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .padding(4.dp),
+                                    tint = Color.Black
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -139,67 +225,108 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun CustomBottomNavBar(
+fun FloatingNavPill(
     selectedRoute: String,
-    onItemSelected: (String) -> Unit
+    onItemSelected: (String) -> Unit,
+    hazeState: HazeState,
+    glassStyle: HazeStyle,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
+            .height(52.dp)
             .shadow(
-                elevation = 8.dp,
-                shape = RectangleShape,
-                ambientColor = Color.Black.copy(alpha = 0.1f),
-                spotColor = Color.Black.copy(alpha = 0.1f)
+                elevation = 16.dp,
+                shape = RoundedCornerShape(50),
+                ambientColor = Color.Black.copy(alpha = 0.28f),
+                spotColor = Color.Black.copy(alpha = 0.18f)
             )
-            .background(Color.White)
+            .clip(RoundedCornerShape(50))
+            .hazeEffect(state = hazeState, style = glassStyle)
+            .border(
+                width = 1.dp,
+                color = Color(0xFFE0E0E0),
+                shape = RoundedCornerShape(50)
+            )
+            .padding(horizontal = 2.dp, vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         bottomNavItems.forEach { item ->
             val selected = selectedRoute == item.route
-            val bgColor = if (selected) Color(0xFFEEEEEE) else Color.White
-
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .background(bgColor)
-                    .clickable { onItemSelected(item.route) }
-                    .padding(vertical = 2.dp),
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(50))
+                    .background(
+                        if (selected) Color.Black.copy(alpha = 0.06f) else Color.Transparent
+                    )
+                    .clickable { onItemSelected(item.route) },
                 contentAlignment = Alignment.Center
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Image(
-                        painter = painterResource(id = item.iconRes),
-                        contentDescription = item.label,
-                        modifier = Modifier.size(96.dp)
-                    )
-                    Spacer(modifier = Modifier.height(1.dp))
-                    Text(
-                        text = item.label,
-                        fontSize = 16.sp,
-                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                        color = if (selected) Color.Black else Color.Gray
-                    )
-                }
+                Icon(
+                    imageVector = item.icon,
+                    contentDescription = item.label,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .padding(4.dp),
+                    tint = Color.Black.copy(alpha = if (selected) 1f else 0.4f)
+                )
             }
         }
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFFF5F5F5)
+@Preview(showBackground = true, backgroundColor = 0xFFF0F0F0)
 @Composable
-fun CustomBottomNavBarPreview() {
-    PecosNotaTheme {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.Bottom
+fun FloatingNavPillPreview() {
+    DesignSystemTheme {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp)
+                .background(Color(0xFFF0F0F0)),
+            contentAlignment = Alignment.BottomCenter
         ) {
-            CustomBottomNavBar(
-                selectedRoute = "main",
-                onItemSelected = {}
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .height(IntrinsicSize.Max),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FloatingNavPill(
+                    selectedRoute = "main",
+                    onItemSelected = {},
+                    hazeState = rememberHazeState(),
+                    glassStyle = HazeStyle(
+                        blurRadius = 20.dp,
+                        backgroundColor = Color.White,
+                        tints = listOf(HazeTint(color = Color.White.copy(alpha = 0.4f)))
+                    ),
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .aspectRatio(1f)
+                        .shadow(10.dp, CircleShape)
+                        .background(Color.White.copy(alpha = 0.88f), CircleShape)
+                        .border(0.5.dp, Color.White.copy(alpha = 0.7f), CircleShape)
+                        .clip(CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.icon_add),
+                        contentDescription = "메모 추가",
+                        colorFilter = ColorFilter.tint(Color.Black),
+                        modifier = Modifier.size(42.dp)
+                    )
+                }
+            }
         }
     }
 }
@@ -208,15 +335,14 @@ fun CustomBottomNavBarPreview() {
 fun HomeScreen(
     memoList: List<MemoUiState>,
     onDelete: (Int) -> Unit,
-    onEdit: (Int) -> Unit,
-    onNavigateToMemo: () -> Unit
+    onEdit: (Int) -> Unit
 ) {
     Scaffold(
         topBar = {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White)
+                    .background(colorResource(R.color.screen_background))
                     .padding(horizontal = 16.dp, vertical = 10.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -231,6 +357,7 @@ fun HomeScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(colorResource(R.color.screen_background))
                 .padding(innerPadding)
         ) {
             if (memoList.isEmpty()) {
@@ -253,24 +380,6 @@ fun HomeScreen(
                     )
                 }
             }
-
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp)
-                    .size(60.dp)
-                    .background(Color.White)
-                    .border(1.dp, Color.Gray, RectangleShape)
-                    .clickable { onNavigateToMemo() },
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.icon_add),
-                    contentDescription = "추가",
-                    colorFilter = ColorFilter.tint(Color.Black),
-                    modifier = Modifier.size(40.dp)
-                )
-            }
         }
     }
 }
@@ -281,42 +390,67 @@ fun Greeting(
     onDelete: () -> Unit,
     onEdit: () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val languageCode = remember {
+        context.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE)
+            .getString("language_code", "ko") ?: "ko"
+    }
     Card(
-        shape = RectangleShape,
+        shape = RoundedCornerShape(12.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(10.dp)
-            .border(1.dp, Color.Gray),
-        elevation = CardDefaults.cardElevation(4.dp)
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .border(1.dp, colorResource(R.color.card_border), RoundedCornerShape(12.dp)),
+        elevation = CardDefaults.cardElevation(0.dp),
+        colors = CardDefaults.cardColors(containerColor = colorResource(R.color.card_background))
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(16.dp)) {
 
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(memo.name, fontWeight = FontWeight.Bold)
-                Text(memo.sex, color = Color.Gray)
+                Text(memo.name, fontWeight = FontWeight.Bold, color = colorResource(R.color.text_title))
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(formatMemoTime(memo.createdAt, languageCode), color = colorResource(R.color.text_secondary))
+                    if (memo.sex.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = memo.sex,
+                            fontSize = 11.sp,
+                            color = Color(0xFF1D6BF3),
+                            modifier = Modifier
+                                .background(colorResource(R.color.chip_background), RoundedCornerShape(50))
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text(memo.killThePecos)
+            Text(memo.killThePecos, color = colorResource(R.color.text_body))
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 modifier = Modifier.align(Alignment.End)
             ) {
                 Icon(
-                    Icons.Default.Delete, contentDescription = null,
-                    modifier = Modifier.clickable { onDelete() })
+                    Icons.Default.Delete,
+                    contentDescription = null,
+                    tint = colorResource(R.color.text_secondary),
+                    modifier = Modifier.clickable { onDelete() }
+                )
 
-                Spacer(modifier = Modifier.width(10.dp))
+                Spacer(modifier = Modifier.width(12.dp))
 
                 Icon(
-                    Icons.Default.Edit, contentDescription = null,
-                    modifier = Modifier.clickable { onEdit() })
+                    Icons.Default.Edit,
+                    contentDescription = null,
+                    tint = colorResource(R.color.text_secondary),
+                    modifier = Modifier.clickable { onEdit() }
+                )
             }
         }
     }
@@ -325,15 +459,71 @@ fun Greeting(
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-    PecosNotaTheme {
+    DesignSystemTheme {
         HomeScreen(
             memoList = listOf(
                 MemoUiState(1, "제목1", "Man", "내용1"),
                 MemoUiState(2, "제목2", "Woman", "내용2")
             ),
             onDelete = {},
-            onEdit = {},
-            onNavigateToMemo = {}
+            onEdit = {}
         )
+    }
+}
+
+fun timezoneForLanguage(languageCode: String): java.util.TimeZone = when (languageCode) {
+    "ko" -> java.util.TimeZone.getTimeZone("Asia/Seoul")
+    "ja" -> java.util.TimeZone.getTimeZone("Asia/Tokyo")
+    "en" -> java.util.TimeZone.getTimeZone("America/New_York")
+    else -> java.util.TimeZone.getDefault()
+}
+
+fun formatMemoTime(createdAt: Long, languageCode: String): String {
+    if (createdAt == 0L) return ""
+    val tz = timezoneForLanguage(languageCode)
+    val now = java.util.Calendar.getInstance(tz)
+    val created = java.util.Calendar.getInstance(tz).apply { timeInMillis = createdAt }
+
+    val sameDay = now.get(java.util.Calendar.YEAR) == created.get(java.util.Calendar.YEAR) &&
+            now.get(java.util.Calendar.DAY_OF_YEAR) == created.get(java.util.Calendar.DAY_OF_YEAR)
+    val yesterday = run {
+        val y = java.util.Calendar.getInstance(tz).apply { timeInMillis = createdAt; add(java.util.Calendar.DAY_OF_YEAR, 1) }
+        y.get(java.util.Calendar.YEAR) == now.get(java.util.Calendar.YEAR) &&
+                y.get(java.util.Calendar.DAY_OF_YEAR) == now.get(java.util.Calendar.DAY_OF_YEAR)
+    }
+
+    return when {
+        sameDay -> {
+            val hour = created.get(java.util.Calendar.HOUR_OF_DAY)
+            val minute = created.get(java.util.Calendar.MINUTE)
+            when (languageCode) {
+                "en" -> {
+                    val ampm = if (hour < 12) "AM" else "PM"
+                    val h = if (hour % 12 == 0) 12 else hour % 12
+                    "$h:${minute.toString().padStart(2, '0')} $ampm"
+                }
+                "ja" -> {
+                    val ampm = if (hour < 12) "午前" else "午後"
+                    val h = if (hour % 12 == 0) 12 else hour % 12
+                    "$ampm${h}:${minute.toString().padStart(2, '0')}"
+                }
+                else -> {
+                    val ampm = if (hour < 12) "오전" else "오후"
+                    val h = if (hour % 12 == 0) 12 else hour % 12
+                    "$ampm ${h}:${minute.toString().padStart(2, '0')}"
+                }
+            }
+        }
+        yesterday -> when (languageCode) {
+            "en" -> "Yesterday"
+            "ja" -> "昨日"
+            else -> "어제"
+        }
+        else -> {
+            val year = created.get(java.util.Calendar.YEAR)
+            val month = created.get(java.util.Calendar.MONTH) + 1
+            val day = created.get(java.util.Calendar.DAY_OF_MONTH)
+            "${year}.${month.toString().padStart(2, '0')}.${day.toString().padStart(2, '0')}"
+        }
     }
 }
