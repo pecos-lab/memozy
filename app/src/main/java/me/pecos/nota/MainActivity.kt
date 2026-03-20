@@ -338,30 +338,36 @@ fun HomeScreen(
     onDelete: (Int) -> Unit,
     onEdit: (Int) -> Unit
 ) {
-    Scaffold(
-        topBar = {
-            Box(
+    Scaffold { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(colorResource(R.color.screen_background))
-                    .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 10.dp),
-                contentAlignment = Alignment.CenterStart
+                    .padding(horizontal = 16.dp, vertical = 24.dp)
             ) {
                 Text(
                     text = "Memozy",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
-                    color = colorResource(R.color.topbar_title)
+                    color = colorResource(R.color.topbar_title),
+                    modifier = Modifier.padding(bottom = 24.dp)
                 )
+
+                LazyColumn {
+                    items(memoList) { memo ->
+                        Greeting(
+                            memo = memo,
+                            onDelete = { onDelete(memo.id) },
+                            onEdit = { onEdit(memo.id) }
+                        )
+                    }
+                }
             }
-        }
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(colorResource(R.color.screen_background))
-                .padding(innerPadding)
-        ) {
+
             if (memoList.isEmpty()) {
                 Image(
                     painter = painterResource(id = R.drawable.logo_full),
@@ -371,16 +377,6 @@ fun HomeScreen(
                         .align(Alignment.Center),
                     alpha = 0.15f
                 )
-            }
-
-            LazyColumn {
-                items(memoList) { memo ->
-                    Greeting(
-                        memo = memo,
-                        onDelete = { onDelete(memo.id) },
-                        onEdit = { onEdit(memo.id) }
-                    )
-                }
             }
         }
     }
@@ -427,7 +423,7 @@ fun Greeting(
                         Text(
                             text = memo.sex,
                             fontSize = 11.sp,
-                            color = Color(0xFF1D6BF3),
+                            color = colorResource(R.color.chip_text),
                             modifier = Modifier
                                 .background(
                                     colorResource(R.color.chip_background),
