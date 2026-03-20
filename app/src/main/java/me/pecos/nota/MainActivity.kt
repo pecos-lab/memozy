@@ -16,13 +16,19 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Card
@@ -52,6 +58,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.wanted.android.wanted.design.theme.DesignSystemTheme
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,26 +81,20 @@ class MainActivity : ComponentActivity() {
                     currentRoute?.destination?.route in listOf("main", "settings")
                 }
 
-                Scaffold(
-                    bottomBar = {
-                        if (showBottomNav) {
-                            CustomBottomNavBar(
-                                selectedRoute = currentRoute?.destination?.route ?: "main",
-                                onItemSelected = { route ->
-                                    navController.navigate(route) {
-                                        popUpTo("main") { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                }
-                            )
-                        }
-                    }
-                ) { innerPadding ->
+                val hazeState = rememberHazeState()
+                val glassStyle = HazeStyle(
+                    blurRadius = 20.dp,
+                    backgroundColor = Color.White,
+                    tints = listOf(HazeTint(color = Color.White.copy(alpha = 0.4f)))
+                )
+
+                Box(modifier = Modifier.fillMaxSize()) {
                     NavHost(
                         navController = navController,
                         startDestination = "main",
-                        modifier = Modifier.padding(innerPadding)
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .hazeSource(hazeState)
                     ) {
 
                         // 메인 화면
@@ -96,8 +102,7 @@ class MainActivity : ComponentActivity() {
                             HomeScreen(
                                 memoList = memoList,
                                 onDelete = { id -> viewModel.deleteMemo(id) },
-                                onEdit = { id -> navController.navigate("Memo/$id") },
-                                onNavigateToMemo = { navController.navigate("Memo/-1") }
+                                onEdit = { id -> navController.navigate("Memo/$id") }
                             )
                         }
 
@@ -131,6 +136,62 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
+
+                    if (showBottomNav) {
+                        Row(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth()
+                                .navigationBarsPadding()
+                                .padding(horizontal = 12.dp, vertical = 4.dp)
+                                .height(IntrinsicSize.Max),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            FloatingNavPill(
+                                selectedRoute = currentRoute?.destination?.route ?: "main",
+                                onItemSelected = { route ->
+                                    navController.navigate(route) {
+                                        popUpTo("main") { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                },
+                                hazeState = hazeState,
+                                glassStyle = glassStyle,
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            // 플로팅 메모 추가 버튼
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .aspectRatio(1f)
+                                    .shadow(
+                                        elevation = 16.dp,
+                                        shape = CircleShape,
+                                        ambientColor = Color.Black.copy(alpha = 0.28f),
+                                        spotColor = Color.Black.copy(alpha = 0.18f)
+                                    )
+                                    .clip(CircleShape)
+                                    .hazeEffect(state = hazeState, style = glassStyle)
+                                    .border(1.dp, Color(0xFFE0E0E0), CircleShape)
+                                    .clickable { navController.navigate("Memo/-1") },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = "메모 추가",
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .padding(4.dp),
+                                    tint = Color.Black
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -138,67 +199,108 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun CustomBottomNavBar(
+fun FloatingNavPill(
     selectedRoute: String,
-    onItemSelected: (String) -> Unit
+    onItemSelected: (String) -> Unit,
+    hazeState: HazeState,
+    glassStyle: HazeStyle,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
+            .height(52.dp)
             .shadow(
-                elevation = 8.dp,
-                shape = RectangleShape,
-                ambientColor = Color.Black.copy(alpha = 0.1f),
-                spotColor = Color.Black.copy(alpha = 0.1f)
+                elevation = 16.dp,
+                shape = RoundedCornerShape(50),
+                ambientColor = Color.Black.copy(alpha = 0.28f),
+                spotColor = Color.Black.copy(alpha = 0.18f)
             )
-            .background(Color.White)
+            .clip(RoundedCornerShape(50))
+            .hazeEffect(state = hazeState, style = glassStyle)
+            .border(
+                width = 1.dp,
+                color = Color(0xFFE0E0E0),
+                shape = RoundedCornerShape(50)
+            )
+            .padding(horizontal = 2.dp, vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         bottomNavItems.forEach { item ->
             val selected = selectedRoute == item.route
-            val bgColor = if (selected) Color(0xFFEEEEEE) else Color.White
-
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .background(bgColor)
-                    .clickable { onItemSelected(item.route) }
-                    .padding(vertical = 2.dp),
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(50))
+                    .background(
+                        if (selected) Color.Black.copy(alpha = 0.06f) else Color.Transparent
+                    )
+                    .clickable { onItemSelected(item.route) },
                 contentAlignment = Alignment.Center
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Image(
-                        painter = painterResource(id = item.iconRes),
-                        contentDescription = item.label,
-                        modifier = Modifier.size(96.dp)
-                    )
-                    Spacer(modifier = Modifier.height(1.dp))
-                    Text(
-                        text = item.label,
-                        fontSize = 16.sp,
-                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                        color = if (selected) Color.Black else Color.Gray
-                    )
-                }
+                Icon(
+                    imageVector = item.icon,
+                    contentDescription = item.label,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .padding(4.dp),
+                    tint = Color.Black.copy(alpha = if (selected) 1f else 0.4f)
+                )
             }
         }
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFFF5F5F5)
+@Preview(showBackground = true, backgroundColor = 0xFFF0F0F0)
 @Composable
-fun CustomBottomNavBarPreview() {
+fun FloatingNavPillPreview() {
     DesignSystemTheme {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.Bottom
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp)
+                .background(Color(0xFFF0F0F0)),
+            contentAlignment = Alignment.BottomCenter
         ) {
-            CustomBottomNavBar(
-                selectedRoute = "main",
-                onItemSelected = {}
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .height(IntrinsicSize.Max),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FloatingNavPill(
+                    selectedRoute = "main",
+                    onItemSelected = {},
+                    hazeState = rememberHazeState(),
+                    glassStyle = HazeStyle(
+                        blurRadius = 20.dp,
+                        backgroundColor = Color.White,
+                        tints = listOf(HazeTint(color = Color.White.copy(alpha = 0.4f)))
+                    ),
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .aspectRatio(1f)
+                        .shadow(10.dp, CircleShape)
+                        .background(Color.White.copy(alpha = 0.88f), CircleShape)
+                        .border(0.5.dp, Color.White.copy(alpha = 0.7f), CircleShape)
+                        .clip(CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.icon_add),
+                        contentDescription = "메모 추가",
+                        colorFilter = ColorFilter.tint(Color.Black),
+                        modifier = Modifier.size(42.dp)
+                    )
+                }
+            }
         }
     }
 }
@@ -207,8 +309,7 @@ fun CustomBottomNavBarPreview() {
 fun HomeScreen(
     memoList: List<MemoUiState>,
     onDelete: (Int) -> Unit,
-    onEdit: (Int) -> Unit,
-    onNavigateToMemo: () -> Unit
+    onEdit: (Int) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -251,24 +352,6 @@ fun HomeScreen(
                         onEdit = { onEdit(memo.id) }
                     )
                 }
-            }
-
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp)
-                    .size(60.dp)
-                    .background(Color.White)
-                    .border(1.dp, Color.Gray, RectangleShape)
-                    .clickable { onNavigateToMemo() },
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.icon_add),
-                    contentDescription = "추가",
-                    colorFilter = ColorFilter.tint(Color.Black),
-                    modifier = Modifier.size(40.dp)
-                )
             }
         }
     }
@@ -331,8 +414,7 @@ fun GreetingPreview() {
                 MemoUiState(2, "제목2", "Woman", "내용2")
             ),
             onDelete = {},
-            onEdit = {},
-            onNavigateToMemo = {}
+            onEdit = {}
         )
     }
 }
