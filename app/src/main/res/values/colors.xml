@@ -7,4 +7,13 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Semantic colors (light) -->
+    <color name="screen_background">#FFFFFF</color>
+    <color name="card_background">#FFFFFF</color>
+    <color name="card_border">#E0E0E0</color>
+    <color name="text_title">#000000</color>
+    <color name="text_body">#616161</color>
+    <color name="text_secondary">#9E9E9E</color>
+    <color name="chip_background">#E8F0FE</color>
 </resources>

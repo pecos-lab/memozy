@@ -41,10 +41,18 @@ android {
     }
 }
 
+configurations.all {
+    resolutionStrategy {
+        force("androidx.compose.foundation:foundation:1.7.8")
+        force("androidx.compose.foundation:foundation-layout:1.7.8")
+    }
+}
+
 dependencies {
     implementation("androidx.navigation:navigation-compose:2.8.9")
     implementation("dev.chrisbanes.haze:haze:1.7.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

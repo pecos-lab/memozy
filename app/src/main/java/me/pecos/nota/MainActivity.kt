@@ -1,5 +1,7 @@
 package me.pecos.nota
 
+import android.content.Context
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -31,9 +33,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.ui.res.colorResource
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -57,6 +61,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import com.wanted.android.wanted.design.theme.DesignSystemTheme
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
@@ -65,9 +71,29 @@ import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
+
+    override fun attachBaseContext(newBase: Context) {
+        val prefs = newBase.getSharedPreferences("settings", Context.MODE_PRIVATE)
+        val languageCode = prefs.getString("language_code", "ko") ?: "ko"
+        val locale = java.util.Locale(languageCode)
+        java.util.Locale.setDefault(locale)
+        val config = Configuration(newBase.resources.configuration)
+        config.setLocale(locale)
+        super.attachBaseContext(newBase.createConfigurationContext(config))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val themePrefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
+        val nightMode = when (themePrefs.getString("theme_mode", "system")) {
+            "light" -> AppCompatDelegate.MODE_NIGHT_NO
+            "dark" -> AppCompatDelegate.MODE_NIGHT_YES
+            else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+        }
+        AppCompatDelegate.setDefaultNightMode(nightMode)
+
         enableEdgeToEdge()
 
         setContent {
@@ -316,7 +342,7 @@ fun HomeScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White)
+                    .background(colorResource(R.color.screen_background))
                     .padding(horizontal = 16.dp, vertical = 10.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -331,6 +357,7 @@ fun HomeScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(colorResource(R.color.screen_background))
                 .padding(innerPadding)
         ) {
             if (memoList.isEmpty()) {
@@ -363,42 +390,67 @@ fun Greeting(
     onDelete: () -> Unit,
     onEdit: () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val languageCode = remember {
+        context.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE)
+            .getString("language_code", "ko") ?: "ko"
+    }
     Card(
-        shape = RectangleShape,
+        shape = RoundedCornerShape(12.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(10.dp)
-            .border(1.dp, Color.Gray),
-        elevation = CardDefaults.cardElevation(4.dp)
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .border(1.dp, colorResource(R.color.card_border), RoundedCornerShape(12.dp)),
+        elevation = CardDefaults.cardElevation(0.dp),
+        colors = CardDefaults.cardColors(containerColor = colorResource(R.color.card_background))
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(16.dp)) {
 
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(memo.name, fontWeight = FontWeight.Bold)
-                Text(memo.sex, color = Color.Gray)
+                Text(memo.name, fontWeight = FontWeight.Bold, color = colorResource(R.color.text_title))
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(formatMemoTime(memo.createdAt, languageCode), color = colorResource(R.color.text_secondary))
+                    if (memo.sex.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = memo.sex,
+                            fontSize = 11.sp,
+                            color = Color(0xFF1D6BF3),
+                            modifier = Modifier
+                                .background(colorResource(R.color.chip_background), RoundedCornerShape(50))
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text(memo.killThePecos)
+            Text(memo.killThePecos, color = colorResource(R.color.text_body))
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 modifier = Modifier.align(Alignment.End)
             ) {
                 Icon(
-                    Icons.Default.Delete, contentDescription = null,
-                    modifier = Modifier.clickable { onDelete() })
+                    Icons.Default.Delete,
+                    contentDescription = null,
+                    tint = colorResource(R.color.text_secondary),
+                    modifier = Modifier.clickable { onDelete() }
+                )
 
-                Spacer(modifier = Modifier.width(10.dp))
+                Spacer(modifier = Modifier.width(12.dp))
 
                 Icon(
-                    Icons.Default.Edit, contentDescription = null,
-                    modifier = Modifier.clickable { onEdit() })
+                    Icons.Default.Edit,
+                    contentDescription = null,
+                    tint = colorResource(R.color.text_secondary),
+                    modifier = Modifier.clickable { onEdit() }
+                )
             }
         }
     }
@@ -416,5 +468,62 @@ fun GreetingPreview() {
             onDelete = {},
             onEdit = {}
         )
+    }
+}
+
+fun timezoneForLanguage(languageCode: String): java.util.TimeZone = when (languageCode) {
+    "ko" -> java.util.TimeZone.getTimeZone("Asia/Seoul")
+    "ja" -> java.util.TimeZone.getTimeZone("Asia/Tokyo")
+    "en" -> java.util.TimeZone.getTimeZone("America/New_York")
+    else -> java.util.TimeZone.getDefault()
+}
+
+fun formatMemoTime(createdAt: Long, languageCode: String): String {
+    if (createdAt == 0L) return ""
+    val tz = timezoneForLanguage(languageCode)
+    val now = java.util.Calendar.getInstance(tz)
+    val created = java.util.Calendar.getInstance(tz).apply { timeInMillis = createdAt }
+
+    val sameDay = now.get(java.util.Calendar.YEAR) == created.get(java.util.Calendar.YEAR) &&
+            now.get(java.util.Calendar.DAY_OF_YEAR) == created.get(java.util.Calendar.DAY_OF_YEAR)
+    val yesterday = run {
+        val y = java.util.Calendar.getInstance(tz).apply { timeInMillis = createdAt; add(java.util.Calendar.DAY_OF_YEAR, 1) }
+        y.get(java.util.Calendar.YEAR) == now.get(java.util.Calendar.YEAR) &&
+                y.get(java.util.Calendar.DAY_OF_YEAR) == now.get(java.util.Calendar.DAY_OF_YEAR)
+    }
+
+    return when {
+        sameDay -> {
+            val hour = created.get(java.util.Calendar.HOUR_OF_DAY)
+            val minute = created.get(java.util.Calendar.MINUTE)
+            when (languageCode) {
+                "en" -> {
+                    val ampm = if (hour < 12) "AM" else "PM"
+                    val h = if (hour % 12 == 0) 12 else hour % 12
+                    "$h:${minute.toString().padStart(2, '0')} $ampm"
+                }
+                "ja" -> {
+                    val ampm = if (hour < 12) "午前" else "午後"
+                    val h = if (hour % 12 == 0) 12 else hour % 12
+                    "$ampm${h}:${minute.toString().padStart(2, '0')}"
+                }
+                else -> {
+                    val ampm = if (hour < 12) "오전" else "오후"
+                    val h = if (hour % 12 == 0) 12 else hour % 12
+                    "$ampm ${h}:${minute.toString().padStart(2, '0')}"
+                }
+            }
+        }
+        yesterday -> when (languageCode) {
+            "en" -> "Yesterday"
+            "ja" -> "昨日"
+            else -> "어제"
+        }
+        else -> {
+            val year = created.get(java.util.Calendar.YEAR)
+            val month = created.get(java.util.Calendar.MONTH) + 1
+            val day = created.get(java.util.Calendar.DAY_OF_MONTH)
+            "${year}.${month.toString().padStart(2, '0')}.${day.toString().padStart(2, '0')}"
+        }
     }
 }

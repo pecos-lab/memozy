@@ -1,135 +1,121 @@
 package me.pecos.nota
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.fillMaxSize
 import com.wanted.android.wanted.design.theme.DesignSystemTheme
+import com.wanted.android.wanted.design.input.textinput.textfield.WantedTextField
+import com.wanted.android.wanted.design.actions.button.WantedButton
+import com.wanted.android.wanted.design.util.ButtonType
+import com.wanted.android.wanted.design.util.ButtonVariant
 
+private val CATEGORIES = listOf("일반", "업무", "아이디어", "할 일", "공부", "개인", "일정", "가계부")
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MemoScreen(
     onSave: (MemoUiState) -> Unit,
     existingMemo: MemoUiState = MemoUiState(0, "", "", "")
 ) {
-
     var nameText by remember { mutableStateOf(existingMemo.name) }
-    var sexText by remember { mutableStateOf(existingMemo.sex) }
+    var categoryText by remember {
+        mutableStateOf(existingMemo.sex.ifBlank { "일반" })
+    }
     var bodyText by remember { mutableStateOf(existingMemo.killThePecos) }
 
-    val enabled = nameText.isNotBlank() && bodyText.isNotBlank() && sexText.isNotBlank()
+    val enabled = nameText.isNotBlank() && bodyText.isNotBlank()
 
     Scaffold { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(30.dp)
+                .padding(horizontal = 30.dp, vertical = 16.dp)
                 .padding(innerPadding)
         ) {
 
-            TextField(
-                value = nameText,
-                onValueChange = { nameText = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(1.dp, Color.Gray),
-                placeholder = { Text("메모 제목") }
+            WantedTextField(
+                text = nameText,
+                placeholder = stringResource(R.string.memo_title_placeholder),
+                title = stringResource(R.string.memo_title_label),
+                onValueChange = { nameText = it }
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            TextField(
-                value = bodyText,
-                onValueChange = { bodyText = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .border(1.dp, Color.Gray),
-                placeholder = { Text("메모 내용") }
+            WantedTextField(
+                text = bodyText,
+                placeholder = stringResource(R.string.memo_content_placeholder),
+                title = stringResource(R.string.memo_content_label),
+                onValueChange = { bodyText = it }
             )
 
-            Spacer(modifier = Modifier.height(30.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            Row(
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .border(1.dp, Color.Gray)
-                        .background(if (sexText == "MAN") Color.Gray else Color.White)
-                        .clickable { sexText = "MAN" }
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "MAN",
-                        color = if (sexText == "MAN") Color.White else Color.Black
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .border(1.dp, Color.Gray)
-                        .background(if (sexText == "WOMAN") Color.Gray else Color.White)
-                        .clickable { sexText = "WOMAN" }
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "WOMAN",
-                        color = if (sexText == "WOMAN") Color.White else Color.Black
+                CATEGORIES.forEach { category ->
+                    val selected = categoryText == category
+                    FilterChip(
+                        selected = selected,
+                        onClick = { categoryText = category },
+                        label = { Text(category) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0xFF1D6BF3),
+                            selectedLabelColor = Color.White,
+                            containerColor = Color.White,
+                            labelColor = Color(0xFF616161)
+                        ),
+                        border = if (selected) {
+                            BorderStroke(1.dp, Color(0xFF1D6BF3))
+                        } else {
+                            BorderStroke(1.dp, Color(0xFFE0E0E0))
+                        }
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(1.dp, if (enabled) Color.Gray else Color.LightGray)
-                    .background(if (enabled) Color.White else Color.LightGray)
-                    .padding(30.dp)
-                    .clickable {
-                        if (enabled) {
-                            onSave(
-                                MemoUiState(
-                                    id = existingMemo.id,   // ⭐ 이거 중요
-                                    name = nameText,
-                                    sex = sexText,
-                                    killThePecos = bodyText
-                                )
-                            )
-                        }
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "저장", fontSize = 18.sp)
-            }
+            WantedButton(
+                text = stringResource(R.string.save),
+                modifier = Modifier.fillMaxWidth(),
+                type = ButtonType.PRIMARY,
+                variant = ButtonVariant.SOLID,
+                enabled = enabled,
+                onClick = {
+                    onSave(
+                        MemoUiState(
+                            id = existingMemo.id,
+                            name = nameText,
+                            sex = categoryText,
+                            killThePecos = bodyText
+                        )
+                    )
+                }
+            )
         }
     }
 }
@@ -140,7 +126,7 @@ fun MemoScreenPreview() {
     DesignSystemTheme {
         MemoScreen(
             onSave = {},
-            existingMemo = MemoUiState (1, "테스트 제목", "MAN", "테스트 내용")
+            existingMemo = MemoUiState(1, "테스트 제목", "업무", "테스트 내용")
         )
     }
 }
