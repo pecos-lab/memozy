@@ -108,10 +108,11 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 val hazeState = rememberHazeState()
+                val navBg = colorResource(R.color.nav_background)
                 val glassStyle = HazeStyle(
                     blurRadius = 20.dp,
-                    backgroundColor = Color.White,
-                    tints = listOf(HazeTint(color = Color.White.copy(alpha = 0.4f)))
+                    backgroundColor = navBg,
+                    tints = listOf(HazeTint(color = navBg.copy(alpha = 0.4f)))
                 )
 
                 Box(modifier = Modifier.fillMaxSize()) {
@@ -203,7 +204,7 @@ class MainActivity : AppCompatActivity() {
                                     )
                                     .clip(CircleShape)
                                     .hazeEffect(state = hazeState, style = glassStyle)
-                                    .border(1.dp, Color(0xFFE0E0E0), CircleShape)
+                                    .border(1.dp, colorResource(R.color.nav_border), CircleShape)
                                     .clickable { navController.navigate("Memo/-1") },
                                 contentAlignment = Alignment.Center
                             ) {
@@ -213,7 +214,7 @@ class MainActivity : AppCompatActivity() {
                                     modifier = Modifier
                                         .size(32.dp)
                                         .padding(4.dp),
-                                    tint = Color.Black
+                                    tint = colorResource(R.color.nav_icon_selected)
                                 )
                             }
                         }
@@ -245,7 +246,7 @@ fun FloatingNavPill(
             .hazeEffect(state = hazeState, style = glassStyle)
             .border(
                 width = 1.dp,
-                color = Color(0xFFE0E0E0),
+                color = colorResource(R.color.nav_border),
                 shape = RoundedCornerShape(50)
             )
             .padding(horizontal = 2.dp, vertical = 2.dp),
@@ -260,7 +261,7 @@ fun FloatingNavPill(
                     .fillMaxHeight()
                     .clip(RoundedCornerShape(50))
                     .background(
-                        if (selected) Color.Black.copy(alpha = 0.06f) else Color.Transparent
+                        if (selected) colorResource(R.color.nav_icon_selected).copy(alpha = 0.06f) else Color.Transparent
                     )
                     .clickable { onItemSelected(item.route) },
                 contentAlignment = Alignment.Center
@@ -271,7 +272,7 @@ fun FloatingNavPill(
                     modifier = Modifier
                         .size(32.dp)
                         .padding(4.dp),
-                    tint = Color.Black.copy(alpha = if (selected) 1f else 0.4f)
+                    tint = colorResource(if (selected) R.color.nav_icon_selected else R.color.nav_icon_unselected)
                 )
             }
         }
@@ -343,13 +344,14 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(colorResource(R.color.screen_background))
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
-                contentAlignment = Alignment.Center
+                    .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 10.dp),
+                contentAlignment = Alignment.CenterStart
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.logo_wordmark),
-                    contentDescription = "pecos.nota",
-                    modifier = Modifier.height(28.dp)
+                Text(
+                    text = "Memozy",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorResource(R.color.topbar_title)
                 )
             }
         }

@@ -8,6 +8,15 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
+    <!-- TopBar colors (light) -->
+    <color name="topbar_title">#1C1C1E</color>
+
+    <!-- Nav colors (light) -->
+    <color name="nav_background">#FFFFFF</color>
+    <color name="nav_border">#E0E0E0</color>
+    <color name="nav_icon_selected">#000000</color>
+    <color name="nav_icon_unselected">#66000000</color>
+
     <!-- Semantic colors (light) -->
     <color name="screen_background">#FFFFFF</color>
     <color name="card_background">#FFFFFF</color>
