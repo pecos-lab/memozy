@@ -238,9 +238,9 @@ class MainActivity : AppCompatActivity() {
                                     backStackEntry.arguments?.getString("memoId")?.toIntOrNull() ?: -1
                                 val existingMemo: MemoUiState =
                                     if (memoId > 0) {
-                                        memoList.find { it.id == memoId } ?: MemoUiState(0, "", "", "")
+                                        memoList.find { it.id == memoId } ?: MemoUiState(0, "", MemoCategory.GENERAL, "")
                                     } else {
-                                        MemoUiState(0, "", "", "")
+                                        MemoUiState(0, "", MemoCategory.GENERAL, "")
                                     }
                                 MemoScreen(
                                     existingMemo = existingMemo,
@@ -248,7 +248,7 @@ class MainActivity : AppCompatActivity() {
                                         if (memoId > 0) {
                                             viewModel.updateMemo(memo)
                                         } else {
-                                            viewModel.addMemo(memo.name, memo.sex, memo.killThePecos)
+                                            viewModel.addMemo(memo.name, memo.category, memo.killThePecos)
                                         }
                                         navController.popBackStack()
                                     }
@@ -505,23 +505,15 @@ fun Greeting(
                 Text(memo.name, fontWeight = FontWeight.Bold, color = colors.textTitle)
                 Column(horizontalAlignment = Alignment.End) {
                     Text(formatMemoTime(memo.createdAt, languageCode), color = colors.textSecondary)
-                    if (memo.sex.isNotBlank()) {
-                        val categoryIndex = CATEGORY_ALL_TRANSLATIONS.indexOfFirst { memo.sex in it }
-                        val categoryLabel = if (categoryIndex >= 0) {
-                            stringResource(CATEGORY_RES_IDS[categoryIndex])
-                        } else {
-                            memo.sex
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = categoryLabel,
-                            fontSize = 11.sp,
-                            color = colors.chipText,
-                            modifier = Modifier
-                                .background(colors.chipBackground, RoundedCornerShape(50))
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
-                        )
-                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(memo.category.labelResId),
+                        fontSize = 11.sp,
+                        color = colors.chipText,
+                        modifier = Modifier
+                            .background(colors.chipBackground, RoundedCornerShape(50))
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -552,8 +544,8 @@ fun GreetingPreview() {
     DesignSystemTheme {
         HomeScreen(
             memoList = listOf(
-                MemoUiState(1, "제목1", "Man", "내용1"),
-                MemoUiState(2, "제목2", "Woman", "내용2")
+                MemoUiState(1, "제목1", MemoCategory.WORK, "내용1"),
+                MemoUiState(2, "제목2", MemoCategory.IDEA, "내용2")
             ),
             onDelete = {},
             onEdit = {}

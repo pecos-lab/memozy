@@ -19,7 +19,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -29,59 +28,19 @@ import com.wanted.android.wanted.design.actions.button.WantedButton
 import com.wanted.android.wanted.design.util.ButtonType
 import com.wanted.android.wanted.design.util.ButtonVariant
 
-val CATEGORY_RES_IDS = listOf(
-    R.string.category_general,
-    R.string.category_work,
-    R.string.category_idea,
-    R.string.category_todo,
-    R.string.category_study,
-    R.string.category_personal,
-    R.string.category_schedule,
-    R.string.category_budget,
-)
-
-// 저장된 카테고리 텍스트(한/영/일 모두)를 인덱스로 역매핑하기 위한 룩업 테이블
-val CATEGORY_ALL_TRANSLATIONS = listOf(
-    listOf("일반", "General", "一般"),
-    listOf("업무", "Work", "仕事"),
-    listOf("아이디어", "Idea", "アイデア"),
-    listOf("할 일", "To-Do", "やること"),
-    listOf("공부", "Study", "勉強"),
-    listOf("개인", "Personal", "個人"),
-    listOf("일정", "Schedule", "予定"),
-    listOf("가계부", "Budget", "家計簿"),
-)
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MemoScreen(
     onSave: (MemoUiState) -> Unit,
-    existingMemo: MemoUiState = MemoUiState(0, "", "", "")
+    existingMemo: MemoUiState = MemoUiState(0, "", MemoCategory.GENERAL, "")
 ) {
-    val categories = listOf(
-        stringResource(R.string.category_general),
-        stringResource(R.string.category_work),
-        stringResource(R.string.category_idea),
-        stringResource(R.string.category_todo),
-        stringResource(R.string.category_study),
-        stringResource(R.string.category_personal),
-        stringResource(R.string.category_schedule),
-        stringResource(R.string.category_budget),
-    )
     var nameText by remember { mutableStateOf(existingMemo.name) }
-    var categoryIndex by remember {
-        mutableStateOf(
-            existingMemo.sex.let { saved ->
-                categories.indexOfFirst { it == saved }.takeIf { it >= 0 } ?: 0
-            }
-        )
-    }
+    var selectedCategory by remember { mutableStateOf(existingMemo.category) }
     var bodyText by remember { mutableStateOf(existingMemo.killThePecos) }
 
     val enabled = nameText.isNotBlank() && bodyText.isNotBlank()
-    val colors = LocalAppColors.current  // ← CompositionLocal에서 현재 테마 색상 가져옴
+    val colors = LocalAppColors.current
 
-    // containerColor 명시 → MaterialTheme.colorScheme.surface 무시
     Scaffold(containerColor = colors.screenBackground) { innerPadding ->
         Column(
             modifier = Modifier
@@ -113,12 +72,12 @@ fun MemoScreen(
                 horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
                 verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp)
             ) {
-                categories.forEachIndexed { index, category ->
-                    val selected = categoryIndex == index
+                MemoCategory.entries.forEach { category ->
+                    val selected = selectedCategory == category
                     FilterChip(
                         selected = selected,
-                        onClick = { categoryIndex = index },
-                        label = { Text(category) },
+                        onClick = { selectedCategory = category },
+                        label = { Text(stringResource(category.labelResId)) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = colors.chipText,
                             selectedLabelColor = colors.screenBackground,
@@ -147,7 +106,7 @@ fun MemoScreen(
                         MemoUiState(
                             id = existingMemo.id,
                             name = nameText,
-                            sex = categories[categoryIndex],
+                            category = selectedCategory,
                             killThePecos = bodyText
                         )
                     )
@@ -163,7 +122,7 @@ fun MemoScreenPreview() {
     DesignSystemTheme {
         MemoScreen(
             onSave = {},
-            existingMemo = MemoUiState(1, "테스트 제목", "업무", "테스트 내용")
+            existingMemo = MemoUiState(1, "테스트 제목", MemoCategory.WORK, "테스트 내용")
         )
     }
 }
