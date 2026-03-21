@@ -8,7 +8,7 @@ data class Memo(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val name: String,
-    val sex: String,
+    val category: Int,
     val killThePecos: String,
     val createdAt: Long = System.currentTimeMillis()
 )
