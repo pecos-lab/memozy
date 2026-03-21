@@ -2,7 +2,6 @@ package me.pecos.nota
 
 import android.app.Application
 import android.content.Context
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,10 +16,9 @@ val LANGUAGES = listOf(
     Language("日本語", "ja"),
 )
 
-enum class ThemeMode(val value: String, val nightMode: Int) {
-    LIGHT("light", AppCompatDelegate.MODE_NIGHT_NO),
-    DARK("dark", AppCompatDelegate.MODE_NIGHT_YES),
-    SYSTEM("system", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+enum class ThemeMode(val value: String) {
+    LIGHT("light"),
+    DARK("dark")
 }
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
@@ -40,8 +38,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     val shouldRecreate: StateFlow<Boolean> = _shouldRecreate
 
     private val _selectedTheme = MutableStateFlow(
-        ThemeMode.entries.find { it.value == prefs.getString("theme_mode", "system") }
-            ?: ThemeMode.SYSTEM
+        ThemeMode.entries.find { it.value == prefs.getString("theme_mode", "light") }
+            ?: ThemeMode.LIGHT
     )
     val selectedTheme: StateFlow<ThemeMode> = _selectedTheme
 
@@ -58,8 +56,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun selectTheme(mode: ThemeMode) {
         _selectedTheme.value = mode
         prefs.edit().putString("theme_mode", mode.value).apply()
-        AppCompatDelegate.setDefaultNightMode(mode.nightMode)
-        _shouldRecreate.value = true
     }
 
     fun clearAllMemos() {

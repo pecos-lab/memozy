@@ -48,7 +48,9 @@ fun SettingsScreen(
     val selectedLanguage by settingsViewModel.selectedLanguage.collectAsState()
     val shouldRecreate by settingsViewModel.shouldRecreate.collectAsState()
     val selectedTheme by settingsViewModel.selectedTheme.collectAsState()
-    val activity = LocalContext.current as? Activity
+    val colors = LocalAppColors.current
+    val activity = LocalActivity.current
+    val context = LocalContext.current
 
     LaunchedEffect(shouldRecreate) {
         if (shouldRecreate) {
@@ -56,8 +58,6 @@ fun SettingsScreen(
             activity?.recreate()
         }
     }
-
-    val context = LocalContext.current
     val versionName = remember {
         context.packageManager.getPackageInfo(context.packageName, 0).versionName
     }
@@ -66,11 +66,11 @@ fun SettingsScreen(
         val themeOptions = listOf(
             ThemeMode.LIGHT to stringResource(R.string.theme_light),
             ThemeMode.DARK to stringResource(R.string.theme_dark),
-            ThemeMode.SYSTEM to stringResource(R.string.theme_system),
         )
         AlertDialog(
             onDismissRequest = { showThemeDialog = false },
-            title = { Text(stringResource(R.string.theme_settings)) },
+            containerColor = colors.cardBackground,
+            title = { Text(stringResource(R.string.theme_settings), color = colors.textTitle) },
             text = {
                 Column {
                     themeOptions.forEach { (mode, label) ->
@@ -91,14 +91,14 @@ fun SettingsScreen(
                                     showThemeDialog = false
                                 }
                             )
-                            Text(label, modifier = Modifier.padding(start = 8.dp))
+                            Text(label, color = colors.textBody, modifier = Modifier.padding(start = 8.dp))
                         }
                     }
                 }
             },
             confirmButton = {
                 TextButton(onClick = { showThemeDialog = false }) {
-                    Text(stringResource(R.string.close))
+                    Text(stringResource(R.string.close), color = colors.chipText)
                 }
             }
         )
@@ -107,7 +107,8 @@ fun SettingsScreen(
     if (showLanguageDialog) {
         AlertDialog(
             onDismissRequest = { showLanguageDialog = false },
-            title = { Text(stringResource(R.string.language_settings)) },
+            containerColor = colors.cardBackground,
+            title = { Text(stringResource(R.string.language_settings), color = colors.textTitle) },
             text = {
                 Column {
                     LANGUAGES.forEach { language ->
@@ -128,14 +129,14 @@ fun SettingsScreen(
                                     showLanguageDialog = false
                                 }
                             )
-                            Text(language.name, modifier = Modifier.padding(start = 8.dp))
+                            Text(language.name, color = colors.textBody, modifier = Modifier.padding(start = 8.dp))
                         }
                     }
                 }
             },
             confirmButton = {
                 TextButton(onClick = { showLanguageDialog = false }) {
-                    Text(stringResource(R.string.close))
+                    Text(stringResource(R.string.close), color = colors.chipText)
                 }
             }
         )
@@ -144,8 +145,9 @@ fun SettingsScreen(
     if (showClearDialog) {
         AlertDialog(
             onDismissRequest = { showClearDialog = false },
-            title = { Text(stringResource(R.string.reset_memos)) },
-            text = { Text(stringResource(R.string.reset_confirm)) },
+            containerColor = colors.cardBackground,
+            title = { Text(stringResource(R.string.reset_memos), color = colors.textTitle) },
+            text = { Text(stringResource(R.string.reset_confirm), color = colors.textBody) },
             confirmButton = {
                 TextButton(onClick = {
                     settingsViewModel.clearAllMemos()
@@ -156,7 +158,7 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showClearDialog = false }) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(R.string.cancel), color = colors.chipText)
                 }
             }
         )
@@ -165,17 +167,19 @@ fun SettingsScreen(
     if (showLicenseDialog) {
         AlertDialog(
             onDismissRequest = { showLicenseDialog = false },
-            title = { Text(stringResource(R.string.open_source_license)) },
-            text = { Text(stringResource(R.string.license_content)) },
+            containerColor = colors.cardBackground,
+            title = { Text(stringResource(R.string.open_source_license), color = colors.textTitle) },
+            text = { Text(stringResource(R.string.license_content), color = colors.textBody) },
             confirmButton = {
                 TextButton(onClick = { showLicenseDialog = false }) {
-                    Text(stringResource(R.string.close))
+                    Text(stringResource(R.string.close), color = colors.chipText)
                 }
             }
         )
     }
 
-    Scaffold { innerPadding ->
+    // containerColor 명시 → MaterialTheme.colorScheme.surface 무시
+    Scaffold(containerColor = colors.screenBackground) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -190,14 +194,17 @@ fun SettingsScreen(
                     text = stringResource(R.string.settings),
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
+                    color = colors.topbarTitle,
                     modifier = Modifier.padding(bottom = 24.dp)
                 )
 
                 WantedButton(
                     text = stringResource(R.string.language_settings),
                     modifier = Modifier.fillMaxWidth(),
-                    type = ButtonType.ASSISTIVE,
-                    variant = ButtonVariant.OUTLINED,
+                    buttonDefault = WantedButtonDefaults.getDefault(
+                        type = ButtonType.ASSISTIVE,
+                        variant = ButtonVariant.OUTLINED
+                    ).copy(contentColor = colors.textTitle),
                     onClick = { showLanguageDialog = true }
                 )
 
@@ -206,8 +213,10 @@ fun SettingsScreen(
                 WantedButton(
                     text = stringResource(R.string.theme_settings),
                     modifier = Modifier.fillMaxWidth(),
-                    type = ButtonType.ASSISTIVE,
-                    variant = ButtonVariant.OUTLINED,
+                    buttonDefault = WantedButtonDefaults.getDefault(
+                        type = ButtonType.ASSISTIVE,
+                        variant = ButtonVariant.OUTLINED
+                    ).copy(contentColor = colors.textTitle),
                     onClick = { showThemeDialog = true }
                 )
 
@@ -216,8 +225,10 @@ fun SettingsScreen(
                 WantedButton(
                     text = stringResource(R.string.open_source_license),
                     modifier = Modifier.fillMaxWidth(),
-                    type = ButtonType.ASSISTIVE,
-                    variant = ButtonVariant.OUTLINED,
+                    buttonDefault = WantedButtonDefaults.getDefault(
+                        type = ButtonType.ASSISTIVE,
+                        variant = ButtonVariant.OUTLINED
+                    ).copy(contentColor = colors.textTitle),
                     onClick = { showLicenseDialog = true }
                 )
 
@@ -237,7 +248,7 @@ fun SettingsScreen(
             Text(
                 text = "v$versionName",
                 fontSize = 12.sp,
-                color = Color.Gray,
+                color = colors.textSecondary,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(bottom = 12.dp)

@@ -1,9 +1,9 @@
 package me.pecos.nota
 
+import android.app.Activity
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
@@ -33,17 +33,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.ui.res.colorResource
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,6 +52,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -62,7 +63,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import com.wanted.android.wanted.design.theme.DesignSystemTheme
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
@@ -70,6 +72,102 @@ import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
+
+// ── 색상 데이터 클래스 ──────────────────────────────────────────────────────────
+
+data class AppColors(
+    val screenBackground: Color,
+    val topbarTitle: Color,
+    val navBackground: Color,
+    val navBorder: Color,
+    val navIconSelected: Color,
+    val navIconUnselected: Color,
+    val cardBackground: Color,
+    val cardBorder: Color,
+    val textTitle: Color,
+    val textBody: Color,
+    val textSecondary: Color,
+    val chipBackground: Color,
+    val chipText: Color,
+)
+
+val lightAppColors = AppColors(
+    screenBackground = Color(0xFFFFFFFF),
+    topbarTitle      = Color(0xFF1C1C1E),
+    navBackground    = Color(0xFFFFFFFF),
+    navBorder        = Color(0xFFE0E0E0),
+    navIconSelected  = Color(0xFF000000),
+    navIconUnselected= Color(0x66000000),
+    cardBackground   = Color(0xFFFFFFFF),
+    cardBorder       = Color(0xFFE0E0E0),
+    textTitle        = Color(0xFF000000),
+    textBody         = Color(0xFF616161),
+    textSecondary    = Color(0xFF9E9E9E),
+    chipBackground   = Color(0xFFE8F0FE),
+    chipText         = Color(0xFF1D6BF3),
+)
+
+val darkAppColors = AppColors(
+    screenBackground = Color(0xFF1C1C1E),
+    topbarTitle      = Color(0xFFF2F2F7),
+    navBackground    = Color(0xFF1C1C1E),
+    navBorder        = Color(0xFF3A3A3C),
+    navIconSelected  = Color(0xFFF2F2F7),
+    navIconUnselected= Color(0xFF8E8E93),
+    cardBackground   = Color(0xFF2C2C2E),
+    cardBorder       = Color(0xFF3A3A3C),
+    textTitle        = Color(0xFFF2F2F7),
+    textBody         = Color(0xFFEBEBF5),
+    textSecondary    = Color(0xFF8E8E93),
+    chipBackground   = Color(0xFF3A3A3C),
+    chipText         = Color(0xFF6B9FFF),
+)
+
+val LocalAppColors = staticCompositionLocalOf { lightAppColors }
+val LocalActivity = staticCompositionLocalOf<Activity?> { null }
+
+/**
+ * LocalConfiguration + LocalContext 를 모두 오버라이드.
+ * - LocalConfiguration: isSystemInDarkTheme() 이 우리 state 를 반환하게 함
+ * - LocalContext: colorResource() 가 라이브러리 내부에서 호출될 때
+ *   올바른 values / values-night 를 읽도록 context.resources 를 교체
+ * activity?.recreate() 가 필요한 곳은 findActivity() 로 Activity 를 꺼내 사용.
+ */
+@Composable
+private fun OverrideNightMode(isDarkTheme: Boolean, content: @Composable () -> Unit) {
+    val baseConfig = LocalConfiguration.current
+    val baseContext = LocalContext.current
+
+    val nightFlag = if (isDarkTheme) Configuration.UI_MODE_NIGHT_YES else Configuration.UI_MODE_NIGHT_NO
+
+    val overriddenConfig = remember(isDarkTheme, baseConfig) {
+        Configuration(baseConfig).apply {
+            uiMode = (uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or nightFlag
+        }
+    }
+    val overriddenContext = remember(isDarkTheme, baseContext) {
+        baseContext.createConfigurationContext(overriddenConfig)
+    }
+
+    CompositionLocalProvider(
+        LocalConfiguration provides overriddenConfig,
+        LocalContext provides overriddenContext,
+    ) {
+        content()
+    }
+}
+
+/** Context 체인을 따라 Activity 를 찾음 (LocalContext 가 ContextWrapper 로 감싸진 경우 대비) */
+fun Context.findActivity(): Activity? {
+    var ctx = this
+    while (ctx is android.content.ContextWrapper) {
+        if (ctx is Activity) return ctx
+        ctx = ctx.baseContext
+    }
+    return null
+}
+
+// ── Activity ───────────────────────────────────────────────────────────────────
 
 class MainActivity : AppCompatActivity() {
 
@@ -85,145 +183,141 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val themePrefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
-        val nightMode = when (themePrefs.getString("theme_mode", "system")) {
-            "light" -> AppCompatDelegate.MODE_NIGHT_NO
-            "dark" -> AppCompatDelegate.MODE_NIGHT_YES
-            else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
-        }
-        AppCompatDelegate.setDefaultNightMode(nightMode)
-
         enableEdgeToEdge()
 
         setContent {
-            DesignSystemTheme {
+            val settingsViewModel: SettingsViewModel = viewModel()
+            val selectedTheme by settingsViewModel.selectedTheme.collectAsState()
+            val isDarkTheme = selectedTheme == ThemeMode.DARK
+            val appColors = if (isDarkTheme) darkAppColors else lightAppColors
 
-                val viewModel: MainViewModel = viewModel()
-                val memoList by viewModel.uiState.collectAsState()
-                val navController = rememberNavController()
-                val currentRoute by navController.currentBackStackEntryAsState()
-                val showBottomNav = remember(currentRoute) {
-                    currentRoute?.destination?.route in listOf("main", "settings")
-                }
+            CompositionLocalProvider(LocalActivity provides this@MainActivity) {
+            OverrideNightMode(isDarkTheme = isDarkTheme) {
+            CompositionLocalProvider(LocalAppColors provides appColors) {
+                DesignSystemTheme(isDarkTheme = isDarkTheme) {
 
-                val hazeState = rememberHazeState()
-                val navBg = colorResource(R.color.nav_background)
-                val glassStyle = HazeStyle(
-                    blurRadius = 20.dp,
-                    backgroundColor = navBg,
-                    tints = listOf(HazeTint(color = navBg.copy(alpha = 0.4f)))
-                )
-
-                Box(modifier = Modifier.fillMaxSize()) {
-                    NavHost(
-                        navController = navController,
-                        startDestination = "main",
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .hazeSource(hazeState)
-                    ) {
-
-                        // 메인 화면
-                        composable("main") {
-                            HomeScreen(
-                                memoList = memoList,
-                                onDelete = { id -> viewModel.deleteMemo(id) },
-                                onEdit = { id -> navController.navigate("Memo/$id") }
-                            )
-                        }
-
-                        // 설정 화면
-                        composable("settings") {
-                            SettingsScreen()
-                        }
-
-                        // 메모 작성/수정 화면
-                        composable("Memo/{memoId}") { backStackEntry ->
-                            val memoId =
-                                backStackEntry.arguments?.getString("memoId")?.toIntOrNull() ?: -1
-
-                            val existingMemo: MemoUiState =
-                                if (memoId > 0) {
-                                    memoList.find { it.id == memoId } ?: MemoUiState(0, "", "", "")
-                                } else {
-                                    MemoUiState(0, "", "", "")
-                                }
-
-                            MemoScreen(
-                                existingMemo = existingMemo,
-                                onSave = { memo ->
-                                    if (memoId > 0) {
-                                        viewModel.updateMemo(memo)
-                                    } else {
-                                        viewModel.addMemo(memo.name, memo.sex, memo.killThePecos)
-                                    }
-                                    navController.popBackStack()
-                                }
-                            )
-                        }
+                    val viewModel: MainViewModel = viewModel()
+                    val memoList by viewModel.uiState.collectAsState()
+                    val navController = rememberNavController()
+                    val currentRoute by navController.currentBackStackEntryAsState()
+                    val showBottomNav = remember(currentRoute) {
+                        currentRoute?.destination?.route in listOf("main", "settings")
                     }
 
-                    if (showBottomNav) {
-                        Row(
+                    val hazeState = rememberHazeState()
+                    val navBg = appColors.navBackground
+                    val glassStyle = HazeStyle(
+                        blurRadius = 20.dp,
+                        backgroundColor = navBg,
+                        tints = listOf(HazeTint(color = navBg.copy(alpha = 0.4f)))
+                    )
+
+                    Box(modifier = Modifier
+                        .fillMaxSize()
+                        .background(appColors.screenBackground)
+                    ) {
+                        NavHost(
+                            navController = navController,
+                            startDestination = "main",
                             modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .fillMaxWidth()
-                                .navigationBarsPadding()
-                                .padding(horizontal = 12.dp, vertical = 12.dp)
-                                .height(IntrinsicSize.Max),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                                .fillMaxSize()
+                                .hazeSource(hazeState)
                         ) {
-                            FloatingNavPill(
-                                selectedRoute = currentRoute?.destination?.route ?: "main",
-                                onItemSelected = { route ->
-                                    navController.navigate(route) {
-                                        popUpTo("main") { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                },
-                                hazeState = hazeState,
-                                glassStyle = glassStyle,
-                                modifier = Modifier.weight(1f)
-                            )
-
-                            Spacer(modifier = Modifier.width(12.dp))
-
-                            // 플로팅 메모 추가 버튼
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .aspectRatio(1f)
-                                    .shadow(
-                                        elevation = 16.dp,
-                                        shape = CircleShape,
-                                        ambientColor = Color.Black.copy(alpha = 0.28f),
-                                        spotColor = Color.Black.copy(alpha = 0.18f)
-                                    )
-                                    .clip(CircleShape)
-                                    .hazeEffect(state = hazeState, style = glassStyle)
-                                    .border(1.dp, colorResource(R.color.nav_border), CircleShape)
-                                    .clickable { navController.navigate("Memo/-1") },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Add,
-                                    contentDescription = "메모 추가",
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .padding(4.dp),
-                                    tint = colorResource(R.color.nav_icon_selected)
+                            composable("main") {
+                                HomeScreen(
+                                    memoList = memoList,
+                                    onDelete = { id -> viewModel.deleteMemo(id) },
+                                    onEdit = { id -> navController.navigate("Memo/$id") }
                                 )
+                            }
+                            composable("settings") {
+                                SettingsScreen(settingsViewModel = settingsViewModel)
+                            }
+                            composable("Memo/{memoId}") { backStackEntry ->
+                                val memoId =
+                                    backStackEntry.arguments?.getString("memoId")?.toIntOrNull() ?: -1
+                                val existingMemo: MemoUiState =
+                                    if (memoId > 0) {
+                                        memoList.find { it.id == memoId } ?: MemoUiState(0, "", "", "")
+                                    } else {
+                                        MemoUiState(0, "", "", "")
+                                    }
+                                MemoScreen(
+                                    existingMemo = existingMemo,
+                                    onSave = { memo ->
+                                        if (memoId > 0) {
+                                            viewModel.updateMemo(memo)
+                                        } else {
+                                            viewModel.addMemo(memo.name, memo.sex, memo.killThePecos)
+                                        }
+                                        navController.popBackStack()
+                                    }
+                                )
+                            }
+                        }
+
+                        if (showBottomNav) {
+                            Row(
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .fillMaxWidth()
+                                    .navigationBarsPadding()
+                                    .padding(horizontal = 12.dp, vertical = 12.dp)
+                                    .height(IntrinsicSize.Max),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                FloatingNavPill(
+                                    selectedRoute = currentRoute?.destination?.route ?: "main",
+                                    onItemSelected = { route ->
+                                        navController.navigate(route) {
+                                            popUpTo("main") { saveState = true }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                    },
+                                    hazeState = hazeState,
+                                    glassStyle = glassStyle,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .aspectRatio(1f)
+                                        .shadow(
+                                            elevation = 16.dp,
+                                            shape = CircleShape,
+                                            ambientColor = Color.Black.copy(alpha = 0.28f),
+                                            spotColor = Color.Black.copy(alpha = 0.18f)
+                                        )
+                                        .clip(CircleShape)
+                                        .hazeEffect(state = hazeState, style = glassStyle)
+                                        .border(1.dp, appColors.navBorder, CircleShape)
+                                        .clickable { navController.navigate("Memo/-1") },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = "메모 추가",
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .padding(4.dp),
+                                        tint = appColors.navIconSelected
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
+            } // OverrideNightMode
+            } // LocalActivity
         }
     }
 }
+
+// ── 바텀 네비게이션 ─────────────────────────────────────────────────────────────
 
 @Composable
 fun FloatingNavPill(
@@ -233,6 +327,7 @@ fun FloatingNavPill(
     glassStyle: HazeStyle,
     modifier: Modifier = Modifier
 ) {
+    val colors = LocalAppColors.current
     Row(
         modifier = modifier
             .height(52.dp)
@@ -244,11 +339,7 @@ fun FloatingNavPill(
             )
             .clip(RoundedCornerShape(50))
             .hazeEffect(state = hazeState, style = glassStyle)
-            .border(
-                width = 1.dp,
-                color = colorResource(R.color.nav_border),
-                shape = RoundedCornerShape(50)
-            )
+            .border(width = 1.dp, color = colors.navBorder, shape = RoundedCornerShape(50))
             .padding(horizontal = 2.dp, vertical = 2.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
@@ -261,7 +352,8 @@ fun FloatingNavPill(
                     .fillMaxHeight()
                     .clip(RoundedCornerShape(50))
                     .background(
-                        if (selected) colorResource(R.color.nav_icon_selected).copy(alpha = 0.06f) else Color.Transparent
+                        if (selected) colors.navIconSelected.copy(alpha = 0.06f)
+                        else Color.Transparent
                     )
                     .clickable { onItemSelected(item.route) },
                 contentAlignment = Alignment.Center
@@ -269,10 +361,8 @@ fun FloatingNavPill(
                 Icon(
                     imageVector = item.icon,
                     contentDescription = item.label,
-                    modifier = Modifier
-                        .size(32.dp)
-                        .padding(4.dp),
-                    tint = colorResource(if (selected) R.color.nav_icon_selected else R.color.nav_icon_unselected)
+                    modifier = Modifier.size(32.dp).padding(4.dp),
+                    tint = if (selected) colors.navIconSelected else colors.navIconUnselected
                 )
             }
         }
@@ -332,13 +422,17 @@ fun FloatingNavPillPreview() {
     }
 }
 
+// ── 홈 화면 ────────────────────────────────────────────────────────────────────
+
 @Composable
 fun HomeScreen(
     memoList: List<MemoUiState>,
     onDelete: (Int) -> Unit,
     onEdit: (Int) -> Unit
 ) {
-    Scaffold { innerPadding ->
+    val colors = LocalAppColors.current
+    // containerColor 명시 → MaterialTheme.colorScheme.surface 무시
+    Scaffold(containerColor = colors.screenBackground) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -353,10 +447,9 @@ fun HomeScreen(
                     text = "Memozy",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
-                    color = colorResource(R.color.topbar_title),
+                    color = colors.topbarTitle,
                     modifier = Modifier.padding(bottom = 24.dp)
                 )
-
                 LazyColumn {
                     items(memoList) { memo ->
                         Greeting(
@@ -367,7 +460,6 @@ fun HomeScreen(
                     }
                 }
             }
-
             if (memoList.isEmpty()) {
                 Image(
                     painter = painterResource(id = R.drawable.logo_full),
@@ -382,12 +474,15 @@ fun HomeScreen(
     }
 }
 
+// ── 메모 카드 ───────────────────────────────────────────────────────────────────
+
 @Composable
 fun Greeting(
     memo: MemoUiState,
     onDelete: () -> Unit,
     onEdit: () -> Unit
 ) {
+    val colors = LocalAppColors.current
     val context = androidx.compose.ui.platform.LocalContext.current
     val languageCode = remember {
         context.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE)
@@ -398,65 +493,52 @@ fun Greeting(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
-            .border(1.dp, colorResource(R.color.card_border), RoundedCornerShape(12.dp)),
+            .border(1.dp, colors.cardBorder, RoundedCornerShape(12.dp)),
         elevation = CardDefaults.cardElevation(0.dp),
-        colors = CardDefaults.cardColors(containerColor = colorResource(R.color.card_background))
+        colors = CardDefaults.cardColors(containerColor = colors.cardBackground)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    memo.name,
-                    fontWeight = FontWeight.Bold,
-                    color = colorResource(R.color.text_title)
-                )
+                Text(memo.name, fontWeight = FontWeight.Bold, color = colors.textTitle)
                 Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        formatMemoTime(memo.createdAt, languageCode),
-                        color = colorResource(R.color.text_secondary)
-                    )
+                    Text(formatMemoTime(memo.createdAt, languageCode), color = colors.textSecondary)
                     if (memo.sex.isNotBlank()) {
+                        val categoryIndex = CATEGORY_ALL_TRANSLATIONS.indexOfFirst { memo.sex in it }
+                        val categoryLabel = if (categoryIndex >= 0) {
+                            stringResource(CATEGORY_RES_IDS[categoryIndex])
+                        } else {
+                            memo.sex
+                        }
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = memo.sex,
+                            text = categoryLabel,
                             fontSize = 11.sp,
-                            color = colorResource(R.color.chip_text),
+                            color = colors.chipText,
                             modifier = Modifier
-                                .background(
-                                    colorResource(R.color.chip_background),
-                                    RoundedCornerShape(50)
-                                )
+                                .background(colors.chipBackground, RoundedCornerShape(50))
                                 .padding(horizontal = 8.dp, vertical = 2.dp)
                         )
                     }
                 }
             }
-
             Spacer(modifier = Modifier.height(8.dp))
-
-            Text(memo.killThePecos, color = colorResource(R.color.text_body))
-
+            Text(memo.killThePecos, color = colors.textBody)
             Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.align(Alignment.End)
-            ) {
+            Row(modifier = Modifier.align(Alignment.End)) {
                 Icon(
                     Icons.Default.Delete,
                     contentDescription = null,
-                    tint = colorResource(R.color.text_secondary),
+                    tint = colors.textSecondary,
                     modifier = Modifier.clickable { onDelete() }
                 )
-
                 Spacer(modifier = Modifier.width(12.dp))
-
                 Icon(
                     Icons.Default.Edit,
                     contentDescription = null,
-                    tint = colorResource(R.color.text_secondary),
+                    tint = colors.textSecondary,
                     modifier = Modifier.clickable { onEdit() }
                 )
             }
@@ -478,6 +560,8 @@ fun GreetingPreview() {
         )
     }
 }
+
+// ── 시간 포맷 ───────────────────────────────────────────────────────────────────
 
 fun timezoneForLanguage(languageCode: String): java.util.TimeZone = when (languageCode) {
     "ko" -> java.util.TimeZone.getTimeZone("Asia/Seoul")
@@ -511,13 +595,11 @@ fun formatMemoTime(createdAt: Long, languageCode: String): String {
                     val h = if (hour % 12 == 0) 12 else hour % 12
                     "$h:${minute.toString().padStart(2, '0')} $ampm"
                 }
-
                 "ja" -> {
                     val ampm = if (hour < 12) "午前" else "午後"
                     val h = if (hour % 12 == 0) 12 else hour % 12
                     "$ampm${h}:${minute.toString().padStart(2, '0')}"
                 }
-
                 else -> {
                     val ampm = if (hour < 12) "오전" else "오후"
                     val h = if (hour % 12 == 0) 12 else hour % 12
@@ -525,13 +607,11 @@ fun formatMemoTime(createdAt: Long, languageCode: String): String {
                 }
             }
         }
-
         yesterday -> when (languageCode) {
             "en" -> "Yesterday"
             "ja" -> "昨日"
             else -> "어제"
         }
-
         else -> {
             val year = created.get(java.util.Calendar.YEAR)
             val month = created.get(java.util.Calendar.MONTH) + 1

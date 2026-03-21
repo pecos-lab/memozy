@@ -29,7 +29,28 @@ import com.wanted.android.wanted.design.actions.button.WantedButton
 import com.wanted.android.wanted.design.util.ButtonType
 import com.wanted.android.wanted.design.util.ButtonVariant
 
-private val CATEGORIES = listOf("일반", "업무", "아이디어", "할 일", "공부", "개인", "일정", "가계부")
+val CATEGORY_RES_IDS = listOf(
+    R.string.category_general,
+    R.string.category_work,
+    R.string.category_idea,
+    R.string.category_todo,
+    R.string.category_study,
+    R.string.category_personal,
+    R.string.category_schedule,
+    R.string.category_budget,
+)
+
+// 저장된 카테고리 텍스트(한/영/일 모두)를 인덱스로 역매핑하기 위한 룩업 테이블
+val CATEGORY_ALL_TRANSLATIONS = listOf(
+    listOf("일반", "General", "一般"),
+    listOf("업무", "Work", "仕事"),
+    listOf("아이디어", "Idea", "アイデア"),
+    listOf("할 일", "To-Do", "やること"),
+    listOf("공부", "Study", "勉強"),
+    listOf("개인", "Personal", "個人"),
+    listOf("일정", "Schedule", "予定"),
+    listOf("가계부", "Budget", "家計簿"),
+)
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -37,15 +58,31 @@ fun MemoScreen(
     onSave: (MemoUiState) -> Unit,
     existingMemo: MemoUiState = MemoUiState(0, "", "", "")
 ) {
+    val categories = listOf(
+        stringResource(R.string.category_general),
+        stringResource(R.string.category_work),
+        stringResource(R.string.category_idea),
+        stringResource(R.string.category_todo),
+        stringResource(R.string.category_study),
+        stringResource(R.string.category_personal),
+        stringResource(R.string.category_schedule),
+        stringResource(R.string.category_budget),
+    )
     var nameText by remember { mutableStateOf(existingMemo.name) }
-    var categoryText by remember {
-        mutableStateOf(existingMemo.sex.ifBlank { "일반" })
+    var categoryIndex by remember {
+        mutableStateOf(
+            existingMemo.sex.let { saved ->
+                categories.indexOfFirst { it == saved }.takeIf { it >= 0 } ?: 0
+            }
+        )
     }
     var bodyText by remember { mutableStateOf(existingMemo.killThePecos) }
 
     val enabled = nameText.isNotBlank() && bodyText.isNotBlank()
+    val colors = LocalAppColors.current  // ← CompositionLocal에서 현재 테마 색상 가져옴
 
-    Scaffold { innerPadding ->
+    // containerColor 명시 → MaterialTheme.colorScheme.surface 무시
+    Scaffold(containerColor = colors.screenBackground) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -76,22 +113,22 @@ fun MemoScreen(
                 horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
                 verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp)
             ) {
-                CATEGORIES.forEach { category ->
-                    val selected = categoryText == category
+                categories.forEachIndexed { index, category ->
+                    val selected = categoryIndex == index
                     FilterChip(
                         selected = selected,
-                        onClick = { categoryText = category },
+                        onClick = { categoryIndex = index },
                         label = { Text(category) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Color(0xFF1D6BF3),
-                            selectedLabelColor = Color.White,
-                            containerColor = Color.White,
-                            labelColor = Color(0xFF616161)
+                            selectedContainerColor = colors.chipText,
+                            selectedLabelColor = colors.screenBackground,
+                            containerColor = colors.cardBackground,
+                            labelColor = colors.textBody
                         ),
                         border = if (selected) {
-                            BorderStroke(1.dp, Color(0xFF1D6BF3))
+                            BorderStroke(1.dp, colors.chipText)
                         } else {
-                            BorderStroke(1.dp, Color(0xFFE0E0E0))
+                            BorderStroke(1.dp, colors.cardBorder)
                         }
                     )
                 }
@@ -110,7 +147,7 @@ fun MemoScreen(
                         MemoUiState(
                             id = existingMemo.id,
                             name = nameText,
-                            sex = categoryText,
+                            sex = categories[categoryIndex],
                             killThePecos = bodyText
                         )
                     )
