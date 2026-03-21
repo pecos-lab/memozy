@@ -170,7 +170,7 @@ class MainActivity : AppCompatActivity() {
                                 .align(Alignment.BottomCenter)
                                 .fillMaxWidth()
                                 .navigationBarsPadding()
-                                .padding(horizontal = 12.dp, vertical = 4.dp)
+                                .padding(horizontal = 12.dp, vertical = 12.dp)
                                 .height(IntrinsicSize.Max),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically

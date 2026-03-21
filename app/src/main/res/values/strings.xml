@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">pecos.nota</string>
+    <string name="app_name">Memozy</string>
 
     <!-- Settings -->
     <string name="settings">설정</string>
