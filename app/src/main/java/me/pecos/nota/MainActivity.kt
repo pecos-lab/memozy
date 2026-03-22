@@ -250,7 +250,7 @@ class MainActivity : AppCompatActivity() {
                                         } else {
                                             viewModel.addMemo(memo.name, memo.category, memo.killThePecos)
                                         }
-                                        navController.popBackStack()
+                                        navController.popBackStack("main", false)
                                     }
                                 )
                             }
