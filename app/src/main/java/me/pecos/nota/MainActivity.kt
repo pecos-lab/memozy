@@ -103,6 +103,7 @@ data class AppColors(
     val chipText: Color,
 )
 
+
 val lightAppColors = AppColors(
     screenBackground = Color(0xFFFFFFFF),
     topbarTitle      = Color(0xFF1C1C1E),
