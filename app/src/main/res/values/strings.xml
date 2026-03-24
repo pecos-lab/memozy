@@ -17,14 +17,19 @@
     <string name="license_content">• Jetpack Compose - Apache 2.0\n• Room Database - Apache 2.0\n• Kotlin Coroutines - Apache 2.0\n• Navigation Compose - Apache 2.0</string>
 
     <!-- Categories -->
+    <string name="category_all">전체</string>
+    <string name="category_settings">카테고리 설정</string>
     <string name="category_general">일반</string>
     <string name="category_work">업무</string>
     <string name="category_idea">아이디어</string>
     <string name="category_todo">할 일</string>
     <string name="category_study">공부</string>
-    <string name="category_personal">개인</string>
     <string name="category_schedule">일정</string>
     <string name="category_budget">가계부</string>
+    <string name="category_exercise">운동</string>
+    <string name="category_health">건강</string>
+    <string name="category_travel">여행</string>
+    <string name="category_shopping">쇼핑</string>
 
     <!-- Memo -->
     <string name="memo_title_label">제목</string>

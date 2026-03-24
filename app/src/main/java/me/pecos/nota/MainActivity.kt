@@ -25,6 +25,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -33,16 +35,25 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -173,11 +184,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun attachBaseContext(newBase: Context) {
         val prefs = newBase.getSharedPreferences("settings", Context.MODE_PRIVATE)
-        val languageCode = prefs.getString("language_code", "ko") ?: "ko"
-        val locale = java.util.Locale(languageCode)
+        val langCode = prefs.getString("language_code", "ko") ?: "ko"
+
+        val locale = java.util.Locale(langCode)
         java.util.Locale.setDefault(locale)
+
         val config = Configuration(newBase.resources.configuration)
         config.setLocale(locale)
+
         super.attachBaseContext(newBase.createConfigurationContext(config))
     }
 
@@ -188,10 +202,18 @@ class MainActivity : AppCompatActivity() {
         setContent {
             val settingsViewModel: SettingsViewModel = viewModel()
             val selectedTheme by settingsViewModel.selectedTheme.collectAsState()
-            val isDarkTheme = selectedTheme == ThemeMode.DARK
+            val systemIsDark = LocalConfiguration.current.uiMode and
+                    Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+            val isDarkTheme = when (selectedTheme) {
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+                ThemeMode.SYSTEM -> systemIsDark
+            }
             val appColors = if (isDarkTheme) darkAppColors else lightAppColors
 
-            CompositionLocalProvider(LocalActivity provides this@MainActivity) {
+            CompositionLocalProvider(
+                LocalActivity provides this@MainActivity
+            ) {
             OverrideNightMode(isDarkTheme = isDarkTheme) {
             CompositionLocalProvider(LocalAppColors provides appColors) {
                 DesignSystemTheme(isDarkTheme = isDarkTheme) {
@@ -316,7 +338,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             } // OverrideNightMode
-            } // LocalActivity
+            } // LocalContext + LocalActivity
         }
     }
 }
@@ -428,13 +450,82 @@ fun FloatingNavPillPreview() {
 
 // ── 홈 화면 ────────────────────────────────────────────────────────────────────
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun HomeScreen(
     memoList: List<MemoUiState>,
     onDelete: (Int) -> Unit,
-    onEdit: (Int) -> Unit
+    onEdit: (Int) -> Unit,
+    viewModel: MainViewModel = viewModel()
 ) {
     val colors = LocalAppColors.current
+    val selectedCategoryIndex by viewModel.selectedCategoryIndex.collectAsState()
+    var showFilterDialog by remember { mutableStateOf(false) }
+    var tempCategoryIndex by remember(showFilterDialog) { mutableIntStateOf(selectedCategoryIndex) }
+
+    val categoryLabels = CATEGORY_RES_IDS.mapIndexed { index, resId ->
+        "${CATEGORY_EMOJIS[index]} ${stringResource(resId)}"
+    }
+    val allLabel = "🗂️ ${stringResource(R.string.category_all)}"
+    val currentLabel = if (selectedCategoryIndex == -1) allLabel else categoryLabels[selectedCategoryIndex]
+
+    val filteredList = remember(memoList, selectedCategoryIndex) {
+        if (selectedCategoryIndex == -1) memoList
+        else memoList.filter { memo ->
+            CATEGORY_ALL_TRANSLATIONS[selectedCategoryIndex].any { it.equals(memo.sex, ignoreCase = true) }
+        }
+    }
+
+    // ── 카테고리 필터 Dialog ───────────────────────────────────────────────────
+    if (showFilterDialog) {
+        AlertDialog(
+            onDismissRequest = { showFilterDialog = false },
+            containerColor = colors.cardBackground,
+            title = { Text(stringResource(R.string.category_settings), color = colors.textTitle) },
+            text = {
+                FlowRow(
+                    maxItemsInEachRow = 3,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    val orderedIndices = listOf(-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+                    orderedIndices.forEach { index ->
+                        val label = if (index == -1) allLabel else categoryLabels[index]
+                        val selected = tempCategoryIndex == index
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (selected) colors.chipBackground else Color.Transparent)
+                                .border(1.dp, if (selected) colors.chipText else colors.cardBorder, RoundedCornerShape(12.dp))
+                                .clickable { tempCategoryIndex = index }
+                                .padding(horizontal = 4.dp, vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = label, maxLines = 1, fontSize = 11.sp,
+                                color = if (selected) colors.chipText else colors.textSecondary)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.setSelectedCategory(tempCategoryIndex)
+                    showFilterDialog = false
+                }) {
+                    Text(stringResource(R.string.save), color = colors.chipText)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showFilterDialog = false }) {
+                    Text(stringResource(R.string.cancel), color = colors.textSecondary)
+                }
+            }
+        )
+    }
+
     // containerColor 명시 → MaterialTheme.colorScheme.surface 무시
     Scaffold(containerColor = colors.screenBackground) { innerPadding ->
         Box(
@@ -452,10 +543,36 @@ fun HomeScreen(
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color = colors.topbarTitle,
-                    modifier = Modifier.padding(bottom = 24.dp)
+                    modifier = Modifier.padding(bottom = 12.dp)
                 )
+
+                // 카테고리 필터 버튼
+                Row(
+                    modifier = Modifier
+                        .border(1.5.dp, colors.cardBorder, RoundedCornerShape(12.dp))
+                        .clickable { showFilterDialog = true }
+                        .padding(horizontal = 14.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = currentLabel,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = colors.textSecondary
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowDown,
+                        contentDescription = null,
+                        tint = colors.textSecondary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 LazyColumn {
-                    items(memoList) { memo ->
+                    items(filteredList) { memo ->
                         Greeting(
                             memo = memo,
                             onDelete = { onDelete(memo.id) },
@@ -464,7 +581,7 @@ fun HomeScreen(
                     }
                 }
             }
-            if (memoList.isEmpty()) {
+            if (filteredList.isEmpty()) {
                 Image(
                     painter = painterResource(id = R.drawable.logo_full),
                     contentDescription = null,
@@ -512,7 +629,7 @@ fun Greeting(
                     if (memo.sex.isNotBlank()) {
                         val categoryIndex = CATEGORY_ALL_TRANSLATIONS.indexOfFirst { memo.sex in it }
                         val categoryLabel = if (categoryIndex >= 0) {
-                            stringResource(CATEGORY_RES_IDS[categoryIndex])
+                            "${CATEGORY_EMOJIS[categoryIndex]} ${stringResource(CATEGORY_RES_IDS[categoryIndex])}"
                         } else {
                             memo.sex
                         }
@@ -535,7 +652,7 @@ fun Greeting(
                 Icon(
                     Icons.Default.Delete,
                     contentDescription = null,
-                    tint = colors.textSecondary,
+                    tint = Color(0xFFFF3B30),
                     modifier = Modifier.clickable { onDelete() }
                 )
                 Spacer(modifier = Modifier.width(12.dp))

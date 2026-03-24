@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Memozy</string>
+
+    <!-- Settings -->
+    <string name="settings">設定</string>
+    <string name="language_settings">言語設定</string>
+    <string name="open_source_license">オープンソースライセンス</string>
+    <string name="reset_memos">メモをリセット</string>
+    <string name="reset_confirm">保存されたすべてのメモが削除されます。\n本当にリセットしますか？</string>
+    <string name="reset">リセット</string>
+    <string name="cancel">キャンセル</string>
+    <string name="close">閉じる</string>
+    <string name="theme_settings">テーマ設定</string>
+    <string name="theme_light">ライトモード</string>
+    <string name="theme_dark">ダークモード</string>
+    <string name="theme_system">システムデフォルト</string>
+    <string name="license_content">• Jetpack Compose - Apache 2.0\n• Room Database - Apache 2.0\n• Kotlin Coroutines - Apache 2.0\n• Navigation Compose - Apache 2.0</string>
+
+    <!-- Categories -->
+    <string name="category_all">すべて</string>
+    <string name="category_settings">カテゴリ設定</string>
+    <string name="category_general">一般</string>
+    <string name="category_work">仕事</string>
+    <string name="category_idea">アイデア</string>
+    <string name="category_todo">やること</string>
+    <string name="category_study">勉強</string>
+    <string name="category_schedule">予定</string>
+    <string name="category_budget">家計簿</string>
+    <string name="category_exercise">運動</string>
+    <string name="category_health">健康</string>
+    <string name="category_travel">旅行</string>
+    <string name="category_shopping">ショッピング</string>
+
+    <!-- Memo -->
+    <string name="memo_title_label">タイトル</string>
+    <string name="memo_title_placeholder">メモのタイトル</string>
+    <string name="memo_content_label">内容</string>
+    <string name="memo_content_placeholder">メモの内容</string>
+    <string name="save">保存</string>
+    <string name="add_memo">メモを追加</string>
+    <string name="man">男性</string>
+    <string name="woman">女性</string>
+</resources>

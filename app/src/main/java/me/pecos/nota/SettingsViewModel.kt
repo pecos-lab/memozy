@@ -18,7 +18,8 @@ val LANGUAGES = listOf(
 
 enum class ThemeMode(val value: String) {
     LIGHT("light"),
-    DARK("dark")
+    DARK("dark"),
+    SYSTEM("system")
 }
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
@@ -34,9 +35,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     )
     val selectedLanguage: StateFlow<Language> = _selectedLanguage
 
-    private val _shouldRecreate = MutableStateFlow(false)
-    val shouldRecreate: StateFlow<Boolean> = _shouldRecreate
-
     private val _selectedTheme = MutableStateFlow(
         ThemeMode.entries.find { it.value == prefs.getString("theme_mode", "light") }
             ?: ThemeMode.LIGHT
@@ -45,12 +43,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun selectLanguage(language: Language) {
         _selectedLanguage.value = language
-        prefs.edit().putString("language_code", language.code).apply()
-        _shouldRecreate.value = true
-    }
-
-    fun onRecreated() {
-        _shouldRecreate.value = false
+        prefs.edit().putString("language_code", language.code).commit() // 동기 저장 - recreate 전 반드시 완료
     }
 
     fun selectTheme(mode: ThemeMode) {

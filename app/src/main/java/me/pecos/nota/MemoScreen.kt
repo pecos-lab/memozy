@@ -1,6 +1,10 @@
 package me.pecos.nota
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -9,11 +13,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -25,16 +28,33 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.wanted.android.wanted.design.theme.DesignSystemTheme
 import com.wanted.android.wanted.design.input.textinput.textfield.WantedTextField
 import com.wanted.android.wanted.design.actions.button.WantedButton
 import com.wanted.android.wanted.design.util.ButtonType
 import com.wanted.android.wanted.design.util.ButtonVariant
+
+val CATEGORY_EMOJIS = listOf(
+    "📝", // 일반
+    "💼", // 업무
+    "💡", // 아이디어
+    "✅", // 할 일
+    "📚", // 공부
+    "📅", // 일정
+    "💰", // 가계부
+    "🏃", // 운동
+    "🏥", // 건강
+    "✈️", // 여행
+    "🛒", // 쇼핑
+)
 
 val CATEGORY_RES_IDS = listOf(
     R.string.category_general,
@@ -42,9 +62,12 @@ val CATEGORY_RES_IDS = listOf(
     R.string.category_idea,
     R.string.category_todo,
     R.string.category_study,
-    R.string.category_personal,
     R.string.category_schedule,
     R.string.category_budget,
+    R.string.category_exercise,
+    R.string.category_health,
+    R.string.category_travel,
+    R.string.category_shopping,
 )
 
 // 저장된 카테고리 텍스트(한/영/일 모두)를 인덱스로 역매핑하기 위한 룩업 테이블
@@ -54,9 +77,12 @@ val CATEGORY_ALL_TRANSLATIONS = listOf(
     listOf("아이디어", "Idea", "アイデア"),
     listOf("할 일", "To-Do", "やること"),
     listOf("공부", "Study", "勉強"),
-    listOf("개인", "Personal", "個人"),
     listOf("일정", "Schedule", "予定"),
     listOf("가계부", "Budget", "家計簿"),
+    listOf("운동", "Exercise", "運動"),
+    listOf("건강", "Health", "健康"),
+    listOf("여행", "Travel", "旅行"),
+    listOf("쇼핑", "Shopping", "ショッピング"),
 )
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
@@ -72,15 +98,18 @@ fun MemoScreen(
         stringResource(R.string.category_idea),
         stringResource(R.string.category_todo),
         stringResource(R.string.category_study),
-        stringResource(R.string.category_personal),
         stringResource(R.string.category_schedule),
         stringResource(R.string.category_budget),
+        stringResource(R.string.category_exercise),
+        stringResource(R.string.category_health),
+        stringResource(R.string.category_travel),
+        stringResource(R.string.category_shopping),
     )
     var nameText by remember { mutableStateOf(existingMemo.name) }
     var categoryIndex by remember {
         mutableStateOf(
             existingMemo.sex.let { saved ->
-                categories.indexOfFirst { it == saved }.takeIf { it >= 0 } ?: 0
+                CATEGORY_ALL_TRANSLATIONS.indexOfFirst { saved in it }.takeIf { it >= 0 } ?: 0
             }
         )
     }
@@ -134,29 +163,34 @@ fun MemoScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             FlowRow(
+                maxItemsInEachRow = 3,
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
-                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 categories.forEachIndexed { index, category ->
                     val selected = categoryIndex == index
-                    FilterChip(
-                        selected = selected,
-                        onClick = { categoryIndex = index },
-                        label = { Text(category) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = colors.chipText,
-                            selectedLabelColor = colors.screenBackground,
-                            containerColor = colors.cardBackground,
-                            labelColor = colors.textBody
-                        ),
-                        border = if (selected) {
-                            BorderStroke(1.dp, colors.chipText)
-                        } else {
-                            BorderStroke(1.dp, colors.cardBorder)
-                        }
-                    )
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (selected) colors.chipBackground else Color.Transparent)
+                            .border(1.dp, if (selected) colors.chipText else colors.cardBorder, RoundedCornerShape(12.dp))
+                            .clickable { categoryIndex = index }
+                            .padding(horizontal = 4.dp, vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "${CATEGORY_EMOJIS[index]} $category",
+                            maxLines = 1,
+                            fontSize = 11.sp,
+                            color = if (selected) colors.chipText else colors.textSecondary
+                        )
+                    }
                 }
+                // 11개 카테고리 / 3열 → 마지막 줄 2개만 남으므로 더미 1개로 크기 통일
+                Spacer(modifier = Modifier.weight(1f))
             }
 
             Spacer(modifier = Modifier.height(20.dp))
