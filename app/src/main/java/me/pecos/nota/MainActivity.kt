@@ -543,12 +543,13 @@ fun HomeScreen(
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color = colors.topbarTitle,
-                    modifier = Modifier.padding(bottom = 12.dp)
+                    modifier = Modifier.padding(start = 16.dp, bottom = 12.dp)
                 )
 
                 // 카테고리 필터 버튼
                 Row(
                     modifier = Modifier
+                        .padding(start = 16.dp)
                         .border(1.5.dp, colors.cardBorder, RoundedCornerShape(12.dp))
                         .clickable { showFilterDialog = true }
                         .padding(horizontal = 14.dp, vertical = 6.dp),
@@ -569,7 +570,7 @@ fun HomeScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 LazyColumn {
                     items(filteredList) { memo ->
