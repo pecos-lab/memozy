@@ -231,7 +231,10 @@ class MainActivity : AppCompatActivity() {
                                 )
                             }
                             composable("settings") {
-                                SettingsScreen(settingsViewModel = settingsViewModel)
+                                SettingsScreen(
+                                    onBack = { navController.popBackStack() },
+                                    settingsViewModel = settingsViewModel
+                                )
                             }
                             composable("Memo/{memoId}") { backStackEntry ->
                                 val memoId =
@@ -244,6 +247,7 @@ class MainActivity : AppCompatActivity() {
                                     }
                                 MemoScreen(
                                     existingMemo = existingMemo,
+                                    onBack = { navController.popBackStack() },
                                     onSave = { memo ->
                                         if (memoId > 0) {
                                             viewModel.updateMemo(memo)
