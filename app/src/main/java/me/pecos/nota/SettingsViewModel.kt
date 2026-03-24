@@ -18,7 +18,8 @@ val LANGUAGES = listOf(
 
 enum class ThemeMode(val value: String) {
     LIGHT("light"),
-    DARK("dark")
+    DARK("dark"),
+    SYSTEM("system")
 }
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
@@ -38,8 +39,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     val shouldRecreate: StateFlow<Boolean> = _shouldRecreate
 
     private val _selectedTheme = MutableStateFlow(
-        ThemeMode.entries.find { it.value == prefs.getString("theme_mode", "light") }
-            ?: ThemeMode.LIGHT
+        ThemeMode.entries.find { it.value == prefs.getString("theme_mode", "system") }
+            ?: ThemeMode.SYSTEM
     )
     val selectedTheme: StateFlow<ThemeMode> = _selectedTheme
 

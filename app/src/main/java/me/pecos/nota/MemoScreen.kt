@@ -1,5 +1,6 @@
 package me.pecos.nota
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -28,11 +29,24 @@ import com.wanted.android.wanted.design.actions.button.WantedButton
 import com.wanted.android.wanted.design.util.ButtonType
 import com.wanted.android.wanted.design.util.ButtonVariant
 
+@get:StringRes
+val MemoCategoryUiState.labelResId: Int
+    get() = when (this) {
+        MemoCategoryUiState.GENERAL -> R.string.category_general
+        MemoCategoryUiState.WORK -> R.string.category_work
+        MemoCategoryUiState.IDEA -> R.string.category_idea
+        MemoCategoryUiState.TODO -> R.string.category_todo
+        MemoCategoryUiState.STUDY -> R.string.category_study
+        MemoCategoryUiState.PERSONAL -> R.string.category_personal
+        MemoCategoryUiState.SCHEDULE -> R.string.category_schedule
+        MemoCategoryUiState.BUDGET -> R.string.category_budget
+    }
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MemoScreen(
     onSave: (MemoUiState) -> Unit,
-    existingMemo: MemoUiState = MemoUiState(0, "", MemoCategory.GENERAL, "")
+    existingMemo: MemoUiState = MemoUiState(0, "", MemoCategoryUiState.GENERAL, "")
 ) {
     var nameText by remember { mutableStateOf(existingMemo.name) }
     var selectedCategory by remember { mutableStateOf(existingMemo.category) }
@@ -72,7 +86,7 @@ fun MemoScreen(
                 horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
                 verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp)
             ) {
-                MemoCategory.entries.forEach { category ->
+                MemoCategoryUiState.entries.forEach { category ->
                     val selected = selectedCategory == category
                     FilterChip(
                         selected = selected,
@@ -122,7 +136,7 @@ fun MemoScreenPreview() {
     DesignSystemTheme {
         MemoScreen(
             onSave = {},
-            existingMemo = MemoUiState(1, "테스트 제목", MemoCategory.WORK, "테스트 내용")
+            existingMemo = MemoUiState(1, "테스트 제목", MemoCategoryUiState.WORK, "테스트 내용")
         )
     }
 }

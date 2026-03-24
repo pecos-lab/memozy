@@ -14,7 +14,7 @@
     <string name="theme_light">Light Mode</string>
     <string name="theme_dark">Dark Mode</string>
     <string name="theme_system">System Default</string>
-    <string name="license_content">• Jetpack Compose - Apache 2.0\n• Room Database - Apache 2.0\n• Kotlin Coroutines - Apache 2.0\n• Navigation Compose - Apache 2.0</string>
+    <string name="license_content">• Jetpack Compose - Apache 2.0\n• Room Database - Apache 2.0\n• Kotlin Coroutines - Apache 2.0\n• Navigation Compose - Apache 2.0\n\n[Design]\n• Design System: Montage by Wantedlab (MIT)</string>
 
     <!-- Categories -->
     <string name="category_general">General</string>

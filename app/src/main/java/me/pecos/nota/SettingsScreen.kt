@@ -66,6 +66,7 @@ fun SettingsScreen(
         val themeOptions = listOf(
             ThemeMode.LIGHT to stringResource(R.string.theme_light),
             ThemeMode.DARK to stringResource(R.string.theme_dark),
+            ThemeMode.SYSTEM to stringResource(R.string.theme_system),
         )
         AlertDialog(
             onDismissRequest = { showThemeDialog = false },

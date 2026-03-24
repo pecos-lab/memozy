@@ -14,7 +14,7 @@
     <string name="theme_light">라이트 모드</string>
     <string name="theme_dark">다크 모드</string>
     <string name="theme_system">시스템 기본값</string>
-    <string name="license_content">• Jetpack Compose - Apache 2.0\n• Room Database - Apache 2.0\n• Kotlin Coroutines - Apache 2.0\n• Navigation Compose - Apache 2.0</string>
+    <string name="license_content">• Jetpack Compose - Apache 2.0\n• Room Database - Apache 2.0\n• Kotlin Coroutines - Apache 2.0\n• Navigation Compose - Apache 2.0\n\n[디자인]\n• 디자인 시스템: Montage by Wantedlab (MIT)</string>
 
     <!-- Categories -->
     <string name="category_general">일반</string>

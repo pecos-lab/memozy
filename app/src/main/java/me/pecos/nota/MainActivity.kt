@@ -40,9 +40,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,6 +66,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import com.wanted.android.wanted.design.theme.DesignSystemTheme
@@ -188,8 +192,19 @@ class MainActivity : AppCompatActivity() {
         setContent {
             val settingsViewModel: SettingsViewModel = viewModel()
             val selectedTheme by settingsViewModel.selectedTheme.collectAsState()
-            val isDarkTheme = selectedTheme == ThemeMode.DARK
+            val isDarkTheme = when (selectedTheme) {
+                ThemeMode.DARK -> true
+                ThemeMode.LIGHT -> false
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+            }
             val appColors = if (isDarkTheme) darkAppColors else lightAppColors
+
+            val window = this@MainActivity.window
+            SideEffect {
+                WindowInsetsControllerCompat(window, window.decorView).apply {
+                    isAppearanceLightStatusBars = !isDarkTheme
+                }
+            }
 
             CompositionLocalProvider(LocalActivity provides this@MainActivity) {
             OverrideNightMode(isDarkTheme = isDarkTheme) {
@@ -238,9 +253,9 @@ class MainActivity : AppCompatActivity() {
                                     backStackEntry.arguments?.getString("memoId")?.toIntOrNull() ?: -1
                                 val existingMemo: MemoUiState =
                                     if (memoId > 0) {
-                                        memoList.find { it.id == memoId } ?: MemoUiState(0, "", MemoCategory.GENERAL, "")
+                                        memoList.find { it.id == memoId } ?: MemoUiState(0, "", MemoCategoryUiState.GENERAL, "")
                                     } else {
-                                        MemoUiState(0, "", MemoCategory.GENERAL, "")
+                                        MemoUiState(0, "", MemoCategoryUiState.GENERAL, "")
                                     }
                                 MemoScreen(
                                     existingMemo = existingMemo,
@@ -523,15 +538,19 @@ fun Greeting(
                 Icon(
                     Icons.Default.Delete,
                     contentDescription = null,
-                    tint = colors.textSecondary,
-                    modifier = Modifier.clickable { onDelete() }
+                    tint = Color(0xFFE24B4A),
+                    modifier = Modifier
+                        .clickable { onDelete() }
+                        .padding(8.dp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Icon(
                     Icons.Default.Edit,
                     contentDescription = null,
                     tint = colors.textSecondary,
-                    modifier = Modifier.clickable { onEdit() }
+                    modifier = Modifier
+                        .clickable { onEdit() }
+                        .padding(8.dp)
                 )
             }
         }
@@ -544,8 +563,8 @@ fun GreetingPreview() {
     DesignSystemTheme {
         HomeScreen(
             memoList = listOf(
-                MemoUiState(1, "제목1", MemoCategory.WORK, "내용1"),
-                MemoUiState(2, "제목2", MemoCategory.IDEA, "내용2")
+                MemoUiState(1, "제목1", MemoCategoryUiState.WORK, "내용1"),
+                MemoUiState(2, "제목2", MemoCategoryUiState.IDEA, "내용2")
             ),
             onDelete = {},
             onEdit = {}
