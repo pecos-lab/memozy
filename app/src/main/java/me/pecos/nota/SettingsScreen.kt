@@ -10,11 +10,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -27,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -36,8 +42,10 @@ import com.wanted.android.wanted.design.actions.button.config.WantedButtonDefaul
 import com.wanted.android.wanted.design.util.ButtonType
 import com.wanted.android.wanted.design.util.ButtonVariant
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    onBack: () -> Unit = {},
     settingsViewModel: SettingsViewModel = viewModel()
 ) {
     var showClearDialog by remember { mutableStateOf(false) }
@@ -179,7 +187,24 @@ fun SettingsScreen(
     }
 
     // containerColor 명시 → MaterialTheme.colorScheme.surface 무시
-    Scaffold(containerColor = colors.screenBackground) { innerPadding ->
+    Scaffold(
+        containerColor = colors.screenBackground,
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.settings), color = colors.topbarTitle) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null,
+                            tint = colors.topbarTitle
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colors.screenBackground)
+            )
+        }
+    ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -190,14 +215,6 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 24.dp)
             ) {
-                Text(
-                    text = stringResource(R.string.settings),
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.topbarTitle,
-                    modifier = Modifier.padding(bottom = 24.dp)
-                )
-
                 WantedButton(
                     text = stringResource(R.string.language_settings),
                     modifier = Modifier.fillMaxWidth(),

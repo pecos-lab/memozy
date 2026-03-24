@@ -9,10 +9,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,10 +59,11 @@ val CATEGORY_ALL_TRANSLATIONS = listOf(
     listOf("가계부", "Budget", "家計簿"),
 )
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MemoScreen(
     onSave: (MemoUiState) -> Unit,
+    onBack: () -> Unit = {},
     existingMemo: MemoUiState = MemoUiState(0, "", "", "")
 ) {
     val categories = listOf(
@@ -82,7 +90,24 @@ fun MemoScreen(
     val colors = LocalAppColors.current  // ← CompositionLocal에서 현재 테마 색상 가져옴
 
     // containerColor 명시 → MaterialTheme.colorScheme.surface 무시
-    Scaffold(containerColor = colors.screenBackground) { innerPadding ->
+    Scaffold(
+        containerColor = colors.screenBackground,
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.add_memo), color = colors.topbarTitle) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null,
+                            tint = colors.topbarTitle
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colors.screenBackground)
+            )
+        }
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
