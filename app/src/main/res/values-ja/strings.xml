@@ -37,6 +37,10 @@
     <string name="memo_title_placeholder">メモのタイトル</string>
     <string name="memo_content_label">内容</string>
     <string name="memo_content_placeholder">メモの内容</string>
+    <string name="delete_confirm_title">本当に削除しますか？</string>
+    <string name="delete_confirm_message">注意 : 削除後は復元できません</string>
+    <string name="yes">はい</string>
+    <string name="no">いいえ</string>
     <string name="save">保存</string>
     <string name="add_memo">メモを追加</string>
     <string name="man">男性</string>
