@@ -36,6 +36,10 @@
     <string name="memo_title_placeholder">메모 제목</string>
     <string name="memo_content_label">내용</string>
     <string name="memo_content_placeholder">메모 내용</string>
+    <string name="delete_confirm_title">정말 삭제하시겠습니까?</string>
+    <string name="delete_confirm_message">주의 : 삭제 시 복구가 불가능합니다</string>
+    <string name="yes">예</string>
+    <string name="no">아니오</string>
     <string name="save">저장</string>
     <string name="add_memo">메모 추가</string>
     <string name="man">남자</string>

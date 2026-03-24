@@ -9,6 +9,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -610,6 +611,35 @@ fun Greeting(
         context.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE)
             .getString("language_code", "ko") ?: "ko"
     }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            containerColor = colors.cardBackground,
+            title = { Text(stringResource(R.string.delete_confirm_title), color = colors.textTitle) },
+            text = {
+                Text(
+                    stringResource(R.string.delete_confirm_message),
+                    color = Color(0xFFE24B4A)
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteDialog = false
+                    onDelete()
+                }) {
+                    Text(stringResource(R.string.yes), color = Color(0xFFE24B4A))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text(stringResource(R.string.no), color = colors.chipText)
+                }
+            }
+        )
+    }
+
     Card(
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier
@@ -649,20 +679,51 @@ fun Greeting(
             Spacer(modifier = Modifier.height(8.dp))
             Text(memo.killThePecos, color = colors.textBody)
             Spacer(modifier = Modifier.height(12.dp))
+            val isDark = isSystemInDarkTheme()
             Row(modifier = Modifier.align(Alignment.End)) {
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = null,
-                    tint = Color(0xFFFF3B30),
-                    modifier = Modifier.clickable { onDelete() }
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Icon(
-                    Icons.Default.Edit,
-                    contentDescription = null,
-                    tint = colors.textSecondary,
-                    modifier = Modifier.clickable { onEdit() }
-                )
+                // 삭제 버튼
+                val deleteBg     = if (isDark) Color(0x2EFF6B4F) else Color(0x00000000)
+                val deleteBorder = if (isDark) Color(0x66FF6B4F) else Color(0xFFE5735A)
+                val deleteTint   = if (isDark) Color(0xFFFF6B4F) else Color(0xFFE5735A)
+                val deleteBorderWidth = if (isDark) 0.5.dp else 1.5.dp
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .border(deleteBorderWidth, deleteBorder, RoundedCornerShape(10.dp))
+                        .background(deleteBg)
+                        .clickable { showDeleteDialog = true },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = null,
+                        tint = deleteTint,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                // 수정 버튼
+                val editBg     = if (isDark) Color(0x2664B4FF) else Color(0x00000000)
+                val editBorder = if (isDark) Color(0x5964B4FF) else Color(0xFF4A9EE8)
+                val editTint   = if (isDark) Color(0xFF64B4FF) else Color(0xFF4A9EE8)
+                val editBorderWidth = if (isDark) 0.5.dp else 1.5.dp
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .border(editBorderWidth, editBorder, RoundedCornerShape(10.dp))
+                        .background(editBg)
+                        .clickable { onEdit() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = null,
+                        tint = editTint,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             }
         }
     }

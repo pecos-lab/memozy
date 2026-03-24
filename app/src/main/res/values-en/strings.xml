@@ -37,6 +37,10 @@
     <string name="memo_title_placeholder">Memo title</string>
     <string name="memo_content_label">Content</string>
     <string name="memo_content_placeholder">Memo content</string>
+    <string name="delete_confirm_title">Are you sure you want to delete?</string>
+    <string name="delete_confirm_message">Warning: This action cannot be undone</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
     <string name="save">Save</string>
     <string name="add_memo">Add Memo</string>
     <string name="man">Male</string>
