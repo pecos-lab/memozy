@@ -25,7 +25,10 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,16 +36,26 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -89,6 +102,7 @@ data class AppColors(
     val textSecondary: Color,
     val chipBackground: Color,
     val chipText: Color,
+    val deleteIcon: Color,
 )
 
 val lightAppColors = AppColors(
@@ -105,6 +119,7 @@ val lightAppColors = AppColors(
     textSecondary    = Color(0xFF9E9E9E),
     chipBackground   = Color(0xFFE8F0FE),
     chipText         = Color(0xFF1D6BF3),
+    deleteIcon       = Color(0xFFFF3B30),
 )
 
 val darkAppColors = AppColors(
@@ -121,6 +136,7 @@ val darkAppColors = AppColors(
     textSecondary    = Color(0xFF8E8E93),
     chipBackground   = Color(0xFF3A3A3C),
     chipText         = Color(0xFF6B9FFF),
+    deleteIcon       = Color(0xFFFF453A),
 )
 
 val LocalAppColors = staticCompositionLocalOf { lightAppColors }
@@ -188,7 +204,14 @@ class MainActivity : AppCompatActivity() {
         setContent {
             val settingsViewModel: SettingsViewModel = viewModel()
             val selectedTheme by settingsViewModel.selectedTheme.collectAsState()
-            val isDarkTheme = selectedTheme == ThemeMode.DARK
+            val systemIsDark = LocalConfiguration.current.uiMode and
+                    Configuration.UI_MODE_NIGHT_MASK ==
+                    Configuration.UI_MODE_NIGHT_YES
+            val isDarkTheme = when (selectedTheme) {
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+                ThemeMode.SYSTEM -> systemIsDark
+            }
             val appColors = if (isDarkTheme) darkAppColors else lightAppColors
 
             CompositionLocalProvider(LocalActivity provides this@MainActivity) {
@@ -428,13 +451,97 @@ fun FloatingNavPillPreview() {
 
 // ── 홈 화면 ────────────────────────────────────────────────────────────────────
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun HomeScreen(
     memoList: List<MemoUiState>,
     onDelete: (Int) -> Unit,
-    onEdit: (Int) -> Unit
+    onEdit: (Int) -> Unit,
+    viewModel: MainViewModel = viewModel()
 ) {
     val colors = LocalAppColors.current
+    val selectedCategoryIndex by viewModel.selectedCategoryIndex.collectAsState()
+    var showFilterDialog by remember { mutableStateOf(false) }
+    var tempCategoryIndex by remember(showFilterDialog) { mutableIntStateOf(selectedCategoryIndex) }
+
+    val categoryLabels = listOf(
+        "${CATEGORY_EMOJIS[0]} ${stringResource(R.string.category_general)}",
+        "${CATEGORY_EMOJIS[1]} ${stringResource(R.string.category_work)}",
+        "${CATEGORY_EMOJIS[2]} ${stringResource(R.string.category_idea)}",
+        "${CATEGORY_EMOJIS[3]} ${stringResource(R.string.category_todo)}",
+        "${CATEGORY_EMOJIS[4]} ${stringResource(R.string.category_study)}",
+        "${CATEGORY_EMOJIS[5]} ${stringResource(R.string.category_schedule)}",
+        "${CATEGORY_EMOJIS[6]} ${stringResource(R.string.category_budget)}",
+        "${CATEGORY_EMOJIS[7]} ${stringResource(R.string.category_exercise)}",
+        "${CATEGORY_EMOJIS[8]} ${stringResource(R.string.category_health)}",
+        "${CATEGORY_EMOJIS[9]} ${stringResource(R.string.category_travel)}",
+        "${CATEGORY_EMOJIS[10]} ${stringResource(R.string.category_shopping)}",
+    )
+    val allLabel = "🗂️ ${stringResource(R.string.category_all)}"
+    val currentLabel = if (selectedCategoryIndex == -1) allLabel else categoryLabels[selectedCategoryIndex]
+
+    val filteredList = remember(memoList, selectedCategoryIndex) {
+        if (selectedCategoryIndex == -1) memoList
+        else memoList.filter { memo ->
+            CATEGORY_ALL_TRANSLATIONS[selectedCategoryIndex].any { it.equals(memo.sex, ignoreCase = true) }
+        }
+    }
+
+    // ── 카테고리 필터 Dialog ───────────────────────────────────────────────────
+    if (showFilterDialog) {
+        AlertDialog(
+            onDismissRequest = { showFilterDialog = false },
+            containerColor = colors.cardBackground,
+            title = { Text(stringResource(R.string.category_settings), color = colors.textTitle) },
+            text = {
+                FlowRow(
+                    maxItemsInEachRow = 3,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // 순서: 전체, 아이디어, 일반, 할 일, 공부, 일정, 가계부, 운동, 건강, 여행, 쇼핑, 업무
+                    val orderedIndices = listOf(-1, 2, 0, 3, 4, 5, 6, 7, 8, 9, 10, 1)
+                    orderedIndices.forEach { index ->
+                        val label = if (index == -1) allLabel else categoryLabels[index]
+                        val selected = tempCategoryIndex == index
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(50))
+                                .background(if (selected) colors.chipBackground else Color.Transparent)
+                                .border(1.dp, if (selected) colors.chipText else colors.cardBorder, RoundedCornerShape(50))
+                                .clickable { tempCategoryIndex = index }
+                                .padding(horizontal = 4.dp, vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = label,
+                                maxLines = 1,
+                                fontSize = 11.sp,
+                                color = if (selected) colors.chipText else colors.textSecondary
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.setSelectedCategory(tempCategoryIndex)
+                    showFilterDialog = false
+                }) {
+                    Text(stringResource(R.string.save), color = colors.chipText)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showFilterDialog = false }) {
+                    Text(stringResource(R.string.cancel), color = colors.textSecondary)
+                }
+            }
+        )
+    }
+
     // containerColor 명시 → MaterialTheme.colorScheme.surface 무시
     Scaffold(containerColor = colors.screenBackground) { innerPadding ->
         Box(
@@ -452,10 +559,36 @@ fun HomeScreen(
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color = colors.topbarTitle,
-                    modifier = Modifier.padding(bottom = 24.dp)
+                    modifier = Modifier.padding(bottom = 12.dp)
                 )
+
+                // 카테고리 필터 버튼
+                Row(
+                    modifier = Modifier
+                        .border(1.5.dp, colors.cardBorder, RoundedCornerShape(50))
+                        .clickable { showFilterDialog = true }
+                        .padding(horizontal = 14.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = currentLabel,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = colors.textSecondary
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowDown,
+                        contentDescription = null,
+                        tint = colors.textSecondary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 LazyColumn {
-                    items(memoList) { memo ->
+                    items(filteredList) { memo ->
                         Greeting(
                             memo = memo,
                             onDelete = { onDelete(memo.id) },
@@ -464,7 +597,7 @@ fun HomeScreen(
                     }
                 }
             }
-            if (memoList.isEmpty()) {
+            if (filteredList.isEmpty()) {
                 Image(
                     painter = painterResource(id = R.drawable.logo_full),
                     contentDescription = null,
@@ -492,6 +625,11 @@ fun Greeting(
         context.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE)
             .getString("language_code", "ko") ?: "ko"
     }
+
+    val currentCategoryIndex = remember(memo.sex) {
+        CATEGORY_ALL_TRANSLATIONS.indexOfFirst { memo.sex in it }
+    }
+
     Card(
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier
@@ -510,9 +648,8 @@ fun Greeting(
                 Column(horizontalAlignment = Alignment.End) {
                     Text(formatMemoTime(memo.createdAt, languageCode), color = colors.textSecondary)
                     if (memo.sex.isNotBlank()) {
-                        val categoryIndex = CATEGORY_ALL_TRANSLATIONS.indexOfFirst { memo.sex in it }
-                        val categoryLabel = if (categoryIndex >= 0) {
-                            stringResource(CATEGORY_RES_IDS[categoryIndex])
+                        val categoryLabel = if (currentCategoryIndex >= 0) {
+                            "${CATEGORY_EMOJIS[currentCategoryIndex]} ${stringResource(CATEGORY_RES_IDS[currentCategoryIndex])}"
                         } else {
                             memo.sex
                         }
@@ -535,10 +672,10 @@ fun Greeting(
                 Icon(
                     Icons.Default.Delete,
                     contentDescription = null,
-                    tint = colors.textSecondary,
+                    tint = colors.deleteIcon,
                     modifier = Modifier.clickable { onDelete() }
                 )
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(20.dp))
                 Icon(
                     Icons.Default.Edit,
                     contentDescription = null,

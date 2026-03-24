@@ -8,4 +8,5 @@ interface MemoRepository {
     suspend fun deleteMemo(id: Int)
     suspend fun updateMemo(memo: Memo)
     suspend fun clearAllMemos()
+    suspend fun migratePersonalToGeneral()
 }

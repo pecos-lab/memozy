@@ -21,4 +21,8 @@ class MemoRepositoryImpl(private val memoDao: MemoDao) : MemoRepository {
     override suspend fun clearAllMemos() {
         memoDao.clearAllMemos()
     }
+
+    override suspend fun migratePersonalToGeneral() {
+        memoDao.migratePersonalToGeneral()
+    }
 }

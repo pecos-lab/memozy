@@ -22,4 +22,7 @@ interface MemoDao {
 
     @Query("DELETE FROM memo")
     suspend fun clearAllMemos()
+
+    @Query("UPDATE memo SET sex = CASE sex WHEN '개인' THEN '일반' WHEN 'Personal' THEN 'General' WHEN '個人' THEN '一般' ELSE sex END WHERE sex IN ('개인', 'Personal', '個人')")
+    suspend fun migratePersonalToGeneral()
 }

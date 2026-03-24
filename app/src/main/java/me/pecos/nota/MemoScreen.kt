@@ -26,8 +26,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.wanted.android.wanted.design.theme.DesignSystemTheme
@@ -42,10 +44,15 @@ val CATEGORY_RES_IDS = listOf(
     R.string.category_idea,
     R.string.category_todo,
     R.string.category_study,
-    R.string.category_personal,
     R.string.category_schedule,
     R.string.category_budget,
+    R.string.category_exercise,
+    R.string.category_health,
+    R.string.category_travel,
+    R.string.category_shopping,
 )
+
+val CATEGORY_EMOJIS = listOf("📝", "💼", "💡", "✅", "📚", "📅", "💰", "🏃", "🏥", "✈️", "🛒")
 
 // 저장된 카테고리 텍스트(한/영/일 모두)를 인덱스로 역매핑하기 위한 룩업 테이블
 val CATEGORY_ALL_TRANSLATIONS = listOf(
@@ -54,9 +61,12 @@ val CATEGORY_ALL_TRANSLATIONS = listOf(
     listOf("아이디어", "Idea", "アイデア"),
     listOf("할 일", "To-Do", "やること"),
     listOf("공부", "Study", "勉強"),
-    listOf("개인", "Personal", "個人"),
     listOf("일정", "Schedule", "予定"),
     listOf("가계부", "Budget", "家計簿"),
+    listOf("운동", "Exercise", "運動"),
+    listOf("건강", "Health", "健康"),
+    listOf("여행", "Travel", "旅行"),
+    listOf("쇼핑", "Shopping", "ショッピング"),
 )
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
@@ -72,15 +82,18 @@ fun MemoScreen(
         stringResource(R.string.category_idea),
         stringResource(R.string.category_todo),
         stringResource(R.string.category_study),
-        stringResource(R.string.category_personal),
         stringResource(R.string.category_schedule),
         stringResource(R.string.category_budget),
+        stringResource(R.string.category_exercise),
+        stringResource(R.string.category_health),
+        stringResource(R.string.category_travel),
+        stringResource(R.string.category_shopping),
     )
     var nameText by remember { mutableStateOf(existingMemo.name) }
     var categoryIndex by remember {
         mutableStateOf(
             existingMemo.sex.let { saved ->
-                categories.indexOfFirst { it == saved }.takeIf { it >= 0 } ?: 0
+                CATEGORY_ALL_TRANSLATIONS.indexOfFirst { saved in it }.takeIf { it >= 0 } ?: 0
             }
         )
     }
@@ -128,6 +141,9 @@ fun MemoScreen(
                 text = bodyText,
                 placeholder = stringResource(R.string.memo_content_placeholder),
                 title = stringResource(R.string.memo_content_label),
+                minLines = 4,
+                maxLines = 8,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                 onValueChange = { bodyText = it }
             )
 
@@ -143,7 +159,7 @@ fun MemoScreen(
                     FilterChip(
                         selected = selected,
                         onClick = { categoryIndex = index },
-                        label = { Text(category) },
+                        label = { Text("${CATEGORY_EMOJIS[index]} $category") },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = colors.chipText,
                             selectedLabelColor = colors.screenBackground,

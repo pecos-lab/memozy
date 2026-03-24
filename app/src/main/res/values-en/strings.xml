@@ -1,0 +1,43 @@
+<resources>
+    <string name="app_name">Memozy</string>
+
+    <!-- Settings -->
+    <string name="settings">Settings</string>
+    <string name="language_settings">Language</string>
+    <string name="open_source_license">Open Source Licenses</string>
+    <string name="reset_memos">Reset Memos</string>
+    <string name="reset_confirm">All saved memos will be deleted.\nAre you sure you want to reset?</string>
+    <string name="reset">Reset</string>
+    <string name="cancel">Cancel</string>
+    <string name="close">Close</string>
+    <string name="theme_settings">Theme</string>
+    <string name="theme_light">Light Mode</string>
+    <string name="theme_dark">Dark Mode</string>
+    <string name="theme_system">System Default</string>
+    <string name="license_content">• Jetpack Compose - Apache 2.0\n• Room Database - Apache 2.0\n• Kotlin Coroutines - Apache 2.0\n• Navigation Compose - Apache 2.0</string>
+
+    <!-- Categories -->
+    <string name="category_all">All</string>
+    <string name="category_settings">Category</string>
+    <string name="category_general">General</string>
+    <string name="category_work">Work</string>
+    <string name="category_idea">Idea</string>
+    <string name="category_todo">To-Do</string>
+    <string name="category_study">Study</string>
+    <string name="category_schedule">Schedule</string>
+    <string name="category_budget">Budget</string>
+    <string name="category_exercise">Exercise</string>
+    <string name="category_health">Health</string>
+    <string name="category_travel">Travel</string>
+    <string name="category_shopping">Shopping</string>
+
+    <!-- Memo -->
+    <string name="memo_title_label">Title</string>
+    <string name="memo_title_placeholder">Memo title</string>
+    <string name="memo_content_label">Content</string>
+    <string name="memo_content_placeholder">Memo content</string>
+    <string name="save">Save</string>
+    <string name="add_memo">Add Memo</string>
+    <string name="man">Male</string>
+    <string name="woman">Female</string>
+</resources>

@@ -1,6 +1,6 @@
 package me.pecos.nota
 
-import android.app.Activity
+import android.os.Build
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
@@ -34,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -48,14 +51,14 @@ fun SettingsScreen(
     onBack: () -> Unit = {},
     settingsViewModel: SettingsViewModel = viewModel()
 ) {
-    var showClearDialog by remember { mutableStateOf(false) }
-    var showLicenseDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
+    var showLicenseDialog by remember { mutableStateOf(false) }
+    var showClearDialog by remember { mutableStateOf(false) }
 
     val selectedLanguage by settingsViewModel.selectedLanguage.collectAsState()
-    val shouldRecreate by settingsViewModel.shouldRecreate.collectAsState()
     val selectedTheme by settingsViewModel.selectedTheme.collectAsState()
+    val shouldRecreate by settingsViewModel.shouldRecreate.collectAsState()
     val colors = LocalAppColors.current
     val activity = LocalActivity.current
     val context = LocalContext.current
@@ -66,52 +69,12 @@ fun SettingsScreen(
             activity?.recreate()
         }
     }
+
     val versionName = remember {
         context.packageManager.getPackageInfo(context.packageName, 0).versionName
     }
 
-    if (showThemeDialog) {
-        val themeOptions = listOf(
-            ThemeMode.LIGHT to stringResource(R.string.theme_light),
-            ThemeMode.DARK to stringResource(R.string.theme_dark),
-        )
-        AlertDialog(
-            onDismissRequest = { showThemeDialog = false },
-            containerColor = colors.cardBackground,
-            title = { Text(stringResource(R.string.theme_settings), color = colors.textTitle) },
-            text = {
-                Column {
-                    themeOptions.forEach { (mode, label) ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    settingsViewModel.selectTheme(mode)
-                                    showThemeDialog = false
-                                }
-                                .padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = selectedTheme == mode,
-                                onClick = {
-                                    settingsViewModel.selectTheme(mode)
-                                    showThemeDialog = false
-                                }
-                            )
-                            Text(label, color = colors.textBody, modifier = Modifier.padding(start = 8.dp))
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showThemeDialog = false }) {
-                    Text(stringResource(R.string.close), color = colors.chipText)
-                }
-            }
-        )
-    }
-
+    // ── 언어설정 Dialog ────────────────────────────────────────────────────────
     if (showLanguageDialog) {
         AlertDialog(
             onDismissRequest = { showLanguageDialog = false },
@@ -123,21 +86,19 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
-                                    settingsViewModel.selectLanguage(language)
-                                    showLanguageDialog = false
-                                }
+                                .clickable { settingsViewModel.selectLanguage(language) }
                                 .padding(vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             RadioButton(
                                 selected = language.code == selectedLanguage.code,
-                                onClick = {
-                                    settingsViewModel.selectLanguage(language)
-                                    showLanguageDialog = false
-                                }
+                                onClick = { settingsViewModel.selectLanguage(language) }
                             )
-                            Text(language.name, color = colors.textBody, modifier = Modifier.padding(start = 8.dp))
+                            Text(
+                                text = language.name,
+                                color = colors.textBody,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
                         }
                     }
                 }
@@ -150,6 +111,90 @@ fun SettingsScreen(
         )
     }
 
+    // ── 테마 설정 Dialog ───────────────────────────────────────────────────────
+    if (showThemeDialog) {
+        val isSystemEnabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+        val themeOptions = listOf(
+            Triple(ThemeMode.LIGHT, stringResource(R.string.theme_light), true),
+            Triple(ThemeMode.DARK, stringResource(R.string.theme_dark), true),
+            Triple(ThemeMode.SYSTEM, stringResource(R.string.theme_system), isSystemEnabled),
+        )
+        AlertDialog(
+            onDismissRequest = { showThemeDialog = false },
+            containerColor = colors.cardBackground,
+            title = { Text(stringResource(R.string.theme_settings), color = colors.textTitle) },
+            text = {
+                Column {
+                    themeOptions.forEach { (mode, label, enabled) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .then(
+                                    if (enabled) Modifier.clickable {
+                                        settingsViewModel.selectTheme(mode)
+                                    } else Modifier
+                                )
+                                .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = selectedTheme == mode,
+                                onClick = if (enabled) ({ settingsViewModel.selectTheme(mode) }) else null,
+                                enabled = enabled
+                            )
+                            Text(
+                                text = label,
+                                color = if (enabled) colors.textBody else colors.textSecondary,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showThemeDialog = false }) {
+                    Text(stringResource(R.string.close), color = colors.chipText)
+                }
+            }
+        )
+    }
+
+    // ── 오픈소스 라이센스 Dialog ───────────────────────────────────────────────
+    if (showLicenseDialog) {
+        AlertDialog(
+            onDismissRequest = { showLicenseDialog = false },
+            containerColor = colors.cardBackground,
+            title = { Text(stringResource(R.string.open_source_license), color = colors.textTitle) },
+            text = {
+                Text(
+                    text = """
+[1] Wanted Design System (Montage)
+출처: https://montage.wanted.co.kr
+라이선스: MIT License
+Copyright (c) Wanted Lab Corp.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+                    """.trimIndent(),
+                    color = colors.textBody,
+                    fontSize = 12.sp,
+                    fontFamily = FontFamily.Monospace,
+                    lineHeight = 18.sp,
+                    modifier = Modifier.verticalScroll(rememberScrollState())
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showLicenseDialog = false }) {
+                    Text(stringResource(R.string.close), color = colors.chipText)
+                }
+            }
+        )
+    }
+
+    // ── 메모 초기화 Dialog ─────────────────────────────────────────────────────
     if (showClearDialog) {
         AlertDialog(
             onDismissRequest = { showClearDialog = false },
@@ -167,20 +212,6 @@ fun SettingsScreen(
             dismissButton = {
                 TextButton(onClick = { showClearDialog = false }) {
                     Text(stringResource(R.string.cancel), color = colors.chipText)
-                }
-            }
-        )
-    }
-
-    if (showLicenseDialog) {
-        AlertDialog(
-            onDismissRequest = { showLicenseDialog = false },
-            containerColor = colors.cardBackground,
-            title = { Text(stringResource(R.string.open_source_license), color = colors.textTitle) },
-            text = { Text(stringResource(R.string.license_content), color = colors.textBody) },
-            confirmButton = {
-                TextButton(onClick = { showLicenseDialog = false }) {
-                    Text(stringResource(R.string.close), color = colors.chipText)
                 }
             }
         )

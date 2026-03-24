@@ -18,7 +18,8 @@ val LANGUAGES = listOf(
 
 enum class ThemeMode(val value: String) {
     LIGHT("light"),
-    DARK("dark")
+    DARK("dark"),
+    SYSTEM("system")
 }
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
