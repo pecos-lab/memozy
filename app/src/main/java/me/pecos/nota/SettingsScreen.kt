@@ -12,18 +12,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -36,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wanted.android.wanted.design.actions.button.WantedButton
@@ -43,7 +35,6 @@ import com.wanted.android.wanted.design.actions.button.config.WantedButtonDefaul
 import com.wanted.android.wanted.design.util.ButtonType
 import com.wanted.android.wanted.design.util.ButtonVariant
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit = {},
@@ -70,107 +61,97 @@ fun SettingsScreen(
             ThemeMode.DARK to stringResource(R.string.theme_dark),
             ThemeMode.SYSTEM to stringResource(R.string.theme_system),
         )
-        AlertDialog(
+        AppPopup(
             onDismissRequest = { showThemeDialog = false },
-            containerColor = colors.cardBackground,
-            title = { Text(stringResource(R.string.theme_settings), color = colors.textTitle) },
-            text = {
-                Column {
-                    themeOptions.forEach { (mode, label) ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    settingsViewModel.selectTheme(mode)
-                                    showThemeDialog = false
-                                }
-                                .padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = selectedTheme == mode,
-                                onClick = {
-                                    settingsViewModel.selectTheme(mode)
-                                    showThemeDialog = false
-                                }
-                            )
-                            Text(label, color = colors.textBody, modifier = Modifier.padding(start = 8.dp))
-                        }
+            title = stringResource(R.string.theme_settings),
+            navigation = PopupNavigation.EMPHASIZED,
+            size = PopupSize.MEDIUM,
+            actionArea = PopupActionArea.NONE
+        ) {
+            Column {
+                themeOptions.forEach { (mode, label) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                settingsViewModel.selectTheme(mode)
+                                showThemeDialog = false
+                            }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = selectedTheme == mode,
+                            onClick = {
+                                settingsViewModel.selectTheme(mode)
+                                showThemeDialog = false
+                            }
+                        )
+                        Text(label, color = colors.textBody, modifier = Modifier.padding(start = 8.dp))
                     }
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = { showThemeDialog = false }) {
-                    Text(stringResource(R.string.close), color = colors.chipText)
-                }
             }
-        )
+        }
     }
 
     if (showLanguageDialog) {
-        AlertDialog(
+        AppPopup(
             onDismissRequest = { showLanguageDialog = false },
-            containerColor = colors.cardBackground,
-            title = { Text(stringResource(R.string.language_settings), color = colors.textTitle) },
-            text = {
-                Column {
-                    LANGUAGES.forEach { language ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    settingsViewModel.selectLanguage(language)
-                                    showLanguageDialog = false
-                                    @Suppress("DEPRECATION")
-                                    activity?.overridePendingTransition(0, 0)
-                                    activity?.recreate()
-                                }
-                                .padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = language.code == selectedLanguage.code,
-                                onClick = {
-                                    settingsViewModel.selectLanguage(language)
-                                    showLanguageDialog = false
-                                    @Suppress("DEPRECATION")
-                                    activity?.overridePendingTransition(0, 0)
-                                    activity?.recreate()
-                                }
-                            )
-                            Text(language.name, color = colors.textBody, modifier = Modifier.padding(start = 8.dp))
-                        }
+            title = stringResource(R.string.language_settings),
+            navigation = PopupNavigation.EMPHASIZED,
+            size = PopupSize.MEDIUM,
+            actionArea = PopupActionArea.NONE
+        ) {
+            Column {
+                LANGUAGES.forEach { language ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                settingsViewModel.selectLanguage(language)
+                                showLanguageDialog = false
+                                @Suppress("DEPRECATION")
+                                activity?.overridePendingTransition(0, 0)
+                                activity?.recreate()
+                            }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = language.code == selectedLanguage.code,
+                            onClick = {
+                                settingsViewModel.selectLanguage(language)
+                                showLanguageDialog = false
+                                @Suppress("DEPRECATION")
+                                activity?.overridePendingTransition(0, 0)
+                                activity?.recreate()
+                            }
+                        )
+                        Text(language.name, color = colors.textBody, modifier = Modifier.padding(start = 8.dp))
                     }
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = { showLanguageDialog = false }) {
-                    Text(stringResource(R.string.close), color = colors.chipText)
-                }
             }
-        )
+        }
     }
 
     if (showClearDialog) {
-        AlertDialog(
+        AppPopup(
             onDismissRequest = { showClearDialog = false },
-            containerColor = colors.cardBackground,
-            title = { Text(stringResource(R.string.reset_memos), color = colors.textTitle) },
-            text = { Text(stringResource(R.string.reset_confirm), color = colors.textBody) },
-            confirmButton = {
-                TextButton(onClick = {
-                    settingsViewModel.clearAllMemos()
-                    showClearDialog = false
-                }) {
-                    Text(stringResource(R.string.reset), color = Color.Red)
-                }
+            title = stringResource(R.string.reset_memos),
+            navigation = PopupNavigation.EMPHASIZED,
+            size = PopupSize.MEDIUM,
+            actionArea = PopupActionArea.NEUTRAL,
+            primaryButtonText = stringResource(R.string.reset),
+            isPrimaryDestructive = true,
+            onPrimaryClick = {
+                settingsViewModel.clearAllMemos()
+                showClearDialog = false
             },
-            dismissButton = {
-                TextButton(onClick = { showClearDialog = false }) {
-                    Text(stringResource(R.string.cancel), color = colors.chipText)
-                }
-            }
-        )
+            secondaryButtonText = stringResource(R.string.cancel),
+            onSecondaryClick = { showClearDialog = false }
+        ) {
+            Text(stringResource(R.string.reset_confirm), color = colors.textBody)
+        }
     }
 
     if (showLicenseDialog) {
@@ -181,61 +162,42 @@ fun SettingsScreen(
             Text(text = text, color = colors.textBody, fontSize = 11.sp, lineHeight = 17.sp)
         }
 
-        AlertDialog(
+        AppPopup(
             onDismissRequest = { showLicenseDialog = false },
-            containerColor = colors.cardBackground,
-            title = { Text(stringResource(R.string.open_source_license), color = colors.textTitle) },
-            text = {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    LicenseItem("[1] Wanted Design System (Montage)\n출처: https://montage.wanted.co.kr\n라이선스: MIT License\nCopyright (c) Wanted Lab Corp.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.")
+            title = stringResource(R.string.open_source_license),
+            navigation = PopupNavigation.EMPHASIZED,
+            size = PopupSize.LARGE,
+            actionArea = PopupActionArea.NONE
+        ) {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                LicenseItem("[1] Wanted Design System (Montage)\n출처: https://montage.wanted.co.kr\n라이선스: MIT License\nCopyright (c) Wanted Lab Corp.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.")
 
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = colors.cardBorder)
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = colors.cardBorder)
 
-                    LicenseItem("[2] Jetpack Compose & AndroidX\n출처: https://developer.android.com/jetpack\n라이선스: Apache License 2.0\nCopyright (c) The Android Open Source Project\n\n$apacheLicense")
+                LicenseItem("[2] Jetpack Compose & AndroidX\n출처: https://developer.android.com/jetpack\n라이선스: Apache License 2.0\nCopyright (c) The Android Open Source Project\n\n$apacheLicense")
 
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = colors.cardBorder)
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = colors.cardBorder)
 
-                    LicenseItem("[3] Kotlin & kotlinx-coroutines\n출처: https://kotlinlang.org\n라이선스: Apache License 2.0\nCopyright (c) JetBrains s.r.o.\n\n$apacheLicense")
+                LicenseItem("[3] Kotlin & kotlinx-coroutines\n출처: https://kotlinlang.org\n라이선스: Apache License 2.0\nCopyright (c) JetBrains s.r.o.\n\n$apacheLicense")
 
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = colors.cardBorder)
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = colors.cardBorder)
 
-                    LicenseItem("[4] Haze (dev.chrisbanes.haze) 1.7.2\n출처: https://github.com/chrisbanes/haze\n라이선스: Apache License 2.0\nCopyright (c) Chris Banes\n\n$apacheLicense")
+                LicenseItem("[4] Haze (dev.chrisbanes.haze) 1.7.2\n출처: https://github.com/chrisbanes/haze\n라이선스: Apache License 2.0\nCopyright (c) Chris Banes\n\n$apacheLicense")
 
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = colors.cardBorder)
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = colors.cardBorder)
 
-                    LicenseItem("[5] Room (androidx.room)\n출처: https://developer.android.com/jetpack/androidx/releases/room\n라이선스: Apache License 2.0\nCopyright (c) The Android Open Source Project\n\n$apacheLicense")
+                LicenseItem("[5] Room (androidx.room)\n출처: https://developer.android.com/jetpack/androidx/releases/room\n라이선스: Apache License 2.0\nCopyright (c) The Android Open Source Project\n\n$apacheLicense")
 
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = colors.cardBorder)
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = colors.cardBorder)
 
-                    LicenseItem("[6] Firebase (Crashlytics & Analytics)\n출처: https://firebase.google.com\n라이선스: Apache License 2.0\nCopyright (c) Google LLC\n\n$apacheLicense")
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showLicenseDialog = false }) {
-                    Text(stringResource(R.string.close), color = colors.chipText)
-                }
+                LicenseItem("[6] Firebase (Crashlytics & Analytics)\n출처: https://firebase.google.com\n라이선스: Apache License 2.0\nCopyright (c) Google LLC\n\n$apacheLicense")
             }
-        )
+        }
     }
 
     // containerColor 명시 → MaterialTheme.colorScheme.surface 무시
     Scaffold(
-        containerColor = colors.screenBackground,
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.settings), color = colors.topbarTitle) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = null,
-                            tint = colors.topbarTitle
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = colors.screenBackground)
-            )
-        }
+        containerColor = colors.screenBackground
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -247,9 +209,16 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 24.dp)
             ) {
+                Text(
+                    text = stringResource(R.string.settings),
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.topbarTitle,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 12.dp)
+                )
                 WantedButton(
                     text = stringResource(R.string.language_settings),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                     buttonDefault = WantedButtonDefaults.getDefault(
                         type = ButtonType.ASSISTIVE,
                         variant = ButtonVariant.OUTLINED
@@ -261,7 +230,7 @@ fun SettingsScreen(
 
                 WantedButton(
                     text = stringResource(R.string.theme_settings),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                     buttonDefault = WantedButtonDefaults.getDefault(
                         type = ButtonType.ASSISTIVE,
                         variant = ButtonVariant.OUTLINED
@@ -273,7 +242,7 @@ fun SettingsScreen(
 
                 WantedButton(
                     text = stringResource(R.string.open_source_license),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                     buttonDefault = WantedButtonDefaults.getDefault(
                         type = ButtonType.ASSISTIVE,
                         variant = ButtonVariant.OUTLINED
@@ -285,7 +254,7 @@ fun SettingsScreen(
 
                 WantedButton(
                     text = stringResource(R.string.reset_memos),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                     buttonDefault = WantedButtonDefaults.getDefault(
                         type = ButtonType.ASSISTIVE,
                         variant = ButtonVariant.OUTLINED

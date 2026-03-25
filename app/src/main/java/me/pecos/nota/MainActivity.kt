@@ -28,15 +28,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -45,7 +47,6 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -75,6 +76,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.wanted.android.wanted.design.input.textinput.textfield.WantedTextField
+import com.wanted.android.wanted.design.input.textinput.textarea.WantedTextArea
+import com.wanted.android.wanted.design.actions.button.WantedButton
+import com.wanted.android.wanted.design.util.ButtonType
+import com.wanted.android.wanted.design.util.ButtonVariant
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import com.wanted.android.wanted.design.theme.DesignSystemTheme
@@ -389,7 +397,7 @@ fun FloatingNavPill(
                 Icon(
                     imageVector = item.icon,
                     contentDescription = item.label,
-                    modifier = Modifier.size(32.dp).padding(4.dp),
+                    modifier = Modifier.size(24.dp),
                     tint = if (selected) colors.navIconSelected else colors.navIconUnselected
                 )
             }
@@ -478,54 +486,49 @@ fun HomeScreen(
         }
     }
 
-    // ── 카테고리 필터 Dialog ───────────────────────────────────────────────────
+    // ── 카테고리 필터 Popup ────────────────────────────────────────────────────
     if (showFilterDialog) {
-        AlertDialog(
+        AppPopup(
             onDismissRequest = { showFilterDialog = false },
-            containerColor = colors.cardBackground,
-            title = { Text(stringResource(R.string.category_settings), color = colors.textTitle) },
-            text = {
-                FlowRow(
-                    maxItemsInEachRow = 3,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    val orderedIndices = listOf(-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-                    orderedIndices.forEach { index ->
-                        val label = if (index == -1) allLabel else categoryLabels[index]
-                        val selected = tempCategoryIndex == index
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(if (selected) colors.chipBackground else Color.Transparent)
-                                .border(1.dp, if (selected) colors.chipText else colors.cardBorder, RoundedCornerShape(12.dp))
-                                .clickable { tempCategoryIndex = index }
-                                .padding(horizontal = 4.dp, vertical = 8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(text = label, maxLines = 1, fontSize = 11.sp,
-                                color = if (selected) colors.chipText else colors.textSecondary)
-                        }
+            title = stringResource(R.string.category_settings),
+            navigation = PopupNavigation.EMPHASIZED,
+            size = PopupSize.LARGE,
+            actionArea = PopupActionArea.NEUTRAL,
+            primaryButtonText = stringResource(R.string.save),
+            onPrimaryClick = {
+                viewModel.setSelectedCategory(tempCategoryIndex)
+                showFilterDialog = false
+            },
+            secondaryButtonText = stringResource(R.string.cancel),
+            onSecondaryClick = { showFilterDialog = false }
+        ) {
+            FlowRow(
+                maxItemsInEachRow = 3,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                val orderedIndices = listOf(-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+                orderedIndices.forEach { index ->
+                    val label = if (index == -1) allLabel else categoryLabels[index]
+                    val selected = tempCategoryIndex == index
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (selected) colors.chipBackground else Color.Transparent)
+                            .border(1.dp, if (selected) colors.chipText else colors.cardBorder, RoundedCornerShape(12.dp))
+                            .clickable { tempCategoryIndex = index }
+                            .padding(horizontal = 4.dp, vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = label, maxLines = 1, fontSize = 11.sp,
+                            color = if (selected) colors.chipText else colors.textSecondary)
                     }
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.setSelectedCategory(tempCategoryIndex)
-                    showFilterDialog = false
-                }) {
-                    Text(stringResource(R.string.save), color = colors.chipText)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showFilterDialog = false }) {
-                    Text(stringResource(R.string.cancel), color = colors.textSecondary)
-                }
             }
-        )
+        }
     }
 
     // containerColor 명시 → MaterialTheme.colorScheme.surface 무시
@@ -579,7 +582,7 @@ fun HomeScreen(
                         Greeting(
                             memo = memo,
                             onDelete = { onDelete(memo.id) },
-                            onEdit = { onEdit(memo.id) }
+                            onSave = { updatedMemo -> viewModel.updateMemo(updatedMemo) }
                         )
                     }
                 }
@@ -600,11 +603,12 @@ fun HomeScreen(
 
 // ── 메모 카드 ───────────────────────────────────────────────────────────────────
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun Greeting(
     memo: MemoUiState,
     onDelete: () -> Unit,
-    onEdit: () -> Unit
+    onSave: (MemoUiState) -> Unit
 ) {
     val colors = LocalAppColors.current
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -613,32 +617,163 @@ fun Greeting(
             .getString("language_code", "ko") ?: "ko"
     }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showEditPopup by remember { mutableStateOf(false) }
 
-    if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            containerColor = colors.cardBackground,
-            title = { Text(stringResource(R.string.delete_confirm_title), color = colors.textTitle) },
-            text = {
-                Text(
-                    stringResource(R.string.delete_confirm_message),
-                    color = Color(0xFFE24B4A)
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    showDeleteDialog = false
-                    onDelete()
-                }) {
-                    Text(stringResource(R.string.yes), color = Color(0xFFE24B4A))
+    // ── 수정 팝업 ─────────────────────────────────────────────────────────────
+    if (showEditPopup) {
+        var editName by remember { mutableStateOf(memo.name) }
+        var editBody by remember { mutableStateOf(memo.killThePecos) }
+        var editCategoryIndex by remember {
+            mutableIntStateOf(
+                CATEGORY_ALL_TRANSLATIONS.indexOfFirst { memo.sex in it }.takeIf { it >= 0 } ?: 0
+            )
+        }
+        val rawCategories = CATEGORY_RES_IDS.map { resId -> stringResource(resId) }
+        val displayCategories = CATEGORY_RES_IDS.mapIndexed { i, resId ->
+            "${CATEGORY_EMOJIS[i]} ${stringResource(resId)}"
+        }
+        val editEnabled = editName.isNotBlank() && editBody.isNotBlank()
+
+        Dialog(
+            onDismissRequest = { showEditPopup = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 40.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(colors.cardBackground)
+            ) {
+                // Navigation: EMPHASIZED (타이틀 좌측 + X 우측)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 20.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.edit_memo),
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.textTitle,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = null,
+                        tint = colors.textSecondary,
+                        modifier = Modifier
+                            .size(20.dp)
+                            .clickable { showEditPopup = false }
+                    )
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text(stringResource(R.string.no), color = colors.chipText)
+
+                // Contents (스크롤 가능)
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 30.dp)
+                    ) {
+                        WantedTextField(
+                            text = editName,
+                            placeholder = stringResource(R.string.memo_title_placeholder),
+                            title = stringResource(R.string.memo_title_label),
+                            onValueChange = { editName = it }
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        WantedTextArea(
+                            text = editBody,
+                            placeholder = stringResource(R.string.memo_content_placeholder),
+                            title = stringResource(R.string.memo_content_label),
+                            onValueChange = { editBody = it }
+                        )
+                        Spacer(modifier = Modifier.height(20.dp))
+                        FlowRow(
+                            maxItemsInEachRow = 3,
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            displayCategories.forEachIndexed { index, category ->
+                                val selected = editCategoryIndex == index
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(if (selected) colors.chipBackground else Color.Transparent)
+                                        .border(1.dp, if (selected) colors.chipText else colors.cardBorder, RoundedCornerShape(12.dp))
+                                        .clickable { editCategoryIndex = index }
+                                        .padding(horizontal = 4.dp, vertical = 8.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = category,
+                                        maxLines = 1,
+                                        fontSize = 11.sp,
+                                        color = if (selected) colors.chipText else colors.textSecondary
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                        Spacer(modifier = Modifier.height(20.dp))
+                    }
+                }
+
+                // 저장 버튼
+                Box(modifier = Modifier.padding(horizontal = 30.dp, vertical = 16.dp)) {
+                    WantedButton(
+                        text = stringResource(R.string.save),
+                        modifier = Modifier.fillMaxWidth(),
+                        type = ButtonType.PRIMARY,
+                        variant = ButtonVariant.SOLID,
+                        enabled = editEnabled,
+                        onClick = {
+                            onSave(
+                                MemoUiState(
+                                    id = memo.id,
+                                    name = editName,
+                                    sex = rawCategories[editCategoryIndex],
+                                    killThePecos = editBody
+                                )
+                            )
+                            showEditPopup = false
+                        }
+                    )
                 }
             }
-        )
+        }
+    }
+
+    if (showDeleteDialog) {
+        AppPopup(
+            onDismissRequest = { showDeleteDialog = false },
+            title = stringResource(R.string.delete_confirm_title),
+            navigation = PopupNavigation.EMPHASIZED,
+            size = PopupSize.MEDIUM,
+            actionArea = PopupActionArea.NEUTRAL,
+            primaryButtonText = stringResource(R.string.yes),
+            isPrimaryDestructive = true,
+            onPrimaryClick = {
+                showDeleteDialog = false
+                onDelete()
+            },
+            secondaryButtonText = stringResource(R.string.no),
+            onSecondaryClick = { showDeleteDialog = false }
+        ) {
+            Text(
+                stringResource(R.string.delete_confirm_message),
+                color = Color(0xFFE24B4A)
+            )
+        }
     }
 
     Card(
@@ -678,7 +813,28 @@ fun Greeting(
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Text(memo.killThePecos, color = colors.textBody)
+            var isExpanded by remember { mutableStateOf(false) }
+            var isOverflow by remember { mutableStateOf(false) }
+            Text(
+                text = memo.killThePecos,
+                color = colors.textBody,
+                maxLines = if (isExpanded) Int.MAX_VALUE else 3,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                onTextLayout = { result ->
+                    if (!isExpanded) isOverflow = result.hasVisualOverflow
+                }
+            )
+            if (isOverflow || isExpanded) {
+                Text(
+                    text = if (isExpanded) "접기" else "더보기",
+                    color = colors.chipText,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier
+                        .clickable { isExpanded = !isExpanded }
+                        .padding(top = 2.dp)
+                )
+            }
             Spacer(modifier = Modifier.height(12.dp))
             val isDark = isSystemInDarkTheme()
             Row(modifier = Modifier.align(Alignment.End)) {
@@ -715,7 +871,7 @@ fun Greeting(
                         .clip(RoundedCornerShape(10.dp))
                         .border(editBorderWidth, editBorder, RoundedCornerShape(10.dp))
                         .background(editBg)
-                        .clickable { onEdit() },
+                        .clickable { showEditPopup = true },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
