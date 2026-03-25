@@ -13,16 +13,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.wanted.android.wanted.design.theme.DesignSystemTheme
 import com.wanted.android.wanted.design.input.textinput.textfield.WantedTextField
@@ -86,7 +86,7 @@ val CATEGORY_ALL_TRANSLATIONS = listOf(
     listOf("쇼핑", "Shopping", "ショッピング"),
 )
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MemoScreen(
     onSave: (MemoUiState) -> Unit,
@@ -121,29 +121,40 @@ fun MemoScreen(
 
     // containerColor 명시 → MaterialTheme.colorScheme.surface 무시
     Scaffold(
-        containerColor = colors.screenBackground,
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.add_memo), color = colors.topbarTitle) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = null,
-                            tint = colors.topbarTitle
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = colors.screenBackground)
-            )
-        }
+        containerColor = colors.screenBackground
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 30.dp, vertical = 16.dp)
                 .padding(innerPadding)
         ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 24.dp, bottom = 12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = null,
+                    tint = colors.topbarTitle,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clickable { onBack() }
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.add_memo),
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.topbarTitle
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 30.dp, vertical = 16.dp)
+            ) {
 
             WantedTextField(
                 text = nameText,
@@ -213,7 +224,8 @@ fun MemoScreen(
                     )
                 }
             )
-        }
+            } // inner Column
+        } // outer Column
     }
 }
 

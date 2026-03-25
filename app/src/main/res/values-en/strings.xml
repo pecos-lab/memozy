@@ -43,6 +43,7 @@
     <string name="no">No</string>
     <string name="save">Save</string>
     <string name="add_memo">Add Memo</string>
+    <string name="edit_memo">Edit Memo</string>
     <string name="man">Male</string>
     <string name="woman">Female</string>
 </resources>
