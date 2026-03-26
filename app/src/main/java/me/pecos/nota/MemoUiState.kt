@@ -5,5 +5,6 @@ data class MemoUiState(
     val name: String,
     val category: String,
     val content: String,
-    val createdAt: Long = 0L
+    val createdAt: Long = 0L,
+    val format: String = "plain"
 )
