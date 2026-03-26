@@ -27,7 +27,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     name = name,
                     category = category,
                     content = content,
-                    createdAt = System.currentTimeMillis()
+                    createdAt = System.currentTimeMillis(),
+                    format = MemoFormat.MARKDOWN
                 )
             )
         }
@@ -59,7 +60,11 @@ fun MemoUiState.toMemo(): Memo = Memo(
     name = this.name,
     category = this.category,
     content = this.content,
-    createdAt = this.createdAt
+    createdAt = this.createdAt,
+    format = when (this.format) {
+        MemoFormatUi.MARKDOWN -> MemoFormat.MARKDOWN
+        MemoFormatUi.PLAIN -> MemoFormat.PLAIN
+    }
 )
 
 fun Memo.toUiState(): MemoUiState = MemoUiState(
@@ -67,5 +72,9 @@ fun Memo.toUiState(): MemoUiState = MemoUiState(
     name = this.name,
     category = this.category,
     content = this.content,
-    createdAt = this.createdAt
+    createdAt = this.createdAt,
+    format = when (this.format) {
+        MemoFormat.MARKDOWN -> MemoFormatUi.MARKDOWN
+        MemoFormat.PLAIN -> MemoFormatUi.PLAIN
+    }
 )
