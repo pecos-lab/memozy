@@ -91,7 +91,7 @@ val CATEGORY_ALL_TRANSLATIONS = listOf(
 fun MemoScreen(
     onSave: (MemoUiState) -> Unit,
     onBack: () -> Unit = {},
-    existingMemo: MemoUiState = MemoUiState(0, "", "", "")
+    existingMemo: MemoUiState = MemoUiState(0, "", 1, "")
 ) {
     val categories = listOf(
         stringResource(R.string.category_general),
@@ -108,11 +108,7 @@ fun MemoScreen(
     )
     var nameText by remember { mutableStateOf(existingMemo.name) }
     var categoryIndex by remember {
-        mutableStateOf(
-            existingMemo.category.let { saved ->
-                CATEGORY_ALL_TRANSLATIONS.indexOfFirst { saved in it }.takeIf { it >= 0 } ?: 0
-            }
-        )
+        mutableStateOf((existingMemo.categoryId - 1).coerceIn(0, CATEGORY_RES_IDS.size - 1))
     }
     var bodyText by remember { mutableStateOf(existingMemo.content) }
 
@@ -218,7 +214,7 @@ fun MemoScreen(
                         MemoUiState(
                             id = existingMemo.id,
                             name = nameText,
-                            category = categories[categoryIndex],
+                            categoryId = categoryIndex + 1,
                             content = bodyText
                         )
                     )
@@ -235,7 +231,7 @@ fun MemoScreenPreview() {
     DesignSystemTheme {
         MemoScreen(
             onSave = {},
-            existingMemo = MemoUiState(1, "테스트 제목", "업무", "테스트 내용")
+            existingMemo = MemoUiState(1, "테스트 제목", 2, "테스트 내용")
         )
     }
 }

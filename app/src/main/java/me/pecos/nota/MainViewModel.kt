@@ -20,12 +20,12 @@ class MainViewModel @Inject constructor(
         .map { list -> list.map { it.toUiState() } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    fun addMemo(name: String, category: String, content: String) {
+    fun addMemo(name: String, categoryId: Int, content: String) {
         viewModelScope.launch {
             repository.addMemo(
                 Memo(
                     name = name,
-                    category = category,
+                    categoryId = categoryId,
                     content = content,
                     createdAt = System.currentTimeMillis(),
                     format = MemoFormat.MARKDOWN
@@ -58,7 +58,7 @@ class MainViewModel @Inject constructor(
 fun MemoUiState.toMemo(): Memo = Memo(
     id = this.id,
     name = this.name,
-    category = this.category,
+    categoryId = this.categoryId,
     content = this.content,
     createdAt = this.createdAt,
     format = when (this.format) {
@@ -70,7 +70,7 @@ fun MemoUiState.toMemo(): Memo = Memo(
 fun Memo.toUiState(): MemoUiState = MemoUiState(
     id = this.id,
     name = this.name,
-    category = this.category,
+    categoryId = this.categoryId,
     content = this.content,
     createdAt = this.createdAt,
     format = when (this.format) {
