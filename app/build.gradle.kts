@@ -49,6 +49,10 @@ configurations.all {
     }
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     implementation("androidx.navigation:navigation-compose:2.8.9")
     implementation("dev.chrisbanes.haze:haze:1.7.2")
