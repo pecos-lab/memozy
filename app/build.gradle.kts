@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.hilt.android)
     id("com.google.firebase.crashlytics")
 }
 
@@ -73,6 +74,9 @@ dependencies {
     implementation("com.github.wanteddev:montage-android:3.3.0")
     implementation("com.google.firebase:firebase-crashlytics")
     ksp(libs.room.compiler)
+    implementation(libs.hilt.android)
+    implementation(libs.hilt.navigation.compose)
+    ksp(libs.hilt.compiler)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     testImplementation(libs.junit)

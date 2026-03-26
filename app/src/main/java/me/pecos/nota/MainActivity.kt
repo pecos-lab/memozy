@@ -190,6 +190,7 @@ fun Context.findActivity(): Activity? {
 
 // ── Activity ───────────────────────────────────────────────────────────────────
 
+@dagger.hilt.android.AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     override fun attachBaseContext(newBase: Context) {

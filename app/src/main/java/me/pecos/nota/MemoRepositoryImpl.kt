@@ -1,8 +1,9 @@
 package me.pecos.nota
 
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
 
-class MemoRepositoryImpl(private val memoDao: MemoDao) : MemoRepository {
+class MemoRepositoryImpl @Inject constructor(private val memoDao: MemoDao) : MemoRepository {
 
     override fun getMemos(): Flow<List<Memo>> = memoDao.getAllMemos()
 

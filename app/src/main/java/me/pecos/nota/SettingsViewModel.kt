@@ -1,12 +1,14 @@
 package me.pecos.nota
 
-import android.app.Application
 import android.content.Context
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class Language(val name: String, val code: String)
 
@@ -22,12 +24,13 @@ enum class ThemeMode(val value: String) {
     SYSTEM("system")
 }
 
-class SettingsViewModel(application: Application) : AndroidViewModel(application) {
+@HiltViewModel
+class SettingsViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val repository: MemoRepository
+) : ViewModel() {
 
-    private val prefs = application.getSharedPreferences("settings", Context.MODE_PRIVATE)
-    private val repository = MemoRepositoryImpl(
-        MemoDatabase.getDatabase(application).memoDao()
-    )
+    private val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
 
     private val _selectedLanguage = MutableStateFlow(
         LANGUAGES.find { it.code == prefs.getString("language_code", "ko") }
