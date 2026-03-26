@@ -43,7 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.wanted.android.wanted.design.theme.DesignSystemTheme
 
 // ── 홈 화면 ────────────────────────────────────────────────────────────────────
@@ -54,7 +54,7 @@ fun HomeScreen(
     memoList: List<MemoUiState>,
     onDelete: (Int) -> Unit,
     onEdit: (Int) -> Unit,
-    viewModel: MainViewModel = viewModel()
+    viewModel: MainViewModel = hiltViewModel()
 ) {
     val colors = LocalAppColors.current
     val selectedCategoryIndex by viewModel.selectedCategoryIndex.collectAsState()
@@ -70,7 +70,7 @@ fun HomeScreen(
     val filteredList = remember(memoList, selectedCategoryIndex) {
         if (selectedCategoryIndex == -1) memoList
         else memoList.filter { memo ->
-            CATEGORY_ALL_TRANSLATIONS[selectedCategoryIndex].any { it.equals(memo.category, ignoreCase = true) }
+            memo.categoryId == selectedCategoryIndex + 1
         }
     }
 
@@ -195,8 +195,8 @@ fun GreetingPreview() {
     DesignSystemTheme {
         HomeScreen(
             memoList = listOf(
-                MemoUiState(1, "제목1", "Man", "내용1"),
-                MemoUiState(2, "제목2", "Woman", "내용2")
+                MemoUiState(1, "제목1", 1, "내용1"),
+                MemoUiState(2, "제목2", 2, "내용2")
             ),
             onDelete = {},
             onEdit = {}

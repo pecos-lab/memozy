@@ -74,7 +74,7 @@ fun Greeting(
         var editBody by remember { mutableStateOf(memo.content) }
         var editCategoryIndex by remember {
             mutableIntStateOf(
-                CATEGORY_ALL_TRANSLATIONS.indexOfFirst { memo.category in it }.takeIf { it >= 0 } ?: 0
+                (memo.categoryId - 1).coerceIn(0, CATEGORY_RES_IDS.size - 1)
             )
         }
         val rawCategories = CATEGORY_RES_IDS.map { resId -> stringResource(resId) }
@@ -190,7 +190,7 @@ fun Greeting(
                                 MemoUiState(
                                     id = memo.id,
                                     name = editName,
-                                    category = rawCategories[editCategoryIndex],
+                                    categoryId = editCategoryIndex + 1,
                                     content = editBody
                                 )
                             )
@@ -242,13 +242,9 @@ fun Greeting(
                 Text(memo.name, fontWeight = FontWeight.Bold, color = colors.textTitle)
                 Column(horizontalAlignment = Alignment.End) {
                     Text(formatMemoTime(memo.createdAt, languageCode), color = colors.textSecondary)
-                    if (memo.category.isNotBlank()) {
-                        val categoryIndex = CATEGORY_ALL_TRANSLATIONS.indexOfFirst { memo.category in it }
-                        val categoryLabel = if (categoryIndex >= 0) {
-                            "${CATEGORY_EMOJIS[categoryIndex]} ${stringResource(CATEGORY_RES_IDS[categoryIndex])}"
-                        } else {
-                            memo.category
-                        }
+                    if (memo.categoryId in 1..CATEGORY_RES_IDS.size) {
+                        val categoryIndex = memo.categoryId - 1
+                        val categoryLabel = "${CATEGORY_EMOJIS[categoryIndex]} ${stringResource(CATEGORY_RES_IDS[categoryIndex])}"
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = categoryLabel,

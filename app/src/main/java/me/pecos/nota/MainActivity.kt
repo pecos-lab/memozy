@@ -122,7 +122,8 @@ class MainActivity : AppCompatActivity() {
                                 HomeScreen(
                                     memoList = memoList,
                                     onDelete = { id -> viewModel.deleteMemo(id) },
-                                    onEdit = { id -> navController.navigate("Memo/$id") }
+                                    onEdit = { id -> navController.navigate("Memo/$id") },
+                                    viewModel = viewModel
                                 )
                             }
                             composable("settings") {
@@ -136,9 +137,9 @@ class MainActivity : AppCompatActivity() {
                                     backStackEntry.arguments?.getString("memoId")?.toIntOrNull() ?: -1
                                 val existingMemo: MemoUiState =
                                     if (memoId > 0) {
-                                        memoList.find { it.id == memoId } ?: MemoUiState(0, "", "", "")
+                                        memoList.find { it.id == memoId } ?: MemoUiState(0, "", 0, "")
                                     } else {
-                                        MemoUiState(0, "", "", "")
+                                        MemoUiState(0, "", 0, "")
                                     }
                                 MemoScreen(
                                     existingMemo = existingMemo,
@@ -147,7 +148,7 @@ class MainActivity : AppCompatActivity() {
                                         if (memoId > 0) {
                                             viewModel.updateMemo(memo)
                                         } else {
-                                            viewModel.addMemo(memo.name, memo.category, memo.content)
+                                            viewModel.addMemo(memo.name, memo.categoryId, memo.content)
                                         }
                                         navController.popBackStack()
                                     }
@@ -215,4 +216,3 @@ class MainActivity : AppCompatActivity() {
         }
     }
 }
-
