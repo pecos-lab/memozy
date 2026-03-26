@@ -15,7 +15,7 @@ class MemoRepositoryImpl(private val memoDao: MemoDao) : MemoRepository {
     }
 
     override suspend fun updateMemo(memo: Memo) {
-        memoDao.updateMemo(memo)
+        memoDao.updateMemo(memo.copy(updatedAt = System.currentTimeMillis()))
     }
 
     override suspend fun clearAllMemos() {
