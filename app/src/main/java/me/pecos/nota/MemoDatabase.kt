@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
@@ -26,6 +27,7 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
 }
 
 @Database(entities = [Memo::class], version = 4, exportSchema = true)
+@TypeConverters(MemoFormatConverter::class)
 abstract class MemoDatabase : RoomDatabase() {
     abstract fun memoDao(): MemoDao
 
