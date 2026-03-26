@@ -20,13 +20,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         .map { list -> list.map { it.toUiState() } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    fun addMemo(name: String, sex: String, killThePecos: String) {
+    fun addMemo(name: String, category: String, content: String) {
         viewModelScope.launch {
             repository.addMemo(
                 Memo(
                     name = name,
-                    sex = sex,
-                    killThePecos = killThePecos,
+                    category = category,
+                    content = content,
                     createdAt = System.currentTimeMillis()
                 )
             )
@@ -57,15 +57,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 fun MemoUiState.toMemo(): Memo = Memo(
     id = this.id,
     name = this.name,
-    sex = this.sex,
-    killThePecos = this.killThePecos,
+    category = this.category,
+    content = this.content,
     createdAt = this.createdAt
 )
 
 fun Memo.toUiState(): MemoUiState = MemoUiState(
     id = this.id,
     name = this.name,
-    sex = this.sex,
-    killThePecos = this.killThePecos,
+    category = this.category,
+    content = this.content,
     createdAt = this.createdAt
 )

@@ -109,12 +109,12 @@ fun MemoScreen(
     var nameText by remember { mutableStateOf(existingMemo.name) }
     var categoryIndex by remember {
         mutableStateOf(
-            existingMemo.sex.let { saved ->
+            existingMemo.category.let { saved ->
                 CATEGORY_ALL_TRANSLATIONS.indexOfFirst { saved in it }.takeIf { it >= 0 } ?: 0
             }
         )
     }
-    var bodyText by remember { mutableStateOf(existingMemo.killThePecos) }
+    var bodyText by remember { mutableStateOf(existingMemo.content) }
 
     val enabled = nameText.isNotBlank() && bodyText.isNotBlank()
     val colors = LocalAppColors.current  // ← CompositionLocal에서 현재 테마 색상 가져옴
@@ -218,8 +218,8 @@ fun MemoScreen(
                         MemoUiState(
                             id = existingMemo.id,
                             name = nameText,
-                            sex = categories[categoryIndex],
-                            killThePecos = bodyText
+                            category = categories[categoryIndex],
+                            content = bodyText
                         )
                     )
                 }

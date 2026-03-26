@@ -284,7 +284,7 @@ class MainActivity : AppCompatActivity() {
                                         if (memoId > 0) {
                                             viewModel.updateMemo(memo)
                                         } else {
-                                            viewModel.addMemo(memo.name, memo.sex, memo.killThePecos)
+                                            viewModel.addMemo(memo.name, memo.category, memo.content)
                                         }
                                         navController.popBackStack()
                                     }
@@ -482,7 +482,7 @@ fun HomeScreen(
     val filteredList = remember(memoList, selectedCategoryIndex) {
         if (selectedCategoryIndex == -1) memoList
         else memoList.filter { memo ->
-            CATEGORY_ALL_TRANSLATIONS[selectedCategoryIndex].any { it.equals(memo.sex, ignoreCase = true) }
+            CATEGORY_ALL_TRANSLATIONS[selectedCategoryIndex].any { it.equals(memo.category, ignoreCase = true) }
         }
     }
 
@@ -622,10 +622,10 @@ fun Greeting(
     // ── 수정 팝업 ─────────────────────────────────────────────────────────────
     if (showEditPopup) {
         var editName by remember { mutableStateOf(memo.name) }
-        var editBody by remember { mutableStateOf(memo.killThePecos) }
+        var editBody by remember { mutableStateOf(memo.content) }
         var editCategoryIndex by remember {
             mutableIntStateOf(
-                CATEGORY_ALL_TRANSLATIONS.indexOfFirst { memo.sex in it }.takeIf { it >= 0 } ?: 0
+                CATEGORY_ALL_TRANSLATIONS.indexOfFirst { memo.category in it }.takeIf { it >= 0 } ?: 0
             )
         }
         val rawCategories = CATEGORY_RES_IDS.map { resId -> stringResource(resId) }
@@ -741,8 +741,8 @@ fun Greeting(
                                 MemoUiState(
                                     id = memo.id,
                                     name = editName,
-                                    sex = rawCategories[editCategoryIndex],
-                                    killThePecos = editBody
+                                    category = rawCategories[editCategoryIndex],
+                                    content = editBody
                                 )
                             )
                             showEditPopup = false
@@ -793,12 +793,12 @@ fun Greeting(
                 Text(memo.name, fontWeight = FontWeight.Bold, color = colors.textTitle)
                 Column(horizontalAlignment = Alignment.End) {
                     Text(formatMemoTime(memo.createdAt, languageCode), color = colors.textSecondary)
-                    if (memo.sex.isNotBlank()) {
-                        val categoryIndex = CATEGORY_ALL_TRANSLATIONS.indexOfFirst { memo.sex in it }
+                    if (memo.category.isNotBlank()) {
+                        val categoryIndex = CATEGORY_ALL_TRANSLATIONS.indexOfFirst { memo.category in it }
                         val categoryLabel = if (categoryIndex >= 0) {
                             "${CATEGORY_EMOJIS[categoryIndex]} ${stringResource(CATEGORY_RES_IDS[categoryIndex])}"
                         } else {
-                            memo.sex
+                            memo.category
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
@@ -816,7 +816,7 @@ fun Greeting(
             var isExpanded by remember { mutableStateOf(false) }
             var isOverflow by remember { mutableStateOf(false) }
             Text(
-                text = memo.killThePecos,
+                text = memo.content,
                 color = colors.textBody,
                 maxLines = if (isExpanded) Int.MAX_VALUE else 3,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
