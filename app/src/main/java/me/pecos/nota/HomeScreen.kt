@@ -55,7 +55,6 @@ import com.wanted.android.wanted.design.theme.DesignSystemTheme
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun HomeScreen(
-    memoList: List<MemoUiState>,
     onDelete: (Int) -> Unit,
     onEdit: (Int) -> Unit,
     viewModel: MainViewModel = hiltViewModel()
@@ -64,6 +63,7 @@ fun HomeScreen(
     val selectedCategoryIndex by viewModel.selectedCategoryIndex.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val sortOrder by viewModel.sortOrder.collectAsState()
+    val filteredList by viewModel.filteredList.collectAsState()
     var showFilterDialog by remember { mutableStateOf(false) }
     var tempCategoryIndex by remember(showFilterDialog) { mutableIntStateOf(selectedCategoryIndex) }
 
@@ -72,21 +72,6 @@ fun HomeScreen(
     }
     val allLabel = "🗂️ ${stringResource(R.string.category_all)}"
     val currentLabel = if (selectedCategoryIndex == -1) allLabel else categoryLabels[selectedCategoryIndex]
-
-    val filteredList = remember(memoList, selectedCategoryIndex, searchQuery, sortOrder) {
-        memoList
-            .filter { memo ->
-                selectedCategoryIndex == -1 || memo.categoryId == selectedCategoryIndex + 1
-            }
-            .filter { memo ->
-                if (searchQuery.isBlank()) true
-                else memo.name.contains(searchQuery, ignoreCase = true) ||
-                        memo.content.contains(searchQuery, ignoreCase = true)
-            }
-            .let { list ->
-                if (sortOrder == SortOrder.NEWEST) list else list.reversed()
-            }
-    }
 
     // ── 카테고리 필터 Popup ────────────────────────────────────────────────────
     if (showFilterDialog) {
@@ -295,10 +280,6 @@ fun HomeScreen(
 fun GreetingPreview() {
     DesignSystemTheme {
         HomeScreen(
-            memoList = listOf(
-                MemoUiState(1, "제목1", 1, "내용1"),
-                MemoUiState(2, "제목2", 2, "내용2")
-            ),
             onDelete = {},
             onEdit = {}
         )

@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -57,6 +58,23 @@ class MainViewModel @Inject constructor(
     fun toggleSortOrder() {
         _sortOrder.value = if (_sortOrder.value == SortOrder.NEWEST) SortOrder.OLDEST else SortOrder.NEWEST
     }
+
+    val filteredList: StateFlow<List<MemoUiState>> = combine(
+        uiState, _selectedCategoryIndex, _searchQuery, _sortOrder
+    ) { list, categoryIndex, query, sort ->
+        list
+            .filter { memo ->
+                categoryIndex == -1 || memo.categoryId == categoryIndex + 1
+            }
+            .filter { memo ->
+                if (query.isBlank()) true
+                else memo.name.contains(query, ignoreCase = true) ||
+                        memo.content.contains(query, ignoreCase = true)
+            }
+            .let { filtered ->
+                if (sort == SortOrder.NEWEST) filtered else filtered.reversed()
+            }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun deleteMemo(id: Int) {
         viewModelScope.launch {
