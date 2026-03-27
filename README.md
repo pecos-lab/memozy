@@ -112,11 +112,18 @@ cd memozy
 
 ## 📄 License
 
-```
-Copyright 2026 pecos-lab
+이 앱은 Apache License 2.0 하에 배포됩니다.
 
-Licensed under the Apache License, Version 2.0
-```
+### Open Source Libraries
+
+| 라이브러리 | 라이센스 |
+|-----------|---------|
+| [Wanted Design System (Montage)](https://montage.wanted.co.kr) | MIT License |
+| [Jetpack Compose & AndroidX](https://developer.android.com/jetpack) | Apache License 2.0 |
+| [Kotlin & kotlinx-coroutines](https://kotlinlang.org) | Apache License 2.0 |
+| [Haze 1.7.2](https://github.com/chrisbanes/haze) | Apache License 2.0 |
+| [Room](https://developer.android.com/jetpack/androidx/releases/room) | Apache License 2.0 |
+| [Firebase (Crashlytics & Analytics)](https://firebase.google.com) | Apache License 2.0 |
 
 ---
 
