@@ -1,33 +1,23 @@
 package me.pecos.nota
 
-// ── 시간 포맷 ───────────────────────────────────────────────────────────────────
+import org.joda.time.DateTime
+import org.joda.time.LocalDate
+import org.joda.time.format.DateTimeFormat
 
-fun timezoneForLanguage(languageCode: String): java.util.TimeZone = when (languageCode) {
-    "ko" -> java.util.TimeZone.getTimeZone("Asia/Seoul")
-    "ja" -> java.util.TimeZone.getTimeZone("Asia/Tokyo")
-    "en" -> java.util.TimeZone.getTimeZone("America/New_York")
-    else -> java.util.TimeZone.getDefault()
-}
+// ── 시간 포맷 ───────────────────────────────────────────────────────────────────
 
 fun formatMemoTime(createdAt: Long, languageCode: String): String {
     if (createdAt == 0L) return ""
-    val tz = timezoneForLanguage(languageCode)
-    val now = java.util.Calendar.getInstance(tz)
-    val created = java.util.Calendar.getInstance(tz).apply { timeInMillis = createdAt }
 
-    val sameDay = now.get(java.util.Calendar.YEAR) == created.get(java.util.Calendar.YEAR) &&
-            now.get(java.util.Calendar.DAY_OF_YEAR) == created.get(java.util.Calendar.DAY_OF_YEAR)
-    val yesterday = run {
-        val y = java.util.Calendar.getInstance(tz)
-            .apply { timeInMillis = createdAt; add(java.util.Calendar.DAY_OF_YEAR, 1) }
-        y.get(java.util.Calendar.YEAR) == now.get(java.util.Calendar.YEAR) &&
-                y.get(java.util.Calendar.DAY_OF_YEAR) == now.get(java.util.Calendar.DAY_OF_YEAR)
-    }
+    val created = DateTime(createdAt)
+    val today = LocalDate.now()
+    val yesterday = today.minusDays(1)
+    val createdDate = created.toLocalDate()
 
     return when {
-        sameDay -> {
-            val hour = created.get(java.util.Calendar.HOUR_OF_DAY)
-            val minute = created.get(java.util.Calendar.MINUTE)
+        createdDate.isEqual(today) -> {
+            val hour = created.hourOfDay
+            val minute = created.minuteOfHour
             when (languageCode) {
                 "en" -> {
                     val ampm = if (hour < 12) "AM" else "PM"
@@ -46,16 +36,11 @@ fun formatMemoTime(createdAt: Long, languageCode: String): String {
                 }
             }
         }
-        yesterday -> when (languageCode) {
+        createdDate.isEqual(yesterday) -> when (languageCode) {
             "en" -> "Yesterday"
             "ja" -> "昨日"
             else -> "어제"
         }
-        else -> {
-            val year = created.get(java.util.Calendar.YEAR)
-            val month = created.get(java.util.Calendar.MONTH) + 1
-            val day = created.get(java.util.Calendar.DAY_OF_MONTH)
-            "${year}.${month.toString().padStart(2, '0')}.${day.toString().padStart(2, '0')}"
-        }
+        else -> DateTimeFormat.forPattern("yyyy.MM.dd").print(created)
     }
 }
