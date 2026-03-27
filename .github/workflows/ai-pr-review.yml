@@ -34,7 +34,7 @@ jobs:
           DIFF=$(cat pr_diff.txt)
           PR_TITLE="${{ github.event.pull_request.title }}"
 
-          REVIEW=$(curl -s https://api.anthropic.com/v1/messages \
+          RESPONSE=$(curl -s https://api.anthropic.com/v1/messages \
             -H "x-api-key: $ANTHROPIC_API_KEY" \
             -H "anthropic-version: 2023-06-01" \
             -H "content-type: application/json" \
@@ -43,9 +43,20 @@ jobs:
               \"max_tokens\": 2048,
               \"messages\": [{
                 \"role\": \"user\",
-                \"content\": \"당신은 Android(Kotlin/Jetpack Compose) 전문 코드 리뷰어입니다.\n\nPR 제목: $PR_TITLE\n\n아래 diff를 리뷰해주세요. 다음 항목을 중점적으로 확인하세요:\n1. 버그 가능성\n2. Room DB / 마이그레이션 안전성\n3. Compose 상태 관리 (remember, LaunchedEffect 오남용)\n4. 코드 가독성 및 유지보수성\n5. 기존 기능 영향 여부\n\n응답은 한국어로, 마크다운 형식으로 작성해주세요.\n이슈가 없으면 ✅ LGTM으로 짧게 마무리해도 됩니다.\n\n\`\`\`diff\n$(echo "$DIFF" | head -c 8000)\n\`\`\`\"
+                \"content\": \"당신은 Android(Kotlin/Jetpack Compose) 전문 코드 리뷰어입니다.\\n\\nPR 제목: $PR_TITLE\\n\\n아래 diff를 리뷰해주세요. 다음 항목을 중점적으로 확인하세요:\\n1. 버그 가능성\\n2. Room DB / 마이그레이션 안전성\\n3. Compose 상태 관리 (remember, LaunchedEffect 오남용)\\n4. 코드 가독성 및 유지보수성\\n5. 기존 기능 영향 여부\\n\\n응답은 한국어로, 마크다운 형식으로 작성해주세요.\\n이슈가 없으면 ✅ LGTM으로 짧게 마무리해도 됩니다.\\n\\n\`\`\`diff\\n$(echo \"$DIFF\" | head -c 8000)\\n\`\`\`\"
               }]
-            }" | python3 -c "import sys,json; print(json.load(sys.stdin)['content'][0]['text'])")
+            }")
+
+          REVIEW=$(echo "$RESPONSE" | python3 -c "
+import sys, json
+response = json.load(sys.stdin)
+if 'content' in response:
+    print(response['content'][0]['text'])
+else:
+    error_msg = response.get('error', {}).get('message', 'Unknown error')
+    error_type = response.get('error', {}).get('type', 'unknown')
+    print(f'⚠️ API 오류 ({error_type}): {error_msg}')
+")
 
           gh pr comment $PR_NUMBER --repo $REPO --body "## 🤖 AI 코드 리뷰
 
