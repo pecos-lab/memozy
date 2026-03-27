@@ -37,9 +37,5 @@ jobs:
 
           TEXT=$(echo "$RESP" | jq -r '.content[0].text // ("Error: " + (.error.message // "unknown"))')
 
-          gh pr comment "$PR_NUMBER" --repo "$REPO" --body "## 🤖 AI 코드 리뷰
-
-$TEXT
-
----
-*Powered by Claude Sonnet 4.6*"
+          printf '## 🤖 AI 코드 리뷰\n\n%s\n\n---\n*Powered by Claude Sonnet 4.6*' "$TEXT" > /tmp/review.md
+          gh pr comment "$PR_NUMBER" --repo "$REPO" --body-file /tmp/review.md
