@@ -100,7 +100,6 @@ class MainActivity : AppCompatActivity() {
                     val showBottomNav = remember(currentRoute) {
                         currentRoute?.destination?.route in listOf("main", "settings")
                     }
-                    var addMemoCounter by remember { mutableStateOf(0) }
 
                     val hazeState = rememberHazeState()
                     val navBg = appColors.navBackground
@@ -202,8 +201,7 @@ class MainActivity : AppCompatActivity() {
                                         .hazeEffect(state = hazeState, style = glassStyle)
                                         .border(1.dp, appColors.navBorder, CircleShape)
                                         .clickable {
-                                            addMemoCounter++
-                                            navController.navigate("Memo/-$addMemoCounter")
+                                            navController.navigate("Memo/-${System.currentTimeMillis()}")
                                         },
                                     contentAlignment = Alignment.Center
                                 ) {
