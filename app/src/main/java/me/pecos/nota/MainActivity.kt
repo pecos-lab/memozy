@@ -30,7 +30,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -198,7 +200,9 @@ class MainActivity : AppCompatActivity() {
                                         .clip(CircleShape)
                                         .hazeEffect(state = hazeState, style = glassStyle)
                                         .border(1.dp, appColors.navBorder, CircleShape)
-                                        .clickable { navController.navigate("Memo/-1") },
+                                        .clickable {
+                                            navController.navigate("Memo/-${System.currentTimeMillis()}")
+                                        },
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
