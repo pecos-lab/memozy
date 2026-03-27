@@ -167,6 +167,12 @@ fun MemoScreen(
                 title = stringResource(R.string.memo_content_label),
                 onValueChange = { bodyText = it }
             )
+            Text(
+                text = stringResource(R.string.char_count, bodyText.length),
+                fontSize = 11.sp,
+                color = colors.textSecondary.copy(alpha = 0.6f),
+                modifier = Modifier.align(Alignment.End)
+            )
 
             Spacer(modifier = Modifier.height(20.dp))
 

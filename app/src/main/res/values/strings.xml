@@ -45,4 +45,15 @@
     <string name="edit_memo">메모 수정</string>
     <string name="man">남자</string>
     <string name="woman">여자</string>
+
+    <!-- Search / Sort / Count -->
+    <string name="search_placeholder">제목 또는 내용으로 검색</string>
+    <string name="sort_newest">최신순</string>
+    <string name="sort_oldest">오래된순</string>
+    <string name="memo_count">총 %d개</string>
+    <string name="memo_updated_at">수정:</string>
+    <string name="memo_copy">복사</string>
+    <string name="char_count">%d자</string>
+    <string name="empty_memo_hint">아직 메모가 없어요\n새 메모를 추가해 보세요</string>
+    <string name="empty_search_hint">검색 결과가 없어요</string>
 </resources>

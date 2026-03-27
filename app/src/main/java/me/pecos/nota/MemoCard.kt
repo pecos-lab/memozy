@@ -3,7 +3,6 @@ package me.pecos.nota
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,10 +19,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import android.content.Intent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -61,6 +64,7 @@ fun Greeting(
 ) {
     val colors = LocalAppColors.current
     val context = androidx.compose.ui.platform.LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
     val languageCode = remember {
         context.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE)
             .getString("language_code", "ko") ?: "ko"
@@ -241,7 +245,14 @@ fun Greeting(
             ) {
                 Text(memo.name, fontWeight = FontWeight.Bold, color = colors.textTitle)
                 Column(horizontalAlignment = Alignment.End) {
-                    Text(formatMemoTime(memo.createdAt, languageCode), color = colors.textSecondary)
+                    Text(formatMemoTime(memo.createdAt, languageCode), color = colors.textSecondary, fontSize = 12.sp)
+                    if (memo.updatedAt > memo.createdAt + 60_000L) {
+                        Text(
+                            text = "${androidx.compose.ui.res.stringResource(R.string.memo_updated_at)} ${formatMemoTime(memo.updatedAt, languageCode)}",
+                            fontSize = 11.sp,
+                            color = colors.textSecondary.copy(alpha = 0.7f)
+                        )
+                    }
                     if (memo.categoryId in 1..CATEGORY_RES_IDS.size) {
                         val categoryIndex = memo.categoryId - 1
                         val categoryLabel = "${CATEGORY_EMOJIS[categoryIndex]} ${stringResource(CATEGORY_RES_IDS[categoryIndex])}"
@@ -281,13 +292,60 @@ fun Greeting(
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
-            val isDark = isSystemInDarkTheme()
             Row(modifier = Modifier.align(Alignment.End)) {
+                // 복사 버튼
+                val neutralBg          = colors.actionNeutralBg
+                val neutralBorder      = colors.actionNeutralBorder
+                val neutralTint        = colors.actionNeutralTint
+                val neutralBorderWidth = colors.actionBorderWidth
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .border(neutralBorderWidth, neutralBorder, RoundedCornerShape(10.dp))
+                        .background(neutralBg)
+                        .clickable {
+                            clipboardManager.setText(AnnotatedString("${memo.name}\n\n${memo.content}"))
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.memo_copy),
+                        fontSize = 10.sp,
+                        color = neutralTint,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                // 공유 버튼
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .border(neutralBorderWidth, neutralBorder, RoundedCornerShape(10.dp))
+                        .background(neutralBg)
+                        .clickable {
+                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_TEXT, "${memo.name}\n\n${memo.content}")
+                            }
+                            context.startActivity(Intent.createChooser(shareIntent, null))
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Share,
+                        contentDescription = null,
+                        tint = neutralTint,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
                 // 삭제 버튼
-                val deleteBg     = if (isDark) Color(0x2EFF6B4F) else Color(0x00000000)
-                val deleteBorder = if (isDark) Color(0x66FF6B4F) else Color(0xFFE5735A)
-                val deleteTint   = if (isDark) Color(0xFFFF6B4F) else Color(0xFFE5735A)
-                val deleteBorderWidth = if (isDark) 0.5.dp else 1.5.dp
+                val deleteBg          = colors.actionDeleteBg
+                val deleteBorder      = colors.actionDeleteBorder
+                val deleteTint        = colors.actionDeleteTint
+                val deleteBorderWidth = colors.actionBorderWidth
                 Box(
                     modifier = Modifier
                         .size(36.dp)
@@ -306,10 +364,10 @@ fun Greeting(
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 // 수정 버튼
-                val editBg     = if (isDark) Color(0x2664B4FF) else Color(0x00000000)
-                val editBorder = if (isDark) Color(0x5964B4FF) else Color(0xFF4A9EE8)
-                val editTint   = if (isDark) Color(0xFF64B4FF) else Color(0xFF4A9EE8)
-                val editBorderWidth = if (isDark) 0.5.dp else 1.5.dp
+                val editBg          = colors.actionEditBg
+                val editBorder      = colors.actionEditBorder
+                val editTint        = colors.actionEditTint
+                val editBorderWidth = colors.actionBorderWidth
                 Box(
                     modifier = Modifier
                         .size(36.dp)

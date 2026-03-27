@@ -10,6 +10,8 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 
 // ── 색상 데이터 클래스 ──────────────────────────────────────────────────────────
 
@@ -27,6 +29,17 @@ data class AppColors(
     val textSecondary: Color,
     val chipBackground: Color,
     val chipText: Color,
+    // Action buttons (copy / share / delete / edit)
+    val actionBorderWidth: Dp,
+    val actionNeutralBg: Color,
+    val actionNeutralBorder: Color,
+    val actionNeutralTint: Color,
+    val actionDeleteBg: Color,
+    val actionDeleteBorder: Color,
+    val actionDeleteTint: Color,
+    val actionEditBg: Color,
+    val actionEditBorder: Color,
+    val actionEditTint: Color,
 )
 
 
@@ -44,6 +57,16 @@ val lightAppColors = AppColors(
     textSecondary    = Color(0xFF9E9E9E),
     chipBackground   = Color(0xFFE8F0FE),
     chipText         = Color(0xFF1D6BF3),
+    actionBorderWidth   = 1.5.dp,
+    actionNeutralBg     = Color(0x00000000),
+    actionNeutralBorder = Color(0xFFAAAAAA),
+    actionNeutralTint   = Color(0xFF888888),
+    actionDeleteBg      = Color(0x00000000),
+    actionDeleteBorder  = Color(0xFFE5735A),
+    actionDeleteTint    = Color(0xFFE5735A),
+    actionEditBg        = Color(0x00000000),
+    actionEditBorder    = Color(0xFF4A9EE8),
+    actionEditTint      = Color(0xFF4A9EE8),
 )
 
 val darkAppColors = AppColors(
@@ -60,6 +83,16 @@ val darkAppColors = AppColors(
     textSecondary    = Color(0xFF8E8E93),
     chipBackground   = Color(0xFF3A3A3C),
     chipText         = Color(0xFF6B9FFF),
+    actionBorderWidth   = 0.5.dp,
+    actionNeutralBg     = Color(0x26AAAAAA),
+    actionNeutralBorder = Color(0x59AAAAAA),
+    actionNeutralTint   = Color(0xFFAAAAAA),
+    actionDeleteBg      = Color(0x2EFF6B4F),
+    actionDeleteBorder  = Color(0x66FF6B4F),
+    actionDeleteTint    = Color(0xFFFF6B4F),
+    actionEditBg        = Color(0x2664B4FF),
+    actionEditBorder    = Color(0x5964B4FF),
+    actionEditTint      = Color(0xFF64B4FF),
 )
 
 val LocalAppColors = staticCompositionLocalOf { lightAppColors }

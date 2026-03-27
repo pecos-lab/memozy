@@ -20,8 +20,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -37,8 +39,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -51,13 +55,15 @@ import com.wanted.android.wanted.design.theme.DesignSystemTheme
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun HomeScreen(
-    memoList: List<MemoUiState>,
     onDelete: (Int) -> Unit,
     onEdit: (Int) -> Unit,
     viewModel: MainViewModel = hiltViewModel()
 ) {
     val colors = LocalAppColors.current
     val selectedCategoryIndex by viewModel.selectedCategoryIndex.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val sortOrder by viewModel.sortOrder.collectAsState()
+    val filteredList by viewModel.filteredList.collectAsState()
     var showFilterDialog by remember { mutableStateOf(false) }
     var tempCategoryIndex by remember(showFilterDialog, selectedCategoryIndex) { mutableIntStateOf(selectedCategoryIndex) }
 
@@ -66,13 +72,6 @@ fun HomeScreen(
     }
     val allLabel = "🗂️ ${stringResource(R.string.category_all)}"
     val currentLabel = if (selectedCategoryIndex == -1) allLabel else categoryLabels[selectedCategoryIndex]
-
-    val filteredList = remember(memoList, selectedCategoryIndex) {
-        if (selectedCategoryIndex == -1) memoList
-        else memoList.filter { memo ->
-            memo.categoryId == selectedCategoryIndex + 1
-        }
-    }
 
     // ── 카테고리 필터 Popup ────────────────────────────────────────────────────
     if (showFilterDialog) {
@@ -131,35 +130,108 @@ fun HomeScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 24.dp)
             ) {
-                Text(
-                    text = "Memozy",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.topbarTitle,
-                    modifier = Modifier.padding(start = 16.dp, bottom = 12.dp)
-                )
-
-                // 카테고리 필터 버튼
+                // 제목 + 메모 개수
                 Row(
                     modifier = Modifier
-                        .padding(start = 16.dp)
-                        .border(1.5.dp, colors.cardBorder, RoundedCornerShape(12.dp))
-                        .clickable { showFilterDialog = true }
-                        .padding(horizontal = 14.dp, vertical = 6.dp),
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = currentLabel,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
+                        text = "Memozy",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.topbarTitle,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = stringResource(R.string.memo_count, filteredList.size),
+                        fontSize = 12.sp,
                         color = colors.textSecondary
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                }
+
+                // 카테고리 필터 + 정렬 버튼
+                Row(
+                    modifier = Modifier.padding(start = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .border(1.5.dp, colors.cardBorder, RoundedCornerShape(12.dp))
+                            .clickable { showFilterDialog = true }
+                            .padding(horizontal = 14.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = currentLabel,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = colors.textSecondary
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowDown,
+                            contentDescription = null,
+                            tint = colors.textSecondary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Row(
+                        modifier = Modifier
+                            .border(1.5.dp, colors.cardBorder, RoundedCornerShape(12.dp))
+                            .clickable { viewModel.toggleSortOrder() }
+                            .padding(horizontal = 14.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (sortOrder == SortOrder.NEWEST)
+                                stringResource(R.string.sort_newest)
+                            else
+                                stringResource(R.string.sort_oldest),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = colors.textSecondary
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // 검색바
+                Row(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .fillMaxWidth()
+                        .border(1.5.dp, colors.cardBorder, RoundedCornerShape(12.dp))
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Icon(
-                        imageVector = Icons.Default.KeyboardArrowDown,
+                        imageVector = Icons.Default.Search,
                         contentDescription = null,
                         tint = colors.textSecondary,
                         modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    BasicTextField(
+                        value = searchQuery,
+                        onValueChange = { viewModel.setSearchQuery(it) },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        textStyle = TextStyle(fontSize = 13.sp, color = colors.textSecondary),
+                        cursorBrush = SolidColor(colors.textSecondary),
+                        decorationBox = { inner ->
+                            if (searchQuery.isEmpty()) {
+                                Text(
+                                    text = stringResource(R.string.search_placeholder),
+                                    fontSize = 13.sp,
+                                    color = colors.textSecondary.copy(alpha = 0.5f)
+                                )
+                            }
+                            inner()
+                        }
                     )
                 }
 
@@ -176,14 +248,28 @@ fun HomeScreen(
                 }
             }
             if (filteredList.isEmpty()) {
-                Image(
-                    painter = painterResource(id = R.drawable.logo_full),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(200.dp)
-                        .align(Alignment.Center),
-                    alpha = 0.15f
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.align(Alignment.Center)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.logo_full),
+                        contentDescription = null,
+                        modifier = Modifier.size(160.dp),
+                        alpha = 0.15f
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = if (searchQuery.isNotBlank())
+                            stringResource(R.string.empty_search_hint)
+                        else
+                            stringResource(R.string.empty_memo_hint),
+                        fontSize = 14.sp,
+                        color = colors.textSecondary.copy(alpha = 0.5f),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
             }
         }
     }
@@ -194,10 +280,6 @@ fun HomeScreen(
 fun GreetingPreview() {
     DesignSystemTheme {
         HomeScreen(
-            memoList = listOf(
-                MemoUiState(1, "제목1", 1, "내용1"),
-                MemoUiState(2, "제목2", 2, "내용2")
-            ),
             onDelete = {},
             onEdit = {}
         )

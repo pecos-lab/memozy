@@ -122,7 +122,6 @@ class MainActivity : AppCompatActivity() {
                         ) {
                             composable("main") {
                                 HomeScreen(
-                                    memoList = memoList,
                                     onDelete = { id -> viewModel.deleteMemo(id) },
                                     onEdit = { id -> navController.navigate("Memo/$id") },
                                     viewModel = viewModel

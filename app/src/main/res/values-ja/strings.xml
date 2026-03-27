@@ -46,4 +46,15 @@
     <string name="edit_memo">メモを編集</string>
     <string name="man">男性</string>
     <string name="woman">女性</string>
+
+    <!-- Search / Sort / Count -->
+    <string name="search_placeholder">タイトルまたは内容で検索</string>
+    <string name="sort_newest">新しい順</string>
+    <string name="sort_oldest">古い順</string>
+    <string name="memo_count">計 %d件</string>
+    <string name="memo_updated_at">編集:</string>
+    <string name="memo_copy">コピー</string>
+    <string name="char_count">%d字</string>
+    <string name="empty_memo_hint">メモがまだありません\n新しいメモを追加してみてください</string>
+    <string name="empty_search_hint">検索結果がありません</string>
 </resources>
