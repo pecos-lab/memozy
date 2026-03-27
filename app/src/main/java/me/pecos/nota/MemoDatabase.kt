@@ -26,7 +26,7 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
         database.execSQL("CREATE TABLE IF NOT EXISTS `category` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL)")
         database.execSQL("INSERT INTO `category` (`id`, `name`) VALUES (1,'일반'),(2,'업무'),(3,'아이디어'),(4,'할 일'),(5,'공부'),(6,'일정'),(7,'가계부'),(8,'운동'),(9,'건강'),(10,'여행'),(11,'쇼핑'),(12,'미분류')")
 
-        // 2. memo 테이블 재생성 (sex→categoryId, killThePecos→content 컬럼 정리)
+        // 2. memo 테이블 재생성 (sex→categoryId, killThePecos→content, format 추가)
         database.execSQL("""
             CREATE TABLE IF NOT EXISTS `memo_new` (
                 `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -34,13 +34,14 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
                 `categoryId` INTEGER NOT NULL DEFAULT 12,
                 `content` TEXT NOT NULL,
                 `createdAt` INTEGER NOT NULL DEFAULT 0,
-                `updatedAt` INTEGER NOT NULL DEFAULT 0
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `format` TEXT NOT NULL DEFAULT 'plain'
             )
         """.trimIndent())
 
-        // 3. 기존 데이터 복사: sex 문자열 → categoryId (한/영/일 모두 처리)
+        // 3. 기존 데이터 복사: sex 문자열 → categoryId (한/영/일 모두 처리), format은 'plain' 기본값
         database.execSQL("""
-            INSERT INTO `memo_new` (`id`, `name`, `categoryId`, `content`, `createdAt`, `updatedAt`)
+            INSERT INTO `memo_new` (`id`, `name`, `categoryId`, `content`, `createdAt`, `updatedAt`, `format`)
             SELECT `id`, `name`,
                 CASE `sex`
                     WHEN '일반' THEN 1 WHEN 'General' THEN 1 WHEN '一般' THEN 1
@@ -56,7 +57,7 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
                     WHEN '쇼핑' THEN 11 WHEN 'Shopping' THEN 11 WHEN 'ショッピング' THEN 11
                     ELSE 12
                 END,
-                `killThePecos`, `createdAt`, `updatedAt`
+                `killThePecos`, `createdAt`, `updatedAt`, 'plain'
             FROM `memo`
         """.trimIndent())
 
@@ -73,6 +74,7 @@ private val PREPOPULATE_CALLBACK = object : RoomDatabase.Callback() {
     }
 }
 
+@TypeConverters(MemoFormatConverter::class)
 @Database(entities = [Memo::class, Category::class], version = 4, exportSchema = true)
 abstract class MemoDatabase : RoomDatabase() {
     abstract fun memoDao(): MemoDao
