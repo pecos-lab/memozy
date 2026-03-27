@@ -2,16 +2,9 @@ package me.pecos.nota
 
 // ── 시간 포맷 ───────────────────────────────────────────────────────────────────
 
-fun timezoneForLanguage(languageCode: String): java.util.TimeZone = when (languageCode) {
-    "ko" -> java.util.TimeZone.getTimeZone("Asia/Seoul")
-    "ja" -> java.util.TimeZone.getTimeZone("Asia/Tokyo")
-    "en" -> java.util.TimeZone.getTimeZone("America/New_York")
-    else -> java.util.TimeZone.getDefault()
-}
-
 fun formatMemoTime(createdAt: Long, languageCode: String): String {
     if (createdAt == 0L) return ""
-    val tz = timezoneForLanguage(languageCode)
+    val tz = java.util.TimeZone.getDefault()
     val now = java.util.Calendar.getInstance(tz)
     val created = java.util.Calendar.getInstance(tz).apply { timeInMillis = createdAt }
 
