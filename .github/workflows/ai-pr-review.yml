@@ -29,7 +29,7 @@ jobs:
 
           BODY=$(jq -rn --arg d "$DIFF" '{"model":"claude-sonnet-4-6","max_tokens":1024,"messages":[{"role":"user","content":"Android Kotlin 코드 리뷰어입니다. 아래 diff를 한국어로 리뷰해주세요. 이슈 없으면 LGTM으로 짧게.\n\n\($d)"}]}')
 
-          RESP=$(curl -sf https://api.anthropic.com/v1/messages \
+          RESP=$(curl -s https://api.anthropic.com/v1/messages \
             -H "x-api-key: $ANTHROPIC_API_KEY" \
             -H "anthropic-version: 2023-06-01" \
             -H "content-type: application/json" \
