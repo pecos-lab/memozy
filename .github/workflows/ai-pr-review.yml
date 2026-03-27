@@ -1,0 +1,55 @@
+name: AI PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR diff
+        id: diff
+        run: |
+          git diff origin/${{ github.base_ref }}...HEAD > pr_diff.txt
+          echo "diff_size=$(wc -c < pr_diff.txt)" >> $GITHUB_OUTPUT
+
+      - name: AI Code Review
+        if: steps.diff.outputs.diff_size != '0'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          DIFF=$(cat pr_diff.txt)
+          PR_TITLE="${{ github.event.pull_request.title }}"
+
+          REVIEW=$(curl -s https://api.anthropic.com/v1/messages \
+            -H "x-api-key: $ANTHROPIC_API_KEY" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "content-type: application/json" \
+            -d "{
+              \"model\": \"claude-sonnet-4-6\",
+              \"max_tokens\": 2048,
+              \"messages\": [{
+                \"role\": \"user\",
+                \"content\": \"당신은 Android(Kotlin/Jetpack Compose) 전문 코드 리뷰어입니다.\n\nPR 제목: $PR_TITLE\n\n아래 diff를 리뷰해주세요. 다음 항목을 중점적으로 확인하세요:\n1. 버그 가능성\n2. Room DB / 마이그레이션 안전성\n3. Compose 상태 관리 (remember, LaunchedEffect 오남용)\n4. 코드 가독성 및 유지보수성\n5. 기존 기능 영향 여부\n\n응답은 한국어로, 마크다운 형식으로 작성해주세요.\n이슈가 없으면 ✅ LGTM으로 짧게 마무리해도 됩니다.\n\n\`\`\`diff\n$(echo "$DIFF" | head -c 8000)\n\`\`\`\"
+              }]
+            }" | python3 -c "import sys,json; print(json.load(sys.stdin)['content'][0]['text'])")
+
+          gh pr comment $PR_NUMBER --repo $REPO --body "## 🤖 AI 코드 리뷰
+
+          $REVIEW
+
+          ---
+          *Powered by Claude Sonnet 4.6*"
