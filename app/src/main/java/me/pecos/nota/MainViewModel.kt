@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+enum class SortOrder { NEWEST, OLDEST }
+
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val repository: MemoRepository
@@ -42,6 +44,20 @@ class MainViewModel @Inject constructor(
         _selectedCategoryIndex.value = index
     }
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery
+
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
+
+    private val _sortOrder = MutableStateFlow(SortOrder.NEWEST)
+    val sortOrder: StateFlow<SortOrder> = _sortOrder
+
+    fun toggleSortOrder() {
+        _sortOrder.value = if (_sortOrder.value == SortOrder.NEWEST) SortOrder.OLDEST else SortOrder.NEWEST
+    }
+
     fun deleteMemo(id: Int) {
         viewModelScope.launch {
             repository.deleteMemo(id)
@@ -61,6 +77,7 @@ fun MemoUiState.toMemo(): Memo = Memo(
     categoryId = this.categoryId,
     content = this.content,
     createdAt = this.createdAt,
+    updatedAt = this.updatedAt,
     format = when (this.format) {
         MemoFormatUi.MARKDOWN -> MemoFormat.MARKDOWN
         MemoFormatUi.PLAIN -> MemoFormat.PLAIN
@@ -73,6 +90,7 @@ fun Memo.toUiState(): MemoUiState = MemoUiState(
     categoryId = this.categoryId,
     content = this.content,
     createdAt = this.createdAt,
+    updatedAt = this.updatedAt,
     format = when (this.format) {
         MemoFormat.MARKDOWN -> MemoFormatUi.MARKDOWN
         MemoFormat.PLAIN -> MemoFormatUi.PLAIN
