@@ -11,6 +11,7 @@ import me.pecos.nota.MemoDao
 import me.pecos.nota.MemoDatabase
 import me.pecos.nota.MIGRATION_1_2
 import me.pecos.nota.MIGRATION_2_3
+import me.pecos.nota.MIGRATION_3_4
 import javax.inject.Singleton
 
 @Module
@@ -25,7 +26,7 @@ object DatabaseModule {
             MemoDatabase::class.java,
             "memo_database"
         )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
             .build()
     }
 
