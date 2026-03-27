@@ -30,7 +30,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -98,6 +100,7 @@ class MainActivity : AppCompatActivity() {
                     val showBottomNav = remember(currentRoute) {
                         currentRoute?.destination?.route in listOf("main", "settings")
                     }
+                    var addMemoCounter by remember { mutableStateOf(0) }
 
                     val hazeState = rememberHazeState()
                     val navBg = appColors.navBackground
@@ -198,7 +201,10 @@ class MainActivity : AppCompatActivity() {
                                         .clip(CircleShape)
                                         .hazeEffect(state = hazeState, style = glassStyle)
                                         .border(1.dp, appColors.navBorder, CircleShape)
-                                        .clickable { navController.navigate("Memo/-1") },
+                                        .clickable {
+                                            addMemoCounter++
+                                            navController.navigate("Memo/-$addMemoCounter")
+                                        },
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
