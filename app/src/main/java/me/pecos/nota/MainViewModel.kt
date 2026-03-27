@@ -12,8 +12,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-enum class SortOrder { NEWEST, OLDEST }
-
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val repository: MemoRepository

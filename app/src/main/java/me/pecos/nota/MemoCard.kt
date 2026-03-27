@@ -3,7 +3,6 @@ package me.pecos.nota
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -293,13 +292,12 @@ fun Greeting(
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
-            val isDark = isSystemInDarkTheme()
             Row(modifier = Modifier.align(Alignment.End)) {
                 // 복사 버튼
-                val neutralBg     = if (isDark) Color(0x26AAAAAA) else Color(0x00000000)
-                val neutralBorder = if (isDark) Color(0x59AAAAAA) else Color(0xFFAAAAAA)
-                val neutralTint   = if (isDark) Color(0xFFAAAAAA) else Color(0xFF888888)
-                val neutralBorderWidth = if (isDark) 0.5.dp else 1.5.dp
+                val neutralBg          = colors.actionNeutralBg
+                val neutralBorder      = colors.actionNeutralBorder
+                val neutralTint        = colors.actionNeutralTint
+                val neutralBorderWidth = colors.actionBorderWidth
                 Box(
                     modifier = Modifier
                         .size(36.dp)
@@ -344,10 +342,10 @@ fun Greeting(
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 // 삭제 버튼
-                val deleteBg     = if (isDark) Color(0x2EFF6B4F) else Color(0x00000000)
-                val deleteBorder = if (isDark) Color(0x66FF6B4F) else Color(0xFFE5735A)
-                val deleteTint   = if (isDark) Color(0xFFFF6B4F) else Color(0xFFE5735A)
-                val deleteBorderWidth = if (isDark) 0.5.dp else 1.5.dp
+                val deleteBg          = colors.actionDeleteBg
+                val deleteBorder      = colors.actionDeleteBorder
+                val deleteTint        = colors.actionDeleteTint
+                val deleteBorderWidth = colors.actionBorderWidth
                 Box(
                     modifier = Modifier
                         .size(36.dp)
@@ -366,10 +364,10 @@ fun Greeting(
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 // 수정 버튼
-                val editBg     = if (isDark) Color(0x2664B4FF) else Color(0x00000000)
-                val editBorder = if (isDark) Color(0x5964B4FF) else Color(0xFF4A9EE8)
-                val editTint   = if (isDark) Color(0xFF64B4FF) else Color(0xFF4A9EE8)
-                val editBorderWidth = if (isDark) 0.5.dp else 1.5.dp
+                val editBg          = colors.actionEditBg
+                val editBorder      = colors.actionEditBorder
+                val editTint        = colors.actionEditTint
+                val editBorderWidth = colors.actionBorderWidth
                 Box(
                     modifier = Modifier
                         .size(36.dp)
