@@ -59,7 +59,7 @@ fun HomeScreen(
     val colors = LocalAppColors.current
     val selectedCategoryIndex by viewModel.selectedCategoryIndex.collectAsState()
     var showFilterDialog by remember { mutableStateOf(false) }
-    var tempCategoryIndex by remember(showFilterDialog) { mutableIntStateOf(selectedCategoryIndex) }
+    var tempCategoryIndex by remember(showFilterDialog, selectedCategoryIndex) { mutableIntStateOf(selectedCategoryIndex) }
 
     val categoryLabels = CATEGORY_RES_IDS.mapIndexed { index, resId ->
         "${CATEGORY_EMOJIS[index]} ${stringResource(resId)}"
