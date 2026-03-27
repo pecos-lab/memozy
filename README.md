@@ -83,7 +83,24 @@ cd memozy
 
 ## 📱 Screenshots
 
-> *(스크린샷 추가 예정)*
+### ☀️ Light Mode
+
+<div align="center">
+<img src="screenshots/Screenshot_20260327_182153.png" width="18%"/>
+<img src="screenshots/Screenshot_20260327_182202.png" width="18%"/>
+<img src="screenshots/Screenshot_20260327_182222.png" width="18%"/>
+<img src="screenshots/Screenshot_20260327_182230.png" width="18%"/>
+<img src="screenshots/Screenshot_20260327_182243.png" width="18%"/>
+<img src="screenshots/Screenshot_20260327_182251.png" width="18%"/>
+</div>
+
+### 🌙 Dark Mode
+
+<div align="center">
+<img src="screenshots/Screenshot_20260327_182303.png" width="18%"/>
+<img src="screenshots/Screenshot_20260327_182323.png" width="18%"/>
+<img src="screenshots/Screenshot_20260327_182326.png" width="18%"/>
+</div>
 
 ---
 
