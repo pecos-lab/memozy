@@ -18,6 +18,16 @@
 2. 변경 범위 최소화
 3. 수정 후 기존 기능 유지 여부 확인
 
+## Room/DB 작업 자동 검증 규칙
+Room DB 또는 Migration 관련 작업 완료 후 반드시 아래 항목을 자동으로 검증할 것:
+1. Migration SQL의 컬럼 목록이 Entity 클래스와 100% 일치하는지
+2. `@TypeConverters` 어노테이션 누락 여부
+3. `@Database` version과 실제 Migration 경로 커버리지 (모든 버전 → 최신 버전 경로 존재 여부)
+4. `DatabaseModule`(Hilt)과 `getDatabase()`(직접 호출) 양쪽에 Migration 및 Callback이 동일하게 등록되어 있는지
+5. schemas/ 폴더의 JSON과 실제 Migration SQL 비교
+
+**적용 대상**: Entity 추가/수정, Migration 추가/수정, @Database version 변경, DatabaseModule 수정
+
 ## worktree 병렬 작업 규칙
 - 병렬 worktree 작업 중 매일 각 브랜치에서 `git rebase origin/develop` 실행
 - develop 병합은 반드시 하나씩 순서대로 진행 (동시 병합 금지)
