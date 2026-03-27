@@ -89,9 +89,6 @@ cd memozy
 <img src="screenshots/Screenshot_20260327_182153.png" width="18%"/>
 <img src="screenshots/Screenshot_20260327_182202.png" width="18%"/>
 <img src="screenshots/Screenshot_20260327_182222.png" width="18%"/>
-<img src="screenshots/Screenshot_20260327_182230.png" width="18%"/>
-<img src="screenshots/Screenshot_20260327_182243.png" width="18%"/>
-<img src="screenshots/Screenshot_20260327_182251.png" width="18%"/>
 </div>
 
 ### 🌙 Dark Mode
