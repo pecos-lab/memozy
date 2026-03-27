@@ -147,10 +147,14 @@ class MainActivity : AppCompatActivity() {
                                     onSave = { memo ->
                                         if (memoId > 0) {
                                             viewModel.updateMemo(memo)
+                                            navController.popBackStack()
                                         } else {
                                             viewModel.addMemo(memo.name, memo.categoryId, memo.content)
+                                            navController.navigate("main") {
+                                                popUpTo("main") { inclusive = false }
+                                                launchSingleTop = true
+                                            }
                                         }
-                                        navController.popBackStack()
                                     }
                                 )
                             }
