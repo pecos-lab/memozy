@@ -107,7 +107,7 @@ fun MemoScreen(
         stringResource(R.string.category_shopping),
     )
     var nameText by remember { mutableStateOf(existingMemo.name) }
-    var categoryIndex by remember {
+    var categoryIndex by remember(existingMemo.categoryId) {
         mutableStateOf((existingMemo.categoryId - 1).coerceIn(0, CATEGORY_RES_IDS.size - 1))
     }
     var bodyText by remember { mutableStateOf(existingMemo.content) }
