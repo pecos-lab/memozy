@@ -108,6 +108,6 @@ Licensed under the Apache License, Version 2.0
 
 <div align="center">
 
-Made with ❤️ by [pecos-lab](https://github.com/pecos-lab)
+Made by [pecos-lab](https://github.com/pecos-lab)
 
 </div>
