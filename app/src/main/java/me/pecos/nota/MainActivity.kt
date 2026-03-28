@@ -149,7 +149,7 @@ class MainActivity : AppCompatActivity() {
                                     )
                                 }
                                 composable("donation") {
-                                    val billingManager = remember { BillingManager(this@MainActivity.applicationContext) }
+                                    val billingManager = remember { BillingManager(this@MainActivity) }
                                     DonationScreen(
                                         onBack = { navController.popBackStack() },
                                         billingManager = billingManager

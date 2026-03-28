@@ -19,8 +19,7 @@ data class DonationProduct(
     val productId: String,
     val name: String,
     val description: String,
-    val formattedPrice: String,
-    val productDetails: ProductDetails? = null
+    val formattedPrice: String
 )
 
 sealed class PurchaseState {
@@ -59,6 +58,8 @@ class BillingManager(
         )
         .build()
 
+    private val productDetailsMap = mutableMapOf<String, ProductDetails>()
+
     private val _products = MutableStateFlow<List<DonationProduct>>(emptyList())
     val products: StateFlow<List<DonationProduct>> = _products
 
@@ -69,6 +70,8 @@ class BillingManager(
     val isConnected: StateFlow<Boolean> = _isConnected
 
     fun connect() {
+        if (billingClient.isReady) return
+
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(billingResult: BillingResult) {
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
@@ -81,6 +84,7 @@ class BillingManager(
 
             override fun onBillingServiceDisconnected() {
                 _isConnected.value = false
+                connect()
             }
         })
     }
@@ -99,26 +103,31 @@ class BillingManager(
 
         billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                val donationProducts = productDetailsList.map { details ->
-                    DonationProduct(
-                        productId = details.productId,
-                        name = details.name,
-                        description = details.description,
-                        formattedPrice = details.oneTimePurchaseOfferDetails?.formattedPrice ?: "",
-                        productDetails = details
-                    )
-                }.sortedBy { PRODUCT_IDS.indexOf(it.productId) }
+                productDetailsMap.clear()
+                productDetailsList.forEach { productDetailsMap[it.productId] = it }
+
+                val donationProducts = PRODUCT_IDS.mapNotNull { id ->
+                    productDetailsMap[id]?.let { details ->
+                        DonationProduct(
+                            productId = details.productId,
+                            name = details.name,
+                            description = details.description,
+                            formattedPrice = details.oneTimePurchaseOfferDetails?.formattedPrice ?: ""
+                        )
+                    }
+                }
                 _products.value = donationProducts
             }
         }
     }
 
-    fun launchPurchaseFlow(activity: Activity, productDetails: ProductDetails) {
+    fun launchPurchaseFlow(activity: Activity, productId: String) {
+        val details = productDetailsMap[productId] ?: return
         _purchaseState.value = PurchaseState.Loading
 
         val productDetailsParamsList = listOf(
             BillingFlowParams.ProductDetailsParams.newBuilder()
-                .setProductDetails(productDetails)
+                .setProductDetails(details)
                 .build()
         )
 
@@ -128,6 +137,8 @@ class BillingManager(
 
         billingClient.launchBillingFlow(activity, billingFlowParams)
     }
+
+    fun isProductAvailable(productId: String): Boolean = productDetailsMap.containsKey(productId)
 
     override fun onPurchasesUpdated(
         billingResult: BillingResult,

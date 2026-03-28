@@ -148,13 +148,14 @@ fun DonationScreen(
 
             DONATION_TIERS.forEach { tier ->
                 val product = products.find { it.productId == tier.productId }
+                val available = billingManager.isProductAvailable(tier.productId)
                 DonationCard(
                     tier = tier,
                     product = product,
-                    isConnected = isConnected,
+                    isConnected = isConnected && available,
                     onClick = {
-                        if (activity != null && product?.productDetails != null) {
-                            billingManager.launchPurchaseFlow(activity, product.productDetails!!)
+                        if (activity != null) {
+                            billingManager.launchPurchaseFlow(activity, tier.productId)
                         }
                     }
                 )
@@ -180,7 +181,7 @@ private fun DonationCard(
             .clip(RoundedCornerShape(16.dp))
             .background(colors.cardBackground)
             .border(1.dp, colors.cardBorder, RoundedCornerShape(16.dp))
-            .clickable(enabled = isConnected && product?.productDetails != null) { onClick() }
+            .clickable(enabled = isConnected) { onClick() }
             .padding(16.dp)
     ) {
         Row(
