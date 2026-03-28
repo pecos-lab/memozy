@@ -22,10 +22,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -223,16 +228,35 @@ fun HomeScreen(
                         textStyle = TextStyle(fontSize = 13.sp, color = colors.textSecondary),
                         cursorBrush = SolidColor(colors.textSecondary),
                         decorationBox = { inner ->
-                            if (searchQuery.isEmpty()) {
-                                Text(
-                                    text = stringResource(R.string.search_placeholder),
-                                    fontSize = 13.sp,
-                                    color = colors.textSecondary.copy(alpha = 0.5f)
-                                )
+                            Box(contentAlignment = Alignment.CenterStart) {
+                                if (searchQuery.isEmpty()) {
+                                    Text(
+                                        text = stringResource(R.string.search_placeholder),
+                                        fontSize = 13.sp,
+                                        color = colors.textSecondary.copy(alpha = 0.5f)
+                                    )
+                                }
+                                inner()
                             }
-                            inner()
                         }
                     )
+                    AnimatedVisibility(
+                        visible = searchQuery.isNotEmpty(),
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        IconButton(
+                            onClick = { viewModel.setSearchQuery("") },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "검색어 지우기",
+                                tint = colors.textSecondary,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(6.dp))
