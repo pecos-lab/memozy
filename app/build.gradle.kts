@@ -73,10 +73,13 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     implementation("com.github.wanteddev:montage-android:3.3.0")
+    implementation("com.android.billingclient:billing-ktx:7.1.1")
     implementation("com.google.firebase:firebase-crashlytics")
     ksp(libs.room.compiler)
     implementation(libs.hilt.android)
-    implementation(libs.hilt.navigation.compose)
+    // hilt-navigation-compose 제거: OverrideNightMode의 LocalContext 오버라이드와 충돌
+    // hiltViewModel()을 사용하지 않으므로 불필요
+    // implementation(libs.hilt.navigation.compose)
     ksp(libs.hilt.compiler)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)

@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.res.Configuration
+import android.view.ContextThemeWrapper
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
@@ -119,7 +120,9 @@ fun OverrideNightMode(isDarkTheme: Boolean, content: @Composable () -> Unit) {
         }
     }
     val overriddenContext = remember(isDarkTheme, baseContext) {
-        baseContext.createConfigurationContext(overriddenConfig)
+        ContextThemeWrapper(baseContext, baseContext.theme).apply {
+            applyOverrideConfiguration(overriddenConfig)
+        }
     }
 
     CompositionLocalProvider(

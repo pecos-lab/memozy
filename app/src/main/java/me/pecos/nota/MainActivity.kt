@@ -54,6 +54,8 @@ import me.pecos.nota.presentation.screen.home.HomeScreen
 import me.pecos.nota.presentation.screen.home.MainViewModel
 import me.pecos.nota.presentation.screen.home.model.MemoUiState
 import me.pecos.nota.presentation.screen.memo.MemoScreen
+import me.pecos.nota.data.billing.BillingManager
+import me.pecos.nota.presentation.screen.donation.DonationScreen
 import me.pecos.nota.presentation.screen.settings.SettingsScreen
 import me.pecos.nota.presentation.screen.settings.SettingsViewModel
 import me.pecos.nota.presentation.screen.settings.ThemeMode
@@ -67,6 +69,13 @@ import me.pecos.nota.presentation.theme.lightAppColors
 
 @dagger.hilt.android.AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+
+    private val billingManager by lazy { BillingManager(this) }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        billingManager.disconnect()
+    }
 
     override fun attachBaseContext(newBase: Context) {
         val prefs = newBase.getSharedPreferences("settings", Context.MODE_PRIVATE)
@@ -142,7 +151,14 @@ class MainActivity : AppCompatActivity() {
                                 composable("settings") {
                                     SettingsScreen(
                                         onBack = { navController.popBackStack() },
+                                        onDonation = { navController.navigate("donation") },
                                         settingsViewModel = settingsViewModel
+                                    )
+                                }
+                                composable("donation") {
+                                    DonationScreen(
+                                        onBack = { navController.popBackStack() },
+                                        billingManager = this@MainActivity.billingManager
                                     )
                                 }
                                 composable("Memo/{memoId}") { backStackEntry ->

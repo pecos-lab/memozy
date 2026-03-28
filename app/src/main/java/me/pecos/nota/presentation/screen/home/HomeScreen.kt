@@ -53,7 +53,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.wanted.android.wanted.design.theme.DesignSystemTheme
 import me.pecos.nota.presentation.components.AppPopup
 import me.pecos.nota.presentation.screen.memo.CATEGORY_EMOJIS
@@ -73,7 +72,7 @@ import me.pecos.nota.presentation.theme.LocalAppColors
 fun HomeScreen(
     onDelete: (Int) -> Unit,
     onEdit: (Int) -> Unit,
-    viewModel: MainViewModel = hiltViewModel()
+    viewModel: MainViewModel
 ) {
     val colors = LocalAppColors.current
     val selectedCategoryIndex by viewModel.selectedCategoryIndex.collectAsState()
@@ -316,13 +315,4 @@ fun HomeScreen(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    DesignSystemTheme {
-        HomeScreen(
-            onDelete = {},
-            onEdit = {}
-        )
-    }
-}
+// Preview removed: HomeScreen requires MainViewModel instance

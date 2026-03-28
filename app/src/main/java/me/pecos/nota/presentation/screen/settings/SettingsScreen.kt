@@ -45,6 +45,7 @@ import me.pecos.nota.presentation.theme.LocalAppColors
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit = {},
+    onDonation: () -> Unit = {},
     settingsViewModel: SettingsViewModel = viewModel()
 ) {
     var showClearDialog by remember { mutableStateOf(false) }
@@ -278,6 +279,18 @@ fun SettingsScreen(
                         variant = ButtonVariant.OUTLINED
                     ).copy(contentColor = colors.textTitle),
                     onClick = { showLicenseDialog = true }
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                WantedButton(
+                    text = stringResource(R.string.donation_button),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    buttonDefault = WantedButtonDefaults.getDefault(
+                        type = ButtonType.ASSISTIVE,
+                        variant = ButtonVariant.OUTLINED
+                    ).copy(contentColor = colors.textTitle),
+                    onClick = { onDonation() }
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
