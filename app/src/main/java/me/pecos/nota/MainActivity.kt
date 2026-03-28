@@ -54,6 +54,8 @@ import me.pecos.nota.presentation.screen.home.HomeScreen
 import me.pecos.nota.presentation.screen.home.MainViewModel
 import me.pecos.nota.presentation.screen.home.model.MemoUiState
 import me.pecos.nota.presentation.screen.memo.MemoScreen
+import me.pecos.nota.data.billing.BillingManager
+import me.pecos.nota.presentation.screen.donation.DonationScreen
 import me.pecos.nota.presentation.screen.settings.SettingsScreen
 import me.pecos.nota.presentation.screen.settings.SettingsViewModel
 import me.pecos.nota.presentation.screen.settings.ThemeMode
@@ -142,7 +144,15 @@ class MainActivity : AppCompatActivity() {
                                 composable("settings") {
                                     SettingsScreen(
                                         onBack = { navController.popBackStack() },
+                                        onDonation = { navController.navigate("donation") },
                                         settingsViewModel = settingsViewModel
+                                    )
+                                }
+                                composable("donation") {
+                                    val billingManager = remember { BillingManager(this@MainActivity.applicationContext) }
+                                    DonationScreen(
+                                        onBack = { navController.popBackStack() },
+                                        billingManager = billingManager
                                     )
                                 }
                                 composable("Memo/{memoId}") { backStackEntry ->
