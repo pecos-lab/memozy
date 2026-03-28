@@ -56,4 +56,24 @@
     <string name="char_count">%d자</string>
     <string name="empty_memo_hint">아직 메모가 없어요\n새 메모를 추가해 보세요</string>
     <string name="empty_search_hint">검색 결과가 없어요</string>
+
+    <!-- Donation -->
+    <string name="donation_button">개발자에게 쌀 사주기 🍚</string>
+    <string name="donation_title">개발자에게 쌀 사주기</string>
+    <string name="donation_subtitle">후원해 주시면 더 맛있는 기능을 만들 수 있어요!</string>
+    <string name="donation_tier_1_name">햇반 1개</string>
+    <string name="donation_tier_1_desc">간단한 한 끼 선물</string>
+    <string name="donation_tier_2_name">햇반 6개 (1묶음)</string>
+    <string name="donation_tier_2_desc">일주일치 밥 선물</string>
+    <string name="donation_tier_3_name">햇반 18개 (1묶음)</string>
+    <string name="donation_tier_3_desc">한 달 든든한 선물</string>
+    <string name="donation_tier_4_name">쌀 10kg</string>
+    <string name="donation_tier_4_desc">진짜 쌀 한 포대!</string>
+    <string name="donation_tier_5_name">쌀 1포대 (20kg)</string>
+    <string name="donation_tier_5_desc">최고의 후원! 감사합니다</string>
+    <string name="donation_thank_title">감사합니다! 🙏</string>
+    <string name="donation_thank_message">따뜻한 후원 감사합니다!\n더 좋은 앱을 만들겠습니다.</string>
+    <string name="donation_error_title">결제 오류</string>
+    <string name="donation_error_message">결제 처리 중 문제가 발생했습니다.\n다시 시도해 주세요.</string>
+    <string name="donation_loading">연결 중…</string>
 </resources>

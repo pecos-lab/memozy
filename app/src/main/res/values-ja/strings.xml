@@ -57,4 +57,24 @@
     <string name="char_count">%d字</string>
     <string name="empty_memo_hint">メモがまだありません\n新しいメモを追加してみてください</string>
     <string name="empty_search_hint">検索結果がありません</string>
+
+    <!-- Donation -->
+    <string name="donation_button">開発者にお米を贈る 🍚</string>
+    <string name="donation_title">開発者にお米を贈る</string>
+    <string name="donation_subtitle">ご支援いただけると、もっと美味しい機能を作れます！</string>
+    <string name="donation_tier_1_name">ごはん 1個</string>
+    <string name="donation_tier_1_desc">ちょっとした一食のプレゼント</string>
+    <string name="donation_tier_2_name">ごはん 6個セット</string>
+    <string name="donation_tier_2_desc">一週間分のごはん</string>
+    <string name="donation_tier_3_name">ごはん 18個セット</string>
+    <string name="donation_tier_3_desc">一ヶ月の安心ごはん</string>
+    <string name="donation_tier_4_name">お米 10kg</string>
+    <string name="donation_tier_4_desc">本物のお米一袋！</string>
+    <string name="donation_tier_5_name">お米 1俵 (20kg)</string>
+    <string name="donation_tier_5_desc">最高のご支援！ありがとうございます</string>
+    <string name="donation_thank_title">ありがとうございます！ 🙏</string>
+    <string name="donation_thank_message">温かいご支援ありがとうございます！\nもっと良いアプリを作ります。</string>
+    <string name="donation_error_title">決済エラー</string>
+    <string name="donation_error_message">決済処理中に問題が発生しました。\nもう一度お試しください。</string>
+    <string name="donation_loading">接続中…</string>
 </resources>

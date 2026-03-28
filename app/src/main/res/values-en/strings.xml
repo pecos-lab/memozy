@@ -57,4 +57,24 @@
     <string name="char_count">%d chars</string>
     <string name="empty_memo_hint">No memos yet\nAdd your first memo!</string>
     <string name="empty_search_hint">No results found</string>
+
+    <!-- Donation -->
+    <string name="donation_button">Buy the Developer Rice 🍚</string>
+    <string name="donation_title">Buy the Developer Rice</string>
+    <string name="donation_subtitle">Your support helps us cook up better features!</string>
+    <string name="donation_tier_1_name">1 Instant Rice</string>
+    <string name="donation_tier_1_desc">A quick meal gift</string>
+    <string name="donation_tier_2_name">6-Pack Instant Rice</string>
+    <string name="donation_tier_2_desc">A week of meals</string>
+    <string name="donation_tier_3_name">18-Pack Instant Rice</string>
+    <string name="donation_tier_3_desc">A month of hearty meals</string>
+    <string name="donation_tier_4_name">10kg Rice Bag</string>
+    <string name="donation_tier_4_desc">A real bag of rice!</string>
+    <string name="donation_tier_5_name">20kg Rice Sack</string>
+    <string name="donation_tier_5_desc">The ultimate support! Thank you</string>
+    <string name="donation_thank_title">Thank You! 🙏</string>
+    <string name="donation_thank_message">Thank you for your warm support!\nWe\'ll keep making the app better.</string>
+    <string name="donation_error_title">Payment Error</string>
+    <string name="donation_error_message">Something went wrong during payment.\nPlease try again.</string>
+    <string name="donation_loading">Connecting…</string>
 </resources>
