@@ -69,6 +69,7 @@ import me.pecos.nota.presentation.components.PopupActionArea
 import me.pecos.nota.presentation.components.PopupNavigation
 import me.pecos.nota.presentation.components.PopupSize
 import me.pecos.nota.presentation.theme.LocalAppColors
+import me.pecos.nota.presentation.theme.LocalActivity
 
 // ── 메모 카드 ───────────────────────────────────────────────────────────────────
 
