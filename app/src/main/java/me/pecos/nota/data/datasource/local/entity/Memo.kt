@@ -2,7 +2,7 @@ package me.pecos.nota.data.datasource.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import me.pecos.nota.data.reposotory.model.MemoFormat
+import me.pecos.nota.data.repository.model.MemoFormat
 
 @Entity(tableName = "memo")
 data class Memo(

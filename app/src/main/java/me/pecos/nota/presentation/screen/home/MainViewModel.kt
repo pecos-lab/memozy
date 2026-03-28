@@ -10,12 +10,12 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import me.pecos.nota.data.reposotory.model.MemoFormat
+import me.pecos.nota.data.repository.model.MemoFormat
 import me.pecos.nota.presentation.screen.home.model.MemoFormatUi
 import me.pecos.nota.presentation.screen.home.model.MemoUiState
 import me.pecos.nota.presentation.screen.home.model.SortOrder
 import me.pecos.nota.data.datasource.local.entity.Memo
-import me.pecos.nota.data.reposotory.MemoRepository
+import me.pecos.nota.data.repository.MemoRepository
 import javax.inject.Inject
 
 @HiltViewModel

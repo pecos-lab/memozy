@@ -1,4 +1,4 @@
-package me.pecos.nota.data.reposotory
+package me.pecos.nota.data.repository
 
 import kotlinx.coroutines.flow.Flow
 import me.pecos.nota.data.datasource.local.entity.Category

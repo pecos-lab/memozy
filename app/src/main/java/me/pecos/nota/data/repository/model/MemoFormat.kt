@@ -1,4 +1,4 @@
-package me.pecos.nota.data.reposotory.model
+package me.pecos.nota.data.repository.model
 
 // Data layer enum — Room DB에 저장되는 값 기준
 enum class MemoFormat {

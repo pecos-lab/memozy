@@ -8,7 +8,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import me.pecos.nota.data.reposotory.MemoRepository
+import me.pecos.nota.data.repository.MemoRepository
 import javax.inject.Inject
 
 data class Language(val name: String, val code: String)
