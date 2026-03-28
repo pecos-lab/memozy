@@ -30,9 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,6 +49,19 @@ import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
+import me.pecos.nota.presentation.components.FloatingNavPill
+import me.pecos.nota.presentation.screen.home.HomeScreen
+import me.pecos.nota.presentation.screen.home.MainViewModel
+import me.pecos.nota.presentation.screen.home.model.MemoUiState
+import me.pecos.nota.presentation.screen.memo.MemoScreen
+import me.pecos.nota.presentation.screen.settings.SettingsScreen
+import me.pecos.nota.presentation.screen.settings.SettingsViewModel
+import me.pecos.nota.presentation.screen.settings.ThemeMode
+import me.pecos.nota.presentation.theme.LocalActivity
+import me.pecos.nota.presentation.theme.LocalAppColors
+import me.pecos.nota.presentation.theme.OverrideNightMode
+import me.pecos.nota.presentation.theme.darkAppColors
+import me.pecos.nota.presentation.theme.lightAppColors
 
 // ── Activity ───────────────────────────────────────────────────────────────────
 
@@ -90,134 +101,145 @@ class MainActivity : AppCompatActivity() {
                 LocalActivity provides this@MainActivity
             ) {
             OverrideNightMode(isDarkTheme = isDarkTheme) {
-            CompositionLocalProvider(LocalAppColors provides appColors) {
-                DesignSystemTheme(isDarkTheme = isDarkTheme) {
+                CompositionLocalProvider(LocalAppColors provides appColors) {
+                    DesignSystemTheme(isDarkTheme = isDarkTheme) {
 
-                    val viewModel: MainViewModel = viewModel()
-                    val memoList by viewModel.uiState.collectAsState()
-                    val navController = rememberNavController()
-                    val currentRoute by navController.currentBackStackEntryAsState()
-                    val showBottomNav = remember(currentRoute) {
-                        currentRoute?.destination?.route in listOf("main", "settings")
-                    }
-
-                    val hazeState = rememberHazeState()
-                    val navBg = appColors.navBackground
-                    val glassStyle = HazeStyle(
-                        blurRadius = 20.dp,
-                        backgroundColor = navBg,
-                        tints = listOf(HazeTint(color = navBg.copy(alpha = 0.4f)))
-                    )
-
-                    Box(modifier = Modifier
-                        .fillMaxSize()
-                        .background(appColors.screenBackground)
-                    ) {
-                        NavHost(
-                            navController = navController,
-                            startDestination = "main",
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .hazeSource(hazeState)
-                        ) {
-                            composable("main") {
-                                HomeScreen(
-                                    onDelete = { id -> viewModel.deleteMemo(id) },
-                                    onEdit = { id -> navController.navigate("Memo/$id") },
-                                    viewModel = viewModel
-                                )
-                            }
-                            composable("settings") {
-                                SettingsScreen(
-                                    onBack = { navController.popBackStack() },
-                                    settingsViewModel = settingsViewModel
-                                )
-                            }
-                            composable("Memo/{memoId}") { backStackEntry ->
-                                val memoId =
-                                    backStackEntry.arguments?.getString("memoId")?.toIntOrNull() ?: -1
-                                val existingMemo: MemoUiState =
-                                    if (memoId > 0) {
-                                        memoList.find { it.id == memoId } ?: MemoUiState(0, "", 0, "")
-                                    } else {
-                                        MemoUiState(0, "", 0, "")
-                                    }
-                                MemoScreen(
-                                    existingMemo = existingMemo,
-                                    onBack = { navController.popBackStack() },
-                                    onSave = { memo ->
-                                        if (memoId > 0) {
-                                            viewModel.updateMemo(memo)
-                                            navController.popBackStack()
-                                        } else {
-                                            viewModel.addMemo(memo.name, memo.categoryId, memo.content)
-                                            navController.navigate("main") {
-                                                popUpTo("main") { inclusive = false }
-                                                launchSingleTop = true
-                                            }
-                                        }
-                                    }
-                                )
-                            }
+                        val viewModel: MainViewModel = viewModel()
+                        val memoList by viewModel.uiState.collectAsState()
+                        val navController = rememberNavController()
+                        val currentRoute by navController.currentBackStackEntryAsState()
+                        val showBottomNav = remember(currentRoute) {
+                            currentRoute?.destination?.route in listOf("main", "settings")
                         }
 
-                        if (showBottomNav) {
-                            Row(
+                        val hazeState = rememberHazeState()
+                        val navBg = appColors.navBackground
+                        val glassStyle = HazeStyle(
+                            blurRadius = 20.dp,
+                            backgroundColor = navBg,
+                            tints = listOf(HazeTint(color = navBg.copy(alpha = 0.4f)))
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(appColors.screenBackground)
+                        ) {
+                            NavHost(
+                                navController = navController,
+                                startDestination = "main",
                                 modifier = Modifier
-                                    .align(Alignment.BottomCenter)
-                                    .fillMaxWidth()
-                                    .navigationBarsPadding()
-                                    .padding(horizontal = 12.dp, vertical = 12.dp)
-                                    .height(IntrinsicSize.Max),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                    .fillMaxSize()
+                                    .hazeSource(hazeState)
                             ) {
-                                FloatingNavPill(
-                                    selectedRoute = currentRoute?.destination?.route ?: "main",
-                                    onItemSelected = { route ->
-                                        navController.navigate(route) {
-                                            popUpTo("main") { saveState = true }
-                                            launchSingleTop = true
-                                            restoreState = true
-                                        }
-                                    },
-                                    hazeState = hazeState,
-                                    glassStyle = glassStyle,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .aspectRatio(1f)
-                                        .shadow(
-                                            elevation = 16.dp,
-                                            shape = CircleShape,
-                                            ambientColor = Color.Black.copy(alpha = 0.28f),
-                                            spotColor = Color.Black.copy(alpha = 0.18f)
-                                        )
-                                        .clip(CircleShape)
-                                        .hazeEffect(state = hazeState, style = glassStyle)
-                                        .border(1.dp, appColors.navBorder, CircleShape)
-                                        .clickable {
-                                            navController.navigate("Memo/-${System.currentTimeMillis()}")
-                                        },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Add,
-                                        contentDescription = "메모 추가",
-                                        modifier = Modifier
-                                            .size(32.dp)
-                                            .padding(4.dp),
-                                        tint = appColors.navIconSelected
+                                composable("main") {
+                                    HomeScreen(
+                                        onDelete = { id -> viewModel.deleteMemo(id) },
+                                        onEdit = { id -> navController.navigate("Memo/$id") },
+                                        viewModel = viewModel
                                     )
+                                }
+                                composable("settings") {
+                                    SettingsScreen(
+                                        onBack = { navController.popBackStack() },
+                                        settingsViewModel = settingsViewModel
+                                    )
+                                }
+                                composable("Memo/{memoId}") { backStackEntry ->
+                                    val memoId =
+                                        backStackEntry.arguments?.getString("memoId")?.toIntOrNull()
+                                            ?: -1
+                                    val existingMemo: MemoUiState =
+                                        if (memoId > 0) {
+                                            memoList.find { it.id == memoId } ?: MemoUiState(
+                                                0,
+                                                "",
+                                                0,
+                                                ""
+                                            )
+                                        } else {
+                                            MemoUiState(0, "", 0, "")
+                                        }
+                                    MemoScreen(
+                                        existingMemo = existingMemo,
+                                        onBack = { navController.popBackStack() },
+                                        onSave = { memo ->
+                                            if (memoId > 0) {
+                                                viewModel.updateMemo(memo)
+                                                navController.popBackStack()
+                                            } else {
+                                                viewModel.addMemo(
+                                                    memo.name,
+                                                    memo.categoryId,
+                                                    memo.content
+                                                )
+                                                navController.navigate("main") {
+                                                    popUpTo("main") { inclusive = false }
+                                                    launchSingleTop = true
+                                                }
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+
+                            if (showBottomNav) {
+                                Row(
+                                    modifier = Modifier
+                                        .align(Alignment.BottomCenter)
+                                        .fillMaxWidth()
+                                        .navigationBarsPadding()
+                                        .padding(horizontal = 12.dp, vertical = 12.dp)
+                                        .height(IntrinsicSize.Max),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    FloatingNavPill(
+                                        selectedRoute = currentRoute?.destination?.route ?: "main",
+                                        onItemSelected = { route ->
+                                            navController.navigate(route) {
+                                                popUpTo("main") { saveState = true }
+                                                launchSingleTop = true
+                                                restoreState = true
+                                            }
+                                        },
+                                        hazeState = hazeState,
+                                        glassStyle = glassStyle,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxHeight()
+                                            .aspectRatio(1f)
+                                            .shadow(
+                                                elevation = 16.dp,
+                                                shape = CircleShape,
+                                                ambientColor = Color.Black.copy(alpha = 0.28f),
+                                                spotColor = Color.Black.copy(alpha = 0.18f)
+                                            )
+                                            .clip(CircleShape)
+                                            .hazeEffect(state = hazeState, style = glassStyle)
+                                            .border(1.dp, appColors.navBorder, CircleShape)
+                                            .clickable {
+                                                navController.navigate("Memo/-${System.currentTimeMillis()}")
+                                            },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Add,
+                                            contentDescription = "메모 추가",
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .padding(4.dp),
+                                            tint = appColors.navIconSelected
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
             } // OverrideNightMode
             } // LocalContext + LocalActivity
         }
