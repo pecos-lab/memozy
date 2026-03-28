@@ -81,59 +81,20 @@ fun Greeting(
 
     // ── 공유 바텀 시트 ────────────────────────────────────────────────────────
     if (showShareSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showShareSheet = false },
-            sheetState = shareSheetState
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-                    .padding(bottom = 32.dp)
-            ) {
-                Text(
-                    text = "공유",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    modifier = Modifier.padding(bottom = 12.dp)
-                )
-                Text(
-                    text = memo.name,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    color = colors.textTitle
-                )
-                if (memo.content.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = memo.content,
-                        fontSize = 13.sp,
-                        color = colors.textSecondary,
-                        maxLines = 3
-                    )
+        ShareBottomSheet(
+            memoName = memo.name,
+            memoContent = memo.content,
+            sheetState = shareSheetState,
+            onDismiss = { showShareSheet = false },
+            onShareToApp = {
+                showShareSheet = false
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, "${memo.name}\n\n${memo.content}")
                 }
-                HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable {
-                            showShareSheet = false
-                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                type = "text/plain"
-                                putExtra(Intent.EXTRA_TEXT, "${memo.name}\n\n${memo.content}")
-                            }
-                            activity?.startActivity(Intent.createChooser(shareIntent, null))
-                        }
-                        .padding(vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Icon(Icons.Default.Share, contentDescription = null, tint = colors.textTitle)
-                    Text(text = "다른 앱으로 공유", fontSize = 15.sp, color = colors.textTitle)
-                }
+                activity?.startActivity(Intent.createChooser(shareIntent, null))
             }
-        }
+        )
     }
 
     // ── 수정 팝업 ─────────────────────────────────────────────────────────────
@@ -442,6 +403,66 @@ fun Greeting(
                         modifier = Modifier.size(18.dp)
                     )
                 }
+            }
+        }
+    }
+}
+
+// ── 공유 바텀 시트 ──────────────────────────────────────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ShareBottomSheet(
+    memoName: String,
+    memoContent: String,
+    sheetState: androidx.compose.material3.SheetState,
+    onDismiss: () -> Unit,
+    onShareToApp: () -> Unit
+) {
+    val colors = LocalAppColors.current
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 32.dp)
+        ) {
+            Text(
+                text = "공유",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+            Text(
+                text = memoName,
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = colors.textTitle
+            )
+            if (memoContent.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = memoContent,
+                    fontSize = 13.sp,
+                    color = colors.textSecondary,
+                    maxLines = 3
+                )
+            }
+            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable(onClick = onShareToApp)
+                    .padding(vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(Icons.Default.Share, contentDescription = null, tint = colors.textTitle)
+                Text(text = "다른 앱으로 공유", fontSize = 15.sp, color = colors.textTitle)
             }
         }
     }
