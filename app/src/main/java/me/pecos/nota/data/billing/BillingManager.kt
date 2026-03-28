@@ -35,12 +35,18 @@ class BillingManager(
 ) : PurchasesUpdatedListener {
 
     companion object {
+        private const val PRODUCT_RICE_1 = "donation_rice_1"
+        private const val PRODUCT_RICE_2 = "donation_rice_2"
+        private const val PRODUCT_RICE_3 = "donation_rice_3"
+        private const val PRODUCT_RICE_4 = "donation_rice_4"
+        private const val PRODUCT_RICE_5 = "donation_rice_5"
+
         val PRODUCT_IDS = listOf(
-            "donation_rice_1",
-            "donation_rice_2",
-            "donation_rice_3",
-            "donation_rice_4",
-            "donation_rice_5"
+            PRODUCT_RICE_1,
+            PRODUCT_RICE_2,
+            PRODUCT_RICE_3,
+            PRODUCT_RICE_4,
+            PRODUCT_RICE_5
         )
     }
 
