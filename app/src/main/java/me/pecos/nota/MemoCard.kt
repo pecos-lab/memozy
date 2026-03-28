@@ -329,7 +329,10 @@ fun Greeting(
                                 type = "text/plain"
                                 putExtra(Intent.EXTRA_TEXT, "${memo.name}\n\n${memo.content}")
                             }
-                            context.startActivity(Intent.createChooser(shareIntent, null))
+                            val chooser = Intent.createChooser(shareIntent, null).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            context.startActivity(chooser)
                         },
                     contentAlignment = Alignment.Center
                 ) {
