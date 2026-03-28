@@ -70,6 +70,13 @@ import me.pecos.nota.presentation.theme.lightAppColors
 @dagger.hilt.android.AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
+    private val billingManager by lazy { BillingManager(this) }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        billingManager.disconnect()
+    }
+
     override fun attachBaseContext(newBase: Context) {
         val prefs = newBase.getSharedPreferences("settings", Context.MODE_PRIVATE)
         val langCode = prefs.getString("language_code", "ko") ?: "ko"
@@ -149,10 +156,9 @@ class MainActivity : AppCompatActivity() {
                                     )
                                 }
                                 composable("donation") {
-                                    val billingManager = remember { BillingManager(this@MainActivity) }
                                     DonationScreen(
                                         onBack = { navController.popBackStack() },
-                                        billingManager = billingManager
+                                        billingManager = this@MainActivity.billingManager
                                     )
                                 }
                                 composable("Memo/{memoId}") { backStackEntry ->

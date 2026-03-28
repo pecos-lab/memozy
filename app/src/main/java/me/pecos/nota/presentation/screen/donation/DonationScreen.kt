@@ -22,10 +22,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,9 +70,8 @@ fun DonationScreen(
     val colors = LocalAppColors.current
     val activity = LocalActivity.current
 
-    DisposableEffect(Unit) {
+    LaunchedEffect(Unit) {
         billingManager.connect()
-        onDispose { billingManager.disconnect() }
     }
 
     if (purchaseState is PurchaseState.Success) {
