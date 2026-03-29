@@ -44,8 +44,7 @@
     <string name="save">保存</string>
     <string name="add_memo">メモを追加</string>
     <string name="edit_memo">メモを編集</string>
-    <string name="man">男性</string>
-    <string name="woman">女性</string>
+
 
     <!-- Search / Sort / Count -->
     <string name="search_placeholder">タイトルまたは内容で検索</string>
