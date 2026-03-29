@@ -6,8 +6,8 @@ plugins {
 
 android {
     namespace = "me.pecos.memozy.feature.memo_plain.impl"
-    compileSdk = 36
-    defaultConfig { minSdk = 26 }
+    compileSdk = libs.versions.compileSdk.get().toInt()
+    defaultConfig { minSdk = libs.versions.minSdk.get().toInt() }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -18,8 +18,8 @@ android {
 
 configurations.all {
     resolutionStrategy {
-        force("androidx.compose.foundation:foundation:1.7.8")
-        force("androidx.compose.foundation:foundation-layout:1.7.8")
+        force("androidx.compose.foundation:foundation:${libs.versions.composeFoundation.get()}")
+        force("androidx.compose.foundation:foundation-layout:${libs.versions.composeFoundation.get()}")
     }
 }
 
@@ -33,6 +33,6 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.foundation.layout)
-    implementation("com.github.wanteddev:montage-android:3.3.0")
+    implementation(libs.montage.android)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

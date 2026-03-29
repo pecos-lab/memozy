@@ -5,8 +5,8 @@ plugins {
 
 android {
     namespace = "me.pecos.memozy.datasource.local.memo.api"
-    compileSdk = 36
-    defaultConfig { minSdk = 26 }
+    compileSdk = libs.versions.compileSdk.get().toInt()
+    defaultConfig { minSdk = libs.versions.minSdk.get().toInt() }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -17,5 +17,5 @@ android {
 dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation(libs.kotlinx.coroutines.android)
 }

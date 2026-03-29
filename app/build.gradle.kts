@@ -44,8 +44,8 @@ android {
 
 configurations.all {
     resolutionStrategy {
-        force("androidx.compose.foundation:foundation:1.7.8")
-        force("androidx.compose.foundation:foundation-layout:1.7.8")
+        force("androidx.compose.foundation:foundation:${libs.versions.composeFoundation.get()}")
+        force("androidx.compose.foundation:foundation-layout:${libs.versions.composeFoundation.get()}")
     }
 }
 

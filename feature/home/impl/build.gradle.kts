@@ -8,8 +8,8 @@ plugins {
 
 android {
     namespace = "me.pecos.memozy.feature.home.impl"
-    compileSdk = 36
-    defaultConfig { minSdk = 26 }
+    compileSdk = libs.versions.compileSdk.get().toInt()
+    defaultConfig { minSdk = libs.versions.minSdk.get().toInt() }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -20,8 +20,8 @@ android {
 
 configurations.all {
     resolutionStrategy {
-        force("androidx.compose.foundation:foundation:1.7.8")
-        force("androidx.compose.foundation:foundation-layout:1.7.8")
+        force("androidx.compose.foundation:foundation:${libs.versions.composeFoundation.get()}")
+        force("androidx.compose.foundation:foundation-layout:${libs.versions.composeFoundation.get()}")
     }
 }
 
@@ -38,12 +38,12 @@ dependencies {
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.foundation.layout)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation("androidx.navigation:navigation-compose:2.8.9")
-    implementation("dev.chrisbanes.haze:haze:1.7.2")
-    implementation("net.danlew:android.joda:2.12.7")
-    implementation("com.github.wanteddev:montage-android:3.3.0")
-    implementation("com.android.billingclient:billing-ktx:7.1.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation(libs.androidx.compose.navigation)
+    implementation(libs.haze)
+    implementation(libs.android.joda)
+    implementation(libs.montage.android)
+    implementation(libs.billing.ktx)
+    implementation(libs.kotlinx.coroutines.android)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     debugImplementation(libs.androidx.compose.ui.tooling)
