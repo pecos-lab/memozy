@@ -75,7 +75,7 @@ import me.pecos.nota.presentation.theme.LocalActivity
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun Greeting(
+fun MemoCardItem(
     memo: MemoUiState,
     onDelete: () -> Unit,
     onSave: (MemoUiState) -> Unit
