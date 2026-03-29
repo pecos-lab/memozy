@@ -76,21 +76,21 @@ dependencies {
     implementation(libs.androidx.compose.navigation)
 
     // haze (MainActivity 네비게이션 바 glass 효과)
-    implementation("dev.chrisbanes.haze:haze:1.7.2")
+    implementation(libs.haze)
 
     // hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 
     // app이 직접 사용하는 라이브러리 (feature:home:impl에서 implementation으로 선언되어 전이되지 않음)
-    implementation("com.github.wanteddev:montage-android:3.3.0")   // MainActivity, BottomNavBar
-    implementation("com.android.billingclient:billing-ktx:7.1.1")  // BillingManager 상위 타입
-    implementation("net.danlew:android.joda:2.12.7")               // MemozyApplication
+    implementation(libs.montage.android)   // MainActivity, BottomNavBar
+    implementation(libs.billing.ktx)  // BillingManager 상위 타입
+    implementation(libs.android.joda)               // MemozyApplication
 
     // firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
-    implementation("com.google.firebase:firebase-crashlytics")
+    implementation(libs.firebase.crashlytics)
 
     // test
     testImplementation(libs.junit)
