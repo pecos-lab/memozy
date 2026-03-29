@@ -7,9 +7,28 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:470786671712:android:7559fe639dcd0e5371ef05",
+        "mobilesdk_app_id": "1:470786671712:android:95d767d05ade018f71ef05",
         "android_client_info": {
           "package_name": "me.pecos.memozy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCWBfurhpfDutHWxL4WPuoXDGyBbpPwg6U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:470786671712:android:7559fe639dcd0e5371ef05",
+        "android_client_info": {
+          "package_name": "me.pecos.nota"
         }
       },
       "oauth_client": [],
