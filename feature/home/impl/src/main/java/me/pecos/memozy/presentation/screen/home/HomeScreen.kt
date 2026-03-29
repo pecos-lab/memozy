@@ -151,7 +151,8 @@ fun HomeScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 24.dp)
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 24.dp)
             ) {
                 // 제목 + 메모 개수
                 Row(
