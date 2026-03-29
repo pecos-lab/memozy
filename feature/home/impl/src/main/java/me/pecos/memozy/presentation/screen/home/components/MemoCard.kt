@@ -59,8 +59,8 @@ import com.wanted.android.wanted.design.input.textinput.textarea.WantedTextArea
 import com.wanted.android.wanted.design.input.textinput.textfield.WantedTextField
 import com.wanted.android.wanted.design.util.ButtonType
 import com.wanted.android.wanted.design.util.ButtonVariant
-import me.pecos.memozy.presentation.screen.memo.CATEGORY_EMOJIS
-import me.pecos.memozy.presentation.screen.memo.CATEGORY_RES_IDS
+import me.pecos.memozy.feature.core.resource.CATEGORY_EMOJIS
+import me.pecos.memozy.feature.core.resource.CATEGORY_RES_IDS
 import me.pecos.memozy.presentation.screen.home.model.MemoUiState
 import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.presentation.screen.home.util.formatMemoTime

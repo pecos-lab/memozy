@@ -55,8 +55,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wanted.android.wanted.design.theme.DesignSystemTheme
 import me.pecos.memozy.presentation.components.AppPopup
-import me.pecos.memozy.presentation.screen.memo.CATEGORY_EMOJIS
-import me.pecos.memozy.presentation.screen.memo.CATEGORY_RES_IDS
+import me.pecos.memozy.feature.core.resource.CATEGORY_EMOJIS
+import me.pecos.memozy.feature.core.resource.CATEGORY_RES_IDS
 import me.pecos.memozy.presentation.screen.home.components.MemoCardItem
 import me.pecos.memozy.presentation.components.PopupActionArea
 import me.pecos.memozy.presentation.components.PopupNavigation

@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "me.pecos.memozy.feature.home.api"
+    namespace = "me.pecos.memozy.feature.memo_plain.api"
     compileSdk = 36
     defaultConfig { minSdk = 26 }
     compileOptions {
