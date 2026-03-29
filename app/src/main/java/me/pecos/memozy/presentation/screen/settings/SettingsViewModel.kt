@@ -45,6 +45,8 @@ class SettingsViewModel @Inject constructor(
     )
     val selectedTheme: StateFlow<ThemeMode> = _selectedTheme
 
+    val isDonationEnabled: StateFlow<Boolean> = MutableStateFlow(false)
+
     fun selectLanguage(language: Language) {
         _selectedLanguage.value = language
         prefs.edit().putString("language_code", language.code).commit() // 동기 저장 - recreate 전 반드시 완료

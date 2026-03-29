@@ -55,6 +55,7 @@ fun SettingsScreen(
 
     val selectedLanguage by settingsViewModel.selectedLanguage.collectAsState()
     val selectedTheme by settingsViewModel.selectedTheme.collectAsState()
+    val isDonationEnabled by settingsViewModel.isDonationEnabled.collectAsState()
     val colors = LocalAppColors.current
     val context = LocalContext.current
     val activity = LocalActivity.current
@@ -280,6 +281,20 @@ fun SettingsScreen(
                     ).copy(contentColor = colors.textTitle),
                     onClick = { showLicenseDialog = true }
                 )
+
+                if (isDonationEnabled) {
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    WantedButton(
+                        text = stringResource(R.string.donation_button),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        buttonDefault = WantedButtonDefaults.getDefault(
+                            type = ButtonType.ASSISTIVE,
+                            variant = ButtonVariant.OUTLINED
+                        ).copy(contentColor = colors.textTitle),
+                        onClick = { onDonation() }
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
