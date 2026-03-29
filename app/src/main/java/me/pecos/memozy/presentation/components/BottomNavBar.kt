@@ -35,7 +35,7 @@ import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.rememberHazeState
-import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.R
 import me.pecos.memozy.presentation.theme.LocalAppColors
 
 // ── 바텀 네비게이션 ─────────────────────────────────────────────────────────────
