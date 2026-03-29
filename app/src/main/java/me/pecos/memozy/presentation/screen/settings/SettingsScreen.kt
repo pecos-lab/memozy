@@ -283,17 +283,16 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                WantedButton(
-                    text = stringResource(R.string.donation_button),
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                    buttonDefault = WantedButtonDefaults.getDefault(
-                        type = ButtonType.ASSISTIVE,
-                        variant = ButtonVariant.OUTLINED
-                    ).copy(contentColor = colors.textTitle),
-                    onClick = { onDonation() }
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
+                // TODO: 후원 버튼 임시 숨김 (기능 유지)
+//                WantedButton(
+//                    text = stringResource(R.string.donation_button),
+//                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+//                    buttonDefault = WantedButtonDefaults.getDefault(
+//                        type = ButtonType.ASSISTIVE,
+//                        variant = ButtonVariant.OUTLINED
+//                    ).copy(contentColor = colors.textTitle),
+//                    onClick = { onDonation() }
+//                )
 
                 WantedButton(
                     text = stringResource(R.string.reset_memos),
