@@ -15,6 +15,6 @@ android {
 }
 
 dependencies {
-    api(project(":datasource:local:memo:api"))
+    implementation(project(":datasource:local:memo:api"))
     implementation(libs.kotlinx.coroutines.android)
 }

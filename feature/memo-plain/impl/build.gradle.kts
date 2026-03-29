@@ -24,7 +24,7 @@ configurations.all {
 }
 
 dependencies {
-    api(project(":feature:memo-plain:api"))
+    implementation(project(":feature:memo-plain:api"))
     implementation(project(":feature:core:resource"))
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

@@ -17,7 +17,7 @@ android {
 }
 
 dependencies {
-    api(project(":data:repository:memo:api"))
+    implementation(project(":data:repository:memo:api"))
     implementation(project(":datasource:local:memo:api"))
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

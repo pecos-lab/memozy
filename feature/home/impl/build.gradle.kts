@@ -26,9 +26,10 @@ configurations.all {
 }
 
 dependencies {
-    api(project(":feature:home:api"))
+    implementation(project(":feature:home:api"))
     implementation(project(":feature:core:resource"))
     implementation(project(":feature:memo-plain:api"))
+    implementation(project(":datasource:local:memo:api"))
     implementation(project(":data:repository:memo:api"))
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

@@ -15,5 +15,5 @@ android {
 }
 
 dependencies {
-    api(libs.androidx.compose.navigation)
+    implementation(libs.androidx.compose.navigation)
 }

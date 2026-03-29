@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -23,5 +24,5 @@ configurations.all {
 }
 
 dependencies {
-    api(libs.androidx.compose.navigation)
+    implementation(libs.androidx.compose.navigation)
 }

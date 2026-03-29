@@ -21,7 +21,7 @@ ksp {
 }
 
 dependencies {
-    api(project(":datasource:local:memo:api"))
+    implementation(project(":datasource:local:memo:api"))
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)

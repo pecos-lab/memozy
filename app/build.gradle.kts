@@ -51,8 +51,8 @@ configurations.all {
 
 dependencies {
     // 모듈
-    implementation(project(":datasource:local:memo:impl"))
-    implementation(project(":data:repository:memo:impl"))
+    runtimeOnly(project(":datasource:local:memo:impl"))
+    runtimeOnly(project(":data:repository:memo:impl"))
     implementation(project(":feature:core:resource"))
     implementation(project(":feature:home:impl"))
     implementation(project(":feature:memo-plain:impl"))
