@@ -278,7 +278,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(6.dp))
 
                 LazyColumn {
-                    items(filteredList) { memo ->
+                    items(filteredList, key = { it.id }) { memo ->
                         MemoCardItem(
                             memo = memo,
                             onDelete = { onDelete(memo.id) },
