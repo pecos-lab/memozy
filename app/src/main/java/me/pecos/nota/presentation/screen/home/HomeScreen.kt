@@ -57,7 +57,7 @@ import com.wanted.android.wanted.design.theme.DesignSystemTheme
 import me.pecos.nota.presentation.components.AppPopup
 import me.pecos.nota.presentation.screen.memo.CATEGORY_EMOJIS
 import me.pecos.nota.presentation.screen.memo.CATEGORY_RES_IDS
-import me.pecos.nota.presentation.screen.home.components.Greeting
+import me.pecos.nota.presentation.screen.home.components.MemoCardItem
 import me.pecos.nota.presentation.components.PopupActionArea
 import me.pecos.nota.presentation.components.PopupNavigation
 import me.pecos.nota.presentation.components.PopupSize
@@ -279,7 +279,7 @@ fun HomeScreen(
 
                 LazyColumn {
                     items(filteredList) { memo ->
-                        Greeting(
+                        MemoCardItem(
                             memo = memo,
                             onDelete = { onDelete(memo.id) },
                             onSave = { updatedMemo -> viewModel.updateMemo(updatedMemo) }
