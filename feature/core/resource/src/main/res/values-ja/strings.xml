@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Settings -->
+    <string name="settings">設定</string>
+    <string name="language_settings">言語設定</string>
+    <string name="open_source_license">オープンソースライセンス</string>
+    <string name="reset_memos">メモをリセット</string>
+    <string name="reset_confirm">保存されたすべてのメモが削除されます。\n本当にリセットしますか？</string>
+    <string name="reset">リセット</string>
+    <string name="cancel">キャンセル</string>
+    <string name="close">閉じる</string>
+    <string name="theme_settings">テーマ設定</string>
+    <string name="theme_light">ライトモード</string>
+    <string name="theme_dark">ダークモード</string>
+    <string name="theme_system">システムデフォルト</string>
+    <string name="license_content">• Jetpack Compose - Apache 2.0\n• Room Database - Apache 2.0\n• Kotlin Coroutines - Apache 2.0\n• Navigation Compose - Apache 2.0</string>
+
+    <!-- Categories -->
+    <string name="category_all">すべて</string>
+    <string name="category_settings">カテゴリ設定</string>
+    <string name="category_general">一般</string>
+    <string name="category_work">仕事</string>
+    <string name="category_idea">アイデア</string>
+    <string name="category_todo">やること</string>
+    <string name="category_study">勉強</string>
+    <string name="category_schedule">予定</string>
+    <string name="category_budget">家計簿</string>
+    <string name="category_exercise">運動</string>
+    <string name="category_health">健康</string>
+    <string name="category_travel">旅行</string>
+    <string name="category_shopping">ショッピング</string>
+
+    <!-- Memo -->
+    <string name="memo_title_label">タイトル</string>
+    <string name="memo_title_placeholder">メモのタイトル</string>
+    <string name="memo_content_label">内容</string>
+    <string name="memo_content_placeholder">メモの内容</string>
+    <string name="delete_confirm_title">本当に削除しますか？</string>
+    <string name="delete_confirm_message">注意 : 削除後は復元できません</string>
+    <string name="yes">はい</string>
+    <string name="no">いいえ</string>
+    <string name="save">保存</string>
+    <string name="add_memo">メモを追加</string>
+    <string name="edit_memo">メモを編集</string>
+
+
+    <!-- Search / Sort / Count -->
+    <string name="search_placeholder">タイトルまたは内容で検索</string>
+    <string name="sort_newest">新しい順</string>
+    <string name="sort_oldest">古い順</string>
+    <string name="memo_count">計 %d件</string>
+    <string name="memo_updated_at">編集:</string>
+    <string name="memo_copy">コピー</string>
+    <string name="char_count">%d字</string>
+    <string name="empty_memo_hint">メモがまだありません\n新しいメモを追加してみてください</string>
+    <string name="empty_search_hint">検索結果がありません</string>
+
+    <!-- Donation -->
+    <string name="donation_button">開発者にお米を贈る 🍚</string>
+    <string name="donation_title">開発者にお米を贈る</string>
+    <string name="donation_subtitle">ご支援いただけると、もっと美味しい機能を作れます！</string>
+    <string name="donation_tier_1_name">ごはん 1個</string>
+    <string name="donation_tier_1_desc">ちょっとした一食のプレゼント</string>
+    <string name="donation_tier_2_name">ごはん 6個セット</string>
+    <string name="donation_tier_2_desc">一週間分のごはん</string>
+    <string name="donation_tier_3_name">ごはん 18個セット</string>
+    <string name="donation_tier_3_desc">一ヶ月の安心ごはん</string>
+    <string name="donation_tier_4_name">お米 10kg</string>
+    <string name="donation_tier_4_desc">本物のお米一袋！</string>
+    <string name="donation_tier_5_name">お米 1俵 (20kg)</string>
+    <string name="donation_tier_5_desc">最高のご支援！ありがとうございます</string>
+    <string name="donation_thank_title">ありがとうございます！ 🙏</string>
+    <string name="donation_thank_message">温かいご支援ありがとうございます！\nもっと良いアプリを作ります。</string>
+    <string name="donation_error_title">決済エラー</string>
+    <string name="donation_error_message">決済処理中に問題が発生しました。\nもう一度お試しください。</string>
+    <string name="donation_loading">接続中…</string>
+</resources>
