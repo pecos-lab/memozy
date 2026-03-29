@@ -23,5 +23,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "pecos.nota"
+rootProject.name = "memozy"
 include(":app")

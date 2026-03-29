@@ -9,11 +9,11 @@ plugins {
 }
 
 android {
-    namespace = "me.pecos.nota"
+    namespace = "me.pecos.memozy"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "me.pecos.nota"
+        applicationId = "me.pecos.memozy"
         minSdk = 26
         targetSdk = 36
         versionCode = 2
