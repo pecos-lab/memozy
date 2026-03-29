@@ -81,7 +81,7 @@ class MainViewModel @Inject constructor(
                 if (sort == SortOrder.NEWEST) filtered else filtered.reversed()
             }
     }.flowOn(Dispatchers.Default)
-     .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+     .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     fun deleteMemo(id: Int) {
         viewModelScope.launch {
