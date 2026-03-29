@@ -81,6 +81,11 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 
+    // app이 직접 사용하는 라이브러리 (feature:home:impl에서 implementation으로 선언되어 전이되지 않음)
+    implementation("com.github.wanteddev:montage-android:3.3.0")   // MainActivity, BottomNavBar
+    implementation("com.android.billingclient:billing-ktx:7.1.1")  // BillingManager 상위 타입
+    implementation("net.danlew:android.joda:2.12.7")               // MemozyApplication
+
     // firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
