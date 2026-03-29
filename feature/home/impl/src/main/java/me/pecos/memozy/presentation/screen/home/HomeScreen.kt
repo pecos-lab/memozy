@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -79,6 +80,7 @@ fun HomeScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val sortOrder by viewModel.sortOrder.collectAsState()
     val filteredList by viewModel.filteredList.collectAsState()
+    val listState = remember(sortOrder) { LazyListState() }
     var showFilterDialog by remember { mutableStateOf(false) }
     var tempCategoryIndex by remember(showFilterDialog, selectedCategoryIndex) { mutableIntStateOf(selectedCategoryIndex) }
 
@@ -277,7 +279,10 @@ fun HomeScreen(
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                LazyColumn {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.weight(1f)
+                ) {
                     items(filteredList, key = { it.id }) { memo ->
                         MemoCardItem(
                             memo = memo,
