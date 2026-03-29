@@ -10,12 +10,12 @@ plugins {
 
 android {
     namespace = "me.pecos.memozy"
-    compileSdk = 36
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
         applicationId = "me.pecos.memozy"
-        minSdk = 26
-        targetSdk = 36
+        minSdk = libs.versions.minSdk.get().toInt()
+        targetSdk = libs.versions.compileSdk.get().toInt()
         versionCode = 3
         versionName = "1.2603.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
