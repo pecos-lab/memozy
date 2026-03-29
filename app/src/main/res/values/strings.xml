@@ -43,8 +43,7 @@
     <string name="save">저장</string>
     <string name="add_memo">메모 추가</string>
     <string name="edit_memo">메모 수정</string>
-    <string name="man">남자</string>
-    <string name="woman">여자</string>
+
 
     <!-- Search / Sort / Count -->
     <string name="search_placeholder">제목 또는 내용으로 검색</string>

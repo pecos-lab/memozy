@@ -44,8 +44,7 @@
     <string name="save">Save</string>
     <string name="add_memo">Add Memo</string>
     <string name="edit_memo">Edit Memo</string>
-    <string name="man">Male</string>
-    <string name="woman">Female</string>
+
 
     <!-- Search / Sort / Count -->
     <string name="search_placeholder">Search by title or content</string>
