@@ -1,30 +1,20 @@
 package me.pecos.memozy.data.datasource.local.di
 
-import android.content.Context
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
 import me.pecos.memozy.data.datasource.local.MIGRATION_1_2
 import me.pecos.memozy.data.datasource.local.MIGRATION_2_3
 import me.pecos.memozy.data.datasource.local.MIGRATION_3_4
-import me.pecos.memozy.data.datasource.local.MemoDao
 import me.pecos.memozy.data.datasource.local.MemoDatabase
-import javax.inject.Singleton
+import org.koin.android.ext.koin.androidContext
+import org.koin.dsl.module
 
-@Module
-@InstallIn(SingletonComponent::class)
-object DatabaseModule {
+val databaseModule = module {
 
-    @Provides
-    @Singleton
-    fun provideMemoDatabase(@ApplicationContext context: Context): MemoDatabase {
-        return Room.databaseBuilder(
-            context,
+    single {
+        Room.databaseBuilder(
+            androidContext(),
             MemoDatabase::class.java,
             "memo_database"
         )
@@ -38,8 +28,5 @@ object DatabaseModule {
             .build()
     }
 
-    @Provides
-    fun provideMemoDao(database: MemoDatabase): MemoDao {
-        return database.memoDao()
-    }
+    single { get<MemoDatabase>().memoDao() }
 }

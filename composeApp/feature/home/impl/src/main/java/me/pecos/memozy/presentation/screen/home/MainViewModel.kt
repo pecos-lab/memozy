@@ -2,7 +2,6 @@ package me.pecos.memozy.presentation.screen.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,10 +17,8 @@ import me.pecos.memozy.presentation.screen.home.model.MemoUiState
 import me.pecos.memozy.presentation.screen.home.model.SortOrder
 import me.pecos.memozy.data.datasource.local.entity.Memo
 import me.pecos.memozy.data.repository.MemoRepository
-import javax.inject.Inject
 
-@HiltViewModel
-class MainViewModel @Inject constructor(
+class MainViewModel(
     private val repository: MemoRepository
 ) : ViewModel() {
 

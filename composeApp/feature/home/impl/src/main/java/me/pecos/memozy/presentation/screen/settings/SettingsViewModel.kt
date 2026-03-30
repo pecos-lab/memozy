@@ -3,13 +3,10 @@ package me.pecos.memozy.presentation.screen.settings
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import me.pecos.memozy.data.repository.MemoRepository
-import javax.inject.Inject
 
 data class Language(val name: String, val code: String)
 
@@ -19,9 +16,8 @@ val LANGUAGES = listOf(
     Language("日本語", "ja"),
 )
 
-@HiltViewModel
-class SettingsViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
+class SettingsViewModel(
+    private val context: Context,
     private val repository: MemoRepository
 ) : ViewModel() {
 

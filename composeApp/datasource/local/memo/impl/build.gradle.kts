@@ -2,7 +2,6 @@ import me.pecos.memozy.convention.extension.setNamespace
 
 plugins {
     id("memozy.android.library")
-    id("memozy.hilt")
     id("memozy.room")
 }
 
@@ -14,4 +13,6 @@ ksp {
 
 dependencies {
     implementation(projects.composeApp.datasource.local.memo.api)
+    implementation(libs.koin.core)
+    implementation(libs.koin.android)
 }

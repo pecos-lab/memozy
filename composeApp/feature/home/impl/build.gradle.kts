@@ -3,7 +3,6 @@ import me.pecos.memozy.convention.extension.setNamespace
 plugins {
     id("memozy.android.library")
     id("memozy.compose")
-    id("memozy.hilt")
 }
 
 setNamespace("feature.home.impl")
@@ -22,5 +21,7 @@ dependencies {
     implementation(libs.android.joda)
     implementation(libs.montage.android)
     implementation(libs.billing.ktx)
+    implementation(libs.koin.android)
+    implementation(libs.koin.compose.viewmodel)
     implementation(libs.kotlinx.coroutines.android)
 }
