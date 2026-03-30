@@ -1,4 +1,4 @@
-package me.pecos.memozy.feature.memo_plain.impl
+package me.pecos.memozy.feature.memoplain.impl
 
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -10,8 +10,8 @@ import kotlinx.coroutines.launch
 import me.pecos.memozy.data.datasource.local.entity.Memo
 import me.pecos.memozy.data.repository.MemoRepository
 import me.pecos.memozy.data.repository.model.MemoFormat
-import me.pecos.memozy.feature.memo_plain.api.MemoPlainNavigation
-import me.pecos.memozy.feature.memo_plain.api.MemoPlainRoute
+import me.pecos.memozy.feature.memoplain.api.MemoPlainNavigation
+import me.pecos.memozy.feature.memoplain.api.MemoPlainRoute
 import me.pecos.memozy.presentation.screen.home.model.MemoFormatUi
 import me.pecos.memozy.presentation.screen.home.model.MemoUiState
 import me.pecos.memozy.presentation.screen.memo.MemoScreen
@@ -46,51 +46,30 @@ class MemoPlainNavigationImpl @Inject constructor(
                     }
                 }
                 .collectAsState(initial = emptyList())
-
-            val existingMemo = if (memoId > 0) {
-                memos.find { it.id == memoId } ?: MemoUiState(0, "", 0, "")
-            } else {
-                MemoUiState(0, "", 0, "")
-            }
-
+            val existingMemo = memos.firstOrNull { it.id == memoId }
             val scope = rememberCoroutineScope()
 
             MemoScreen(
-                existingMemo = existingMemo,
+                existingMemo = existingMemo ?: MemoUiState(0, "", 1, ""),
                 onBack = onBack,
                 onSave = { memo ->
                     scope.launch {
-                        if (memoId > 0) {
-                            repository.updateMemo(
-                                Memo(
-                                    id = memo.id,
-                                    name = memo.name,
-                                    categoryId = memo.categoryId,
-                                    content = memo.content,
-                                    createdAt = memo.createdAt,
-                                    updatedAt = memo.updatedAt,
-                                    format = when (memo.format) {
-                                        MemoFormatUi.MARKDOWN -> MemoFormat.MARKDOWN
-                                        MemoFormatUi.PLAIN -> MemoFormat.PLAIN
-                                    }
-                                )
-                            )
-                            onBack()
+                        if (memoId > 0 && existingMemo != null) {
+                            repository.updateMemo(memo.toEntity())
                         } else {
-                            repository.addMemo(
-                                Memo(
-                                    name = memo.name,
-                                    categoryId = memo.categoryId,
-                                    content = memo.content,
-                                    createdAt = System.currentTimeMillis(),
-                                    format = MemoFormat.MARKDOWN
-                                )
-                            )
-                            onNavigateToHome()
+                            repository.addMemo(memo.toEntity())
                         }
+                        onNavigateToHome()
                     }
                 }
             )
         }
     }
+
+    private fun MemoUiState.toEntity() = Memo(
+        id = id,
+        name = name,
+        categoryId = categoryId,
+        content = content
+    )
 }

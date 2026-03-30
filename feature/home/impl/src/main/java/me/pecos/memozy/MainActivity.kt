@@ -50,8 +50,8 @@ import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.rememberHazeState
 import me.pecos.memozy.data.billing.BillingManager
 import me.pecos.memozy.feature.home.api.HomeRoute
-import me.pecos.memozy.feature.memo_plain.api.MemoPlainNavigation
-import me.pecos.memozy.feature.memo_plain.api.MemoPlainRoute
+import me.pecos.memozy.feature.memoplain.api.MemoPlainNavigation
+import me.pecos.memozy.feature.memoplain.api.MemoPlainRoute
 import me.pecos.memozy.presentation.components.FloatingNavPill
 import me.pecos.memozy.presentation.screen.donation.DonationScreen
 import me.pecos.memozy.presentation.screen.home.HomeScreen

@@ -1,18 +1,10 @@
+import me.pecos.memozy.convention.extension.setNamespace
+
 plugins {
-    alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
+    id("memozy.android.library")
 }
 
-android {
-    namespace = "me.pecos.memozy.data.repository.memo.api"
-    compileSdk = libs.versions.compileSdk.get().toInt()
-    defaultConfig { minSdk = libs.versions.minSdk.get().toInt() }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    kotlinOptions { jvmTarget = "11" }
-}
+setNamespace("data.repository.memo.api")
 
 dependencies {
     implementation(projects.datasource.local.memo.api)
