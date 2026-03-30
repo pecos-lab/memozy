@@ -69,6 +69,8 @@ class MemoPlainNavigationImpl(
         id = id,
         name = name,
         categoryId = categoryId,
-        content = content
+        content = content,
+        createdAt = if (createdAt > 0L) createdAt else System.currentTimeMillis(),
+        updatedAt = System.currentTimeMillis()
     )
 }

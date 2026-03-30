@@ -1,36 +1,37 @@
 package me.pecos.memozy.data.datasource.local
 
-import android.content.Context
+import androidx.room.ConstructedBy
 import androidx.room.Database
-import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
-import androidx.sqlite.db.SupportSQLiteDatabase
+import androidx.sqlite.SQLiteConnection
+import androidx.sqlite.execSQL
+import me.pecos.memozy.data.datasource.local.converter.MemoFormatConverter
 import me.pecos.memozy.data.datasource.local.entity.Category
 import me.pecos.memozy.data.datasource.local.entity.Memo
-import me.pecos.memozy.data.datasource.local.converter.MemoFormatConverter
 
 val MIGRATION_1_2 = object : Migration(1, 2) {
-    override fun migrate(database: SupportSQLiteDatabase) {
-        database.execSQL("ALTER TABLE memo ADD COLUMN createdAt INTEGER NOT NULL DEFAULT 0")
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE memo ADD COLUMN createdAt INTEGER NOT NULL DEFAULT 0")
     }
 }
 
 val MIGRATION_2_3 = object : Migration(2, 3) {
-    override fun migrate(database: SupportSQLiteDatabase) {
-        database.execSQL("ALTER TABLE memo ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0")
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE memo ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0")
     }
 }
 
 val MIGRATION_3_4 = object : Migration(3, 4) {
-    override fun migrate(database: SupportSQLiteDatabase) {
+    override fun migrate(connection: SQLiteConnection) {
         // 1. category 테이블 생성 (고정 ID로 사전 삽입)
-        database.execSQL("CREATE TABLE IF NOT EXISTS `category` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL)")
-        database.execSQL("INSERT INTO `category` (`id`, `name`) VALUES (1,'일반'),(2,'업무'),(3,'아이디어'),(4,'할 일'),(5,'공부'),(6,'일정'),(7,'가계부'),(8,'운동'),(9,'건강'),(10,'여행'),(11,'쇼핑'),(12,'미분류')")
+        connection.execSQL("CREATE TABLE IF NOT EXISTS `category` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL)")
+        connection.execSQL("INSERT INTO `category` (`id`, `name`) VALUES (1,'일반'),(2,'업무'),(3,'아이디어'),(4,'할 일'),(5,'공부'),(6,'일정'),(7,'가계부'),(8,'운동'),(9,'건강'),(10,'여행'),(11,'쇼핑'),(12,'미분류')")
 
         // 2. memo 테이블 재생성 (sex→categoryId, killThePecos→content, format 추가)
-        database.execSQL("""
+        connection.execSQL("""
             CREATE TABLE IF NOT EXISTS `memo_new` (
                 `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                 `name` TEXT NOT NULL,
@@ -43,7 +44,7 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
         """.trimIndent())
 
         // 3. 기존 데이터 복사: sex 문자열 → categoryId (한/영/일 모두 처리), format은 'plain' 기본값
-        database.execSQL("""
+        connection.execSQL("""
             INSERT INTO `memo_new` (`id`, `name`, `categoryId`, `content`, `createdAt`, `updatedAt`, `format`)
             SELECT `id`, `name`,
                 CASE `sex`
@@ -65,41 +66,25 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
         """.trimIndent())
 
         // 4. 기존 memo 테이블 교체
-        database.execSQL("DROP TABLE `memo`")
-        database.execSQL("ALTER TABLE `memo_new` RENAME TO `memo`")
+        connection.execSQL("DROP TABLE `memo`")
+        connection.execSQL("ALTER TABLE `memo_new` RENAME TO `memo`")
     }
 }
 
-private val PREPOPULATE_CALLBACK = object : RoomDatabase.Callback() {
-    override fun onCreate(db: SupportSQLiteDatabase) {
-        super.onCreate(db)
-        db.execSQL("INSERT INTO `category` (`id`, `name`) VALUES (1,'일반'),(2,'업무'),(3,'아이디어'),(4,'할 일'),(5,'공부'),(6,'일정'),(7,'가계부'),(8,'운동'),(9,'건강'),(10,'여행'),(11,'쇼핑'),(12,'미분류')")
+val PREPOPULATE_CALLBACK = object : RoomDatabase.Callback() {
+    override fun onCreate(connection: SQLiteConnection) {
+        super.onCreate(connection)
+        connection.execSQL("INSERT INTO `category` (`id`, `name`) VALUES (1,'일반'),(2,'업무'),(3,'아이디어'),(4,'할 일'),(5,'공부'),(6,'일정'),(7,'가계부'),(8,'운동'),(9,'건강'),(10,'여행'),(11,'쇼핑'),(12,'미분류')")
     }
 }
 
 @TypeConverters(MemoFormatConverter::class)
 @Database(entities = [Memo::class, Category::class], version = 4, exportSchema = true)
+@ConstructedBy(MemoDatabaseConstructor::class)
 abstract class MemoDatabase : RoomDatabase() {
     abstract fun memoDao(): MemoDao
     abstract fun categoryDao(): CategoryDao
-
-    companion object {
-        @Volatile
-        private var INSTANCE: MemoDatabase? = null
-
-        fun getDatabase(context: Context): MemoDatabase {
-            return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    MemoDatabase::class.java,
-                    "memo_database"
-                )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
-                    .addCallback(PREPOPULATE_CALLBACK)
-                    .build()
-                INSTANCE = instance
-                instance
-            }
-        }
-    }
 }
+
+@Suppress("NO_ACTUAL_FOR_EXPECT")
+expect object MemoDatabaseConstructor : RoomDatabaseConstructor<MemoDatabase>

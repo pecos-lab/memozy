@@ -1,13 +1,15 @@
-import me.pecos.memozy.convention.extension.setNamespace
+import me.pecos.memozy.convention.extension.configureAndroidLibrary
 
 plugins {
-    id("memozy.android.library")
+    id("memozy.library")
 }
 
-setNamespace("datasource.local.memo.api")
+configureAndroidLibrary("datasource.local.memo.api")
 
-dependencies {
-    implementation(libs.room.runtime)
-    implementation(libs.room.ktx)
-    implementation(libs.kotlinx.coroutines.android)
+kotlin {
+    sourceSets {
+        commonMain.dependencies {
+            implementation(libs.room.runtime)
+        }
+    }
 }

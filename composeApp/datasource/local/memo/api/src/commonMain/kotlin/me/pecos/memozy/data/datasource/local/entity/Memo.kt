@@ -11,7 +11,7 @@ data class Memo(
     val name: String,
     val categoryId: Int,
     val content: String,
-    val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis(),
+    val createdAt: Long = 0L,
+    val updatedAt: Long = 0L,
     val format: MemoFormat = MemoFormat.PLAIN
 )
