@@ -1,7 +1,7 @@
 package me.pecos.memozy.convention
 
 import com.android.build.api.dsl.ApplicationExtension
-import me.pecos.memozy.convention.extension.AndroidExtension
+import com.android.build.api.dsl.LibraryExtension
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.withType
@@ -10,8 +10,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 internal const val COMPILE_SDK = 36
 internal const val MIN_SDK = 26
-internal val JAVA_VERSION = JavaVersion.VERSION_17
-internal val JVM_TARGET = JvmTarget.JVM_17
+internal val JAVA_VERSION = JavaVersion.VERSION_21
+internal val JVM_TARGET = JvmTarget.JVM_21
 
 internal fun ApplicationExtension.configureApplication() {
     defaultConfig {
@@ -19,7 +19,19 @@ internal fun ApplicationExtension.configureApplication() {
     }
 }
 
-internal fun AndroidExtension.configureAndroid() {
+internal fun ApplicationExtension.configureAndroid() {
+    compileSdk = COMPILE_SDK
+    defaultConfig {
+        minSdk = MIN_SDK
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+    compileOptions {
+        sourceCompatibility = JAVA_VERSION
+        targetCompatibility = JAVA_VERSION
+    }
+}
+
+internal fun LibraryExtension.configureAndroid() {
     compileSdk = COMPILE_SDK
     defaultConfig {
         minSdk = MIN_SDK

@@ -1,0 +1,48 @@
+# Combobox
+
+Autocomplete input and command palette with a list of suggestions.
+
+## Usage
+
+```kotlin
+import com.shadcn.ui.components.ComboBox
+
+@Composable
+fun Example() {
+    val programmingLanguages = remember {
+        listOf(
+            "JavaScript", "Python", "Java", "C#", "C++", "Ruby", "Swift",
+            "Go", "Kotlin", "PHP", "TypeScript", "Rust", "Dart", "Scala"
+        )
+    }
+
+    var selectedLanguage by remember { mutableStateOf<String?>(null) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+
+            .padding(top = 24.dp, start = 16.dp, end = 16.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        ComboBox(
+            options = programmingLanguages,
+            selectedOption = selectedLanguage,
+            onOptionSelected = {
+                selectedLanguage = it
+            },
+            modifier = Modifier.width(280.dp),
+            placeholder = "Select a language..."
+        )
+
+        Text(
+            text = "Selected Language: ${selectedLanguage ?: "None"}",
+            color = MaterialTheme.colors.foreground,
+            style = MaterialTheme.typography.bodyLarge
+        )
+    }
+}
+```
+
+> 코드 예시는 공식 문서에서 확인: [Combobox](https://shadcn-compose.site/docs/components/combobox)

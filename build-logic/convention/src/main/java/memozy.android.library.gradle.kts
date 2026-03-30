@@ -4,7 +4,6 @@ import me.pecos.memozy.convention.configureKotlin
 
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android")
 }
 
 extensions.getByType<LibraryExtension>().apply {
