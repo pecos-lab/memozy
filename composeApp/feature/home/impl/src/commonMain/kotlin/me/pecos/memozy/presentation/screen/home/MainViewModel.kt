@@ -33,7 +33,7 @@ class MainViewModel(
                     name = name,
                     categoryId = categoryId,
                     content = content,
-                    createdAt = System.currentTimeMillis(),
+                    createdAt = currentTimeMillis(),
                     format = MemoFormat.MARKDOWN
                 )
             )
