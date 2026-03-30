@@ -25,6 +25,7 @@ fun Project.configureComposeLibrary() {
                 implementation(composeDeps.foundation)
                 implementation(composeDeps.ui)
                 implementation(composeDeps.material3)
+                implementation(composeDeps.materialIconsExtended)
                 api(composeDeps.components.resources)
                 implementation(composeDeps.components.uiToolingPreview)
             }
