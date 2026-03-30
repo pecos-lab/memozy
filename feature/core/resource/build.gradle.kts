@@ -16,13 +16,6 @@ android {
     buildFeatures { compose = true }
 }
 
-configurations.all {
-    resolutionStrategy {
-        force(libs.androidx.compose.foundation.asProvider().get().toString())
-        force(libs.androidx.compose.foundation.layout.get().toString())
-    }
-}
-
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

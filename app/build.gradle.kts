@@ -40,10 +40,10 @@ android {
 
 dependencies {
     // 모듈 - Hilt가 런타임에 바인딩 발견
-    runtimeOnly(project(":datasource:local:memo:impl"))
-    runtimeOnly(project(":data:repository:memo:impl"))
-    runtimeOnly(project(":feature:home:impl"))
-    runtimeOnly(project(":feature:memo-plain:impl"))
+    runtimeOnly(projects.datasource.local.memo.impl)
+    runtimeOnly(projects.data.repository.memo.impl)
+    runtimeOnly(projects.feature.home.impl)
+    runtimeOnly(projects.feature.memoPlain.impl)
 
     // core android
     implementation(libs.androidx.core.ktx)

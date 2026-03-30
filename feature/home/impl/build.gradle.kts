@@ -18,19 +18,12 @@ android {
     buildFeatures { compose = true }
 }
 
-configurations.all {
-    resolutionStrategy {
-        force(libs.androidx.compose.foundation.asProvider().get().toString())
-        force(libs.androidx.compose.foundation.layout.get().toString())
-    }
-}
-
 dependencies {
-    implementation(project(":feature:home:api"))
-    implementation(project(":feature:core:resource"))
-    implementation(project(":feature:memo-plain:api"))
-    implementation(project(":datasource:local:memo:api"))
-    implementation(project(":data:repository:memo:api"))
+    implementation(projects.feature.home.api)
+    implementation(projects.feature.core.resource)
+    implementation(projects.feature.memoPlain.api)
+    implementation(projects.datasource.local.memo.api)
+    implementation(projects.data.repository.memo.api)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)

@@ -18,16 +18,9 @@ android {
     buildFeatures { compose = true }
 }
 
-configurations.all {
-    resolutionStrategy {
-        force(libs.androidx.compose.foundation.asProvider().get().toString())
-        force(libs.androidx.compose.foundation.layout.get().toString())
-    }
-}
-
 dependencies {
-    implementation(project(":feature:memo-plain:api"))
-    implementation(project(":feature:core:resource"))
+    implementation(projects.feature.memoPlain.api)
+    implementation(projects.feature.core.resource)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
@@ -37,8 +30,8 @@ dependencies {
     implementation(libs.androidx.compose.foundation.layout)
     implementation(libs.montage.android)
     implementation(libs.androidx.compose.navigation)
-    implementation(project(":datasource:local:memo:api"))
-    implementation(project(":data:repository:memo:api"))
+    implementation(projects.datasource.local.memo.api)
+    implementation(projects.data.repository.memo.api)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.kotlinx.coroutines.android)
