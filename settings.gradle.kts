@@ -27,6 +27,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "memozy"
 include(":androidApp:memozy")
+include(":composeApp:host")
 include(":composeApp:datasource:local:memo:api")
 include(":composeApp:datasource:local:memo:impl")
 include(":composeApp:data:repository:memo:api")
