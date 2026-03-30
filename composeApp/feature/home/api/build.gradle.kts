@@ -1,12 +1,15 @@
-import me.pecos.memozy.convention.extension.setNamespace
+import me.pecos.memozy.convention.extension.configureAndroidLibrary
 
 plugins {
-    id("memozy.android.library")
-    id("memozy.compose")
+    id("memozy.library")
 }
 
-setNamespace("feature.home.api")
+configureAndroidLibrary("feature.home.api")
 
-dependencies {
-    implementation(libs.androidx.compose.navigation)
+kotlin {
+    sourceSets {
+        commonMain.dependencies {
+            implementation(libs.androidx.compose.navigation)
+        }
+    }
 }
