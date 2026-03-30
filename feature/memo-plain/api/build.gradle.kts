@@ -5,8 +5,8 @@ plugins {
 
 android {
     namespace = "me.pecos.memozy.feature.memo_plain.api"
-    compileSdk = 36
-    defaultConfig { minSdk = 26 }
+    compileSdk = libs.versions.compileSdk.get().toInt()
+    defaultConfig { minSdk = libs.versions.minSdk.get().toInt() }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -15,5 +15,5 @@ android {
 }
 
 dependencies {
-    api(libs.androidx.compose.navigation)
+    implementation(libs.androidx.compose.navigation)
 }

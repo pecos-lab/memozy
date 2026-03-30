@@ -7,8 +7,8 @@ plugins {
 
 android {
     namespace = "me.pecos.memozy.datasource.local.memo.impl"
-    compileSdk = 36
-    defaultConfig { minSdk = 26 }
+    compileSdk = libs.versions.compileSdk.get().toInt()
+    defaultConfig { minSdk = libs.versions.minSdk.get().toInt() }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -21,7 +21,7 @@ ksp {
 }
 
 dependencies {
-    api(project(":datasource:local:memo:api"))
+    implementation(projects.datasource.local.memo.api)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)

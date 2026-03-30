@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.google.services)
     alias(libs.plugins.hilt.android)
@@ -10,12 +9,12 @@ plugins {
 
 android {
     namespace = "me.pecos.memozy"
-    compileSdk = 36
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
         applicationId = "me.pecos.memozy"
-        minSdk = 26
-        targetSdk = 36
+        minSdk = libs.versions.minSdk.get().toInt()
+        targetSdk = libs.versions.compileSdk.get().toInt()
         versionCode = 3
         versionName = "1.2603.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -37,67 +36,33 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
-    buildFeatures {
-        compose = true
-    }
-}
-
-configurations.all {
-    resolutionStrategy {
-        force("androidx.compose.foundation:foundation:1.7.8")
-        force("androidx.compose.foundation:foundation-layout:1.7.8")
-    }
 }
 
 dependencies {
-    // 모듈
-    implementation(project(":datasource:local:memo:impl"))
-    implementation(project(":data:repository:memo:impl"))
-    implementation(project(":feature:core:resource"))
-    implementation(project(":feature:home:impl"))
-    implementation(project(":feature:memo-plain:impl"))
+    // 모듈 - Hilt가 런타임에 바인딩 발견
+    runtimeOnly(projects.datasource.local.memo.impl)
+    runtimeOnly(projects.data.repository.memo.impl)
+    runtimeOnly(projects.feature.home.impl)
+    runtimeOnly(projects.feature.memoPlain.impl)
 
     // core android
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)
-
-    // compose
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.foundation)
-    implementation(libs.androidx.compose.foundation.layout)
-
-    // navigation
-    implementation("androidx.navigation:navigation-compose:2.8.9")
-
-    // haze (MainActivity 네비게이션 바 glass 효과)
-    implementation("dev.chrisbanes.haze:haze:1.7.2")
 
     // hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 
-    // app이 직접 사용하는 라이브러리 (feature:home:impl에서 implementation으로 선언되어 전이되지 않음)
-    implementation("com.github.wanteddev:montage-android:3.3.0")   // MainActivity, BottomNavBar
-    implementation("com.android.billingclient:billing-ktx:7.1.1")  // BillingManager 상위 타입
-    implementation("net.danlew:android.joda:2.12.7")               // MemozyApplication
+    // MemozyApplication
+    implementation(libs.android.joda)
 
     // firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
-    implementation("com.google.firebase:firebase-crashlytics")
+    implementation(libs.firebase.crashlytics)
 
     // test
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    debugImplementation(libs.androidx.compose.ui.tooling)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

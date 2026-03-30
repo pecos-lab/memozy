@@ -47,15 +47,15 @@ import com.wanted.android.wanted.design.theme.DesignSystemTheme
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
-import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
+import me.pecos.memozy.data.billing.BillingManager
+import me.pecos.memozy.feature.home.api.HomeRoute
+import me.pecos.memozy.feature.memo_plain.api.MemoPlainNavigation
+import me.pecos.memozy.feature.memo_plain.api.MemoPlainRoute
 import me.pecos.memozy.presentation.components.FloatingNavPill
+import me.pecos.memozy.presentation.screen.donation.DonationScreen
 import me.pecos.memozy.presentation.screen.home.HomeScreen
 import me.pecos.memozy.presentation.screen.home.MainViewModel
-import me.pecos.memozy.presentation.screen.home.model.MemoUiState
-import me.pecos.memozy.presentation.screen.memo.MemoScreen
-import me.pecos.memozy.data.billing.BillingManager
-import me.pecos.memozy.presentation.screen.donation.DonationScreen
 import me.pecos.memozy.presentation.screen.settings.SettingsScreen
 import me.pecos.memozy.presentation.screen.settings.SettingsViewModel
 import me.pecos.memozy.presentation.screen.settings.ThemeMode
@@ -64,11 +64,14 @@ import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.OverrideNightMode
 import me.pecos.memozy.presentation.theme.darkAppColors
 import me.pecos.memozy.presentation.theme.lightAppColors
+import javax.inject.Inject
 
 // ── Activity ───────────────────────────────────────────────────────────────────
 
 @dagger.hilt.android.AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+
+    @Inject lateinit var memoPlainNavigation: MemoPlainNavigation
 
     private val billingManager by lazy { BillingManager(this) }
 
@@ -117,7 +120,9 @@ class MainActivity : AppCompatActivity() {
                         val navController = rememberNavController()
                         val currentRoute by navController.currentBackStackEntryAsState()
                         val showBottomNav = remember(currentRoute) {
-                            currentRoute?.destination?.route in listOf("main", "settings")
+                            currentRoute?.destination?.route in listOf(
+                                HomeRoute.MAIN, HomeRoute.SETTINGS
+                            )
                         }
 
                         val hazeState = rememberHazeState()
@@ -137,19 +142,21 @@ class MainActivity : AppCompatActivity() {
                         ) {
                             NavHost(
                                 navController = navController,
-                                startDestination = "main",
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                // .hazeSource(hazeState)
+                                startDestination = HomeRoute.MAIN,
+                                modifier = Modifier.fillMaxSize()
                             ) {
-                                composable("main") {
+                                composable(HomeRoute.MAIN) {
                                     HomeScreen(
                                         onDelete = { id -> viewModel.deleteMemo(id) },
-                                        onEdit = { id -> navController.navigate("Memo/$id") },
+                                        onEdit = { id ->
+                                            navController.navigate(
+                                                MemoPlainRoute.createRoute(id.toString())
+                                            )
+                                        },
                                         viewModel = viewModel
                                     )
                                 }
-                                composable("settings") {
+                                composable(HomeRoute.SETTINGS) {
                                     SettingsScreen(
                                         onBack = { navController.popBackStack() },
                                         onDonation = { navController.navigate("donation") },
@@ -162,43 +169,16 @@ class MainActivity : AppCompatActivity() {
                                         billingManager = this@MainActivity.billingManager
                                     )
                                 }
-                                composable("Memo/{memoId}") { backStackEntry ->
-                                    val memoList by viewModel.uiState.collectAsState()
-                                    val memoId =
-                                        backStackEntry.arguments?.getString("memoId")?.toIntOrNull()
-                                            ?: -1
-                                    val existingMemo: MemoUiState =
-                                        if (memoId > 0) {
-                                            memoList.find { it.id == memoId } ?: MemoUiState(
-                                                0,
-                                                "",
-                                                0,
-                                                ""
-                                            )
-                                        } else {
-                                            MemoUiState(0, "", 0, "")
+                                memoPlainNavigation.registerGraph(
+                                    navGraphBuilder = this,
+                                    onNavigateToHome = {
+                                        navController.navigate(HomeRoute.MAIN) {
+                                            popUpTo(HomeRoute.MAIN) { inclusive = false }
+                                            launchSingleTop = true
                                         }
-                                    MemoScreen(
-                                        existingMemo = existingMemo,
-                                        onBack = { navController.popBackStack() },
-                                        onSave = { memo ->
-                                            if (memoId > 0) {
-                                                viewModel.updateMemo(memo)
-                                                navController.popBackStack()
-                                            } else {
-                                                viewModel.addMemo(
-                                                    memo.name,
-                                                    memo.categoryId,
-                                                    memo.content
-                                                )
-                                                navController.navigate("main") {
-                                                    popUpTo("main") { inclusive = false }
-                                                    launchSingleTop = true
-                                                }
-                                            }
-                                        }
-                                    )
-                                }
+                                    },
+                                    onBack = { navController.popBackStack() }
+                                )
                             }
 
                             if (showBottomNav) {
@@ -213,10 +193,11 @@ class MainActivity : AppCompatActivity() {
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     FloatingNavPill(
-                                        selectedRoute = currentRoute?.destination?.route ?: "main",
+                                        selectedRoute = currentRoute?.destination?.route
+                                            ?: HomeRoute.MAIN,
                                         onItemSelected = { route ->
                                             navController.navigate(route) {
-                                                popUpTo("main") { saveState = true }
+                                                popUpTo(HomeRoute.MAIN) { saveState = true }
                                                 launchSingleTop = true
                                                 restoreState = true
                                             }
@@ -240,7 +221,11 @@ class MainActivity : AppCompatActivity() {
                                             .hazeEffect(state = hazeState, style = glassStyle)
                                             .border(1.dp, appColors.navBorder, CircleShape)
                                             .clickable {
-                                                navController.navigate("Memo/-${System.currentTimeMillis()}")
+                                                navController.navigate(
+                                                    MemoPlainRoute.createRoute(
+                                                        "-${System.currentTimeMillis()}"
+                                                    )
+                                                )
                                             },
                                         contentAlignment = Alignment.Center
                                     ) {

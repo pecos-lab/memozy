@@ -9,7 +9,7 @@ espressoCore = "3.5.1"
 lifecycleRuntimeKtx = "2.6.1"
 activityCompose = "1.8.0"
 kotlin = "2.2.10"
-composeBom = "2024.09.00"
+composeBom = "2025.05.00"
 ksp = "2.2.10-2.0.2"
 billingKtx = "7.1.1"
 androidJoda = "2.12.7"
@@ -22,7 +22,6 @@ hilt = "2.56.2"
 hiltNavigationCompose = "1.2.0"
 navigationCompose = "2.8.9"
 kotlinxCoroutines = "1.7.3"
-composeFoundation = "1.7.8"
 
 [libraries]
 android-joda = { module = "net.danlew:android.joda", version.ref = "androidJoda" }
