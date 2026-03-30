@@ -14,7 +14,7 @@ object MemoPlainRoute {
 interface MemoPlainNavigation {
     fun registerGraph(
         navGraphBuilder: NavGraphBuilder,
-        onSave: () -> Unit,
+        onNavigateToHome: () -> Unit,
         onBack: () -> Unit
     )
 }

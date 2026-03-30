@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.google.services)
     alias(libs.plugins.hilt.android)
@@ -37,55 +36,25 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
-    buildFeatures {
-        compose = true
-    }
-}
-
-configurations.all {
-    resolutionStrategy {
-        force(libs.androidx.compose.foundation.asProvider().get().toString())
-        force(libs.androidx.compose.foundation.layout.get().toString())
-    }
 }
 
 dependencies {
-    // 모듈
+    // 모듈 - Hilt가 런타임에 바인딩 발견
     runtimeOnly(project(":datasource:local:memo:impl"))
     runtimeOnly(project(":data:repository:memo:impl"))
-    implementation(project(":feature:core:resource"))
-    implementation(project(":feature:home:impl"))
-    implementation(project(":feature:memo-plain:impl"))
+    runtimeOnly(project(":feature:home:impl"))
+    runtimeOnly(project(":feature:memo-plain:impl"))
 
     // core android
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)
-
-    // compose
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.foundation)
-    implementation(libs.androidx.compose.foundation.layout)
-
-    // navigation
-    implementation(libs.androidx.compose.navigation)
-
-    // haze (MainActivity 네비게이션 바 glass 효과)
-    implementation(libs.haze)
 
     // hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 
-    // app이 직접 사용하는 라이브러리 (feature:home:impl에서 implementation으로 선언되어 전이되지 않음)
-    implementation(libs.montage.android)   // MainActivity, BottomNavBar
-    implementation(libs.billing.ktx)  // BillingManager 상위 타입
-    implementation(libs.android.joda)               // MemozyApplication
+    // MemozyApplication
+    implementation(libs.android.joda)
 
     // firebase
     implementation(platform(libs.firebase.bom))
@@ -96,8 +65,4 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    debugImplementation(libs.androidx.compose.ui.tooling)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
