@@ -21,7 +21,6 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
 dependencies {
     implementation(libs.gradlePlugin.android)
     implementation(libs.gradlePlugin.kotlin)
-    implementation(libs.gradlePlugin.hilt)
     implementation(libs.gradlePlugin.ksp)
     implementation(libs.gradlePlugin.compose)
     implementation(libs.gradlePlugin.composeCompiler)
