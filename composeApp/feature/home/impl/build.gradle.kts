@@ -19,7 +19,7 @@ dependencies {
     implementation(libs.androidx.compose.navigation)
     implementation(libs.haze)
     implementation(libs.android.joda)
-    implementation(libs.montage.android)
+    implementation(libs.shadcn.compose)
     implementation(libs.billing.ktx)
     implementation(libs.koin.android)
     implementation(libs.koin.compose.viewmodel)

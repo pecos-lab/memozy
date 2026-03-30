@@ -30,10 +30,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.wanted.android.wanted.design.actions.button.WantedButton
-import com.wanted.android.wanted.design.actions.button.config.WantedButtonDefaults
-import com.wanted.android.wanted.design.util.ButtonType
-import com.wanted.android.wanted.design.util.ButtonVariant
+import com.shadcn.ui.components.Button
+import com.shadcn.ui.components.ButtonVariant
 import me.pecos.memozy.feature.core.resource.*
 import me.pecos.memozy.presentation.components.AppPopup
 import me.pecos.memozy.presentation.components.PopupActionArea
@@ -248,65 +246,45 @@ fun SettingsScreen(
                     color = colors.topbarTitle,
                     modifier = Modifier.padding(start = 16.dp, bottom = 12.dp)
                 )
-                WantedButton(
-                    text = stringResource(Res.string.language_settings),
+                Button(
+                    onClick = { showLanguageDialog = true },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                    buttonDefault = WantedButtonDefaults.getDefault(
-                        type = ButtonType.ASSISTIVE,
-                        variant = ButtonVariant.OUTLINED
-                    ).copy(contentColor = colors.textTitle),
-                    onClick = { showLanguageDialog = true }
-                )
+                    variant = ButtonVariant.Outline,
+                ) { Text(stringResource(Res.string.language_settings)) }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                WantedButton(
-                    text = stringResource(Res.string.theme_settings),
+                Button(
+                    onClick = { showThemeDialog = true },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                    buttonDefault = WantedButtonDefaults.getDefault(
-                        type = ButtonType.ASSISTIVE,
-                        variant = ButtonVariant.OUTLINED
-                    ).copy(contentColor = colors.textTitle),
-                    onClick = { showThemeDialog = true }
-                )
+                    variant = ButtonVariant.Outline,
+                ) { Text(stringResource(Res.string.theme_settings)) }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                WantedButton(
-                    text = stringResource(Res.string.open_source_license),
+                Button(
+                    onClick = { showLicenseDialog = true },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                    buttonDefault = WantedButtonDefaults.getDefault(
-                        type = ButtonType.ASSISTIVE,
-                        variant = ButtonVariant.OUTLINED
-                    ).copy(contentColor = colors.textTitle),
-                    onClick = { showLicenseDialog = true }
-                )
+                    variant = ButtonVariant.Outline,
+                ) { Text(stringResource(Res.string.open_source_license)) }
 
                 if (isDonationEnabled) {
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    WantedButton(
-                        text = stringResource(Res.string.donation_button),
+                    Button(
+                        onClick = { onDonation() },
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                        buttonDefault = WantedButtonDefaults.getDefault(
-                            type = ButtonType.ASSISTIVE,
-                            variant = ButtonVariant.OUTLINED
-                        ).copy(contentColor = colors.textTitle),
-                        onClick = { onDonation() }
-                    )
+                        variant = ButtonVariant.Outline,
+                    ) { Text(stringResource(Res.string.donation_button)) }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                WantedButton(
-                    text = stringResource(Res.string.reset_memos),
+                Button(
+                    onClick = { showClearDialog = true },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                    buttonDefault = WantedButtonDefaults.getDefault(
-                        type = ButtonType.ASSISTIVE,
-                        variant = ButtonVariant.OUTLINED
-                    ).copy(contentColor = Color(0xFFE24B4A)),
-                    onClick = { showClearDialog = true }
-                )
+                    variant = ButtonVariant.Destructive,
+                ) { Text(stringResource(Res.string.reset_memos)) }
             }
 
             Text(

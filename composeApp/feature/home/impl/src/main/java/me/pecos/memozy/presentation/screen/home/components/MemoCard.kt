@@ -54,11 +54,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.wanted.android.wanted.design.actions.button.WantedButton
-import com.wanted.android.wanted.design.input.textinput.textarea.WantedTextArea
-import com.wanted.android.wanted.design.input.textinput.textfield.WantedTextField
-import com.wanted.android.wanted.design.util.ButtonType
-import com.wanted.android.wanted.design.util.ButtonVariant
+import com.shadcn.ui.components.Button
+import com.shadcn.ui.components.Input
 import me.pecos.memozy.feature.core.resource.CATEGORY_EMOJIS
 import me.pecos.memozy.presentation.screen.home.model.MemoUiState
 import me.pecos.memozy.feature.core.resource.*
@@ -178,18 +175,32 @@ fun MemoCardItem(
                             .verticalScroll(rememberScrollState())
                             .padding(horizontal = 30.dp)
                     ) {
-                        WantedTextField(
-                            text = editName,
+                        Text(
+                            text = stringResource(Res.string.memo_title_label),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = colors.textTitle,
+                            modifier = Modifier.padding(bottom = 6.dp)
+                        )
+                        Input(
+                            value = editName,
+                            onValueChange = { editName = it },
                             placeholder = stringResource(Res.string.memo_title_placeholder),
-                            title = stringResource(Res.string.memo_title_label),
-                            onValueChange = { editName = it }
                         )
                         Spacer(modifier = Modifier.height(12.dp))
-                        WantedTextArea(
-                            text = editBody,
+                        Text(
+                            text = stringResource(Res.string.memo_content_label),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = colors.textTitle,
+                            modifier = Modifier.padding(bottom = 6.dp)
+                        )
+                        Input(
+                            value = editBody,
+                            onValueChange = { editBody = it },
                             placeholder = stringResource(Res.string.memo_content_placeholder),
-                            title = stringResource(Res.string.memo_content_label),
-                            onValueChange = { editBody = it }
+                            singleLine = false,
+                            maxLines = 8,
                         )
                         Spacer(modifier = Modifier.height(20.dp))
                         FlowRow(
@@ -227,12 +238,7 @@ fun MemoCardItem(
 
                 // 저장 버튼
                 Box(modifier = Modifier.padding(horizontal = 30.dp, vertical = 16.dp)) {
-                    WantedButton(
-                        text = stringResource(Res.string.save),
-                        modifier = Modifier.fillMaxWidth(),
-                        type = ButtonType.PRIMARY,
-                        variant = ButtonVariant.SOLID,
-                        enabled = editEnabled,
+                    Button(
                         onClick = {
                             onSave(
                                 MemoUiState(
@@ -243,8 +249,12 @@ fun MemoCardItem(
                                 )
                             )
                             showEditPopup = false
-                        }
-                    )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = editEnabled,
+                    ) {
+                        Text(stringResource(Res.string.save))
+                    }
                 }
             }
         }

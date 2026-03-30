@@ -13,7 +13,7 @@ dependencies {
     implementation(projects.composeApp.datasource.local.memo.api)
     implementation(projects.composeApp.data.repository.memo.api)
     implementation(libs.koin.core)
-    implementation(libs.montage.android)
+    implementation(libs.shadcn.compose)
     implementation(libs.androidx.compose.navigation)
     implementation(libs.kotlinx.coroutines.android)
 }

@@ -42,7 +42,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.wanted.android.wanted.design.theme.DesignSystemTheme
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
@@ -113,7 +112,6 @@ class MainActivity : AppCompatActivity() {
             ) {
             OverrideNightMode(isDarkTheme = isDarkTheme) {
                 CompositionLocalProvider(LocalAppColors provides appColors) {
-                    DesignSystemTheme(isDarkTheme = isDarkTheme) {
 
                         val viewModel: MainViewModel = koinViewModel()
                         val navController = rememberNavController()
@@ -240,7 +238,6 @@ class MainActivity : AppCompatActivity() {
                                 }
                             }
                         }
-                    }
                 }
             } // OverrideNightMode
             } // LocalContext + LocalActivity

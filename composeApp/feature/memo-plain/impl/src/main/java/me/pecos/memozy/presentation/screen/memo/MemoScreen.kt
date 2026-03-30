@@ -35,11 +35,8 @@ import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.wanted.android.wanted.design.input.textinput.textfield.WantedTextField
-import com.wanted.android.wanted.design.input.textinput.textarea.WantedTextArea
-import com.wanted.android.wanted.design.actions.button.WantedButton
-import com.wanted.android.wanted.design.util.ButtonType
-import com.wanted.android.wanted.design.util.ButtonVariant
+import com.shadcn.ui.components.Button
+import com.shadcn.ui.components.Input
 import me.pecos.memozy.presentation.screen.home.model.MemoUiState
 import me.pecos.memozy.feature.core.resource.CATEGORY_EMOJIS
 import me.pecos.memozy.feature.core.resource.*
@@ -111,20 +108,34 @@ fun MemoScreen(
                     .padding(horizontal = 30.dp, vertical = 16.dp)
             ) {
 
-            WantedTextField(
-                text = nameText,
+            Text(
+                text = stringResource(Res.string.memo_title_label),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = colors.textTitle,
+                modifier = Modifier.padding(bottom = 6.dp)
+            )
+            Input(
+                value = nameText,
+                onValueChange = { nameText = it },
                 placeholder = stringResource(Res.string.memo_title_placeholder),
-                title = stringResource(Res.string.memo_title_label),
-                onValueChange = { nameText = it }
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            WantedTextArea(
-                text = bodyText,
+            Text(
+                text = stringResource(Res.string.memo_content_label),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = colors.textTitle,
+                modifier = Modifier.padding(bottom = 6.dp)
+            )
+            Input(
+                value = bodyText,
+                onValueChange = { bodyText = it },
                 placeholder = stringResource(Res.string.memo_content_placeholder),
-                title = stringResource(Res.string.memo_content_label),
-                onValueChange = { bodyText = it }
+                singleLine = false,
+                maxLines = 8,
             )
             Text(
                 text = stringResource(Res.string.char_count, bodyText.length),
@@ -168,12 +179,7 @@ fun MemoScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            WantedButton(
-                text = stringResource(Res.string.save),
-                modifier = Modifier.fillMaxWidth(),
-                type = ButtonType.PRIMARY,
-                variant = ButtonVariant.SOLID,
-                enabled = enabled,
+            Button(
                 onClick = {
                     onSave(
                         MemoUiState(
@@ -183,8 +189,12 @@ fun MemoScreen(
                             content = bodyText
                         )
                     )
-                }
-            )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = enabled,
+            ) {
+                Text(stringResource(Res.string.save))
+            }
             } // inner Column
         } // outer Column
     }
