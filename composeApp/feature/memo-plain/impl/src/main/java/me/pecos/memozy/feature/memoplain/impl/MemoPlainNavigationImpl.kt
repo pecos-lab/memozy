@@ -15,9 +15,8 @@ import me.pecos.memozy.feature.memoplain.api.MemoPlainRoute
 import me.pecos.memozy.presentation.screen.home.model.MemoFormatUi
 import me.pecos.memozy.presentation.screen.home.model.MemoUiState
 import me.pecos.memozy.presentation.screen.memo.MemoScreen
-import javax.inject.Inject
 
-class MemoPlainNavigationImpl @Inject constructor(
+class MemoPlainNavigationImpl(
     private val repository: MemoRepository
 ) : MemoPlainNavigation {
 

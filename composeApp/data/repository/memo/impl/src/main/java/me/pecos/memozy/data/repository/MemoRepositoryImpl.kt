@@ -3,9 +3,8 @@ package me.pecos.memozy.data.repository
 import kotlinx.coroutines.flow.Flow
 import me.pecos.memozy.data.datasource.local.entity.Memo
 import me.pecos.memozy.data.datasource.local.MemoDao
-import javax.inject.Inject
 
-class MemoRepositoryImpl @Inject constructor(private val memoDao: MemoDao) : MemoRepository {
+class MemoRepositoryImpl(private val memoDao: MemoDao) : MemoRepository {
 
     override fun getMemos(): Flow<List<Memo>> = memoDao.getAllMemos()
 

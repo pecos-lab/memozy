@@ -2,7 +2,6 @@ import me.pecos.memozy.convention.extension.setNamespace
 
 plugins {
     id("memozy.android.application")
-    id("memozy.hilt")
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
 }
@@ -27,7 +26,7 @@ android {
 }
 
 dependencies {
-    // 모듈 - Hilt 바인딩을 위해 implementation 필요
+    // 모듈 - Koin 모듈 참조를 위해 implementation 필요
     implementation(projects.composeApp.datasource.local.memo.impl)
     implementation(projects.composeApp.data.repository.memo.impl)
     implementation(projects.composeApp.feature.home.impl)

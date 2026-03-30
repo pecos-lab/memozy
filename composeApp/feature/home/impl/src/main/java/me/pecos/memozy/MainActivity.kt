@@ -38,7 +38,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -64,14 +63,14 @@ import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.OverrideNightMode
 import me.pecos.memozy.presentation.theme.darkAppColors
 import me.pecos.memozy.presentation.theme.lightAppColors
-import javax.inject.Inject
+import org.koin.android.ext.android.inject
+import org.koin.compose.viewmodel.koinViewModel
 
 // ── Activity ───────────────────────────────────────────────────────────────────
 
-@dagger.hilt.android.AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
-    @Inject lateinit var memoPlainNavigation: MemoPlainNavigation
+    private val memoPlainNavigation: MemoPlainNavigation by inject()
 
     private val billingManager by lazy { BillingManager(this) }
 
@@ -98,7 +97,7 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
 
         setContent {
-            val settingsViewModel: SettingsViewModel = viewModel()
+            val settingsViewModel: SettingsViewModel = koinViewModel()
             val selectedTheme by settingsViewModel.selectedTheme.collectAsState()
             val systemIsDark = LocalConfiguration.current.uiMode and
                     Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
@@ -116,7 +115,7 @@ class MainActivity : AppCompatActivity() {
                 CompositionLocalProvider(LocalAppColors provides appColors) {
                     DesignSystemTheme(isDarkTheme = isDarkTheme) {
 
-                        val viewModel: MainViewModel = viewModel()
+                        val viewModel: MainViewModel = koinViewModel()
                         val navController = rememberNavController()
                         val currentRoute by navController.currentBackStackEntryAsState()
                         val showBottomNav = remember(currentRoute) {
