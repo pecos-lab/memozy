@@ -1,4 +1,4 @@
-package me.pecos.memozy.feature.memo_plain.impl
+package me.pecos.memozy.feature.memoplain.impl
 
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -10,8 +10,8 @@ import kotlinx.coroutines.launch
 import me.pecos.memozy.data.datasource.local.entity.Memo
 import me.pecos.memozy.data.repository.MemoRepository
 import me.pecos.memozy.data.repository.model.MemoFormat
-import me.pecos.memozy.feature.memo_plain.api.MemoPlainNavigation
-import me.pecos.memozy.feature.memo_plain.api.MemoPlainRoute
+import me.pecos.memozy.feature.memoplain.api.MemoPlainNavigation
+import me.pecos.memozy.feature.memoplain.api.MemoPlainRoute
 import me.pecos.memozy.presentation.screen.home.model.MemoFormatUi
 import me.pecos.memozy.presentation.screen.home.model.MemoUiState
 import me.pecos.memozy.presentation.screen.memo.MemoScreen

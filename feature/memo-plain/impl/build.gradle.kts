@@ -6,7 +6,7 @@ plugins {
     id("memozy.hilt")
 }
 
-setNamespace("feature.memo_plain.impl")
+setNamespace("feature.memoplain.impl")
 
 dependencies {
     implementation(projects.feature.memoPlain.api)

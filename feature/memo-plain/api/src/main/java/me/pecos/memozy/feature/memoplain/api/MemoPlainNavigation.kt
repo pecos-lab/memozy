@@ -1,4 +1,4 @@
-package me.pecos.memozy.feature.memo_plain.api
+package me.pecos.memozy.feature.memoplain.api
 
 import androidx.navigation.NavGraphBuilder
 

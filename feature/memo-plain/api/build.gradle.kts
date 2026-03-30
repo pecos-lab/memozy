@@ -4,7 +4,7 @@ plugins {
     id("memozy.android.library")
 }
 
-setNamespace("feature.memo_plain.api")
+setNamespace("feature.memoplain.api")
 
 dependencies {
     implementation(libs.androidx.compose.navigation)
