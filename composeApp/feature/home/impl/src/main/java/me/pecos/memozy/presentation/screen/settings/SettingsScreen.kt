@@ -25,7 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
@@ -34,7 +34,7 @@ import com.wanted.android.wanted.design.actions.button.WantedButton
 import com.wanted.android.wanted.design.actions.button.config.WantedButtonDefaults
 import com.wanted.android.wanted.design.util.ButtonType
 import com.wanted.android.wanted.design.util.ButtonVariant
-import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.feature.core.resource.*
 import me.pecos.memozy.presentation.components.AppPopup
 import me.pecos.memozy.presentation.components.PopupActionArea
 import me.pecos.memozy.presentation.components.PopupNavigation
@@ -66,13 +66,13 @@ fun SettingsScreen(
 
     if (showThemeDialog) {
         val themeOptions = listOf(
-            ThemeMode.LIGHT to stringResource(R.string.theme_light),
-            ThemeMode.DARK to stringResource(R.string.theme_dark),
-            ThemeMode.SYSTEM to stringResource(R.string.theme_system),
+            ThemeMode.LIGHT to stringResource(Res.string.theme_light),
+            ThemeMode.DARK to stringResource(Res.string.theme_dark),
+            ThemeMode.SYSTEM to stringResource(Res.string.theme_system),
         )
         AppPopup(
             onDismissRequest = { showThemeDialog = false },
-            title = stringResource(R.string.theme_settings),
+            title = stringResource(Res.string.theme_settings),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.MEDIUM,
             actionArea = PopupActionArea.NONE
@@ -110,7 +110,7 @@ fun SettingsScreen(
     if (showLanguageDialog) {
         AppPopup(
             onDismissRequest = { showLanguageDialog = false },
-            title = stringResource(R.string.language_settings),
+            title = stringResource(Res.string.language_settings),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.MEDIUM,
             actionArea = PopupActionArea.NONE
@@ -154,20 +154,20 @@ fun SettingsScreen(
     if (showClearDialog) {
         AppPopup(
             onDismissRequest = { showClearDialog = false },
-            title = stringResource(R.string.reset_memos),
+            title = stringResource(Res.string.reset_memos),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.MEDIUM,
             actionArea = PopupActionArea.NEUTRAL,
-            primaryButtonText = stringResource(R.string.reset),
+            primaryButtonText = stringResource(Res.string.reset),
             isPrimaryDestructive = true,
             onPrimaryClick = {
                 settingsViewModel.clearAllMemos()
                 showClearDialog = false
             },
-            secondaryButtonText = stringResource(R.string.cancel),
+            secondaryButtonText = stringResource(Res.string.cancel),
             onSecondaryClick = { showClearDialog = false }
         ) {
-            Text(stringResource(R.string.reset_confirm), color = colors.textBody)
+            Text(stringResource(Res.string.reset_confirm), color = colors.textBody)
         }
     }
 
@@ -181,7 +181,7 @@ fun SettingsScreen(
 
         AppPopup(
             onDismissRequest = { showLicenseDialog = false },
-            title = stringResource(R.string.open_source_license),
+            title = stringResource(Res.string.open_source_license),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.LARGE,
             actionArea = PopupActionArea.NONE
@@ -242,14 +242,14 @@ fun SettingsScreen(
                     .padding(horizontal = 16.dp, vertical = 24.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.settings),
+                    text = stringResource(Res.string.settings),
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color = colors.topbarTitle,
                     modifier = Modifier.padding(start = 16.dp, bottom = 12.dp)
                 )
                 WantedButton(
-                    text = stringResource(R.string.language_settings),
+                    text = stringResource(Res.string.language_settings),
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                     buttonDefault = WantedButtonDefaults.getDefault(
                         type = ButtonType.ASSISTIVE,
@@ -261,7 +261,7 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 WantedButton(
-                    text = stringResource(R.string.theme_settings),
+                    text = stringResource(Res.string.theme_settings),
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                     buttonDefault = WantedButtonDefaults.getDefault(
                         type = ButtonType.ASSISTIVE,
@@ -273,7 +273,7 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 WantedButton(
-                    text = stringResource(R.string.open_source_license),
+                    text = stringResource(Res.string.open_source_license),
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                     buttonDefault = WantedButtonDefaults.getDefault(
                         type = ButtonType.ASSISTIVE,
@@ -286,7 +286,7 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     WantedButton(
-                        text = stringResource(R.string.donation_button),
+                        text = stringResource(Res.string.donation_button),
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                         buttonDefault = WantedButtonDefaults.getDefault(
                             type = ButtonType.ASSISTIVE,
@@ -299,7 +299,7 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 WantedButton(
-                    text = stringResource(R.string.reset_memos),
+                    text = stringResource(Res.string.reset_memos),
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                     buttonDefault = WantedButtonDefaults.getDefault(
                         type = ButtonType.ASSISTIVE,

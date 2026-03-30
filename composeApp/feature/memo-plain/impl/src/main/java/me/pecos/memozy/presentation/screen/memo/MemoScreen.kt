@@ -31,12 +31,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.wanted.android.wanted.design.theme.DesignSystemTheme
 import com.wanted.android.wanted.design.input.textinput.textfield.WantedTextField
 import com.wanted.android.wanted.design.input.textinput.textarea.WantedTextArea
 import com.wanted.android.wanted.design.actions.button.WantedButton
@@ -44,8 +42,7 @@ import com.wanted.android.wanted.design.util.ButtonType
 import com.wanted.android.wanted.design.util.ButtonVariant
 import me.pecos.memozy.presentation.screen.home.model.MemoUiState
 import me.pecos.memozy.feature.core.resource.CATEGORY_EMOJIS
-import me.pecos.memozy.feature.core.resource.CATEGORY_RES_IDS
-import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.feature.core.resource.*
 import me.pecos.memozy.presentation.theme.LocalAppColors
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -56,21 +53,21 @@ fun MemoScreen(
     existingMemo: MemoUiState = MemoUiState(0, "", 1, "")
 ) {
     val categories = listOf(
-        stringResource(R.string.category_general),
-        stringResource(R.string.category_work),
-        stringResource(R.string.category_idea),
-        stringResource(R.string.category_todo),
-        stringResource(R.string.category_study),
-        stringResource(R.string.category_schedule),
-        stringResource(R.string.category_budget),
-        stringResource(R.string.category_exercise),
-        stringResource(R.string.category_health),
-        stringResource(R.string.category_travel),
-        stringResource(R.string.category_shopping),
+        stringResource(Res.string.category_general),
+        stringResource(Res.string.category_work),
+        stringResource(Res.string.category_idea),
+        stringResource(Res.string.category_todo),
+        stringResource(Res.string.category_study),
+        stringResource(Res.string.category_schedule),
+        stringResource(Res.string.category_budget),
+        stringResource(Res.string.category_exercise),
+        stringResource(Res.string.category_health),
+        stringResource(Res.string.category_travel),
+        stringResource(Res.string.category_shopping),
     )
     var nameText by remember { mutableStateOf(existingMemo.name) }
     var categoryIndex by remember(existingMemo.categoryId) {
-        mutableStateOf((existingMemo.categoryId - 1).coerceIn(0, CATEGORY_RES_IDS.size - 1))
+        mutableStateOf((existingMemo.categoryId - 1).coerceIn(0, categories.size - 1))
     }
     var bodyText by remember { mutableStateOf(existingMemo.content) }
 
@@ -102,7 +99,7 @@ fun MemoScreen(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = stringResource(R.string.add_memo),
+                    text = stringResource(Res.string.add_memo),
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color = colors.topbarTitle
@@ -116,8 +113,8 @@ fun MemoScreen(
 
             WantedTextField(
                 text = nameText,
-                placeholder = stringResource(R.string.memo_title_placeholder),
-                title = stringResource(R.string.memo_title_label),
+                placeholder = stringResource(Res.string.memo_title_placeholder),
+                title = stringResource(Res.string.memo_title_label),
                 onValueChange = { nameText = it }
             )
 
@@ -125,12 +122,12 @@ fun MemoScreen(
 
             WantedTextArea(
                 text = bodyText,
-                placeholder = stringResource(R.string.memo_content_placeholder),
-                title = stringResource(R.string.memo_content_label),
+                placeholder = stringResource(Res.string.memo_content_placeholder),
+                title = stringResource(Res.string.memo_content_label),
                 onValueChange = { bodyText = it }
             )
             Text(
-                text = stringResource(R.string.char_count, bodyText.length),
+                text = stringResource(Res.string.char_count, bodyText.length),
                 fontSize = 11.sp,
                 color = colors.textSecondary.copy(alpha = 0.6f),
                 modifier = Modifier.align(Alignment.End)
@@ -172,7 +169,7 @@ fun MemoScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             WantedButton(
-                text = stringResource(R.string.save),
+                text = stringResource(Res.string.save),
                 modifier = Modifier.fillMaxWidth(),
                 type = ButtonType.PRIMARY,
                 variant = ButtonVariant.SOLID,
@@ -190,16 +187,5 @@ fun MemoScreen(
             )
             } // inner Column
         } // outer Column
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MemoScreenPreview() {
-    DesignSystemTheme {
-        MemoScreen(
-            onSave = {},
-            existingMemo = MemoUiState(1, "테스트 제목", 2, "테스트 내용")
-        )
     }
 }

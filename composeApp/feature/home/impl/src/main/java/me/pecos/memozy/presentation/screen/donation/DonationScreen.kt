@@ -28,12 +28,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.feature.core.resource.*
 import me.pecos.memozy.data.billing.BillingManager
 import me.pecos.memozy.data.billing.DonationProduct
 import me.pecos.memozy.data.billing.PurchaseState
@@ -47,16 +48,16 @@ import me.pecos.memozy.presentation.theme.LocalAppColors
 private data class DonationTier(
     val productId: String,
     val emoji: String,
-    val nameResId: Int,
-    val descResId: Int
+    val nameResId: StringResource,
+    val descResId: StringResource
 )
 
 private val DONATION_TIERS = listOf(
-    DonationTier("donation_rice_1", "\uD83C\uDF5A", R.string.donation_tier_1_name, R.string.donation_tier_1_desc),
-    DonationTier("donation_rice_2", "\uD83C\uDF71", R.string.donation_tier_2_name, R.string.donation_tier_2_desc),
-    DonationTier("donation_rice_3", "\uD83C\uDF5B", R.string.donation_tier_3_name, R.string.donation_tier_3_desc),
-    DonationTier("donation_rice_4", "\uD83C\uDF3E", R.string.donation_tier_4_name, R.string.donation_tier_4_desc),
-    DonationTier("donation_rice_5", "\uD83D\uDCB0", R.string.donation_tier_5_name, R.string.donation_tier_5_desc),
+    DonationTier("donation_rice_1", "\uD83C\uDF5A", Res.string.donation_tier_1_name, Res.string.donation_tier_1_desc),
+    DonationTier("donation_rice_2", "\uD83C\uDF71", Res.string.donation_tier_2_name, Res.string.donation_tier_2_desc),
+    DonationTier("donation_rice_3", "\uD83C\uDF5B", Res.string.donation_tier_3_name, Res.string.donation_tier_3_desc),
+    DonationTier("donation_rice_4", "\uD83C\uDF3E", Res.string.donation_tier_4_name, Res.string.donation_tier_4_desc),
+    DonationTier("donation_rice_5", "\uD83D\uDCB0", Res.string.donation_tier_5_name, Res.string.donation_tier_5_desc),
 )
 
 @Composable
@@ -77,13 +78,13 @@ fun DonationScreen(
     if (purchaseState is PurchaseState.Success) {
         AppPopup(
             onDismissRequest = { billingManager.resetPurchaseState() },
-            title = stringResource(R.string.donation_thank_title),
+            title = stringResource(Res.string.donation_thank_title),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.MEDIUM,
             actionArea = PopupActionArea.NONE
         ) {
             Text(
-                text = stringResource(R.string.donation_thank_message),
+                text = stringResource(Res.string.donation_thank_message),
                 color = colors.textBody
             )
         }
@@ -92,13 +93,13 @@ fun DonationScreen(
     if (purchaseState is PurchaseState.Error) {
         AppPopup(
             onDismissRequest = { billingManager.resetPurchaseState() },
-            title = stringResource(R.string.donation_error_title),
+            title = stringResource(Res.string.donation_error_title),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.MEDIUM,
             actionArea = PopupActionArea.NONE
         ) {
             Text(
-                text = stringResource(R.string.donation_error_message),
+                text = stringResource(Res.string.donation_error_message),
                 color = colors.textBody
             )
         }
@@ -121,12 +122,12 @@ fun DonationScreen(
                 IconButton(onClick = onBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.close),
+                        contentDescription = stringResource(Res.string.close),
                         tint = colors.topbarTitle
                     )
                 }
                 Text(
-                    text = stringResource(R.string.donation_title),
+                    text = stringResource(Res.string.donation_title),
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color = colors.topbarTitle
@@ -136,7 +137,7 @@ fun DonationScreen(
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = stringResource(R.string.donation_subtitle),
+                text = stringResource(Res.string.donation_subtitle),
                 fontSize = 14.sp,
                 color = colors.textSecondary,
                 modifier = Modifier.padding(horizontal = 16.dp)
@@ -215,7 +216,7 @@ private fun DonationCard(
 
             Text(
                 text = product?.formattedPrice
-                    ?: if (isConnected) "-" else stringResource(R.string.donation_loading),
+                    ?: if (isConnected) "-" else stringResource(Res.string.donation_loading),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = colors.textTitle,

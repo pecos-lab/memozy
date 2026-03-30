@@ -39,22 +39,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.wanted.android.wanted.design.theme.DesignSystemTheme
 import me.pecos.memozy.presentation.components.AppPopup
 import me.pecos.memozy.feature.core.resource.CATEGORY_EMOJIS
-import me.pecos.memozy.feature.core.resource.CATEGORY_RES_IDS
 import me.pecos.memozy.presentation.screen.home.components.MemoCardItem
 import me.pecos.memozy.presentation.components.PopupActionArea
 import me.pecos.memozy.presentation.components.PopupNavigation
 import me.pecos.memozy.presentation.components.PopupSize
-import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.feature.core.resource.*
 import me.pecos.memozy.presentation.screen.home.model.SortOrder
 import me.pecos.memozy.presentation.theme.LocalAppColors
 
@@ -76,26 +73,32 @@ fun HomeScreen(
     var showFilterDialog by remember { mutableStateOf(false) }
     var tempCategoryIndex by remember(showFilterDialog, selectedCategoryIndex) { mutableIntStateOf(selectedCategoryIndex) }
 
-    val categoryLabels = CATEGORY_RES_IDS.mapIndexed { index, resId ->
-        "${CATEGORY_EMOJIS[index]} ${stringResource(resId)}"
+    val categoryStringResources = listOf(
+        Res.string.category_general, Res.string.category_work, Res.string.category_idea,
+        Res.string.category_todo, Res.string.category_study, Res.string.category_schedule,
+        Res.string.category_budget, Res.string.category_exercise, Res.string.category_health,
+        Res.string.category_travel, Res.string.category_shopping,
+    )
+    val categoryLabels = categoryStringResources.mapIndexed { index, res ->
+        "${CATEGORY_EMOJIS[index]} ${stringResource(res)}"
     }
-    val allLabel = "🗂️ ${stringResource(R.string.category_all)}"
+    val allLabel = "🗂️ ${stringResource(Res.string.category_all)}"
     val currentLabel = if (selectedCategoryIndex == -1) allLabel else categoryLabels[selectedCategoryIndex]
 
     // ── 카테고리 필터 Popup ────────────────────────────────────────────────────
     if (showFilterDialog) {
         AppPopup(
             onDismissRequest = { showFilterDialog = false },
-            title = stringResource(R.string.category_settings),
+            title = stringResource(Res.string.category_settings),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.LARGE,
             actionArea = PopupActionArea.NEUTRAL,
-            primaryButtonText = stringResource(R.string.save),
+            primaryButtonText = stringResource(Res.string.save),
             onPrimaryClick = {
                 viewModel.setSelectedCategory(tempCategoryIndex)
                 showFilterDialog = false
             },
-            secondaryButtonText = stringResource(R.string.cancel),
+            secondaryButtonText = stringResource(Res.string.cancel),
             onSecondaryClick = { showFilterDialog = false }
         ) {
             FlowRow(
@@ -161,7 +164,7 @@ fun HomeScreen(
                         modifier = Modifier.weight(1f)
                     )
                     Text(
-                        text = stringResource(R.string.memo_count, filteredList.size),
+                        text = stringResource(Res.string.memo_count, filteredList.size),
                         fontSize = 12.sp,
                         color = colors.textSecondary
                     )
@@ -203,9 +206,9 @@ fun HomeScreen(
                     ) {
                         Text(
                             text = if (sortOrder == SortOrder.NEWEST)
-                                stringResource(R.string.sort_newest)
+                                stringResource(Res.string.sort_newest)
                             else
-                                stringResource(R.string.sort_oldest),
+                                stringResource(Res.string.sort_oldest),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium,
                             color = colors.textSecondary
@@ -235,7 +238,7 @@ fun HomeScreen(
                     modifier = Modifier.align(Alignment.Center)
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.logo_full),
+                        painter = painterResource(Res.drawable.logo_full),
                         contentDescription = null,
                         modifier = Modifier.size(160.dp),
                         alpha = 0.15f
@@ -243,9 +246,9 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = if (searchQuery.isNotBlank())
-                            stringResource(R.string.empty_search_hint)
+                            stringResource(Res.string.empty_search_hint)
                         else
-                            stringResource(R.string.empty_memo_hint),
+                            stringResource(Res.string.empty_memo_hint),
                         fontSize = 14.sp,
                         color = colors.textSecondary.copy(alpha = 0.5f),
                         textAlign = TextAlign.Center

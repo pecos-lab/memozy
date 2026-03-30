@@ -47,7 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -60,9 +60,8 @@ import com.wanted.android.wanted.design.input.textinput.textfield.WantedTextFiel
 import com.wanted.android.wanted.design.util.ButtonType
 import com.wanted.android.wanted.design.util.ButtonVariant
 import me.pecos.memozy.feature.core.resource.CATEGORY_EMOJIS
-import me.pecos.memozy.feature.core.resource.CATEGORY_RES_IDS
 import me.pecos.memozy.presentation.screen.home.model.MemoUiState
-import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.feature.core.resource.*
 import me.pecos.memozy.presentation.screen.home.util.formatMemoTime
 import me.pecos.memozy.presentation.components.AppPopup
 import me.pecos.memozy.presentation.components.PopupActionArea
@@ -115,14 +114,20 @@ fun MemoCardItem(
     if (showEditPopup) {
         var editName by remember { mutableStateOf(memo.name) }
         var editBody by remember { mutableStateOf(memo.content) }
+        val categoryStringResources = listOf(
+            Res.string.category_general, Res.string.category_work, Res.string.category_idea,
+            Res.string.category_todo, Res.string.category_study, Res.string.category_schedule,
+            Res.string.category_budget, Res.string.category_exercise, Res.string.category_health,
+            Res.string.category_travel, Res.string.category_shopping,
+        )
         var editCategoryIndex by remember {
             mutableIntStateOf(
-                (memo.categoryId - 1).coerceIn(0, CATEGORY_RES_IDS.size - 1)
+                (memo.categoryId - 1).coerceIn(0, categoryStringResources.size - 1)
             )
         }
-        val rawCategories = CATEGORY_RES_IDS.map { resId -> stringResource(resId) }
-        val displayCategories = CATEGORY_RES_IDS.mapIndexed { i, resId ->
-            "${CATEGORY_EMOJIS[i]} ${stringResource(resId)}"
+        val rawCategories = categoryStringResources.map { res -> stringResource(res) }
+        val displayCategories = categoryStringResources.mapIndexed { i, res ->
+            "${CATEGORY_EMOJIS[i]} ${stringResource(res)}"
         }
         val editEnabled = editName.isNotBlank() && editBody.isNotBlank()
 
@@ -145,7 +150,7 @@ fun MemoCardItem(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = stringResource(R.string.edit_memo),
+                        text = stringResource(Res.string.edit_memo),
                         fontSize = 17.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = colors.textTitle,
@@ -175,15 +180,15 @@ fun MemoCardItem(
                     ) {
                         WantedTextField(
                             text = editName,
-                            placeholder = stringResource(R.string.memo_title_placeholder),
-                            title = stringResource(R.string.memo_title_label),
+                            placeholder = stringResource(Res.string.memo_title_placeholder),
+                            title = stringResource(Res.string.memo_title_label),
                             onValueChange = { editName = it }
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         WantedTextArea(
                             text = editBody,
-                            placeholder = stringResource(R.string.memo_content_placeholder),
-                            title = stringResource(R.string.memo_content_label),
+                            placeholder = stringResource(Res.string.memo_content_placeholder),
+                            title = stringResource(Res.string.memo_content_label),
                             onValueChange = { editBody = it }
                         )
                         Spacer(modifier = Modifier.height(20.dp))
@@ -223,7 +228,7 @@ fun MemoCardItem(
                 // 저장 버튼
                 Box(modifier = Modifier.padding(horizontal = 30.dp, vertical = 16.dp)) {
                     WantedButton(
-                        text = stringResource(R.string.save),
+                        text = stringResource(Res.string.save),
                         modifier = Modifier.fillMaxWidth(),
                         type = ButtonType.PRIMARY,
                         variant = ButtonVariant.SOLID,
@@ -248,21 +253,21 @@ fun MemoCardItem(
     if (showDeleteDialog) {
         AppPopup(
             onDismissRequest = { showDeleteDialog = false },
-            title = stringResource(R.string.delete_confirm_title),
+            title = stringResource(Res.string.delete_confirm_title),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.MEDIUM,
             actionArea = PopupActionArea.NEUTRAL,
-            primaryButtonText = stringResource(R.string.yes),
+            primaryButtonText = stringResource(Res.string.yes),
             isPrimaryDestructive = true,
             onPrimaryClick = {
                 showDeleteDialog = false
                 onDelete()
             },
-            secondaryButtonText = stringResource(R.string.no),
+            secondaryButtonText = stringResource(Res.string.no),
             onSecondaryClick = { showDeleteDialog = false }
         ) {
             Text(
-                stringResource(R.string.delete_confirm_message),
+                stringResource(Res.string.delete_confirm_message),
                 color = Color(0xFFE24B4A)
             )
         }
@@ -287,7 +292,7 @@ fun MemoCardItem(
                     Text(formatMemoTime(memo.createdAt, languageCode), color = colors.textSecondary, fontSize = 12.sp)
                     if (memo.updatedAt > memo.createdAt + 60_000L) {
                         Text(
-                            text = "${stringResource(R.string.memo_updated_at)} ${
+                            text = "${stringResource(Res.string.memo_updated_at)} ${
                                 formatMemoTime(
                                     memo.updatedAt,
                                     languageCode
@@ -297,10 +302,16 @@ fun MemoCardItem(
                             color = colors.textSecondary.copy(alpha = 0.7f)
                         )
                     }
-                    if (memo.categoryId in 1..CATEGORY_RES_IDS.size) {
+                    val cardCategoryResources = listOf(
+                        Res.string.category_general, Res.string.category_work, Res.string.category_idea,
+                        Res.string.category_todo, Res.string.category_study, Res.string.category_schedule,
+                        Res.string.category_budget, Res.string.category_exercise, Res.string.category_health,
+                        Res.string.category_travel, Res.string.category_shopping,
+                    )
+                    if (memo.categoryId in 1..cardCategoryResources.size) {
                         val categoryIndex = memo.categoryId - 1
                         val categoryLabel = "${CATEGORY_EMOJIS[categoryIndex]} ${stringResource(
-                            CATEGORY_RES_IDS[categoryIndex])}"
+                            cardCategoryResources[categoryIndex])}"
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = categoryLabel,
@@ -355,7 +366,7 @@ fun MemoCardItem(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = stringResource(R.string.memo_copy),
+                        text = stringResource(Res.string.memo_copy),
                         fontSize = 10.sp,
                         color = neutralTint,
                         fontWeight = FontWeight.Medium

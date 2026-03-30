@@ -1,31 +1,17 @@
 package me.pecos.memozy.feature.core.resource
 
 val CATEGORY_EMOJIS = listOf(
-    "📝", // 일반
-    "💼", // 업무
-    "💡", // 아이디어
+    "\uD83D\uDCDD", // 일반
+    "\uD83D\uDCBC", // 업무
+    "\uD83D\uDCA1", // 아이디어
     "✅", // 할 일
-    "📚", // 공부
-    "📅", // 일정
-    "💰", // 가계부
-    "🏃", // 운동
-    "🏥", // 건강
-    "✈️", // 여행
-    "🛒", // 쇼핑
-)
-
-val CATEGORY_RES_IDS = listOf(
-    R.string.category_general,
-    R.string.category_work,
-    R.string.category_idea,
-    R.string.category_todo,
-    R.string.category_study,
-    R.string.category_schedule,
-    R.string.category_budget,
-    R.string.category_exercise,
-    R.string.category_health,
-    R.string.category_travel,
-    R.string.category_shopping,
+    "\uD83D\uDCDA", // 공부
+    "\uD83D\uDCC5", // 일정
+    "\uD83D\uDCB0", // 가계부
+    "\uD83C\uDFC3", // 운동
+    "\uD83C\uDFE5", // 건강
+    "✈\uFE0F", // 여행
+    "\uD83D\uDED2", // 쇼핑
 )
 
 val CATEGORY_ALL_TRANSLATIONS = listOf(
