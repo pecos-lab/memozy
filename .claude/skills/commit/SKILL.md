@@ -24,7 +24,7 @@ git config user.email
 
 ```bash
 git status
-git diff --staged
+git diff --staged 
 ```
 
 ### 3. 사용자에게 staged 파일 목록 보여주고 확인받기

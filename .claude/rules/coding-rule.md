@@ -28,6 +28,15 @@ Room DB 또는 Migration 관련 작업 완료 후 반드시 아래 항목을 자
 
 **적용 대상**: Entity 추가/수정, Migration 추가/수정, @Database version 변경, DatabaseModule 수정
 
+## 협업 규칙
+사용자가 직접 처리하는 것을 우선
+### [MEMOZY 작업] 빠른 해결 모드
+- 해결책 즉시 제시, 설명은 짧게
+- 변경 포인트 + 이유만 바로 알려줄 것
+- 전체 코드 재작성 대신 변경 부분만 제시할 것
+- 사용자가 직접 수정할 수 있도록 유도할 것
+- 사용자가 직접 수정후에는 , 왜 수정을 했는지 쉽고 간결하게 설명해줄것
+
 ## worktree 병렬 작업 규칙
 - 병렬 worktree 작업 중 매일 각 브랜치에서 `git rebase origin/develop` 실행
 - develop 병합은 반드시 하나씩 순서대로 진행 (동시 병합 금지)

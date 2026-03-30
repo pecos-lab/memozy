@@ -114,7 +114,6 @@ class MainActivity : AppCompatActivity() {
                     DesignSystemTheme(isDarkTheme = isDarkTheme) {
 
                         val viewModel: MainViewModel = viewModel()
-                        val memoList by viewModel.uiState.collectAsState()
                         val navController = rememberNavController()
                         val currentRoute by navController.currentBackStackEntryAsState()
                         val showBottomNav = remember(currentRoute) {
@@ -123,11 +122,13 @@ class MainActivity : AppCompatActivity() {
 
                         val hazeState = rememberHazeState()
                         val navBg = appColors.navBackground
-                        val glassStyle = HazeStyle(
-                            blurRadius = 20.dp,
-                            backgroundColor = navBg,
-                            tints = listOf(HazeTint(color = navBg.copy(alpha = 0.4f)))
-                        )
+                        val glassStyle = remember(navBg) {
+                            HazeStyle(
+                                blurRadius = 20.dp,
+                                backgroundColor = navBg,
+                                tints = listOf(HazeTint(color = navBg.copy(alpha = 0.4f)))
+                            )
+                        }
 
                         Box(
                             modifier = Modifier
@@ -139,7 +140,7 @@ class MainActivity : AppCompatActivity() {
                                 startDestination = "main",
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .hazeSource(hazeState)
+                                // .hazeSource(hazeState)
                             ) {
                                 composable("main") {
                                     HomeScreen(
@@ -162,6 +163,7 @@ class MainActivity : AppCompatActivity() {
                                     )
                                 }
                                 composable("Memo/{memoId}") { backStackEntry ->
+                                    val memoList by viewModel.uiState.collectAsState()
                                     val memoId =
                                         backStackEntry.arguments?.getString("memoId")?.toIntOrNull()
                                             ?: -1

@@ -25,3 +25,12 @@ dependencyResolutionManagement {
 
 rootProject.name = "memozy"
 include(":app")
+include(":datasource:local:memo:api")
+include(":datasource:local:memo:impl")
+include(":data:repository:memo:api")
+include(":data:repository:memo:impl")
+include(":feature:core:resource")
+include(":feature:home:api")
+include(":feature:home:impl")
+include(":feature:memo-plain:api")
+include(":feature:memo-plain:impl")

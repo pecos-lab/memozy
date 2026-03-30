@@ -18,7 +18,6 @@ android {
         targetSdk = 36
         versionCode = 3
         versionName = "1.2603.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -50,19 +49,21 @@ configurations.all {
     }
 }
 
-ksp {
-    arg("room.schemaLocation", "$projectDir/schemas")
-}
-
 dependencies {
-    implementation("androidx.navigation:navigation-compose:2.8.9")
-    implementation("dev.chrisbanes.haze:haze:1.7.2")
-    implementation("net.danlew:android.joda:2.12.7")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation(libs.androidx.appcompat)
+    // 모듈
+    implementation(project(":datasource:local:memo:impl"))
+    implementation(project(":data:repository:memo:impl"))
+    implementation(project(":feature:core:resource"))
+    implementation(project(":feature:home:impl"))
+    implementation(project(":feature:memo-plain:impl"))
+
+    // core android
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.appcompat)
+
+    // compose
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
@@ -70,19 +71,28 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.foundation.layout)
-    implementation(libs.room.runtime)
-    implementation(libs.room.ktx)
-    implementation("com.github.wanteddev:montage-android:3.3.0")
-    implementation("com.android.billingclient:billing-ktx:7.1.1")
-    implementation("com.google.firebase:firebase-crashlytics")
-    ksp(libs.room.compiler)
+
+    // navigation
+    implementation("androidx.navigation:navigation-compose:2.8.9")
+
+    // haze (MainActivity 네비게이션 바 glass 효과)
+    implementation("dev.chrisbanes.haze:haze:1.7.2")
+
+    // hilt
     implementation(libs.hilt.android)
-    // hilt-navigation-compose 제거: OverrideNightMode의 LocalContext 오버라이드와 충돌
-    // hiltViewModel()을 사용하지 않으므로 불필요
-    // implementation(libs.hilt.navigation.compose)
     ksp(libs.hilt.compiler)
+
+    // app이 직접 사용하는 라이브러리 (feature:home:impl에서 implementation으로 선언되어 전이되지 않음)
+    implementation("com.github.wanteddev:montage-android:3.3.0")   // MainActivity, BottomNavBar
+    implementation("com.android.billingclient:billing-ktx:7.1.1")  // BillingManager 상위 타입
+    implementation("net.danlew:android.joda:2.12.7")               // MemozyApplication
+
+    // firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
+    implementation("com.google.firebase:firebase-crashlytics")
+
+    // test
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
