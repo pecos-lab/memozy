@@ -350,7 +350,7 @@ fun MemoCardItem(
                         .border(neutralBorderWidth, neutralBorder, RoundedCornerShape(10.dp))
                         .background(neutralBg)
                         .clickable {
-                            clipboardManager.setText(AnnotatedString("${memo.name}\n\n${memo.content}"))
+                            clipboardManager.setText(AnnotatedString(memo.content))
                         },
                     contentAlignment = Alignment.Center
                 ) {
