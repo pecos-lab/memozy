@@ -1,25 +1,46 @@
+---
+name: understanding-design-system
+description: Shadcn Compose 기반 디자인 시스템 구조와 사용법. 컴포넌트 사용, 테마 적용, 색상/반경 커스터마이징 시 활성화됨.
+version: 1.0.0
+---
+
 # Understanding Design System
 
-킬성훈 앱에 적용된 디자인 시스템의 구조와 사용법을 이해하기 위한 스킬.
+Shadcn Compose 기반 디자인 시스템의 구조와 사용법을 이해하기 위한 스킬.
 
 ---
 
 ## 목차
 
-### 1. Foundations
-모든 디자인 요소의 기반이 되는 가장 원자적인 단위들로 컬러, 타이포그래피, 스페이싱, 그리드 등 시각적 언어의 최소 단위들로 구성됩니다.
-
-- [Color](foundations/color.md) — 색상의 시각적 일관성을 유지하고 효율적인 디자인 작업을 돕습니다.
-- [Typography](foundations/typography.md) — 화면의 텍스트를 읽기 쉽고 아름답게 표현하도록 돕습니다.
-- [Grid](foundations/grid.md) — 일관된 간격 체계를 사용하여 조화로운 비율과 정렬을 만들어냅니다.
-- [Elevation](foundations/elevation.md) — 컴포넌트 간의 명확한 깊이감과 시각적 계층을 만들어냅니다.
+### 1. Theming
+- [Color](theming/color.md) — ShadcnColors를 통한 색상 시스템 구성
+- [Radius](theming/radius.md) — ShadcnRadius를 통한 모서리 반경 구성
+- [Theme Application](theming/theme-application.md) — ShadcnTheme 적용 방법
 
 ### 2. Components
-재사용 가능한 UI 구성 요소들로, Foundations 위에 구축된 인터랙티브 블록들입니다.
-
-- [Bottom Navigation](components/bottom-navigation.md) — 모바일 앱 하단에 고정되어 주요 섹션 간 빠른 전환을 제공합니다.
-- [Button](components/button.md) — 작업을 수행하는 클릭 가능한 요소로 Solid/Outlined 변형과 다양한 계층 구조를 가집니다.
-- [Icon Button](components/icon-button.md) — 아이콘만으로 액션을 수행하는 버튼으로 공간이 제한적일 때 사용합니다.
-- [Text Button](components/text-button.md) — 배경/테두리 없이 텍스트만으로 구성된 버튼으로 보조 액션에 사용합니다.
-- [Text Field](components/text-field.md) — 한 줄 텍스트 입력 컴포넌트로 Heading, Placeholder, Description 등으로 입력 형식을 안내합니다.
-- [Text Area](components/text-area.md) — 2줄 이상 텍스트 입력 컴포넌트로 Normal/Limited/Fixed 리사이즈 모드를 지원합니다.
+- [Accordion](components/accordion.md) — 펼치기/접기 가능한 콘텐츠 섹션
+- [Alert](components/alert.md) — 사용자 주의를 끄는 콜아웃
+- [Alert Dialog](components/alert-dialog.md) — 응답을 요구하는 모달 다이얼로그
+- [Avatar](components/avatar.md) — 사용자 이미지 + 폴백
+- [Badge](components/badge.md) — 상태/카테고리 배지
+- [Button](components/button.md) — 클릭 가능한 버튼 (8가지 Variant)
+- [Calendar](components/calendar.md) — 날짜 선택 필드
+- [Card](components/card.md) — 헤더/콘텐츠/푸터 카드
+- [Carousel](components/carousel.md) — 모션/스와이프 캐러셀
+- [Checkbox](components/checkbox.md) — 체크박스 토글
+- [Combobox](components/combobox.md) — 자동완성 + 제안 목록
+- [Date Picker](components/date-picker.md) — 범위/프리셋 날짜 선택
+- [Dialog](components/dialog.md) — 오버레이 다이얼로그
+- [Drawer](components/drawer.md) — 바텀시트
+- [Dropdown Menu](components/dropdown-menu.md) — 액션 드롭다운 메뉴
+- [Input](components/input.md) — 폼 입력 필드 (7가지 Variant)
+- [Popover](components/popover.md) — 포탈 콘텐츠 팝오버
+- [Progress](components/progress.md) — 진행률 표시 바
+- [Radio Group](components/radio-group.md) — 단일 선택 라디오 버튼
+- [Select](components/select.md) — 옵션 목록 선택
+- [Sidebar](components/sidebar.md) — 테마 적용 가능한 사이드바
+- [Skeleton](components/skeleton.md) — 로딩 플레이스홀더
+- [Slider](components/slider.md) — 범위 값 슬라이더
+- [Sonner](components/sonner.md) — 토스트 알림
+- [Switch](components/switch.md) — 스위치 토글
+- [Tabs](components/tabs.md) — 탭 패널 전환
