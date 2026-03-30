@@ -4,6 +4,8 @@ import kotlinx.coroutines.flow.Flow
 import me.pecos.memozy.data.datasource.local.entity.Memo
 import me.pecos.memozy.data.datasource.local.MemoDao
 
+internal expect fun currentTimeMillis(): Long
+
 class MemoRepositoryImpl(private val memoDao: MemoDao) : MemoRepository {
 
     override fun getMemos(): Flow<List<Memo>> = memoDao.getAllMemos()
@@ -17,7 +19,7 @@ class MemoRepositoryImpl(private val memoDao: MemoDao) : MemoRepository {
     }
 
     override suspend fun updateMemo(memo: Memo) {
-        memoDao.updateMemo(memo.copy(updatedAt = System.currentTimeMillis()))
+        memoDao.updateMemo(memo.copy(updatedAt = currentTimeMillis()))
     }
 
     override suspend fun clearAllMemos() {
