@@ -14,4 +14,6 @@ ksp {
 
 dependencies {
     implementation(projects.composeApp.datasource.local.memo.api)
+    implementation(libs.koin.core)
+    implementation(libs.koin.android)
 }

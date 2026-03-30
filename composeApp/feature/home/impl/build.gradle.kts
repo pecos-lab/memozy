@@ -22,5 +22,7 @@ dependencies {
     implementation(libs.android.joda)
     implementation(libs.montage.android)
     implementation(libs.billing.ktx)
+    implementation(libs.koin.android)
+    implementation(libs.koin.compose.viewmodel)
     implementation(libs.kotlinx.coroutines.android)
 }

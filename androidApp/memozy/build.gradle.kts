@@ -33,6 +33,10 @@ dependencies {
     implementation(projects.composeApp.feature.home.impl)
     implementation(projects.composeApp.feature.memoPlain.impl)
 
+    // Koin
+    implementation(libs.koin.android)
+    implementation(libs.koin.core)
+
     // core android
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
