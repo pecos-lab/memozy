@@ -26,9 +26,12 @@ def find_relevant_files(issue_title: str, issue_body: str) -> list[str]:
 
     found = set()
     for kw in keywords:
-        out = run(f'grep -rl "{kw}" --include="*.kt" . 2>/dev/null | head -3')
-        if out:
-            found.update(out.splitlines())
+        result = subprocess.run(
+            ["grep", "-rl", kw, "--include=*.kt", "."],
+            capture_output=True, text=True
+        )
+        for line in result.stdout.splitlines()[:3]:
+            found.add(line.strip())
 
     # 홈화면·메모카드는 자주 수정되므로 기본 포함
     defaults = [
@@ -156,9 +159,18 @@ def main():
     print(f"수정 파일: {file_path}")
 
     # ── 5. 파일 패치 ───────────────────────────────────────────────────────
-    if not os.path.exists(file_path):
+    # file_path가 레포 루트 밖을 가리키는지 검증
+    repo_root = os.path.abspath(".")
+    abs_path  = os.path.abspath(file_path)
+    if not abs_path.startswith(repo_root + os.sep):
+        print(f"유효하지 않은 경로: {file_path}")
+        return
+
+    if not os.path.exists(abs_path):
         print(f"파일 없음: {file_path}")
         return
+
+    file_path = abs_path  # 이후 절대경로 사용
 
     with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
