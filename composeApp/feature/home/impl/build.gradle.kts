@@ -9,11 +9,11 @@ plugins {
 setNamespace("feature.home.impl")
 
 dependencies {
-    implementation(projects.feature.home.api)
-    implementation(projects.feature.core.resource)
-    implementation(projects.feature.memoPlain.api)
-    implementation(projects.datasource.local.memo.api)
-    implementation(projects.data.repository.memo.api)
+    implementation(projects.composeApp.feature.home.api)
+    implementation(projects.composeApp.feature.core.resource)
+    implementation(projects.composeApp.feature.memoPlain.api)
+    implementation(projects.composeApp.datasource.local.memo.api)
+    implementation(projects.composeApp.data.repository.memo.api)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)

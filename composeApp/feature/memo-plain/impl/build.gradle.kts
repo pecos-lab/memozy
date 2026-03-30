@@ -9,10 +9,10 @@ plugins {
 setNamespace("feature.memoplain.impl")
 
 dependencies {
-    implementation(projects.feature.memoPlain.api)
-    implementation(projects.feature.core.resource)
-    implementation(projects.datasource.local.memo.api)
-    implementation(projects.data.repository.memo.api)
+    implementation(projects.composeApp.feature.memoPlain.api)
+    implementation(projects.composeApp.feature.core.resource)
+    implementation(projects.composeApp.datasource.local.memo.api)
+    implementation(projects.composeApp.data.repository.memo.api)
     implementation(libs.montage.android)
     implementation(libs.androidx.compose.navigation)
     implementation(libs.kotlinx.coroutines.android)

@@ -28,10 +28,10 @@ android {
 
 dependencies {
     // 모듈 - Hilt 바인딩을 위해 implementation 필요
-    implementation(projects.datasource.local.memo.impl)
-    implementation(projects.data.repository.memo.impl)
-    implementation(projects.feature.home.impl)
-    implementation(projects.feature.memoPlain.impl)
+    implementation(projects.composeApp.datasource.local.memo.impl)
+    implementation(projects.composeApp.data.repository.memo.impl)
+    implementation(projects.composeApp.feature.home.impl)
+    implementation(projects.composeApp.feature.memoPlain.impl)
 
     // core android
     implementation(libs.androidx.core.ktx)

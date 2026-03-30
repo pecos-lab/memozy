@@ -8,7 +8,7 @@ plugins {
 setNamespace("data.repository.memo.impl")
 
 dependencies {
-    implementation(projects.data.repository.memo.api)
-    implementation(projects.datasource.local.memo.api)
+    implementation(projects.composeApp.data.repository.memo.api)
+    implementation(projects.composeApp.datasource.local.memo.api)
     implementation(libs.kotlinx.coroutines.android)
 }

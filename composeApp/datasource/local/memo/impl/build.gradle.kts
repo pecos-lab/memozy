@@ -13,5 +13,5 @@ ksp {
 }
 
 dependencies {
-    implementation(projects.datasource.local.memo.api)
+    implementation(projects.composeApp.datasource.local.memo.api)
 }
