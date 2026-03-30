@@ -1,0 +1,33 @@
+name: 🤖 Night Bug Fixer
+
+on:
+  schedule:
+    - cron: '0 18 * * *'   # 매일 새벽 3시 KST (UTC 18:00)
+  workflow_dispatch:         # 수동 실행 가능
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install anthropic
+
+      - name: Run Night Bug Fixer
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: python .github/scripts/night-bug-fixer.py
