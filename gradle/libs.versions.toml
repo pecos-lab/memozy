@@ -19,7 +19,7 @@ appcompat = "1.7.0"
 hilt = "2.56.2"
 hiltNavigationCompose = "1.2.0"
 navigationCompose = "2.8.9"
-kotlinxCoroutines = "1.7.3"
+kotlinxCoroutines = "1.10.2"
 
 [libraries]
 gradlePlugin-android = { module = "com.android.tools.build:gradle", version.ref = "agp" }
