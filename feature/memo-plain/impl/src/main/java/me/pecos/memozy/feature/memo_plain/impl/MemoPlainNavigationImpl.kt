@@ -45,52 +45,41 @@ class MemoPlainNavigationImpl @Inject constructor(
                         )
                     }
                 }
+                .map { list -> list.map { it.toUiState() } }
                 .collectAsState(initial = emptyList())
-
-            val existingMemo = if (memoId > 0) {
-                memos.find { it.id == memoId } ?: MemoUiState(0, "", 0, "")
-            } else {
-                MemoUiState(0, "", 0, "")
-            }
-
+            val existingMemo = memos.firstOrNull { it.id == memoId }
             val scope = rememberCoroutineScope()
 
             MemoScreen(
-                existingMemo = existingMemo,
+                existingMemo = existingMemo ?: MemoUiState(0, "", 1, ""),
                 onBack = onBack,
                 onSave = { memo ->
                     scope.launch {
-                        if (memoId > 0) {
-                            repository.updateMemo(
-                                Memo(
-                                    id = memo.id,
-                                    name = memo.name,
-                                    categoryId = memo.categoryId,
-                                    content = memo.content,
-                                    createdAt = memo.createdAt,
-                                    updatedAt = memo.updatedAt,
-                                    format = when (memo.format) {
-                                        MemoFormatUi.MARKDOWN -> MemoFormat.MARKDOWN
-                                        MemoFormatUi.PLAIN -> MemoFormat.PLAIN
-                                    }
-                                )
-                            )
-                            onBack()
+                        if (memoId > 0 && existingMemo != null) {
+                            repository.updateMemo(memo.toEntity())
                         } else {
-                            repository.addMemo(
-                                Memo(
-                                    name = memo.name,
-                                    categoryId = memo.categoryId,
-                                    content = memo.content,
-                                    createdAt = System.currentTimeMillis(),
-                                    format = MemoFormat.MARKDOWN
-                                )
-                            )
-                            onNavigateToHome()
+                            repository.addMemo(memo.toEntity())
                         }
+                        onNavigateToHome()
                     }
                 }
             )
         }
     }
+
+    private fun Memo.toUiState() = MemoUiState(
+        id = id,
+        name = name,
+        categoryId = categoryId,
+        content = content,
+        createdAt = createdAt,
+        updatedAt = updatedAt
+    )
+
+    private fun MemoUiState.toEntity() = Memo(
+        id = id,
+        name = name,
+        categoryId = categoryId,
+        content = content
+    )
 }
