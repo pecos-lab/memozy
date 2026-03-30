@@ -18,7 +18,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.compose.navigation)
     implementation(libs.haze)
-    implementation(libs.android.joda)
+    // Joda-Time 제거 완료 — java.time API 사용 (minSdk 26)
     implementation(libs.shadcn.compose)
     implementation(libs.billing.ktx)
     implementation(libs.koin.android)

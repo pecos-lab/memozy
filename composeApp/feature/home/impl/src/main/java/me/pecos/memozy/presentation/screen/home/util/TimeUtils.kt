@@ -1,23 +1,24 @@
 package me.pecos.memozy.presentation.screen.home.util
 
-import org.joda.time.DateTime
-import org.joda.time.LocalDate
-import org.joda.time.format.DateTimeFormat
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
 // ── 시간 포맷 ───────────────────────────────────────────────────────────────────
 
 fun formatMemoTime(createdAt: Long, languageCode: String): String {
     if (createdAt == 0L) return ""
 
-    val created = DateTime(createdAt)
-    val today = LocalDate.now()
+    val zone = ZoneId.systemDefault()
+    val created = Instant.ofEpochMilli(createdAt).atZone(zone).toLocalDateTime()
+    val today = LocalDate.now(zone)
     val yesterday = today.minusDays(1)
     val createdDate = created.toLocalDate()
 
     return when {
-        createdDate.isEqual(today) -> {
-            val hour = created.hourOfDay
-            val minute = created.minuteOfHour
+        createdDate == today -> {
+            val hour = created.hour
+            val minute = created.minute
             when (languageCode) {
                 "en" -> {
                     val ampm = if (hour < 12) "AM" else "PM"
@@ -36,11 +37,16 @@ fun formatMemoTime(createdAt: Long, languageCode: String): String {
                 }
             }
         }
-        createdDate.isEqual(yesterday) -> when (languageCode) {
+        createdDate == yesterday -> when (languageCode) {
             "en" -> "Yesterday"
             "ja" -> "昨日"
             else -> "어제"
         }
-        else -> DateTimeFormat.forPattern("yyyy.MM.dd").print(created)
+        else -> {
+            val y = created.year
+            val m = created.monthValue.toString().padStart(2, '0')
+            val d = created.dayOfMonth.toString().padStart(2, '0')
+            "$y.$m.$d"
+        }
     }
 }

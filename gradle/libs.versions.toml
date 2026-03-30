@@ -38,7 +38,6 @@ shadcnCompose = "0.2.2"
 
 # Android-only
 billingKtx = "7.1.1"
-androidJoda = "2.12.7"
 firebase-bom = "33.7.0"
 
 # Test
@@ -123,7 +122,6 @@ compose-markdown-renderer-m3 = { module = "com.mikepenz:multiplatform-markdown-r
 compose-markdown-renderer-coil3 = { module = "com.mikepenz:multiplatform-markdown-renderer-coil3", version.ref = "composeMarkdown" }
 
 # Android-only
-android-joda = { module = "net.danlew:android.joda", version.ref = "androidJoda" }
 billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "billingKtx" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }

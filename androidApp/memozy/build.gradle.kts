@@ -40,9 +40,6 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
 
-    // MemozyApplication
-    implementation(libs.android.joda)
-
     // firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
