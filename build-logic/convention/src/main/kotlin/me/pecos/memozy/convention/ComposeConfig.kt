@@ -3,6 +3,7 @@ package me.pecos.memozy.convention
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
+import org.jetbrains.compose.ComposeExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import me.pecos.memozy.convention.extension.libs
 
@@ -15,21 +16,24 @@ fun Project.configureComposeLibrary() {
         apply("org.jetbrains.kotlin.plugin.compose")
     }
 
+    val composeDeps = extensions.getByType(ComposeExtension::class.java).dependencies
+
     extensions.configure<KotlinMultiplatformExtension> {
         sourceSets.apply {
             commonMain.dependencies {
-                implementation(libs.findLibrary("compose.runtime").get())
-                implementation(libs.findLibrary("compose.foundation").get())
-                implementation(libs.findLibrary("compose.ui").get())
-                implementation(libs.findLibrary("compose.material3").get())
-                implementation(libs.findLibrary("compose.components.resources").get())
-                implementation(libs.findLibrary("compose.uiToolingPreview").get())
+                implementation(composeDeps.runtime)
+                implementation(composeDeps.foundation)
+                implementation(composeDeps.ui)
+                implementation(composeDeps.material3)
+                implementation(composeDeps.materialIconsExtended)
+                api(composeDeps.components.resources)
+                implementation(composeDeps.components.uiToolingPreview)
             }
         }
     }
 
     dependencies {
-        add("androidRuntimeClasspath", libs.findLibrary("compose.uiTooling").get())
+        add("androidRuntimeClasspath", composeDeps.uiTooling)
     }
 
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).configureEach {

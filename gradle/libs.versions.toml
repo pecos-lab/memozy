@@ -34,11 +34,10 @@ ktorfit = "2.7.2"
 haze = "1.7.2"
 coil = "3.3.0"
 composeMarkdown = "0.39.2"
+shadcnCompose = "0.2.2"
 
 # Android-only
 billingKtx = "7.1.1"
-androidJoda = "2.12.7"
-montageAndroid = "3.3.0"
 firebase-bom = "33.7.0"
 
 # Test
@@ -117,14 +116,13 @@ ktorfit-lib = { module = "de.jensklingenberg.ktorfit:ktorfit-lib", version.ref =
 # UI
 haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+shadcn-compose = { module = "io.github.derangga:shadcn-ui-kmp", version.ref = "shadcnCompose" }
 compose-markdown-renderer = { module = "com.mikepenz:multiplatform-markdown-renderer", version.ref = "composeMarkdown" }
 compose-markdown-renderer-m3 = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version.ref = "composeMarkdown" }
 compose-markdown-renderer-coil3 = { module = "com.mikepenz:multiplatform-markdown-renderer-coil3", version.ref = "composeMarkdown" }
 
 # Android-only
-android-joda = { module = "net.danlew:android.joda", version.ref = "androidJoda" }
 billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "billingKtx" }
-montage-android = { module = "com.github.wanteddev:montage-android", version.ref = "montageAndroid" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }

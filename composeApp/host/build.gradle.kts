@@ -1,8 +1,7 @@
-import me.pecos.memozy.convention.extension.setNamespace
+import me.pecos.memozy.convention.extension.configureAndroidLibrary
 
 plugins {
-    id("memozy.android.library")
-    id("memozy.compose")
+    id("memozy.compose.library")
 }
 
-setNamespace("host")
+configureAndroidLibrary("host")

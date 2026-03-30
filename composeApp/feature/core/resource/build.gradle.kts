@@ -1,8 +1,15 @@
-import me.pecos.memozy.convention.extension.setNamespace
+import me.pecos.memozy.convention.extension.configureAndroidLibrary
+import org.jetbrains.compose.ComposeExtension
 
 plugins {
-    id("memozy.android.library")
-    id("memozy.compose")
+    id("memozy.compose.library")
 }
 
-setNamespace("feature.core.resource")
+configureAndroidLibrary("feature.core.resource")
+
+extensions.configure<ComposeExtension> {
+    resources {
+        publicResClass = true
+        packageOfResClass = "me.pecos.memozy.feature.core.resource"
+    }
+}
