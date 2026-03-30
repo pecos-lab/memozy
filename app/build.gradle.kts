@@ -1,25 +1,20 @@
+import me.pecos.memozy.convention.extension.setNamespace
+
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.ksp)
+    id("memozy.android.application")
+    id("memozy.hilt")
     alias(libs.plugins.google.services)
-    alias(libs.plugins.hilt.android)
-    id("com.google.firebase.crashlytics")
+    alias(libs.plugins.firebase.crashlytics)
 }
 
-android {
-    namespace = "me.pecos.memozy"
-    compileSdk = libs.versions.compileSdk.get().toInt()
+setNamespace("")
 
+android {
     defaultConfig {
         applicationId = "me.pecos.memozy"
-        minSdk = libs.versions.minSdk.get().toInt()
-        targetSdk = libs.versions.compileSdk.get().toInt()
         versionCode = 3
         versionName = "1.2603.0"
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
-
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -29,29 +24,18 @@ android {
             )
         }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
 }
 
 dependencies {
-    // 모듈 - Hilt가 런타임에 바인딩 발견
-    runtimeOnly(projects.datasource.local.memo.impl)
-    runtimeOnly(projects.data.repository.memo.impl)
-    runtimeOnly(projects.feature.home.impl)
-    runtimeOnly(projects.feature.memoPlain.impl)
+    // 모듈 - Hilt 바인딩을 위해 implementation 필요
+    implementation(projects.datasource.local.memo.impl)
+    implementation(projects.data.repository.memo.impl)
+    implementation(projects.feature.home.impl)
+    implementation(projects.feature.memoPlain.impl)
 
     // core android
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
-
-    // hilt
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler)
 
     // MemozyApplication
     implementation(libs.android.joda)
