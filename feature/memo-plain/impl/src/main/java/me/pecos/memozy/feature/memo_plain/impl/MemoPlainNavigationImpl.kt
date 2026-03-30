@@ -45,7 +45,6 @@ class MemoPlainNavigationImpl @Inject constructor(
                         )
                     }
                 }
-                .map { list -> list.map { it.toUiState() } }
                 .collectAsState(initial = emptyList())
             val existingMemo = memos.firstOrNull { it.id == memoId }
             val scope = rememberCoroutineScope()
@@ -66,15 +65,6 @@ class MemoPlainNavigationImpl @Inject constructor(
             )
         }
     }
-
-    private fun Memo.toUiState() = MemoUiState(
-        id = id,
-        name = name,
-        categoryId = categoryId,
-        content = content,
-        createdAt = createdAt,
-        updatedAt = updatedAt
-    )
 
     private fun MemoUiState.toEntity() = Memo(
         id = id,
