@@ -1,6 +1,7 @@
 package me.pecos.memozy.convention
 
-import me.pecos.memozy.convention.extension.AndroidExtension
+import com.android.build.api.dsl.ApplicationExtension
+import com.android.build.api.dsl.LibraryExtension
 import me.pecos.memozy.convention.extension.libs
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.dependencies
@@ -8,10 +9,10 @@ import org.gradle.kotlin.dsl.dependencies
 internal fun Project.configureComposeAndroid() {
     pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
 
-    android {
-        buildFeatures {
-            compose = true
-        }
+    val android = extensions.getByName("android")
+    when (android) {
+        is ApplicationExtension -> android.buildFeatures { compose = true }
+        is LibraryExtension -> android.buildFeatures { compose = true }
     }
 
     dependencies {
@@ -24,8 +25,4 @@ internal fun Project.configureComposeAndroid() {
         add("implementation", libs.findLibrary("androidx-compose-foundation-layout").get())
         add("debugImplementation", libs.findLibrary("androidx-compose-ui-tooling").get())
     }
-}
-
-private fun Project.android(block: AndroidExtension.() -> Unit) {
-    extensions.configure(AndroidExtension::class.java, block)
 }

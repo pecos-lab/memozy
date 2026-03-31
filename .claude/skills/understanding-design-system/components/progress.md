@@ -1,0 +1,39 @@
+# Progress
+
+Displays an indicator showing the completion progress of a task, typically displayed as a progress bar.
+
+## Usage
+
+```kotlin
+import com.shadcn.ui.components.Progress
+
+@Composable
+fun Example() {
+    var progress by remember { mutableFloatStateOf(0.0f) }
+
+    // Simulate progress change
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(1000)
+            progress = (progress + 0.1f) % 1.0f
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 24.dp, start = 16.dp, end = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = "Progress: ${(progress * 100).toInt()}%",
+            color = MaterialTheme.colors.foreground,
+            style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        )
+        Progress(progress = progress)
+    }
+}
+```
+
+> 코드 예시는 공식 문서에서 확인: [Progress](https://shadcn-compose.site/docs/components/progress)

@@ -1,0 +1,96 @@
+# Card
+
+Displays a card with header, content, and footer.
+
+## Basic Usage
+
+```kotlin
+import com.shadcn.ui.components.Card
+import com.shadcn.ui.components.CardContent
+import com.shadcn.ui.components.CardDescription
+import com.shadcn.ui.components.CardFooter
+import com.shadcn.ui.components.CardHeader
+import com.shadcn.ui.components.CardTitle
+
+@Composable
+fun Example() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp, vertical = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp),
+        ) {
+            CardHeader {
+                CardTitle { Text("This is title") }
+                CardDescription { Text("This is description") }
+            }
+            CardContent {
+                Text("This is the main content of the card.")
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("You can put any composables here.")
+            }
+            CardFooter {
+                Text("This is footer")
+            }
+        }
+    }
+}
+```
+
+## With Background Image
+
+```kotlin
+import coil3.compose.AsyncImage
+import com.shadcn.ui.components.Card
+
+@Composable
+fun Example() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp, vertical = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Card(border = null) {
+            AsyncImage(
+                "https://heroui.com/images/hero-card.jpeg",
+                contentDescription = "",
+                modifier = Modifier.size(200.dp)
+            )
+        }
+    }
+}
+```
+
+## Custom Styles
+
+### Colors
+
+You can also set the card background color by passing `Color` to the `background`
+
+```kotlin
+Card(
+    modifier = Modifier
+        .size(200.dp),
+    background = Color.Blue,
+)
+```
+
+### Shadow
+
+You can also adjust the card shadow by passing `BoxShadow` to the `shadow`.
+
+```kotlin
+Card(
+    modifier = Modifier
+        .size(200.dp),
+    shadow = MaterialTheme.shadow.mdx,
+)
+```
+
+> 코드 예시는 공식 문서에서 확인: [Card](https://shadcn-compose.site/docs/components/card)

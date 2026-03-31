@@ -5,7 +5,6 @@ import me.pecos.memozy.convention.configureKotlin
 
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
 }
 
 extensions.getByType<ApplicationExtension>().apply {
