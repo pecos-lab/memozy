@@ -159,23 +159,14 @@ fun PetMainContent(
                 isTouching = false,
                 modifier = Modifier.fillMaxSize(),
                 fallbackContent = {
-                    // Placeholder until Rive asset is ready
                     Column(
                         modifier = Modifier.fillMaxSize(),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = pet.name,
-                            color = colors.textSecondary,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = viewModel.getSpeciesName(pet.speciesId),
-                            color = colors.textSecondary,
-                            fontSize = 14.sp
+                            text = viewModel.getSpeciesEmoji(pet.speciesId),
+                            fontSize = 80.sp
                         )
                     }
                 }

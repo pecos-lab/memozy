@@ -16,8 +16,7 @@ class PetRepositoryImpl @Inject constructor(
     override fun getActivePet(): Flow<Pet?> = petDao.getActivePet()
 
     override suspend fun hatchPet(): Pet {
-        val rarity = rollRarity()
-        val species = PetSpeciesCatalog.getByRarity(rarity).random()
+        val species = PetSpeciesCatalog.ALL.random()
         val personality = species.availablePersonalities.random()
 
         val pet = Pet(

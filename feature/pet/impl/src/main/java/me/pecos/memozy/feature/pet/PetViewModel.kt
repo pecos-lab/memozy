@@ -97,8 +97,11 @@ class PetViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun getSpeciesName(speciesId: String): String {
-        return PetSpeciesCatalog.getById(speciesId)?.id?.replace("_", " ")
-            ?.replaceFirstChar { it.uppercase() } ?: speciesId
+        return PetSpeciesCatalog.getDisplayName(speciesId)
+    }
+
+    fun getSpeciesEmoji(speciesId: String): String {
+        return PetSpeciesCatalog.getEmojiForSpecies(speciesId)
     }
 
     fun getTimeOfDay(): TimeOfDay {
