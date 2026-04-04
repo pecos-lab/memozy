@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import me.pecos.memozy.data.datasource.local.entity.Memo
 import me.pecos.memozy.data.repository.MemoRepository
 import me.pecos.memozy.data.repository.model.MemoFormat
+import me.pecos.memozy.data.repository.pet.PetRepository
 import me.pecos.memozy.feature.memoplain.api.MemoPlainNavigation
 import me.pecos.memozy.feature.memoplain.api.MemoPlainRoute
 import me.pecos.memozy.presentation.screen.home.model.MemoFormatUi
@@ -18,7 +19,8 @@ import me.pecos.memozy.presentation.screen.memo.MemoScreen
 import javax.inject.Inject
 
 class MemoPlainNavigationImpl @Inject constructor(
-    private val repository: MemoRepository
+    private val repository: MemoRepository,
+    private val petRepository: PetRepository
 ) : MemoPlainNavigation {
 
     override fun registerGraph(
@@ -59,6 +61,10 @@ class MemoPlainNavigationImpl @Inject constructor(
                         } else {
                             repository.addMemo(memo.toEntity())
                         }
+                        // Feed pet when memo is saved
+                        try {
+                            petRepository.feedPet(1)
+                        } catch (_: Exception) { }
                         onNavigateToHome()
                     }
                 }
