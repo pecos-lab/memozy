@@ -1,5 +1,8 @@
 package me.pecos.memozy.feature.pet.screen
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -11,32 +14,38 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.border
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.OutlinedButton
-import me.pecos.memozy.feature.pet.PetViewModel
-import androidx.compose.ui.res.stringResource
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import me.pecos.memozy.feature.core.resource.R
-import me.pecos.memozy.feature.pet.model.MoodState
+import me.pecos.memozy.feature.pet.PetViewModel
+import me.pecos.memozy.feature.pet.model.Condition
 import me.pecos.memozy.feature.pet.model.PetDialogue
 import me.pecos.memozy.feature.pet.model.PetUiState
 import me.pecos.memozy.feature.pet.model.TimeOfDay
+import me.pecos.memozy.feature.pet.model.TouchReaction
 import me.pecos.memozy.feature.pet.rive.RivePetView
 import me.pecos.memozy.presentation.theme.LocalAppColors
 
@@ -49,8 +58,15 @@ fun PetMainContent(
 ) {
     val colors = LocalAppColors.current
     val moodState = viewModel.getMoodState(pet.mood)
+    val condition = viewModel.getCondition(pet.mood)
     val timeOfDay = viewModel.getTimeOfDay()
     var showProfile by remember { mutableStateOf(false) }
+
+    // Touch reaction state
+    val scope = rememberCoroutineScope()
+    val bounceScale = remember { Animatable(1f) }
+    var touchDialogue by remember { mutableStateOf<String?>(null) }
+    var showHearts by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -85,7 +101,7 @@ fun PetMainContent(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // EXP Bar
+        // EXP Bar (mood bar removed — condition is invisible)
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -113,41 +129,14 @@ fun PetMainContent(
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Mood Bar
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = getMoodEmoji(moodState),
-                fontSize = 14.sp
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            LinearProgressIndicator(
-                progress = { pet.mood / 100f },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp)),
-                trackColor = colors.cardBorder,
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "${pet.mood}/100",
-                color = colors.textSecondary,
-                fontSize = 12.sp
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Character Area — Rive animation with emoji fallback
+        // Character Area — touch triggers condition-based reaction
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
+                .scale(bounceScale.value)
                 .clip(RoundedCornerShape(24.dp))
                 .background(colors.cardBackground)
                 .clickable(
@@ -155,9 +144,34 @@ fun PetMainContent(
                     indication = null
                 ) {
                     viewModel.interactWithPet()
+
+                    // Trigger touch reaction
+                    val reaction = viewModel.getTouchReaction(pet.personality, pet.mood)
+                    touchDialogue = reaction.dialogue.random()
+                    showHearts = reaction.showHearts
+
+                    scope.launch {
+                        bounceScale.animateTo(
+                            targetValue = reaction.bounceScale,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessLow
+                            )
+                        )
+                        bounceScale.animateTo(
+                            targetValue = 1f,
+                            animationSpec = spring(stiffness = Spring.StiffnessMedium)
+                        )
+                    }
+                    scope.launch {
+                        delay(2000)
+                        touchDialogue = null
+                        showHearts = false
+                    }
                 },
             contentAlignment = Alignment.Center
         ) {
+            // Pet character
             RivePetView(
                 riveAssetName = "${pet.speciesId}.riv",
                 mood = pet.mood,
@@ -170,30 +184,53 @@ fun PetMainContent(
                 isTouching = false,
                 modifier = Modifier.fillMaxSize(),
                 fallbackContent = {
-                    // Emoji fallback when .riv file is not available
                     Column(
                         modifier = Modifier.fillMaxSize(),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
+                        val reaction = viewModel.getTouchReaction(pet.personality, pet.mood)
                         Text(
-                            text = getPetEmoji(moodState, timeOfDay),
+                            text = if (touchDialogue != null) reaction.emoji
+                                   else getConditionEmoji(condition, timeOfDay),
                             fontSize = 80.sp
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = getTimeGreeting(timeOfDay),
-                            color = colors.textSecondary,
-                            fontSize = 12.sp
                         )
                     }
                 }
             )
+
+            // Hearts overlay (HIGH condition touch)
+            if (showHearts) {
+                Text(
+                    text = "\u2764\uFE0F\u2764\uFE0F\u2764\uFE0F",
+                    fontSize = 24.sp,
+                    modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)
+                )
+            }
+
+            // Touch dialogue popup
+            touchDialogue?.let { dialogue ->
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 16.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(colors.chipBackground)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        text = "\uD83D\uDCAC \"$dialogue\"",
+                        color = colors.chipText,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Speech Bubble
+        // Speech Bubble — mood-based dialogue (not touch)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -247,33 +284,11 @@ fun PetMainContent(
     }
 }
 
-private fun getMoodEmoji(mood: MoodState): String = when (mood) {
-    MoodState.HAPPY -> "\u2764\uFE0F"
-    MoodState.NORMAL -> "\uD83D\uDE0A"
-    MoodState.LONELY -> "\uD83D\uDE14"
-    MoodState.SAD -> "\uD83D\uDE22"
-}
-
-private fun getPetEmoji(mood: MoodState, time: TimeOfDay): String {
+private fun getConditionEmoji(condition: Condition, time: TimeOfDay): String {
     if (time == TimeOfDay.NIGHT) return "\uD83D\uDE34"
-    return when (mood) {
-        MoodState.HAPPY -> "\uD83D\uDE3B"
-        MoodState.NORMAL -> "\uD83D\uDE3A"
-        MoodState.LONELY -> "\uD83D\uDE3E"
-        MoodState.SAD -> "\uD83D\uDE40"
+    return when (condition) {
+        Condition.HIGH -> "\uD83D\uDE3B"    // beaming cat
+        Condition.MEDIUM -> "\uD83D\uDE3A"  // smiling cat
+        Condition.LOW -> "\uD83D\uDE3E"     // pouting cat
     }
-}
-
-private fun getTimeGreeting(time: TimeOfDay): String = when (time) {
-    TimeOfDay.MORNING -> "Good morning~ *stretches*"
-    TimeOfDay.DAY -> "Let's write some memos!"
-    TimeOfDay.EVENING -> "Getting sleepy~ *yawn*"
-    TimeOfDay.NIGHT -> "Zzz..."
-}
-
-private fun getSpeechText(mood: MoodState, name: String): String = when (mood) {
-    MoodState.HAPPY -> "\uD83D\uDCAC \"Write more memos today~!\""
-    MoodState.NORMAL -> "\uD83D\uDCAC \"Hey there, $name is here!\""
-    MoodState.LONELY -> "\uD83D\uDCAC \"It's been a while... I missed you.\""
-    MoodState.SAD -> "\uD83D\uDCAC \"...\""
 }

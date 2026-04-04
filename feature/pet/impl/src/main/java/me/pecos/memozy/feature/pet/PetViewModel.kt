@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -12,10 +13,12 @@ import kotlinx.coroutines.launch
 import me.pecos.memozy.data.datasource.local.pet.PetSpeciesCatalog
 import me.pecos.memozy.data.datasource.local.pet.entity.Pet
 import me.pecos.memozy.data.repository.pet.PetRepository
+import me.pecos.memozy.feature.pet.model.Condition
 import me.pecos.memozy.feature.pet.model.MoodState
 import me.pecos.memozy.feature.pet.model.PetScreenState
 import me.pecos.memozy.feature.pet.model.PetUiState
 import me.pecos.memozy.feature.pet.model.TimeOfDay
+import me.pecos.memozy.feature.pet.model.TouchReaction
 import java.util.Calendar
 import javax.inject.Inject
 
@@ -109,6 +112,22 @@ class PetViewModel @Inject constructor(
     }
 
     fun getMoodState(mood: Int): MoodState = MoodState.fromMood(mood)
+
+    fun getCondition(mood: Int): Condition = Condition.fromMood(mood)
+
+    fun getTouchReaction(personality: String, mood: Int): TouchReaction.ReactionData {
+        return TouchReaction.getReaction(personality, Condition.fromMood(mood))
+    }
+
+    fun onAppForeground() {
+        viewModelScope.launch {
+            val pet = petRepository.getActivePet().first() ?: return@launch
+            val newMood = (pet.mood + 3).coerceAtMost(100)
+            if (newMood != pet.mood) {
+                petRepository.interactWithPet() // small boost on app open
+            }
+        }
+    }
 
     fun getExpProgress(pet: PetUiState): Float {
         val needed = pet.level * 100

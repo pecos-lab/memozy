@@ -50,3 +50,21 @@ enum class MoodState(val label: String) {
         }
     }
 }
+
+/**
+ * Pet condition — derived from mood, invisible to user.
+ * Affects touch reactions, expressions, and dialogue tone.
+ */
+enum class Condition {
+    LOW,     // mood 0~30: 시무룩, 반응 미미
+    MEDIUM,  // mood 31~65: 미소, 말 붙여줌
+    HIGH;    // mood 66~100: 함박웃음, 칭찬 폭격
+
+    companion object {
+        fun fromMood(mood: Int): Condition = when {
+            mood >= 66 -> HIGH
+            mood >= 31 -> MEDIUM
+            else -> LOW
+        }
+    }
+}
