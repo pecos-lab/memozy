@@ -1,6 +1,5 @@
 package me.pecos.memozy.feature.pet.screen
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,12 +18,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import me.pecos.memozy.feature.pet.impl.R as PetR
 import me.pecos.memozy.presentation.theme.LocalAppColors
 
 @Composable
@@ -65,10 +62,9 @@ fun SpeciesSelectContent(
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Image(
-                        painter = painterResource(id = PetR.drawable.pet_dog),
-                        contentDescription = "Dog",
-                        modifier = Modifier.size(120.dp)
+                    Text(
+                        text = "\uD83D\uDC36",
+                        fontSize = 72.sp
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
@@ -91,10 +87,9 @@ fun SpeciesSelectContent(
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Image(
-                        painter = painterResource(id = PetR.drawable.pet_cat),
-                        contentDescription = "Cat",
-                        modifier = Modifier.size(120.dp)
+                    Text(
+                        text = "\uD83D\uDC31",
+                        fontSize = 72.sp
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(

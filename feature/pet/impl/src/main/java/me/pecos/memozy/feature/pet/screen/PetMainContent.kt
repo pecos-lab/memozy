@@ -1,10 +1,6 @@
 package me.pecos.memozy.feature.pet.screen
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.size
-import androidx.compose.ui.res.painterResource
-import me.pecos.memozy.feature.pet.impl.R as PetR
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -110,15 +106,9 @@ fun PetMainContent(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        val drawableRes = when (pet.speciesId) {
-                            "dog" -> PetR.drawable.pet_dog
-                            "cat" -> PetR.drawable.pet_cat
-                            else -> PetR.drawable.pet_dog
-                        }
-                        Image(
-                            painter = painterResource(id = drawableRes),
-                            contentDescription = viewModel.getSpeciesName(pet.speciesId),
-                            modifier = Modifier.size(200.dp)
+                        Text(
+                            text = viewModel.getSpeciesEmoji(pet.speciesId),
+                            fontSize = 80.sp
                         )
                     }
                 }
