@@ -62,6 +62,14 @@ class PetViewModel @Inject constructor(
         }
     }
 
+    fun hatchPetWithSpecies(speciesId: String) {
+        viewModelScope.launch {
+            _screenState.value = PetScreenState.HATCHING
+            petRepository.hatchPetWithSpecies(speciesId)
+            _screenState.value = PetScreenState.NAMING
+        }
+    }
+
     fun proceedToNaming() {
         _screenState.value = PetScreenState.NAMING
     }

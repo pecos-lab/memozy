@@ -33,6 +33,24 @@ class PetRepositoryImpl @Inject constructor(
         return petDao.getActivePet().first()!!
     }
 
+    override suspend fun hatchPetWithSpecies(speciesId: String): Pet {
+        val species = PetSpeciesCatalog.getById(speciesId) ?: PetSpeciesCatalog.ALL.first()
+        val personality = species.availablePersonalities.random()
+
+        val pet = Pet(
+            speciesId = species.id,
+            name = "",
+            personality = personality.name,
+            favoriteCategoryId = Random.nextInt(1, 12),
+            dislike = DISLIKES.random(),
+            catchphrase = CATCHPHRASES.random(),
+            rarity = species.rarity,
+            birthday = System.currentTimeMillis()
+        )
+        petDao.insertPet(pet)
+        return petDao.getActivePet().first()!!
+    }
+
     override suspend fun rerollPet(): Pet {
         val currentPet = petDao.getActivePet().first()
         if (currentPet != null) {

@@ -69,63 +69,6 @@ fun PetMainContent(
             .fillMaxSize()
             .padding(horizontal = 16.dp, vertical = 16.dp)
     ) {
-        // Top: Name + Level + Rarity
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = "Lv.${pet.level} ${pet.name}",
-                    color = colors.textTitle,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = viewModel.getRarityStars(pet.rarity),
-                    color = colors.textSecondary,
-                    fontSize = 16.sp
-                )
-            }
-            Text(
-                text = "D+${viewModel.getDaysTogether(pet)}",
-                color = colors.textSecondary,
-                fontSize = 14.sp
-            )
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // EXP Bar (mood bar removed — condition is invisible)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "EXP",
-                color = colors.textSecondary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            LinearProgressIndicator(
-                progress = { viewModel.getExpProgress(pet) },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp)),
-                trackColor = colors.cardBorder,
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = viewModel.getExpText(pet),
-                color = colors.textSecondary,
-                fontSize = 12.sp
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
 
         // Character Area — touch triggers condition-based reaction
         Box(
@@ -201,40 +144,6 @@ fun PetMainContent(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Bottom Buttons
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            OutlinedButton(
-                onClick = { showProfile = true },
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(stringResource(R.string.pet_profile))
-            }
-            OutlinedButton(
-                onClick = onNavigateToHistory,
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(stringResource(R.string.pet_memories))
-            }
-            OutlinedButton(
-                onClick = { viewModel.startDeparting() },
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(stringResource(R.string.pet_reroll))
-            }
-        }
-    }
-
-    if (showProfile) {
-        PetProfileSheet(
-            pet = pet,
-            viewModel = viewModel,
-            onDismiss = { showProfile = false }
-        )
     }
 }
 

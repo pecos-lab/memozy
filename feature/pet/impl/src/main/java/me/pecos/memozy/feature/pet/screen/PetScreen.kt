@@ -34,8 +34,8 @@ fun PetScreen(
                 )
             }
             PetScreenState.NO_PET -> {
-                GachaContent(
-                    onHatch = { viewModel.hatchPet() }
+                SpeciesSelectContent(
+                    onSelectSpecies = { speciesId -> viewModel.hatchPetWithSpecies(speciesId) }
                 )
             }
             PetScreenState.HATCHING -> {
