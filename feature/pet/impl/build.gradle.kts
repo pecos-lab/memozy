@@ -17,5 +17,6 @@ dependencies {
     implementation(projects.data.repository.memo.api)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.compose.navigation)
+    implementation(libs.hilt.navigation.compose)
     implementation(libs.kotlinx.coroutines.android)
 }

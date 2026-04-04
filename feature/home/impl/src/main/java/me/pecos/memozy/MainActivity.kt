@@ -52,6 +52,8 @@ import me.pecos.memozy.data.billing.BillingManager
 import me.pecos.memozy.feature.home.api.HomeRoute
 import me.pecos.memozy.feature.memoplain.api.MemoPlainNavigation
 import me.pecos.memozy.feature.memoplain.api.MemoPlainRoute
+import me.pecos.memozy.feature.pet.PetNavigation
+import me.pecos.memozy.feature.pet.PetRoute
 import me.pecos.memozy.presentation.components.FloatingNavPill
 import me.pecos.memozy.presentation.screen.donation.DonationScreen
 import me.pecos.memozy.presentation.screen.home.HomeScreen
@@ -72,6 +74,7 @@ import javax.inject.Inject
 class MainActivity : AppCompatActivity() {
 
     @Inject lateinit var memoPlainNavigation: MemoPlainNavigation
+    @Inject lateinit var petNavigation: PetNavigation
 
     private val billingManager by lazy { BillingManager(this) }
 
@@ -121,7 +124,7 @@ class MainActivity : AppCompatActivity() {
                         val currentRoute by navController.currentBackStackEntryAsState()
                         val showBottomNav = remember(currentRoute) {
                             currentRoute?.destination?.route in listOf(
-                                HomeRoute.MAIN, HomeRoute.SETTINGS
+                                HomeRoute.MAIN, HomeRoute.SETTINGS, PetRoute.PET
                             )
                         }
 
@@ -169,6 +172,10 @@ class MainActivity : AppCompatActivity() {
                                         billingManager = this@MainActivity.billingManager
                                     )
                                 }
+                                petNavigation.registerGraph(
+                                    navGraphBuilder = this,
+                                    onBack = { navController.popBackStack() }
+                                )
                                 memoPlainNavigation.registerGraph(
                                     navGraphBuilder = this,
                                     onNavigateToHome = {

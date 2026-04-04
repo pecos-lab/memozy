@@ -12,6 +12,7 @@ dependencies {
     implementation(projects.feature.home.api)
     implementation(projects.feature.core.resource)
     implementation(projects.feature.memoPlain.api)
+    implementation(projects.feature.pet.api)
     implementation(projects.datasource.local.memo.api)
     implementation(projects.data.repository.memo.api)
     implementation(libs.androidx.lifecycle.runtime.ktx)

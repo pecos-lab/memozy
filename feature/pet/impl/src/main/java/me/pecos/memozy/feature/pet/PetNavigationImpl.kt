@@ -1,6 +1,9 @@
 package me.pecos.memozy.feature.pet
 
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.compose.composable
+import me.pecos.memozy.feature.pet.screen.PetScreen
 import javax.inject.Inject
 
 class PetNavigationImpl @Inject constructor() : PetNavigation {
@@ -9,6 +12,9 @@ class PetNavigationImpl @Inject constructor() : PetNavigation {
         navGraphBuilder: NavGraphBuilder,
         onBack: () -> Unit
     ) {
-        // Phase 2에서 구현
+        navGraphBuilder.composable(PetRoute.PET) {
+            val viewModel: PetViewModel = hiltViewModel()
+            PetScreen(viewModel = viewModel)
+        }
     }
 }
