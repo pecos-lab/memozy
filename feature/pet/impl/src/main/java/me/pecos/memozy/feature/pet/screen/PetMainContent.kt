@@ -34,6 +34,7 @@ import me.pecos.memozy.feature.pet.PetViewModel
 import me.pecos.memozy.feature.pet.model.MoodState
 import me.pecos.memozy.feature.pet.model.PetUiState
 import me.pecos.memozy.feature.pet.model.TimeOfDay
+import me.pecos.memozy.feature.pet.rive.RivePetView
 import me.pecos.memozy.presentation.theme.LocalAppColors
 
 @Composable
@@ -138,7 +139,7 @@ fun PetMainContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Character Area (Placeholder for Phase 3 Rive)
+        // Character Area — Rive animation with emoji fallback
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -153,18 +154,37 @@ fun PetMainContent(
                 },
             contentAlignment = Alignment.Center
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = getPetEmoji(moodState, timeOfDay),
-                    fontSize = 80.sp
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = getTimeGreeting(timeOfDay),
-                    color = colors.textSecondary,
-                    fontSize = 12.sp
-                )
-            }
+            RivePetView(
+                riveAssetName = "${pet.speciesId}.riv",
+                mood = pet.mood,
+                timeOfDay = when (timeOfDay) {
+                    TimeOfDay.MORNING -> 0
+                    TimeOfDay.DAY -> 1
+                    TimeOfDay.EVENING -> 2
+                    TimeOfDay.NIGHT -> 3
+                },
+                isTouching = false,
+                modifier = Modifier.fillMaxSize(),
+                fallbackContent = {
+                    // Emoji fallback when .riv file is not available
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = getPetEmoji(moodState, timeOfDay),
+                            fontSize = 80.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = getTimeGreeting(timeOfDay),
+                            color = colors.textSecondary,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))

@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import me.pecos.memozy.feature.pet.rive.RiveEggView
 import me.pecos.memozy.presentation.theme.LocalAppColors
 
 @Composable
@@ -113,9 +114,21 @@ fun GachaContent(
                 },
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = if (tapCount < 3) "\uD83E\uDD5A" else "\uD83D\uDCA5",
-                fontSize = 72.sp
+            // Rive egg animation with emoji fallback
+            RiveEggView(
+                tapCount = tapCount,
+                modifier = Modifier.fillMaxSize(),
+                fallbackContent = {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (tapCount < 3) "\uD83E\uDD5A" else "\uD83D\uDCA5",
+                            fontSize = 72.sp
+                        )
+                    }
+                }
             )
         }
 

@@ -20,6 +20,7 @@ hilt = "2.59.2"
 hiltNavigationCompose = "1.2.0"
 navigationCompose = "2.8.9"
 kotlinxCoroutines = "1.10.2"
+riveAndroid = "10.2.0"
 
 [libraries]
 gradlePlugin-android = { module = "com.android.tools.build:gradle", version.ref = "agp" }
@@ -50,6 +51,7 @@ androidx-compose-foundation-layout = { group = "androidx.compose.foundation", na
 androidx-compose-navigation = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose"  }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinxCoroutines" }
 montage-android = { module = "com.github.wanteddev:montage-android", version.ref = "montageAndroid" }
+rive-android = { group = "app.rive", name = "rive-android", version.ref = "riveAndroid" }
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }

@@ -18,5 +18,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.compose.navigation)
     implementation(libs.hilt.navigation.compose)
+    implementation(libs.rive.android)
     implementation(libs.kotlinx.coroutines.android)
 }
