@@ -22,8 +22,10 @@ enum class PetScreenState {
     LOADING,
     NO_PET,
     HATCHING,
+    HATCH_RESULT,
     NAMING,
-    ACTIVE
+    ACTIVE,
+    DEPARTING
 }
 
 enum class TimeOfDay {

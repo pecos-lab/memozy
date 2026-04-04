@@ -55,8 +55,12 @@ class PetViewModel @Inject constructor(
         viewModelScope.launch {
             _screenState.value = PetScreenState.HATCHING
             petRepository.hatchPet()
-            _screenState.value = PetScreenState.NAMING
+            _screenState.value = PetScreenState.HATCH_RESULT
         }
+    }
+
+    fun proceedToNaming() {
+        _screenState.value = PetScreenState.NAMING
     }
 
     fun namePet(name: String) {
@@ -65,11 +69,29 @@ class PetViewModel @Inject constructor(
         }
     }
 
+    fun startDeparting() {
+        _screenState.value = PetScreenState.DEPARTING
+    }
+
+    fun cancelDeparting() {
+        _screenState.value = PetScreenState.ACTIVE
+    }
+
+    fun rerollPet() {
+        viewModelScope.launch {
+            petRepository.rerollPet()
+            _screenState.value = PetScreenState.HATCH_RESULT
+        }
+    }
+
     fun interactWithPet() {
         viewModelScope.launch {
             petRepository.interactWithPet()
         }
     }
+
+    val petHistory = petRepository.getPetHistory()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun getSpeciesName(speciesId: String): String {
         return PetSpeciesCatalog.getById(speciesId)?.id?.replace("_", " ")

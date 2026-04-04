@@ -174,6 +174,9 @@ class MainActivity : AppCompatActivity() {
                                 }
                                 petNavigation.registerGraph(
                                     navGraphBuilder = this,
+                                    onNavigateToHistory = {
+                                        navController.navigate(PetRoute.HISTORY)
+                                    },
                                     onBack = { navController.popBackStack() }
                                 )
                                 memoPlainNavigation.registerGraph(

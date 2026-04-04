@@ -11,6 +11,7 @@ object PetRoute {
 interface PetNavigation {
     fun registerGraph(
         navGraphBuilder: NavGraphBuilder,
+        onNavigateToHistory: () -> Unit,
         onBack: () -> Unit
     )
 }

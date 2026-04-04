@@ -16,6 +16,7 @@ import me.pecos.memozy.feature.pet.model.PetScreenState
 @Composable
 fun PetScreen(
     viewModel: PetViewModel,
+    onNavigateToHistory: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val screenState by viewModel.screenState.collectAsState()
@@ -42,6 +43,14 @@ fun PetScreen(
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
+            PetScreenState.HATCH_RESULT -> {
+                HatchResultContent(
+                    pet = petUiState,
+                    speciesName = viewModel.getSpeciesName(petUiState.speciesId),
+                    rarityStars = viewModel.getRarityStars(petUiState.rarity),
+                    onContinue = { viewModel.proceedToNaming() }
+                )
+            }
             PetScreenState.NAMING -> {
                 NamePetContent(
                     speciesName = viewModel.getSpeciesName(petUiState.speciesId),
@@ -53,7 +62,16 @@ fun PetScreen(
             PetScreenState.ACTIVE -> {
                 PetMainContent(
                     pet = petUiState,
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    onNavigateToHistory = onNavigateToHistory
+                )
+            }
+            PetScreenState.DEPARTING -> {
+                DepartContent(
+                    pet = petUiState,
+                    viewModel = viewModel,
+                    onConfirmDepart = { viewModel.rerollPet() },
+                    onCancel = { viewModel.cancelDeparting() }
                 )
             }
         }

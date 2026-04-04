@@ -41,6 +41,7 @@ import me.pecos.memozy.presentation.theme.LocalAppColors
 fun PetMainContent(
     pet: PetUiState,
     viewModel: PetViewModel,
+    onNavigateToHistory: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val colors = LocalAppColors.current
@@ -220,10 +221,16 @@ fun PetMainContent(
                 Text("Profile")
             }
             OutlinedButton(
-                onClick = { /* Phase 4: History */ },
+                onClick = onNavigateToHistory,
                 modifier = Modifier.weight(1f)
             ) {
                 Text("Memories")
+            }
+            OutlinedButton(
+                onClick = { viewModel.startDeparting() },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Reroll")
             }
         }
     }
