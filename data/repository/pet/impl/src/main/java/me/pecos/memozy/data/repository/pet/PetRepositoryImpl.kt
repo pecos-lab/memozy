@@ -109,6 +109,34 @@ class PetRepositoryImpl @Inject constructor(
 
     override fun getPetHistory(): Flow<List<PetHistory>> = petDao.getPetHistory()
 
+    override suspend fun feedPetWithStreakBonus(memoCount: Int, consecutiveDays: Int) {
+        val pet = petDao.getActivePet().first() ?: return
+
+        val moodGain = (memoCount * 10).coerceAtMost(30)
+        val baseExp = memoCount * 20
+        val streakBonus = when {
+            consecutiveDays >= 7 -> 100
+            consecutiveDays >= 3 -> 50
+            else -> 0
+        }
+        val totalExp = baseExp + streakBonus
+
+        val newMood = (pet.mood + moodGain).coerceAtMost(100)
+        val newExp = pet.exp + totalExp
+        val levelUp = newExp >= pet.level * 100
+        val finalExp = if (levelUp) newExp - (pet.level * 100) else newExp
+        val finalLevel = if (levelUp) pet.level + 1 else pet.level
+
+        petDao.updatePet(
+            pet.copy(
+                mood = newMood,
+                exp = finalExp,
+                level = finalLevel,
+                lastFedAt = System.currentTimeMillis()
+            )
+        )
+    }
+
     private fun rollRarity(): Int {
         val roll = Random.nextInt(100)
         return when {

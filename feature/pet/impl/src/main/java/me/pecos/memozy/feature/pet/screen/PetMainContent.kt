@@ -32,6 +32,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import me.pecos.memozy.feature.pet.PetViewModel
 import me.pecos.memozy.feature.pet.model.MoodState
+import me.pecos.memozy.feature.pet.model.PetDialogue
 import me.pecos.memozy.feature.pet.model.PetUiState
 import me.pecos.memozy.feature.pet.model.TimeOfDay
 import me.pecos.memozy.feature.pet.rive.RivePetView
@@ -199,7 +200,7 @@ fun PetMainContent(
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             Text(
-                text = getSpeechText(moodState, pet.name),
+                text = "\uD83D\uDCAC \"${PetDialogue.getLine(pet.personality, moodState, timeOfDay)}\"",
                 color = colors.chipText,
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,

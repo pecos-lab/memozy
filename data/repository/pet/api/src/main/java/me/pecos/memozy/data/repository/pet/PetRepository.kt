@@ -13,4 +13,5 @@ interface PetRepository {
     suspend fun updateMood()
     suspend fun namePet(name: String)
     fun getPetHistory(): Flow<List<PetHistory>>
+    suspend fun feedPetWithStreakBonus(memoCount: Int, consecutiveDays: Int)
 }
