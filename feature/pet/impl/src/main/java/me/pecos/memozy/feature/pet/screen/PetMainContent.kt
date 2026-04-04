@@ -31,6 +31,8 @@ import androidx.compose.foundation.border
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import me.pecos.memozy.feature.pet.PetViewModel
+import androidx.compose.ui.res.stringResource
+import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.feature.pet.model.MoodState
 import me.pecos.memozy.feature.pet.model.PetDialogue
 import me.pecos.memozy.feature.pet.model.PetUiState
@@ -219,19 +221,19 @@ fun PetMainContent(
                 onClick = { showProfile = true },
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Profile")
+                Text(stringResource(R.string.pet_profile))
             }
             OutlinedButton(
                 onClick = onNavigateToHistory,
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Memories")
+                Text(stringResource(R.string.pet_memories))
             }
             OutlinedButton(
                 onClick = { viewModel.startDeparting() },
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Reroll")
+                Text(stringResource(R.string.pet_reroll))
             }
         }
     }

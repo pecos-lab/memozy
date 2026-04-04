@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.res.stringResource
+import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.presentation.theme.LocalAppColors
 
 @Composable
@@ -64,7 +66,7 @@ fun NamePetContent(
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
-            text = "Give your new friend a name!",
+            text = stringResource(R.string.pet_name_prompt),
             color = colors.textBody,
             fontSize = 16.sp,
             textAlign = TextAlign.Center
@@ -75,7 +77,7 @@ fun NamePetContent(
         OutlinedTextField(
             value = name,
             onValueChange = { if (it.length <= 12) name = it },
-            placeholder = { Text("Enter a name...") },
+            placeholder = { Text(stringResource(R.string.pet_name_placeholder)) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
@@ -87,7 +89,7 @@ fun NamePetContent(
             enabled = name.isNotBlank(),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Confirm")
+            Text(stringResource(R.string.pet_name_confirm))
         }
     }
 }

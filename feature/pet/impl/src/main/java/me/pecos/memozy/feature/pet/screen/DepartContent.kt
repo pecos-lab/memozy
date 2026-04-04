@@ -25,6 +25,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.feature.pet.PetViewModel
 import me.pecos.memozy.feature.pet.model.PetUiState
 import me.pecos.memozy.presentation.theme.LocalAppColors
@@ -52,7 +54,7 @@ fun DepartContent(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "${pet.name} is leaving...",
+            text = stringResource(R.string.pet_departing, pet.name),
             color = colors.textTitle,
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
@@ -81,9 +83,9 @@ fun DepartContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                StatRow("Days Together", "D+$daysTogether")
-                StatRow("Level Reached", "Lv.${pet.level}")
-                StatRow("Species", viewModel.getSpeciesName(pet.speciesId))
+                StatRow(stringResource(R.string.pet_days_together_stat), "D+$daysTogether")
+                StatRow(stringResource(R.string.pet_level_reached), "Lv.${pet.level}")
+                StatRow(stringResource(R.string.pet_species), viewModel.getSpeciesName(pet.speciesId))
                 StatRow("Rarity", viewModel.getRarityStars(pet.rarity))
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -97,7 +99,7 @@ fun DepartContent(
                         .padding(12.dp)
                 ) {
                     Text(
-                        text = "\uD83D\uDCAC \"Thanks for everything... Take care of the next one!\"",
+                        text = "\uD83D\uDCAC \"${stringResource(R.string.pet_last_words)}\"",
                         color = colors.chipText,
                         fontSize = 13.sp,
                         textAlign = TextAlign.Center,
@@ -118,7 +120,7 @@ fun DepartContent(
                 onClick = onCancel,
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Stay Together")
+                Text(stringResource(R.string.pet_stay_together))
             }
             Button(
                 onClick = onConfirmDepart,
@@ -127,7 +129,7 @@ fun DepartContent(
                     containerColor = Color(0xFFE57373)
                 )
             ) {
-                Text("Say Goodbye", color = Color.White)
+                Text(stringResource(R.string.pet_say_goodbye), color = Color.White)
             }
         }
     }

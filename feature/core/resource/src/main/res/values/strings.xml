@@ -73,4 +73,37 @@
     <string name="donation_error_title">결제 오류</string>
     <string name="donation_error_message">결제 처리 중 문제가 발생했습니다.\n다시 시도해 주세요.</string>
     <string name="donation_loading">연결 중…</string>
+
+    <!-- Pet -->
+    <string name="pet_tab">펫</string>
+    <string name="pet_tap_egg">알을 탭하세요!</string>
+    <string name="pet_keep_tapping">계속 탭! (%d/3)</string>
+    <string name="pet_who_inside">누가 기다리고 있을까?</string>
+    <string name="pet_new_friend">새 친구!</string>
+    <string name="pet_name_prompt">새 친구에게 이름을 지어주세요!</string>
+    <string name="pet_name_placeholder">이름 입력…</string>
+    <string name="pet_name_confirm">확인</string>
+    <string name="pet_tap_to_name">탭해서 이름 짓기!</string>
+    <string name="pet_profile">프로필</string>
+    <string name="pet_memories">추억 앨범</string>
+    <string name="pet_reroll">리롤</string>
+    <string name="pet_species">종족</string>
+    <string name="pet_personality">성격</string>
+    <string name="pet_favorite">좋아하는 것</string>
+    <string name="pet_dislike">싫어하는 것</string>
+    <string name="pet_level">레벨</string>
+    <string name="pet_mood">기분</string>
+    <string name="pet_days_together">함께한 날</string>
+    <string name="pet_departing">%s이(가) 떠나려 합니다…</string>
+    <string name="pet_days_together_stat">함께한 일수</string>
+    <string name="pet_level_reached">도달 레벨</string>
+    <string name="pet_last_words">돌봐줘서 고마웠어… 다음 아이도 잘 부탁해!</string>
+    <string name="pet_stay_together">함께하기</string>
+    <string name="pet_say_goodbye">보내기</string>
+    <string name="pet_memories_empty">아직 추억이 없어요.\n떠난 친구들이 여기에 기록됩니다.</string>
+    <string name="pet_departed_date">떠난 날: %s</string>
+    <string name="pet_morning">좋은 아침~ *기지개*</string>
+    <string name="pet_daytime">메모 쓰러 가자!</string>
+    <string name="pet_evening">슬슬 졸려~ *하품*</string>
+    <string name="pet_night">Zzz…</string>
 </resources>

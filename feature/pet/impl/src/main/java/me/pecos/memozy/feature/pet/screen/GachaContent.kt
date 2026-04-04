@@ -34,6 +34,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.feature.pet.rive.RiveEggView
 import me.pecos.memozy.presentation.theme.LocalAppColors
 
@@ -54,7 +56,7 @@ fun GachaContent(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = if (tapCount == 0) "Tap the egg!" else "Keep tapping! (${tapCount}/3)",
+            text = if (tapCount == 0) stringResource(R.string.pet_tap_egg) else stringResource(R.string.pet_keep_tapping, tapCount),
             color = colors.textTitle,
             fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold
@@ -135,7 +137,7 @@ fun GachaContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Who's waiting inside?",
+            text = stringResource(R.string.pet_who_inside),
             color = colors.textSecondary,
             fontSize = 14.sp,
             textAlign = TextAlign.Center

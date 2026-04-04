@@ -74,4 +74,37 @@
     <string name="donation_error_title">決済エラー</string>
     <string name="donation_error_message">決済処理中に問題が発生しました。\nもう一度お試しください。</string>
     <string name="donation_loading">接続中…</string>
+
+    <!-- Pet -->
+    <string name="pet_tab">ペット</string>
+    <string name="pet_tap_egg">たまごをタップ！</string>
+    <string name="pet_keep_tapping">もっとタップ！ (%d/3)</string>
+    <string name="pet_who_inside">中で誰が待っているかな？</string>
+    <string name="pet_new_friend">新しい友達！</string>
+    <string name="pet_name_prompt">新しい友達に名前をつけよう！</string>
+    <string name="pet_name_placeholder">名前を入力…</string>
+    <string name="pet_name_confirm">確認</string>
+    <string name="pet_tap_to_name">タップして名前をつけよう！</string>
+    <string name="pet_profile">プロフィール</string>
+    <string name="pet_memories">思い出アルバム</string>
+    <string name="pet_reroll">リロール</string>
+    <string name="pet_species">種族</string>
+    <string name="pet_personality">性格</string>
+    <string name="pet_favorite">好きなもの</string>
+    <string name="pet_dislike">嫌いなもの</string>
+    <string name="pet_level">レベル</string>
+    <string name="pet_mood">気分</string>
+    <string name="pet_days_together">一緒の日々</string>
+    <string name="pet_departing">%sが旅立とうとしています…</string>
+    <string name="pet_days_together_stat">一緒にいた日数</string>
+    <string name="pet_level_reached">到達レベル</string>
+    <string name="pet_last_words">お世話してくれてありがとう…次の子もよろしくね！</string>
+    <string name="pet_stay_together">一緒にいる</string>
+    <string name="pet_say_goodbye">見送る</string>
+    <string name="pet_memories_empty">まだ思い出がありません。\n旅立った友達がここに記録されます。</string>
+    <string name="pet_departed_date">旅立ち: %s</string>
+    <string name="pet_morning">おはよう～ *のび*</string>
+    <string name="pet_daytime">メモを書きに行こう！</string>
+    <string name="pet_evening">眠くなってきた～ *あくび*</string>
+    <string name="pet_night">Zzz…</string>
 </resources>

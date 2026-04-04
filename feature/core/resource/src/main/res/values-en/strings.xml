@@ -74,4 +74,37 @@
     <string name="donation_error_title">Payment Error</string>
     <string name="donation_error_message">Something went wrong during payment.\nPlease try again.</string>
     <string name="donation_loading">Connecting…</string>
+
+    <!-- Pet -->
+    <string name="pet_tab">Pet</string>
+    <string name="pet_tap_egg">Tap the egg!</string>
+    <string name="pet_keep_tapping">Keep tapping! (%d/3)</string>
+    <string name="pet_who_inside">Who\'s waiting inside?</string>
+    <string name="pet_new_friend">New Friend!</string>
+    <string name="pet_name_prompt">Give your new friend a name!</string>
+    <string name="pet_name_placeholder">Enter a name…</string>
+    <string name="pet_name_confirm">Confirm</string>
+    <string name="pet_tap_to_name">Tap to name your pet!</string>
+    <string name="pet_profile">Profile</string>
+    <string name="pet_memories">Memories</string>
+    <string name="pet_reroll">Reroll</string>
+    <string name="pet_species">Species</string>
+    <string name="pet_personality">Personality</string>
+    <string name="pet_favorite">Favorite</string>
+    <string name="pet_dislike">Dislike</string>
+    <string name="pet_level">Level</string>
+    <string name="pet_mood">Mood</string>
+    <string name="pet_days_together">Days Together</string>
+    <string name="pet_departing">%s is leaving…</string>
+    <string name="pet_days_together_stat">Days Together</string>
+    <string name="pet_level_reached">Level Reached</string>
+    <string name="pet_last_words">Thanks for everything… Take care of the next one!</string>
+    <string name="pet_stay_together">Stay Together</string>
+    <string name="pet_say_goodbye">Say Goodbye</string>
+    <string name="pet_memories_empty">No memories yet.\nYour departed friends will be remembered here.</string>
+    <string name="pet_departed_date">Departed: %s</string>
+    <string name="pet_morning">Good morning~ *stretches*</string>
+    <string name="pet_daytime">Let\'s write some memos!</string>
+    <string name="pet_evening">Getting sleepy~ *yawn*</string>
+    <string name="pet_night">Zzz…</string>
 </resources>

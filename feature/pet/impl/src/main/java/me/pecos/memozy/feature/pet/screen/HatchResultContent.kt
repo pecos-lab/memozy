@@ -32,6 +32,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import androidx.compose.ui.res.stringResource
+import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.feature.pet.model.PetUiState
 import me.pecos.memozy.presentation.theme.LocalAppColors
 
@@ -105,7 +107,7 @@ fun HatchResultContent(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "New Friend!",
+                        text = stringResource(R.string.pet_new_friend),
                         color = colors.textTitle,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
@@ -131,15 +133,15 @@ fun HatchResultContent(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        InfoChip(label = "Personality", value = pet.personality.lowercase()
+                        InfoChip(label = stringResource(R.string.pet_personality), value = pet.personality.lowercase()
                             .replaceFirstChar { it.uppercase() })
-                        InfoChip(label = "Favorite", value = "#${pet.favoriteCategoryId}")
+                        InfoChip(label = stringResource(R.string.pet_favorite), value = "#${pet.favoriteCategoryId}")
                     }
 
                     Spacer(modifier = Modifier.height(20.dp))
 
                     Text(
-                        text = "Tap to name your pet!",
+                        text = stringResource(R.string.pet_tap_to_name),
                         color = colors.chipText,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,

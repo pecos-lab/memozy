@@ -33,6 +33,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.data.datasource.local.pet.entity.PetHistory
 import me.pecos.memozy.feature.pet.PetViewModel
 import me.pecos.memozy.presentation.theme.LocalAppColors
@@ -58,7 +60,7 @@ fun PetHistoryScreen(
         TopAppBar(
             title = {
                 Text(
-                    text = "Memories",
+                    text = stringResource(R.string.pet_memories),
                     color = colors.topbarTitle,
                     fontWeight = FontWeight.Bold
                 )
@@ -91,7 +93,7 @@ fun PetHistoryScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "No memories yet.\nYour departed friends will be remembered here.",
+                        text = stringResource(R.string.pet_memories_empty),
                         color = colors.textSecondary,
                         fontSize = 14.sp,
                         textAlign = TextAlign.Center

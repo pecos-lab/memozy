@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.feature.pet.PetViewModel
 import me.pecos.memozy.feature.pet.model.PetUiState
 import me.pecos.memozy.presentation.theme.LocalAppColors
@@ -52,13 +54,13 @@ fun PetProfileSheet(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            ProfileRow("Species", viewModel.getSpeciesName(pet.speciesId))
-            ProfileRow("Personality", pet.personality.lowercase().replaceFirstChar { it.uppercase() })
-            ProfileRow("Favorite", "Category #${pet.favoriteCategoryId}")
-            ProfileRow("Dislike", pet.dislike.replace("_", " "))
-            ProfileRow("Level", "Lv.${pet.level}")
-            ProfileRow("Mood", "${pet.mood}/100")
-            ProfileRow("Days Together", "D+${viewModel.getDaysTogether(pet)}")
+            ProfileRow(stringResource(R.string.pet_species), viewModel.getSpeciesName(pet.speciesId))
+            ProfileRow(stringResource(R.string.pet_personality), pet.personality.lowercase().replaceFirstChar { it.uppercase() })
+            ProfileRow(stringResource(R.string.pet_favorite), "Category #${pet.favoriteCategoryId}")
+            ProfileRow(stringResource(R.string.pet_dislike), pet.dislike.replace("_", " "))
+            ProfileRow(stringResource(R.string.pet_level), "Lv.${pet.level}")
+            ProfileRow(stringResource(R.string.pet_mood), "${pet.mood}/100")
+            ProfileRow(stringResource(R.string.pet_days_together), "D+${viewModel.getDaysTogether(pet)}")
 
             Spacer(modifier = Modifier.height(24.dp))
         }
