@@ -12,8 +12,10 @@ import dagger.hilt.components.SingletonComponent
 import me.pecos.memozy.data.datasource.local.MIGRATION_1_2
 import me.pecos.memozy.data.datasource.local.MIGRATION_2_3
 import me.pecos.memozy.data.datasource.local.MIGRATION_3_4
+import me.pecos.memozy.data.datasource.local.MIGRATION_4_5
 import me.pecos.memozy.data.datasource.local.MemoDao
 import me.pecos.memozy.data.datasource.local.MemoDatabase
+import me.pecos.memozy.data.datasource.local.pet.PetDao
 import javax.inject.Singleton
 
 @Module
@@ -28,7 +30,7 @@ object DatabaseModule {
             MemoDatabase::class.java,
             "memo_database"
         )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onCreate(db: SupportSQLiteDatabase) {
                     super.onCreate(db)
@@ -41,5 +43,10 @@ object DatabaseModule {
     @Provides
     fun provideMemoDao(database: MemoDatabase): MemoDao {
         return database.memoDao()
+    }
+
+    @Provides
+    fun providePetDao(database: MemoDatabase): PetDao {
+        return database.petDao()
     }
 }

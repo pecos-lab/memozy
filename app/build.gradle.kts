@@ -32,6 +32,9 @@ dependencies {
     implementation(projects.data.repository.memo.impl)
     implementation(projects.feature.home.impl)
     implementation(projects.feature.memoPlain.impl)
+    implementation(projects.datasource.local.pet.impl)
+    implementation(projects.data.repository.pet.impl)
+    implementation(projects.feature.pet.impl)
 
     // core android
     implementation(libs.androidx.core.ktx)

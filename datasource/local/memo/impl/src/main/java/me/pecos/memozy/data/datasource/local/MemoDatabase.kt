@@ -10,6 +10,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import me.pecos.memozy.data.datasource.local.entity.Category
 import me.pecos.memozy.data.datasource.local.entity.Memo
 import me.pecos.memozy.data.datasource.local.converter.MemoFormatConverter
+import me.pecos.memozy.data.datasource.local.pet.PetDao
+import me.pecos.memozy.data.datasource.local.pet.entity.Pet
+import me.pecos.memozy.data.datasource.local.pet.entity.PetHistory
 
 val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(database: SupportSQLiteDatabase) {
@@ -20,6 +23,43 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
 val MIGRATION_2_3 = object : Migration(2, 3) {
     override fun migrate(database: SupportSQLiteDatabase) {
         database.execSQL("ALTER TABLE memo ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("""
+            CREATE TABLE IF NOT EXISTS `pet` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `speciesId` TEXT NOT NULL,
+                `name` TEXT NOT NULL,
+                `personality` TEXT NOT NULL,
+                `favoriteCategoryId` INTEGER NOT NULL,
+                `dislike` TEXT NOT NULL,
+                `catchphrase` TEXT NOT NULL,
+                `rarity` INTEGER NOT NULL,
+                `mood` INTEGER NOT NULL,
+                `exp` INTEGER NOT NULL,
+                `level` INTEGER NOT NULL,
+                `lastFedAt` INTEGER NOT NULL,
+                `lastInteractionAt` INTEGER NOT NULL,
+                `birthday` INTEGER NOT NULL,
+                `isActive` INTEGER NOT NULL
+            )
+        """.trimIndent())
+        database.execSQL("""
+            CREATE TABLE IF NOT EXISTS `pet_history` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `speciesId` TEXT NOT NULL,
+                `name` TEXT NOT NULL,
+                `personality` TEXT NOT NULL,
+                `rarity` INTEGER NOT NULL,
+                `level` INTEGER NOT NULL,
+                `daysTogether` INTEGER NOT NULL,
+                `memosWritten` INTEGER NOT NULL,
+                `departedAt` INTEGER NOT NULL
+            )
+        """.trimIndent())
     }
 }
 
@@ -78,10 +118,11 @@ private val PREPOPULATE_CALLBACK = object : RoomDatabase.Callback() {
 }
 
 @TypeConverters(MemoFormatConverter::class)
-@Database(entities = [Memo::class, Category::class], version = 4, exportSchema = true)
+@Database(entities = [Memo::class, Category::class, Pet::class, PetHistory::class], version = 5, exportSchema = true)
 abstract class MemoDatabase : RoomDatabase() {
     abstract fun memoDao(): MemoDao
     abstract fun categoryDao(): CategoryDao
+    abstract fun petDao(): PetDao
 
     companion object {
         @Volatile
@@ -94,7 +135,7 @@ abstract class MemoDatabase : RoomDatabase() {
                     MemoDatabase::class.java,
                     "memo_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                     .addCallback(PREPOPULATE_CALLBACK)
                     .build()
                 INSTANCE = instance
