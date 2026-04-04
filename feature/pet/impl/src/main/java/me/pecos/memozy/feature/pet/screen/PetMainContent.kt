@@ -1,8 +1,5 @@
 package me.pecos.memozy.feature.pet.screen
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -14,7 +11,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,7 +18,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,7 +26,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -64,9 +58,7 @@ fun PetMainContent(
 
     // Touch reaction state
     val scope = rememberCoroutineScope()
-    val bounceScale = remember { Animatable(1f) }
     var touchDialogue by remember { mutableStateOf<String?>(null) }
-    var showHearts by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -136,7 +128,6 @@ fun PetMainContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .scale(bounceScale.value)
                 .clip(RoundedCornerShape(24.dp))
                 .background(colors.cardBackground)
                 .clickable(
@@ -145,28 +136,12 @@ fun PetMainContent(
                 ) {
                     viewModel.interactWithPet()
 
-                    // Trigger touch reaction
                     val reaction = viewModel.getTouchReaction(pet.personality, pet.mood)
                     touchDialogue = reaction.dialogue.random()
-                    showHearts = reaction.showHearts
 
-                    scope.launch {
-                        bounceScale.animateTo(
-                            targetValue = reaction.bounceScale,
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessLow
-                            )
-                        )
-                        bounceScale.animateTo(
-                            targetValue = 1f,
-                            animationSpec = spring(stiffness = Spring.StiffnessMedium)
-                        )
-                    }
                     scope.launch {
                         delay(2000)
                         touchDialogue = null
-                        showHearts = false
                     }
                 },
             contentAlignment = Alignment.Center
@@ -184,29 +159,10 @@ fun PetMainContent(
                 isTouching = false,
                 modifier = Modifier.fillMaxSize(),
                 fallbackContent = {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        val reaction = viewModel.getTouchReaction(pet.personality, pet.mood)
-                        Text(
-                            text = if (touchDialogue != null) reaction.emoji
-                                   else getConditionEmoji(condition, timeOfDay),
-                            fontSize = 80.sp
-                        )
-                    }
+                    // Placeholder — will be replaced by Rive animation
+                    Box(modifier = Modifier.fillMaxSize())
                 }
             )
-
-            // Hearts overlay (HIGH condition touch)
-            if (showHearts) {
-                Text(
-                    text = "\u2764\uFE0F\u2764\uFE0F\u2764\uFE0F",
-                    fontSize = 24.sp,
-                    modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)
-                )
-            }
 
             // Touch dialogue popup
             touchDialogue?.let { dialogue ->
