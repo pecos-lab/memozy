@@ -159,8 +159,25 @@ fun PetMainContent(
                 isTouching = false,
                 modifier = Modifier.fillMaxSize(),
                 fallbackContent = {
-                    // Placeholder — will be replaced by Rive animation
-                    Box(modifier = Modifier.fillMaxSize())
+                    // Placeholder until Rive asset is ready
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = pet.name,
+                            color = colors.textSecondary,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = viewModel.getSpeciesName(pet.speciesId),
+                            color = colors.textSecondary,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
             )
 
@@ -182,25 +199,6 @@ fun PetMainContent(
                     )
                 }
             }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Speech Bubble — mood-based dialogue (not touch)
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(colors.chipBackground)
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-        ) {
-            Text(
-                text = "\uD83D\uDCAC \"${PetDialogue.getLine(pet.personality, moodState, timeOfDay)}\"",
-                color = colors.chipText,
-                fontSize = 14.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
