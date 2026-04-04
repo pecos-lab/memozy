@@ -102,15 +102,7 @@ fun PetMainContent(
                 isTouching = false,
                 modifier = Modifier.fillMaxSize(),
                 fallbackContent = {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = viewModel.getSpeciesEmoji(pet.speciesId),
-                            fontSize = 80.sp
-                        )
-                    }
+                    Box(modifier = Modifier.fillMaxSize())
                 }
             )
 

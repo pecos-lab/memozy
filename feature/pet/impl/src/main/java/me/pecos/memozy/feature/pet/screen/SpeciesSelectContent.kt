@@ -61,19 +61,12 @@ fun SpeciesSelectContent(
                     .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "\uD83D\uDC36",
-                        fontSize = 72.sp
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "Dog",
-                        color = colors.textTitle,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+                Text(
+                    text = "Dog",
+                    color = colors.textTitle,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
 
             // Cat
@@ -86,19 +79,12 @@ fun SpeciesSelectContent(
                     .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "\uD83D\uDC31",
-                        fontSize = 72.sp
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "Cat",
-                        color = colors.textTitle,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+                Text(
+                    text = "Cat",
+                    color = colors.textTitle,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
 
