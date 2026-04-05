@@ -29,6 +29,8 @@ rootProject.name = "memozy"
 include(":app")
 include(":datasource:local:memo:api")
 include(":datasource:local:memo:impl")
+include(":datasource:remote:ai:api")
+include(":datasource:remote:ai:impl")
 include(":data:repository:memo:api")
 include(":data:repository:memo:impl")
 include(":feature:core:resource")
