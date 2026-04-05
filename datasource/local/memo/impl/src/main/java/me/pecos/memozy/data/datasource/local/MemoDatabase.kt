@@ -10,6 +10,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import me.pecos.memozy.data.datasource.local.entity.Category
 import me.pecos.memozy.data.datasource.local.entity.Memo
 import me.pecos.memozy.data.datasource.local.converter.MemoFormatConverter
+import me.pecos.memozy.data.datasource.local.chat.ChatMessageDao
+import me.pecos.memozy.data.datasource.local.chat.ChatSessionDao
+import me.pecos.memozy.data.datasource.local.chat.entity.ChatMessage
+import me.pecos.memozy.data.datasource.local.chat.entity.ChatSession
 
 val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(database: SupportSQLiteDatabase) {
@@ -70,6 +74,34 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
     }
 }
 
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("""
+            CREATE TABLE IF NOT EXISTS `chat_session` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `title` TEXT NOT NULL,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `category` TEXT NOT NULL DEFAULT 'general'
+            )
+        """.trimIndent())
+
+        database.execSQL("""
+            CREATE TABLE IF NOT EXISTS `chat_message` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `sessionId` INTEGER NOT NULL DEFAULT 0,
+                `role` TEXT NOT NULL,
+                `content` TEXT NOT NULL,
+                `timestamp` INTEGER NOT NULL DEFAULT 0,
+                `metadata` TEXT,
+                FOREIGN KEY (`sessionId`) REFERENCES `chat_session`(`id`) ON DELETE CASCADE
+            )
+        """.trimIndent())
+
+        database.execSQL("CREATE INDEX IF NOT EXISTS `index_chat_message_sessionId` ON `chat_message` (`sessionId`)")
+    }
+}
+
 private val PREPOPULATE_CALLBACK = object : RoomDatabase.Callback() {
     override fun onCreate(db: SupportSQLiteDatabase) {
         super.onCreate(db)
@@ -78,10 +110,16 @@ private val PREPOPULATE_CALLBACK = object : RoomDatabase.Callback() {
 }
 
 @TypeConverters(MemoFormatConverter::class)
-@Database(entities = [Memo::class, Category::class], version = 4, exportSchema = true)
+@Database(
+    entities = [Memo::class, Category::class, ChatSession::class, ChatMessage::class],
+    version = 5,
+    exportSchema = true
+)
 abstract class MemoDatabase : RoomDatabase() {
     abstract fun memoDao(): MemoDao
     abstract fun categoryDao(): CategoryDao
+    abstract fun chatSessionDao(): ChatSessionDao
+    abstract fun chatMessageDao(): ChatMessageDao
 
     companion object {
         @Volatile
@@ -94,7 +132,7 @@ abstract class MemoDatabase : RoomDatabase() {
                     MemoDatabase::class.java,
                     "memo_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                     .addCallback(PREPOPULATE_CALLBACK)
                     .build()
                 INSTANCE = instance
