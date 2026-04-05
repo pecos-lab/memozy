@@ -78,7 +78,8 @@ import me.pecos.memozy.presentation.theme.LocalActivity
 fun MemoCardItem(
     memo: MemoUiState,
     onDelete: () -> Unit,
-    onSave: (MemoUiState) -> Unit
+    onSave: (MemoUiState) -> Unit,
+    onShowSnackbar: (String) -> Unit = {}
 ) {
     val colors = LocalAppColors.current
     val context = LocalContext.current
@@ -107,6 +108,7 @@ fun MemoCardItem(
                     putExtra(Intent.EXTRA_TEXT, "${memo.name}\n\n${memo.content}")
                 }
                 activity?.startActivity(Intent.createChooser(shareIntent, null))
+                onShowSnackbar(context.getString(R.string.memo_shared))
             }
         )
     }
@@ -350,7 +352,7 @@ fun MemoCardItem(
                         .border(neutralBorderWidth, neutralBorder, RoundedCornerShape(10.dp))
                         .background(neutralBg)
                         .clickable {
-                            clipboardManager.setText(AnnotatedString(memo.content))
+                            clipboardManager.setText(AnnotatedString("${memo.name}\n\n${memo.content}"))
                         },
                     contentAlignment = Alignment.Center
                 ) {
