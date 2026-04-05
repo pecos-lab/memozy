@@ -429,8 +429,8 @@ fun MemoScreen(
                                 Text("브라우저에서 열기", fontSize = 16.sp, color = colors.textBody)
                             }
 
-                            // 🤖 AI 요약하기
-                            if (onYoutubeSummarize != null) {
+                            // 🤖 AI 요약하기 (1회만 가능)
+                            if (onYoutubeSummarize != null && !isSummarizing && summaryResult == null) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
