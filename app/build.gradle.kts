@@ -30,6 +30,7 @@ dependencies {
     // 모듈 - Hilt 바인딩을 위해 implementation 필요
     implementation(projects.datasource.local.memo.impl)
     implementation(projects.datasource.local.chat.impl)
+    implementation(projects.datasource.remote.ai.impl)
     implementation(projects.data.repository.memo.impl)
     implementation(projects.data.repository.chat.impl)
     implementation(projects.feature.home.impl)

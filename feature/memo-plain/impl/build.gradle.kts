@@ -13,6 +13,7 @@ dependencies {
     implementation(projects.feature.core.resource)
     implementation(projects.datasource.local.memo.api)
     implementation(projects.data.repository.memo.api)
+    implementation(projects.datasource.remote.ai.api)
     implementation(libs.montage.android)
     implementation(libs.androidx.compose.navigation)
     implementation(libs.kotlinx.coroutines.android)

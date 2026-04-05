@@ -135,8 +135,9 @@ class MainActivity : AppCompatActivity() {
                         }
                         LaunchedEffect(sharedText) {
                             if (sharedText != null) {
+                                val encoded = java.net.URLEncoder.encode(sharedText, "UTF-8")
                                 navController.navigate(
-                                    MemoPlainRoute.createRoute("shared")
+                                    MemoPlainRoute.createRoute("shared_$encoded")
                                 )
                             }
                         }
