@@ -39,6 +39,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -87,6 +89,8 @@ fun HomeScreen(
     // 스와이프 열린 카드 추적 — null이면 모두 닫힌 상태
     var swipedOpenId by remember { mutableStateOf<Int?>(null) }
     val listState = remember(sortOrder) { LazyListState() }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     var showFilterDialog by remember { mutableStateOf(false) }
     var tempCategoryIndex by remember(showFilterDialog, selectedCategoryIndex) { mutableIntStateOf(selectedCategoryIndex) }
 
@@ -148,7 +152,10 @@ fun HomeScreen(
     }
 
     // containerColor 명시 → MaterialTheme.colorScheme.surface 무시
-    Scaffold(containerColor = colors.screenBackground) { innerPadding ->
+    Scaffold(
+        containerColor = colors.screenBackground,
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -341,7 +348,10 @@ fun HomeScreen(
                                 MemoCardItem(
                                     memo = memo,
                                     onDelete = { onDelete(memo.id) },
-                                    onSave = { updatedMemo -> viewModel.updateMemo(updatedMemo) }
+                                    onSave = { updatedMemo -> viewModel.updateMemo(updatedMemo) },
+                                    onShowSnackbar = { message ->
+                                        scope.launch { snackbarHostState.showSnackbar(message) }
+                                    }
                                 )
                             }
                         }
