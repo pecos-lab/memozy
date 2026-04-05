@@ -16,4 +16,5 @@ dependencies {
     implementation(libs.montage.android)
     implementation(libs.androidx.compose.navigation)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.compose.material.icons.extended)
 }

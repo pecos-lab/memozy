@@ -61,7 +61,13 @@ class MemoPlainNavigationImpl @Inject constructor(
                         }
                         onNavigateToHome()
                     }
-                }
+                },
+                onDelete = if (memoId > 0) { id ->
+                    scope.launch {
+                        repository.deleteMemo(id)
+                        onNavigateToHome()
+                    }
+                } else null
             )
         }
     }

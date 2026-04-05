@@ -89,8 +89,6 @@ fun HomeScreen(
     // 스와이프 열린 카드 추적 — null이면 모두 닫힌 상태
     var swipedOpenId by remember { mutableStateOf<Int?>(null) }
     val listState = remember(sortOrder) { LazyListState() }
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
     var showFilterDialog by remember { mutableStateOf(false) }
     var tempCategoryIndex by remember(showFilterDialog, selectedCategoryIndex) { mutableIntStateOf(selectedCategoryIndex) }
 
@@ -152,10 +150,7 @@ fun HomeScreen(
     }
 
     // containerColor 명시 → MaterialTheme.colorScheme.surface 무시
-    Scaffold(
-        containerColor = colors.screenBackground,
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { innerPadding ->
+    Scaffold(containerColor = colors.screenBackground) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -343,16 +338,15 @@ fun HomeScreen(
                                             }
                                         )
                                     }
-                                    .clickable { swipedOpenId = null }
-                            ) {
-                                MemoCardItem(
-                                    memo = memo,
-                                    onDelete = { onDelete(memo.id) },
-                                    onSave = { updatedMemo -> viewModel.updateMemo(updatedMemo) },
-                                    onShowSnackbar = { message ->
-                                        scope.launch { snackbarHostState.showSnackbar(message) }
+                                    .clickable {
+                                        if (swipedOpenId != null) {
+                                            swipedOpenId = null
+                                        } else {
+                                            onEdit(memo.id)
+                                        }
                                     }
-                                )
+                            ) {
+                                MemoCardItem(memo = memo)
                             }
                         }
                     }
