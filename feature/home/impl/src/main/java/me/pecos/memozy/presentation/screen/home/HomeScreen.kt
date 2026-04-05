@@ -11,17 +11,29 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.offset
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -72,6 +84,8 @@ fun HomeScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val sortOrder by viewModel.sortOrder.collectAsState()
     val filteredList by viewModel.filteredList.collectAsState()
+    // 스와이프 열린 카드 추적 — null이면 모두 닫힌 상태
+    var swipedOpenId by remember { mutableStateOf<Int?>(null) }
     val listState = remember(sortOrder) { LazyListState() }
     var showFilterDialog by remember { mutableStateOf(false) }
     var tempCategoryIndex by remember(showFilterDialog, selectedCategoryIndex) { mutableIntStateOf(selectedCategoryIndex) }
@@ -139,6 +153,10 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                ) { swipedOpenId = null }
         ) {
             Column(
                 modifier = Modifier
@@ -220,11 +238,113 @@ fun HomeScreen(
                     modifier = Modifier.weight(1f)
                 ) {
                     items(filteredList, key = { it.id }) { memo ->
-                        MemoCardItem(
-                            memo = memo,
-                            onDelete = { onDelete(memo.id) },
-                            onSave = { updatedMemo -> viewModel.updateMemo(updatedMemo) }
+                        val revealWidth = 80f
+                        val revealPx = with(androidx.compose.ui.platform.LocalDensity.current) { revealWidth.dp.toPx() }
+                        // 이 카드가 열려있는지 판단
+                        val isOpen = swipedOpenId == memo.id
+                        var rawOffset by remember { mutableStateOf(0f) }
+                        val offsetX = if (isOpen) rawOffset else 0f
+                        val animatedOffset by animateFloatAsState(
+                            targetValue = offsetX,
+                            animationSpec = tween(200),
+                            label = "swipeOffset"
                         )
+
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            // 뒤쪽 액션 버튼
+                            Row(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .padding(horizontal = 16.dp, vertical = 6.dp)
+                                    .clip(RoundedCornerShape(12.dp)),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                // 오른쪽 스와이프 → 편집 버튼 (왼쪽에 표시)
+                                Box(
+                                    modifier = Modifier
+                                        .width(revealWidth.dp)
+                                        .fillMaxHeight()
+                                        .background(colors.chipText)
+                                        .clickable {
+                                            swipedOpenId = null
+                                            onEdit(memo.id)
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Icon(
+                                            Icons.Default.Edit,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                        Text(
+                                            text = stringResource(R.string.edit_memo),
+                                            color = Color.White,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                }
+                                // 왼쪽 스와이프 → 삭제 버튼 (오른쪽에 표시)
+                                Box(
+                                    modifier = Modifier
+                                        .width(revealWidth.dp)
+                                        .fillMaxHeight()
+                                        .background(Color(0xFFE24B4A))
+                                        .clickable {
+                                            swipedOpenId = null
+                                            onDelete(memo.id)
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                        Text(
+                                            text = "메모 삭제",
+                                            color = Color.White,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                }
+                            }
+
+                            // 앞쪽 카드 (스와이프 이동)
+                            Box(
+                                modifier = Modifier
+                                    .offset { IntOffset(animatedOffset.roundToInt(), 0) }
+                                    .pointerInput(Unit) {
+                                        detectHorizontalDragGestures(
+                                            onDragEnd = {
+                                                val snapped = when {
+                                                    rawOffset > revealPx / 2 -> revealPx
+                                                    rawOffset < -revealPx / 2 -> -revealPx
+                                                    else -> 0f
+                                                }
+                                                rawOffset = snapped
+                                                swipedOpenId = if (snapped != 0f) memo.id else null
+                                            },
+                                            onHorizontalDrag = { _, dragAmount ->
+                                                rawOffset = (rawOffset + dragAmount).coerceIn(-revealPx, revealPx)
+                                                swipedOpenId = memo.id
+                                            }
+                                        )
+                                    }
+                                    .clickable { swipedOpenId = null }
+                            ) {
+                                MemoCardItem(
+                                    memo = memo,
+                                    onDelete = { onDelete(memo.id) },
+                                    onSave = { updatedMemo -> viewModel.updateMemo(updatedMemo) }
+                                )
+                            }
+                        }
                     }
                 }
             }
