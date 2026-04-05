@@ -24,4 +24,5 @@ dependencies {
     implementation(libs.gradlePlugin.hilt)
     implementation(libs.gradlePlugin.ksp)
     implementation(libs.gradlePlugin.composeCompiler)
+    implementation(libs.gradlePlugin.kotlinSerialization)
 }

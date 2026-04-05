@@ -1,6 +1,7 @@
 package me.pecos.memozy
 
 import android.content.Context
+import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -28,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -123,6 +125,21 @@ class MainActivity : AppCompatActivity() {
                             currentRoute?.destination?.route in listOf(
                                 HomeRoute.MAIN, HomeRoute.SETTINGS
                             )
+                        }
+
+                        // ACTION_SEND 공유 수신 처리
+                        val sharedText = remember {
+                            if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
+                                intent.getStringExtra(Intent.EXTRA_TEXT)
+                            } else null
+                        }
+                        LaunchedEffect(sharedText) {
+                            if (sharedText != null) {
+                                val encoded = java.net.URLEncoder.encode(sharedText, "UTF-8")
+                                navController.navigate(
+                                    MemoPlainRoute.createRoute("shared_$encoded")
+                                )
+                            }
                         }
 
                         val hazeState = rememberHazeState()
