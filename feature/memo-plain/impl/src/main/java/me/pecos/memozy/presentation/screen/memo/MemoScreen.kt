@@ -1,6 +1,7 @@
 package me.pecos.memozy.presentation.screen.memo
 
 import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,11 +29,22 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,12 +74,38 @@ import me.pecos.memozy.feature.core.resource.CATEGORY_RES_IDS
 import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.presentation.theme.LocalAppColors
 
-@OptIn(ExperimentalLayoutApi::class)
+private val YOUTUBE_URL_REGEX = Regex(
+    """(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)[\w\-]+(?:[&?][\w\-=]*)*"""
+)
+
+private class UrlHighlightTransformation : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val annotated = buildAnnotatedString {
+            append(text)
+            YOUTUBE_URL_REGEX.findAll(text.text).forEach { match ->
+                addStyle(
+                    SpanStyle(
+                        color = Color(0xFF2196F3),
+                        textDecoration = TextDecoration.Underline
+                    ),
+                    start = match.range.first,
+                    end = match.range.last + 1
+                )
+            }
+        }
+        return TransformedText(annotated, OffsetMapping.Identity)
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MemoScreen(
     onSave: (MemoUiState) -> Unit,
     onBack: () -> Unit = {},
     onDelete: ((Int) -> Unit)? = null,
+    onYoutubeSummarize: ((url: String) -> Unit)? = null,
+    isSummarizing: Boolean = false,
+    summaryResult: String? = null,
     existingMemo: MemoUiState = MemoUiState(0, "", 1, "")
 ) {
     val isNewMemo = existingMemo.id <= 0
@@ -99,6 +138,9 @@ fun MemoScreen(
         initialized = true
     }
     val hasChanges = nameText != existingMemo.name || bodyText != existingMemo.content || categoryIndex != (existingMemo.categoryId - 1).coerceIn(0, CATEGORY_RES_IDS.size - 1)
+
+    // 요약 결과 표시 상태
+    var showSummary by remember { mutableStateOf(false) }
 
     val enabled = nameText.isNotBlank() && bodyText.isNotBlank()
     val colors = LocalAppColors.current  // ← CompositionLocal에서 현재 테마 색상 가져옴
@@ -188,18 +230,32 @@ fun MemoScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 내용
+                // 내용 — YouTube 링크 감지
+                var selectedYoutubeUrl by remember { mutableStateOf<String?>(null) }
+                val sheetState = rememberModalBottomSheetState()
+
+                val urlHighlight = remember { UrlHighlightTransformation() }
+
                 BasicTextField(
                     value = bodyText,
-                    onValueChange = { bodyText = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 150.dp),
+                    onValueChange = { newText ->
+                        bodyText = newText
+                    },
+                    visualTransformation = urlHighlight,
                     textStyle = TextStyle(
                         fontSize = 15.sp,
                         lineHeight = 24.sp,
-                        color = colors.textBody
+                        color = colors.textBody,
+                        lineHeightStyle = LineHeightStyle(
+                            alignment = LineHeightStyle.Alignment.Center,
+                            trim = LineHeightStyle.Trim.None
+                        )
                     ),
-                    modifier = Modifier.fillMaxWidth(),
                     decorationBox = { innerTextField ->
-                        Box {
+                        Box(modifier = Modifier.heightIn(min = 150.dp)) {
                             if (bodyText.isEmpty()) {
                                 Text(
                                     text = stringResource(R.string.memo_content_placeholder),
@@ -211,6 +267,189 @@ fun MemoScreen(
                         }
                     }
                 )
+
+                // 감지된 유튜브 URL 칩 표시
+                val detectedYoutubeUrl = remember(bodyText) {
+                    YOUTUBE_URL_REGEX.find(bodyText)?.value
+                }
+
+                if (detectedYoutubeUrl != null) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Column {
+                        // 링크 칩
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(colors.chipBackground.copy(alpha = 0.5f))
+                                .clickable { selectedYoutubeUrl = detectedYoutubeUrl }
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(text = "▶", fontSize = 14.sp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = detectedYoutubeUrl,
+                                fontSize = 13.sp,
+                                color = Color(0xFF2196F3),
+                                maxLines = 1,
+                                modifier = Modifier.weight(1f),
+                                style = TextStyle(textDecoration = TextDecoration.Underline)
+                            )
+                            if (onYoutubeSummarize != null && !isSummarizing && summaryResult == null) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "🤖 요약",
+                                    fontSize = 12.sp,
+                                    color = colors.chipText,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(colors.chipBackground)
+                                        .clickable { onYoutubeSummarize(detectedYoutubeUrl) }
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+
+                        // 로딩 중 — 칩 아래 작게 표시
+                        if (isSummarizing) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.padding(start = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                androidx.compose.material3.CircularProgressIndicator(
+                                    modifier = Modifier.size(14.dp),
+                                    strokeWidth = 2.dp,
+                                    color = colors.textSecondary
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "요약 중...",
+                                    fontSize = 12.sp,
+                                    color = colors.textSecondary
+                                )
+                            }
+                        }
+
+                        // 요약 완료 — "요약 보기" 버튼
+                        if (summaryResult != null) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = if (showSummary) "▼ 요약 접기" else "▶ 요약 보기",
+                                fontSize = 13.sp,
+                                color = colors.chipText,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(colors.chipBackground)
+                                    .clickable { showSummary = !showSummary }
+                                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                            )
+                            if (showSummary) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = summaryResult,
+                                    fontSize = 14.sp,
+                                    lineHeight = 22.sp,
+                                    color = colors.textBody,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(colors.chipBackground.copy(alpha = 0.3f))
+                                        .padding(12.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // YouTube 링크 바텀시트
+                if (selectedYoutubeUrl != null) {
+                    ModalBottomSheet(
+                        onDismissRequest = { selectedYoutubeUrl = null },
+                        sheetState = sheetState,
+                        containerColor = colors.cardBackground
+                    ) {
+                        val url = selectedYoutubeUrl!!
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp, vertical = 8.dp)
+                                .padding(bottom = 24.dp)
+                        ) {
+                            Text(
+                                text = "YouTube 링크",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textTitle
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = url,
+                                fontSize = 13.sp,
+                                color = colors.textSecondary,
+                                maxLines = 1
+                            )
+                            Spacer(modifier = Modifier.height(20.dp))
+
+                            // 📋 링크 복사
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable {
+                                        clipboardManager.setText(AnnotatedString(url))
+                                        selectedYoutubeUrl = null
+                                    }
+                                    .padding(vertical = 14.dp, horizontal = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("📋", fontSize = 20.sp)
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text("링크 복사", fontSize = 16.sp, color = colors.textBody)
+                            }
+
+                            // 🌐 브라우저에서 열기
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable {
+                                        val fullUrl = if (url.startsWith("http")) url else "https://$url"
+                                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(fullUrl)))
+                                        selectedYoutubeUrl = null
+                                    }
+                                    .padding(vertical = 14.dp, horizontal = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("🌐", fontSize = 20.sp)
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text("브라우저에서 열기", fontSize = 16.sp, color = colors.textBody)
+                            }
+
+                            // 🤖 AI 요약하기
+                            if (onYoutubeSummarize != null) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .clickable {
+                                            onYoutubeSummarize(url)
+                                            selectedYoutubeUrl = null
+                                        }
+                                        .padding(vertical = 14.dp, horizontal = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("🤖", fontSize = 20.sp)
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text("AI 요약하기", fontSize = 16.sp, color = colors.textBody)
+                                }
+                            }
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(20.dp))
 
