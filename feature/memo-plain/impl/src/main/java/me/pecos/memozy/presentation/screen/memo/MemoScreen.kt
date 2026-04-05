@@ -22,13 +22,19 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -73,6 +79,19 @@ fun MemoScreen(
         mutableStateOf((existingMemo.categoryId - 1).coerceIn(0, CATEGORY_RES_IDS.size - 1))
     }
     var bodyText by remember { mutableStateOf(existingMemo.content) }
+    var categoryExpanded by remember { mutableStateOf(false) }
+
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    // 새 메모일 때 자동 포커스 + 키보드 팝업
+    val isNewMemo = existingMemo.id <= 0
+    LaunchedEffect(isNewMemo) {
+        if (isNewMemo) {
+            focusRequester.requestFocus()
+            keyboardController?.show()
+        }
+    }
 
     val enabled = nameText.isNotBlank() && bodyText.isNotBlank()
     val colors = LocalAppColors.current  // ← CompositionLocal에서 현재 테마 색상 가져옴
@@ -114,21 +133,25 @@ fun MemoScreen(
                     .padding(horizontal = 30.dp, vertical = 16.dp)
             ) {
 
-            WantedTextField(
-                text = nameText,
-                placeholder = stringResource(R.string.memo_title_placeholder),
-                title = stringResource(R.string.memo_title_label),
-                onValueChange = { nameText = it }
-            )
+            Box(modifier = Modifier.focusRequester(focusRequester)) {
+                WantedTextField(
+                    text = nameText,
+                    placeholder = stringResource(R.string.memo_title_placeholder),
+                    title = stringResource(R.string.memo_title_label),
+                    onValueChange = { nameText = it }
+                )
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            WantedTextArea(
-                text = bodyText,
-                placeholder = stringResource(R.string.memo_content_placeholder),
-                title = stringResource(R.string.memo_content_label),
-                onValueChange = { bodyText = it }
-            )
+            Box {
+                WantedTextArea(
+                    text = bodyText,
+                    placeholder = stringResource(R.string.memo_content_placeholder),
+                    title = stringResource(R.string.memo_content_label),
+                    onValueChange = { bodyText = it }
+                )
+            }
             Text(
                 text = stringResource(R.string.char_count, bodyText.length),
                 fontSize = 11.sp,
@@ -138,35 +161,64 @@ fun MemoScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            FlowRow(
-                maxItemsInEachRow = 3,
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+            // 카테고리 토글 헤더
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { categoryExpanded = !categoryExpanded }
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                categories.forEachIndexed { index, category ->
-                    val selected = categoryIndex == index
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (selected) colors.chipBackground else Color.Transparent)
-                            .border(1.dp, if (selected) colors.chipText else colors.cardBorder, RoundedCornerShape(12.dp))
-                            .clickable { categoryIndex = index }
-                            .padding(horizontal = 4.dp, vertical = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "${CATEGORY_EMOJIS[index]} $category",
-                            maxLines = 1,
-                            fontSize = 11.sp,
-                            color = if (selected) colors.chipText else colors.textSecondary
-                        )
-                    }
-                }
-                // 11개 카테고리 / 3열 → 마지막 줄 2개만 남으므로 더미 1개로 크기 통일
+                Text(
+                    text = "${CATEGORY_EMOJIS[categoryIndex]} ${categories[categoryIndex]}",
+                    fontSize = 13.sp,
+                    color = colors.chipText,
+                    fontWeight = FontWeight.Medium
+                )
                 Spacer(modifier = Modifier.weight(1f))
+                Icon(
+                    imageVector = if (categoryExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = colors.textSecondary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            if (categoryExpanded) {
+                Spacer(modifier = Modifier.height(6.dp))
+                FlowRow(
+                    maxItemsInEachRow = 3,
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    categories.forEachIndexed { index, category ->
+                        val selected = categoryIndex == index
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (selected) colors.chipBackground else Color.Transparent)
+                                .border(1.dp, if (selected) colors.chipText else colors.cardBorder, RoundedCornerShape(12.dp))
+                                .clickable {
+                                    categoryIndex = index
+                                    categoryExpanded = false
+                                }
+                                .padding(horizontal = 4.dp, vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "${CATEGORY_EMOJIS[index]} $category",
+                                maxLines = 1,
+                                fontSize = 11.sp,
+                                color = if (selected) colors.chipText else colors.textSecondary
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
