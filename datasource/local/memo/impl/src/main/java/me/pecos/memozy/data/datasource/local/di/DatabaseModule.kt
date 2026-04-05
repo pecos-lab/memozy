@@ -13,10 +13,13 @@ import me.pecos.memozy.data.datasource.local.MIGRATION_1_2
 import me.pecos.memozy.data.datasource.local.MIGRATION_2_3
 import me.pecos.memozy.data.datasource.local.MIGRATION_3_4
 import me.pecos.memozy.data.datasource.local.MIGRATION_4_5
+import me.pecos.memozy.data.datasource.local.MIGRATION_5_6
 import me.pecos.memozy.data.datasource.local.MemoDao
 import me.pecos.memozy.data.datasource.local.MemoDatabase
 import me.pecos.memozy.data.datasource.local.chat.ChatMessageDao
 import me.pecos.memozy.data.datasource.local.chat.ChatSessionDao
+import me.pecos.memozy.data.datasource.local.user.AchievementDao
+import me.pecos.memozy.data.datasource.local.user.LearningProgressDao
 import javax.inject.Singleton
 
 @Module
@@ -31,7 +34,7 @@ object DatabaseModule {
             MemoDatabase::class.java,
             "memo_database"
         )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onCreate(db: SupportSQLiteDatabase) {
                     super.onCreate(db)
@@ -54,5 +57,15 @@ object DatabaseModule {
     @Provides
     fun provideChatMessageDao(database: MemoDatabase): ChatMessageDao {
         return database.chatMessageDao()
+    }
+
+    @Provides
+    fun provideLearningProgressDao(database: MemoDatabase): LearningProgressDao {
+        return database.learningProgressDao()
+    }
+
+    @Provides
+    fun provideAchievementDao(database: MemoDatabase): AchievementDao {
+        return database.achievementDao()
     }
 }

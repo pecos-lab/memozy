@@ -14,6 +14,10 @@ import me.pecos.memozy.data.datasource.local.chat.ChatMessageDao
 import me.pecos.memozy.data.datasource.local.chat.ChatSessionDao
 import me.pecos.memozy.data.datasource.local.chat.entity.ChatMessage
 import me.pecos.memozy.data.datasource.local.chat.entity.ChatSession
+import me.pecos.memozy.data.datasource.local.user.AchievementDao
+import me.pecos.memozy.data.datasource.local.user.LearningProgressDao
+import me.pecos.memozy.data.datasource.local.user.entity.Achievement
+import me.pecos.memozy.data.datasource.local.user.entity.LearningProgress
 
 val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(database: SupportSQLiteDatabase) {
@@ -102,6 +106,28 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
     }
 }
 
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("""
+            CREATE TABLE IF NOT EXISTS `learning_progress` (
+                `guideId` TEXT NOT NULL PRIMARY KEY,
+                `completed` INTEGER NOT NULL DEFAULT 0,
+                `completedAt` INTEGER,
+                `score` INTEGER
+            )
+        """.trimIndent())
+
+        database.execSQL("""
+            CREATE TABLE IF NOT EXISTS `achievement` (
+                `id` TEXT NOT NULL PRIMARY KEY,
+                `unlockedAt` INTEGER NOT NULL DEFAULT 0,
+                `title` TEXT NOT NULL,
+                `description` TEXT NOT NULL
+            )
+        """.trimIndent())
+    }
+}
+
 private val PREPOPULATE_CALLBACK = object : RoomDatabase.Callback() {
     override fun onCreate(db: SupportSQLiteDatabase) {
         super.onCreate(db)
@@ -111,8 +137,8 @@ private val PREPOPULATE_CALLBACK = object : RoomDatabase.Callback() {
 
 @TypeConverters(MemoFormatConverter::class)
 @Database(
-    entities = [Memo::class, Category::class, ChatSession::class, ChatMessage::class],
-    version = 5,
+    entities = [Memo::class, Category::class, ChatSession::class, ChatMessage::class, LearningProgress::class, Achievement::class],
+    version = 6,
     exportSchema = true
 )
 abstract class MemoDatabase : RoomDatabase() {
@@ -120,6 +146,8 @@ abstract class MemoDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao
     abstract fun chatSessionDao(): ChatSessionDao
     abstract fun chatMessageDao(): ChatMessageDao
+    abstract fun learningProgressDao(): LearningProgressDao
+    abstract fun achievementDao(): AchievementDao
 
     companion object {
         @Volatile
@@ -132,7 +160,7 @@ abstract class MemoDatabase : RoomDatabase() {
                     MemoDatabase::class.java,
                     "memo_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                     .addCallback(PREPOPULATE_CALLBACK)
                     .build()
                 INSTANCE = instance

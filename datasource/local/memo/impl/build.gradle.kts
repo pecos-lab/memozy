@@ -15,4 +15,5 @@ ksp {
 dependencies {
     implementation(projects.datasource.local.memo.api)
     implementation(projects.datasource.local.chat.api)
+    implementation(projects.datasource.local.user.api)
 }

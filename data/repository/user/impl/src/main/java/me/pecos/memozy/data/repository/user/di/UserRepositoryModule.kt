@@ -1,0 +1,18 @@
+package me.pecos.memozy.data.repository.user.di
+
+import dagger.Binds
+import dagger.Module
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+import me.pecos.memozy.data.repository.user.UserRepository
+import me.pecos.memozy.data.repository.user.UserRepositoryImpl
+import javax.inject.Singleton
+
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class UserRepositoryModule {
+
+    @Binds
+    @Singleton
+    abstract fun bindUserRepository(impl: UserRepositoryImpl): UserRepository
+}
