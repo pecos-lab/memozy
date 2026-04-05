@@ -51,6 +51,8 @@
     <string name="memo_count">%d memos</string>
     <string name="memo_updated_at">Edited:</string>
     <string name="memo_copy">Copy</string>
+    <string name="memo_copied">Memo copied</string>
+    <string name="memo_shared">Memo shared</string>
     <string name="char_count">%d chars</string>
     <string name="empty_memo_hint">No memos yet\nAdd your first memo!</string>
     <string name="empty_search_hint">No results found</string>
