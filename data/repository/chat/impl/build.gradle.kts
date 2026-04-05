@@ -3,16 +3,12 @@ import me.pecos.memozy.convention.extension.setNamespace
 plugins {
     id("memozy.android.library")
     id("memozy.hilt")
-    id("memozy.room")
 }
 
-setNamespace("datasource.local.memo.impl")
-
-ksp {
-    arg("room.schemaLocation", "$projectDir/schemas")
-}
+setNamespace("data.repository.chat.impl")
 
 dependencies {
-    implementation(projects.datasource.local.memo.api)
+    implementation(projects.data.repository.chat.api)
     implementation(projects.datasource.local.chat.api)
+    implementation(libs.kotlinx.coroutines.android)
 }
