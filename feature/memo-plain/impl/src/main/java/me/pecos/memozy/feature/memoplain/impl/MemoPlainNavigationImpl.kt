@@ -25,7 +25,9 @@ import androidx.navigation.compose.composable
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import me.pecos.memozy.data.datasource.local.YoutubeSummaryDao
 import me.pecos.memozy.data.datasource.local.entity.Memo
+import me.pecos.memozy.data.datasource.local.entity.YoutubeSummary
 import me.pecos.memozy.data.datasource.remote.ai.AIApiService
 import me.pecos.memozy.data.repository.MemoRepository
 import me.pecos.memozy.data.repository.model.MemoFormat
@@ -39,7 +41,8 @@ import javax.inject.Inject
 
 class MemoPlainNavigationImpl @Inject constructor(
     private val repository: MemoRepository,
-    private val aiApiService: AIApiService
+    private val aiApiService: AIApiService,
+    private val youtubeSummaryDao: YoutubeSummaryDao
 ) : MemoPlainNavigation {
 
     companion object {
@@ -50,6 +53,39 @@ class MemoPlainNavigationImpl @Inject constructor(
         private val YOUTUBE_REGEX = Regex(
             """(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)[\w-]+"""
         )
+
+        private val VIDEO_ID_REGEX = Regex(
+            """(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)([\w-]+)"""
+        )
+
+        fun extractVideoId(url: String): String? =
+            VIDEO_ID_REGEX.find(url)?.groupValues?.get(1)
+
+        private val SUMMARY_PROMPT = """
+            |이 유튜브 영상을 한국어로 상세하게 요약해줘. 아래 형식을 정확히 따라줘:
+            |
+            |📋 한줄 요약
+            |영상의 핵심을 한 문장으로 요약
+            |
+            |📌 핵심 키워드
+            |#키워드1 #키워드2 #키워드3 #키워드4 #키워드5
+            |
+            |⏰ 타임라인별 상세 요약
+            |각 주제/구간별로 나눠서 아래처럼 정리해줘:
+            |
+            |[00:00] 섹션 제목
+            |- 상세 설명 (2~3문장)
+            |- 중요한 내용이나 인사이트
+            |
+            |[다음 구간] 섹션 제목
+            |- 상세 설명
+            |- 중요한 내용이나 인사이트
+            |
+            |(영상 흐름에 따라 모든 구간을 빠짐없이 정리)
+            |
+            |💡 핵심 인사이트
+            |- 영상에서 얻을 수 있는 주요 인사이트를 정리
+        """.trimMargin()
     }
 
     override fun registerGraph(
@@ -77,39 +113,30 @@ class MemoPlainNavigationImpl @Inject constructor(
 
             val scope = rememberCoroutineScope()
 
-            // YouTube URL이면 자동 요약 시작
+            // YouTube URL이면 자동 요약 시작 (캐시 우선 조회)
             LaunchedEffect(youtubeUrl) {
                 if (youtubeUrl != null && summaryState is SummaryState.Idle) {
+                    val videoId = extractVideoId(youtubeUrl)
+                    // 캐��� 조회
+                    val cached = videoId?.let { youtubeSummaryDao.getByVideoId(it) }
+                    if (cached != null) {
+                        summaryState = SummaryState.Success(cached.summary)
+                        return@LaunchedEffect
+                    }
                     summaryState = SummaryState.Loading
                     try {
                         val summary = aiApiService.generateContentWithVideo(
-                            prompt = """
-                            |이 유튜브 영상을 한국어로 상세하게 요약해줘. 아래 형식을 정확히 따라줘:
-                            |
-                            |📋 한줄 요약
-                            |영상의 핵심을 한 문장으로 요약
-                            |
-                            |📌 핵심 키워드
-                            |#키워드1 #키워드2 #키워드3 #키워드4 #키워드5
-                            |
-                            |⏰ 타임라인별 상세 요약
-                            |각 주제/구간별로 나눠서 아래처럼 정리해줘:
-                            |
-                            |[00:00] 섹션 제목
-                            |- 상세 설명 (2~3문장)
-                            |- 중요한 내용이나 인사이트
-                            |
-                            |[다음 구간] 섹션 제목
-                            |- 상세 설명
-                            |- 중요한 내용이나 인사이트
-                            |
-                            |(영상 흐름에 따라 모든 구간을 빠짐없이 정리)
-                            |
-                            |💡 핵심 인사이트
-                            |- 영상에서 얻을 수 있는 주요 인사이트를 정리
-                            """.trimMargin(),
+                            prompt = SUMMARY_PROMPT,
                             videoUrl = youtubeUrl,
                         )
+                        // 캐시 저장
+                        if (videoId != null) {
+                            youtubeSummaryDao.insert(YoutubeSummary(
+                                videoId = videoId,
+                                url = youtubeUrl,
+                                summary = summary
+                            ))
+                        }
                         summaryState = SummaryState.Success(summary)
                     } catch (e: Exception) {
                         val errorMsg = when {
@@ -213,6 +240,13 @@ class MemoPlainNavigationImpl @Inject constructor(
                 summaryResult = (inlineSummaryState as? SummaryState.Success)?.text,
                 onYoutubeSummarize = if (canSummarize) { { url ->
                     scope.launch {
+                        val videoId = extractVideoId(url)
+                        // 캐시 조회
+                        val cached = videoId?.let { youtubeSummaryDao.getByVideoId(it) }
+                        if (cached != null) {
+                            inlineSummaryState = SummaryState.Success(cached.summary)
+                            return@launch
+                        }
                         inlineSummaryState = SummaryState.Loading
                         try {
                             val summary = aiApiService.generateContentWithVideo(
@@ -243,6 +277,14 @@ class MemoPlainNavigationImpl @Inject constructor(
                                 """.trimMargin(),
                                 videoUrl = url,
                             )
+                            // 캐시 저장
+                            if (videoId != null) {
+                                youtubeSummaryDao.insert(YoutubeSummary(
+                                    videoId = videoId,
+                                    url = url,
+                                    summary = summary
+                                ))
+                            }
                             inlineSummaryState = SummaryState.Success(summary)
                             // 성공 시 사용 횟수 증가
                             val newCount = summaryCount.value + 1

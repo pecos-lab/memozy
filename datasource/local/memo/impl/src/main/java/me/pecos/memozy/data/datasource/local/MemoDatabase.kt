@@ -9,6 +9,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import me.pecos.memozy.data.datasource.local.entity.Category
 import me.pecos.memozy.data.datasource.local.entity.Memo
+import me.pecos.memozy.data.datasource.local.entity.YoutubeSummary
 import me.pecos.memozy.data.datasource.local.converter.MemoFormatConverter
 import me.pecos.memozy.data.datasource.local.chat.ChatMessageDao
 import me.pecos.memozy.data.datasource.local.chat.ChatSessionDao
@@ -102,6 +103,19 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
     }
 }
 
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("""
+            CREATE TABLE IF NOT EXISTS `youtube_summary` (
+                `videoId` TEXT NOT NULL PRIMARY KEY,
+                `url` TEXT NOT NULL,
+                `summary` TEXT NOT NULL,
+                `createdAt` INTEGER NOT NULL DEFAULT 0
+            )
+        """.trimIndent())
+    }
+}
+
 private val PREPOPULATE_CALLBACK = object : RoomDatabase.Callback() {
     override fun onCreate(db: SupportSQLiteDatabase) {
         super.onCreate(db)
@@ -111,8 +125,8 @@ private val PREPOPULATE_CALLBACK = object : RoomDatabase.Callback() {
 
 @TypeConverters(MemoFormatConverter::class)
 @Database(
-    entities = [Memo::class, Category::class, ChatSession::class, ChatMessage::class],
-    version = 5,
+    entities = [Memo::class, Category::class, ChatSession::class, ChatMessage::class, YoutubeSummary::class],
+    version = 6,
     exportSchema = true
 )
 abstract class MemoDatabase : RoomDatabase() {
@@ -120,6 +134,7 @@ abstract class MemoDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao
     abstract fun chatSessionDao(): ChatSessionDao
     abstract fun chatMessageDao(): ChatMessageDao
+    abstract fun youtubeSummaryDao(): YoutubeSummaryDao
 
     companion object {
         @Volatile
@@ -132,7 +147,7 @@ abstract class MemoDatabase : RoomDatabase() {
                     MemoDatabase::class.java,
                     "memo_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                     .addCallback(PREPOPULATE_CALLBACK)
                     .build()
                 INSTANCE = instance
