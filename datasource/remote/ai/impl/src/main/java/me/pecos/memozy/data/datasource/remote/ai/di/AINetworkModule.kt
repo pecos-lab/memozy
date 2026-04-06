@@ -111,6 +111,19 @@ abstract class AINetworkModule {
                 connectTimeoutMillis = 10_000
                 socketTimeoutMillis = 15_000
             }
+            engine {
+                config {
+                    cookieJar(object : okhttp3.CookieJar {
+                        private val store = mutableMapOf<String, List<okhttp3.Cookie>>()
+                        override fun saveFromResponse(url: okhttp3.HttpUrl, cookies: List<okhttp3.Cookie>) {
+                            store[url.host] = cookies
+                        }
+                        override fun loadForRequest(url: okhttp3.HttpUrl): List<okhttp3.Cookie> {
+                            return store[url.host] ?: emptyList()
+                        }
+                    })
+                }
+            }
         }
     }
 }

@@ -115,8 +115,10 @@ fun MemoScreen(
     onBack: () -> Unit = {},
     onDelete: ((Int) -> Unit)? = null,
     onYoutubeSummarize: ((url: String) -> Unit)? = null,
+    onYoutubeDetected: ((videoId: String) -> Unit)? = null,
     isSummarizing: Boolean = false,
     summaryResult: String? = null,
+    youtubeTitle: String? = null,
     existingMemo: MemoUiState = MemoUiState(0, "", 1, "")
 ) {
     val isNewMemo = existingMemo.id <= 0
@@ -153,12 +155,15 @@ fun MemoScreen(
     // 요약 결과 표시 상태
     var showSummary by remember { mutableStateOf(false) }
 
-    // 요약 완료 시 메모 본문의 URL을 요약 텍스트로 대체
-    var lastAppliedSummary by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(summaryResult) {
-        if (summaryResult != null && summaryResult != lastAppliedSummary) {
+    // 요약 완료 시 메모 본문의 URL을 요약 텍스트로 대체 + 제목 설정
+    var summaryApplied by remember { mutableStateOf(false) }
+    LaunchedEffect(summaryResult, isSummarizing) {
+        if (summaryResult != null && !isSummarizing && !summaryApplied) {
             bodyText = YOUTUBE_URL_REGEX.replace(bodyText) { summaryResult }.trim()
-            lastAppliedSummary = summaryResult
+            if (youtubeTitle != null && nameText.isBlank()) {
+                nameText = youtubeTitle
+            }
+            summaryApplied = true
         }
     }
 
@@ -354,6 +359,17 @@ fun MemoScreen(
                     YOUTUBE_URL_REGEX.find(bodyText)?.value
                 }
 
+                // URL 감지 시 제목 가져오기
+                LaunchedEffect(detectedYoutubeUrl) {
+                    if (detectedYoutubeUrl != null && onYoutubeDetected != null && youtubeTitle == null) {
+                        val videoIdRegex = Regex("""(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)([\w-]+)""")
+                        val vid = videoIdRegex.find(detectedYoutubeUrl)?.groupValues?.get(1)
+                        if (vid != null) {
+                            onYoutubeDetected(vid)
+                        }
+                    }
+                }
+
                 if (detectedYoutubeUrl != null) {
                     Spacer(modifier = Modifier.height(12.dp))
                     Column {
@@ -369,14 +385,32 @@ fun MemoScreen(
                         ) {
                             Text(text = "▶", fontSize = 14.sp)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = detectedYoutubeUrl,
-                                fontSize = 13.sp,
-                                color = Color(0xFF2196F3),
-                                maxLines = 1,
-                                modifier = Modifier.weight(1f),
-                                style = TextStyle(textDecoration = TextDecoration.Underline)
-                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                if (youtubeTitle != null) {
+                                    Text(
+                                        text = youtubeTitle,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = colors.textBody,
+                                        maxLines = 2
+                                    )
+                                    Text(
+                                        text = detectedYoutubeUrl,
+                                        fontSize = 11.sp,
+                                        color = Color(0xFF2196F3),
+                                        maxLines = 1,
+                                        style = TextStyle(textDecoration = TextDecoration.Underline)
+                                    )
+                                } else {
+                                    Text(
+                                        text = detectedYoutubeUrl,
+                                        fontSize = 13.sp,
+                                        color = Color(0xFF2196F3),
+                                        maxLines = 1,
+                                        style = TextStyle(textDecoration = TextDecoration.Underline)
+                                    )
+                                }
+                            }
                             if (onYoutubeSummarize != null && !isSummarizing && summaryResult == null) {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
