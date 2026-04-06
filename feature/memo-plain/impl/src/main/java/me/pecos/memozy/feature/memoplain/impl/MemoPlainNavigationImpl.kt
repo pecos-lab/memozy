@@ -29,6 +29,7 @@ import me.pecos.memozy.data.datasource.local.YoutubeSummaryDao
 import me.pecos.memozy.data.datasource.local.entity.Memo
 import me.pecos.memozy.data.datasource.local.entity.YoutubeSummary
 import me.pecos.memozy.data.datasource.remote.ai.AIApiService
+import me.pecos.memozy.data.datasource.remote.ai.YouTubeCaptionService
 import me.pecos.memozy.data.repository.MemoRepository
 import me.pecos.memozy.data.repository.model.MemoFormat
 import me.pecos.memozy.feature.memoplain.api.MemoPlainNavigation
@@ -42,13 +43,14 @@ import javax.inject.Inject
 class MemoPlainNavigationImpl @Inject constructor(
     private val repository: MemoRepository,
     private val aiApiService: AIApiService,
-    private val youtubeSummaryDao: YoutubeSummaryDao
+    private val youtubeSummaryDao: YoutubeSummaryDao,
+    private val captionService: YouTubeCaptionService
 ) : MemoPlainNavigation {
 
     companion object {
         private const val PREF_NAME = "memozy_ai_usage"
         private const val KEY_SUMMARY_COUNT = "youtube_summary_count"
-        private const val FREE_SUMMARY_LIMIT = 1
+        private const val FREE_SUMMARY_LIMIT = 100
 
         private val YOUTUBE_REGEX = Regex(
             """(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)[\w-]+"""
@@ -125,18 +127,13 @@ class MemoPlainNavigationImpl @Inject constructor(
                     }
                     summaryState = SummaryState.Loading
                     try {
-                        val summary = aiApiService.generateContentWithVideo(
-                            prompt = SUMMARY_PROMPT,
-                            videoUrl = youtubeUrl,
-                        )
+                        val summary = summarizeVideo(videoId!!, youtubeUrl)
                         // 캐시 저장
-                        if (videoId != null) {
-                            youtubeSummaryDao.insert(YoutubeSummary(
-                                videoId = videoId,
-                                url = youtubeUrl,
-                                summary = summary
-                            ))
-                        }
+                        youtubeSummaryDao.insert(YoutubeSummary(
+                            videoId = videoId,
+                            url = youtubeUrl,
+                            summary = summary
+                        ))
                         summaryState = SummaryState.Success(summary)
                     } catch (e: Exception) {
                         val errorMsg = when {
@@ -249,34 +246,14 @@ class MemoPlainNavigationImpl @Inject constructor(
                         }
                         inlineSummaryState = SummaryState.Loading
                         try {
-                            val summary = aiApiService.generateContentWithVideo(
-                                prompt = """
-                                |이 유튜브 영상을 한국어로 상세하게 요약해줘. 아래 형식을 정확히 따라줘:
-                                |
-                                |📋 한줄 요약
-                                |영상의 핵심을 한 문장으로 요약
-                                |
-                                |📌 핵심 키워드
-                                |#키워드1 #키워드2 #키워드3 #키워드4 #키워드5
-                                |
-                                |⏰ 타임라인별 상세 요약
-                                |각 주제/구간별로 나눠서 아래처럼 정리해줘:
-                                |
-                                |[00:00] 섹션 제목
-                                |- 상세 설명 (2~3문장)
-                                |- 중요한 내용이나 인사이트
-                                |
-                                |[다음 구간] 섹션 제목
-                                |- 상세 설명
-                                |- 중요한 내용이나 인사이트
-                                |
-                                |(영상 흐름에 따라 모든 구간을 빠짐없이 정리)
-                                |
-                                |💡 핵심 인사이트
-                                |- 영상에서 얻을 수 있는 주요 인사이트를 정리
-                                """.trimMargin(),
-                                videoUrl = url,
-                            )
+                            val summary = if (videoId != null) {
+                                summarizeVideo(videoId, url)
+                            } else {
+                                aiApiService.generateContentWithVideo(
+                                    prompt = SUMMARY_PROMPT,
+                                    videoUrl = url,
+                                )
+                            }
                             // 캐시 저장
                             if (videoId != null) {
                                 youtubeSummaryDao.insert(YoutubeSummary(
@@ -331,6 +308,22 @@ class MemoPlainNavigationImpl @Inject constructor(
         categoryId = categoryId,
         content = content
     )
+
+    private suspend fun summarizeVideo(videoId: String, videoUrl: String): String {
+        // 1. 자막 추출 시도
+        val captions = captionService.extractCaptions(videoId)
+        if (captions != null) {
+            // 자막 기반 요약 (텍스트만, 빠르고 저렴)
+            return aiApiService.generateContent(
+                "$SUMMARY_PROMPT\n\n아래는 영상의 자막입니다:\n\n$captions"
+            )
+        }
+        // 2. 자막 없으면 fallback — 영상 직접 분석
+        return aiApiService.generateContentWithVideo(
+            prompt = SUMMARY_PROMPT,
+            videoUrl = videoUrl,
+        )
+    }
 }
 
 private sealed class SummaryState {
