@@ -153,6 +153,15 @@ fun MemoScreen(
     // 요약 결과 표시 상태
     var showSummary by remember { mutableStateOf(false) }
 
+    // 요약 완료 시 메모 본문의 URL을 요약 텍스트로 대체
+    var lastAppliedSummary by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(summaryResult) {
+        if (summaryResult != null && summaryResult != lastAppliedSummary) {
+            bodyText = YOUTUBE_URL_REGEX.replace(bodyText) { summaryResult }.trim()
+            lastAppliedSummary = summaryResult
+        }
+    }
+
     // 자동저장용 현재 메모 상태
     val currentMemo = remember(nameText, bodyText, categoryIndex) {
         MemoUiState(
