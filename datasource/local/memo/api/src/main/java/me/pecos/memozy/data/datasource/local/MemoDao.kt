@@ -13,7 +13,7 @@ interface MemoDao {
     fun getAllMemos(): Flow<List<Memo>>
 
     @Insert
-    suspend fun insertMemo(memo: Memo)
+    suspend fun insertMemo(memo: Memo): Long
 
     @Update
     suspend fun updateMemo(memo: Memo)

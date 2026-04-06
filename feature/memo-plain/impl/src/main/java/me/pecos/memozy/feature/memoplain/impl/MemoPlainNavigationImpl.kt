@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import me.pecos.memozy.data.datasource.local.entity.Memo
@@ -191,9 +192,23 @@ class MemoPlainNavigationImpl @Inject constructor(
                 }
             }
 
+            // 자동저장용 memoId 추적 (새 메모 insert 후 update로 전환)
+            var savedMemoId by remember { mutableStateOf(memoId) }
+
             MemoScreen(
                 existingMemo = finalMemo,
                 onBack = onBack,
+                onAutoSave = { memo ->
+                    @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
+                    GlobalScope.launch {
+                        if (savedMemoId > 0) {
+                            repository.updateMemo(memo.copy(id = savedMemoId).toEntity())
+                        } else if (memo.name.isNotBlank() || memo.content.isNotBlank()) {
+                            val newId = repository.addMemo(memo.toEntity())
+                            savedMemoId = newId.toInt()
+                        }
+                    }
+                },
                 isSummarizing = inlineSummaryState is SummaryState.Loading,
                 summaryResult = (inlineSummaryState as? SummaryState.Success)?.text,
                 onYoutubeSummarize = if (canSummarize) { { url ->
