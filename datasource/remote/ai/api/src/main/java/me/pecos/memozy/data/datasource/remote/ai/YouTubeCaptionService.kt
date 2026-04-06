@@ -8,4 +8,5 @@ data class YouTubeVideoInfo(
 interface YouTubeCaptionService {
     suspend fun extractCaptions(videoId: String): String?
     suspend fun extractVideoInfo(videoId: String): YouTubeVideoInfo?
+    suspend fun fetchTitle(videoId: String): String?
 }

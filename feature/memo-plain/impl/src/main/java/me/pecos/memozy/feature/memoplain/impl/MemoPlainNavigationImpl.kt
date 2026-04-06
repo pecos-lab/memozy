@@ -242,9 +242,9 @@ class MemoPlainNavigationImpl @Inject constructor(
                 youtubeTitle = youtubeTitle,
                 onYoutubeDetected = { videoId ->
                     scope.launch {
-                        val info = captionService.extractVideoInfo(videoId)
-                        if (info != null) {
-                            youtubeTitle = info.title
+                        val title = captionService.fetchTitle(videoId)
+                        if (title != null) {
+                            youtubeTitle = title
                         }
                     }
                 },
@@ -335,7 +335,7 @@ class MemoPlainNavigationImpl @Inject constructor(
         if (videoInfo != null) {
             onTitleFound?.invoke(videoInfo.title)
         }
-        val captions = videoInfo?.captions
+        val captions = videoInfo?.captions?.take(15000)
         if (captions != null) {
             // 자막 기반 요약 (텍스트만, 빠르고 저렴)
             return aiApiService.generateContent(

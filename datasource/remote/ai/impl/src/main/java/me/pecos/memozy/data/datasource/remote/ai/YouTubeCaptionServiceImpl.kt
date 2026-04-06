@@ -3,6 +3,7 @@ package me.pecos.memozy.data.datasource.remote.ai
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.parameter
 import io.ktor.client.statement.bodyAsText
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
@@ -28,8 +29,9 @@ class YouTubeCaptionServiceImpl @Inject constructor(
             // 1. YouTube 페이지에서 제목 추출
             val title = fetchTitle(videoId)
 
-            // 2. Supadata API로 자막 추출
-            val captions = fetchCaptionsFromSupadata(videoId)
+            // 2. Supadata API로 자막 추출 (ko → en fallback)
+            val captions = fetchCaptionsFromSupadata(videoId, "ko")
+                ?: fetchCaptionsFromSupadata(videoId, "en")
 
             YouTubeVideoInfo(
                 title = title ?: "YouTube 영상",
@@ -40,7 +42,7 @@ class YouTubeCaptionServiceImpl @Inject constructor(
         }
     }
 
-    private suspend fun fetchTitle(videoId: String): String? {
+    override suspend fun fetchTitle(videoId: String): String? {
         return try {
             val pageHtml = httpClient.get("https://www.youtube.com/watch?v=$videoId") {
                 header("Accept-Language", "ko-KR,ko;q=0.9,en;q=0.8")
@@ -56,14 +58,16 @@ class YouTubeCaptionServiceImpl @Inject constructor(
         }
     }
 
-    private suspend fun fetchCaptionsFromSupadata(videoId: String): String? {
+    private suspend fun fetchCaptionsFromSupadata(videoId: String, lang: String = "ko"): String? {
         val apiKey = BuildConfig.SUPADATA_API_KEY
         if (apiKey.isBlank()) return null
 
         return try {
             val responseText = httpClient.get(
-                "https://api.supadata.ai/v1/youtube/transcript?url=https://www.youtube.com/watch?v=$videoId&lang=ko"
+                "https://api.supadata.ai/v1/youtube/transcript"
             ) {
+                parameter("url", "https://www.youtube.com/watch?v=$videoId")
+                parameter("lang", lang)
                 header("x-api-key", apiKey)
             }.bodyAsText()
 
