@@ -64,7 +64,7 @@ class MemoPlainNavigationImpl @Inject constructor(
             VIDEO_ID_REGEX.find(url)?.groupValues?.get(1)
 
         private val SUMMARY_PROMPT = """
-            |이 유튜브 영상을 한국어로 상세하게 요약해줘. 아래 형식을 정확히 따라줘:
+            |이 유튜브 영상을 한국어로 상세하게 요약해줘. 인사말이나 부가 설명 없이 아래 형식만 정확히 출력해:
             |
             |📋 한줄 요약
             |영상의 핵심을 한 문장으로 요약
@@ -112,6 +112,7 @@ class MemoPlainNavigationImpl @Inject constructor(
 
             // YouTube 요약 상태
             var summaryState by remember { mutableStateOf<SummaryState>(SummaryState.Idle) }
+            var youtubeTitle by remember { mutableStateOf<String?>(null) }
 
             val scope = rememberCoroutineScope()
 
@@ -127,7 +128,10 @@ class MemoPlainNavigationImpl @Inject constructor(
                     }
                     summaryState = SummaryState.Loading
                     try {
-                        val summary = summarizeVideo(videoId!!, youtubeUrl)
+                        val summary = summarizeVideo(
+                            videoId!!, youtubeUrl,
+                            onTitleFound = { title -> youtubeTitle = title }
+                        )
                         // 캐시 저장
                         youtubeSummaryDao.insert(YoutubeSummary(
                             videoId = videoId,
@@ -235,6 +239,15 @@ class MemoPlainNavigationImpl @Inject constructor(
                 },
                 isSummarizing = inlineSummaryState is SummaryState.Loading,
                 summaryResult = (inlineSummaryState as? SummaryState.Success)?.text,
+                youtubeTitle = youtubeTitle,
+                onYoutubeDetected = { videoId ->
+                    scope.launch {
+                        val title = captionService.fetchTitle(videoId)
+                        if (title != null) {
+                            youtubeTitle = title
+                        }
+                    }
+                },
                 onYoutubeSummarize = if (canSummarize) { { url ->
                     scope.launch {
                         val videoId = extractVideoId(url)
@@ -247,7 +260,10 @@ class MemoPlainNavigationImpl @Inject constructor(
                         inlineSummaryState = SummaryState.Loading
                         try {
                             val summary = if (videoId != null) {
-                                summarizeVideo(videoId, url)
+                                summarizeVideo(
+                                    videoId, url,
+                                    onTitleFound = { title -> youtubeTitle = title }
+                                )
                             } else {
                                 aiApiService.generateContentWithVideo(
                                     prompt = SUMMARY_PROMPT,
@@ -309,9 +325,17 @@ class MemoPlainNavigationImpl @Inject constructor(
         content = content
     )
 
-    private suspend fun summarizeVideo(videoId: String, videoUrl: String): String {
-        // 1. 자막 추출 시도
-        val captions = captionService.extractCaptions(videoId)
+    private suspend fun summarizeVideo(
+        videoId: String,
+        videoUrl: String,
+        onTitleFound: ((String) -> Unit)? = null
+    ): String {
+        // 1. 자막 + 제목 추출 시도
+        val videoInfo = captionService.extractVideoInfo(videoId)
+        if (videoInfo != null) {
+            onTitleFound?.invoke(videoInfo.title)
+        }
+        val captions = videoInfo?.captions?.take(15000)
         if (captions != null) {
             // 자막 기반 요약 (텍스트만, 빠르고 저렴)
             return aiApiService.generateContent(

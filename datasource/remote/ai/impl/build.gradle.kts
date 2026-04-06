@@ -23,6 +23,7 @@ android {
         buildConfigField("String", "AI_API_KEY", "\"${localProperties.getProperty("ai.api.key", "")}\"")
         buildConfigField("String", "AI_BASE_URL", "\"${localProperties.getProperty("ai.base.url", "https://generativelanguage.googleapis.com/v1beta/")}\"")
         buildConfigField("String", "AI_MODEL", "\"${localProperties.getProperty("ai.model", "gemini-2.5-flash")}\"")
+        buildConfigField("String", "SUPADATA_API_KEY", "\"${localProperties.getProperty("supadata.api.key", "")}\"")
     }
 }
 
