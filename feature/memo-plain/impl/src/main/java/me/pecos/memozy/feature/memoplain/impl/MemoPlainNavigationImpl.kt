@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import me.pecos.memozy.data.datasource.local.entity.Memo
@@ -42,6 +43,10 @@ class MemoPlainNavigationImpl @Inject constructor(
 ) : MemoPlainNavigation {
 
     companion object {
+        private const val PREF_NAME = "memozy_ai_usage"
+        private const val KEY_SUMMARY_COUNT = "youtube_summary_count"
+        private const val FREE_SUMMARY_LIMIT = 1
+
         private val YOUTUBE_REGEX = Regex(
             """(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)[\w-]+"""
         )
@@ -172,6 +177,12 @@ class MemoPlainNavigationImpl @Inject constructor(
                     existingMemo ?: MemoUiState(0, "", 1, "")
                 }
 
+            // AI 사용량 체크
+            val context = LocalContext.current
+            val aiPrefs = remember { context.getSharedPreferences(PREF_NAME, android.content.Context.MODE_PRIVATE) }
+            val summaryCount = remember { mutableStateOf(aiPrefs.getInt(KEY_SUMMARY_COUNT, 0)) }
+            val canSummarize = summaryCount.value < FREE_SUMMARY_LIMIT
+
             // 요약 상태 통합 (ACTION_SEND + 메모 내 링크 감지)
             var inlineSummaryState by remember { mutableStateOf<SummaryState>(SummaryState.Idle) }
             // ACTION_SEND 요약 결과를 inlineSummaryState에 반영
@@ -181,12 +192,26 @@ class MemoPlainNavigationImpl @Inject constructor(
                 }
             }
 
+            // 자동저장용 memoId 추적 (새 메모 insert 후 update로 전환)
+            var savedMemoId by remember { mutableStateOf(memoId) }
+
             MemoScreen(
                 existingMemo = finalMemo,
                 onBack = onBack,
+                onAutoSave = { memo ->
+                    @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
+                    GlobalScope.launch {
+                        if (savedMemoId > 0) {
+                            repository.updateMemo(memo.copy(id = savedMemoId).toEntity())
+                        } else if (memo.name.isNotBlank() || memo.content.isNotBlank()) {
+                            val newId = repository.addMemo(memo.toEntity())
+                            savedMemoId = newId.toInt()
+                        }
+                    }
+                },
                 isSummarizing = inlineSummaryState is SummaryState.Loading,
                 summaryResult = (inlineSummaryState as? SummaryState.Success)?.text,
-                onYoutubeSummarize = { url ->
+                onYoutubeSummarize = if (canSummarize) { { url ->
                     scope.launch {
                         inlineSummaryState = SummaryState.Loading
                         try {
@@ -219,6 +244,10 @@ class MemoPlainNavigationImpl @Inject constructor(
                                 videoUrl = url,
                             )
                             inlineSummaryState = SummaryState.Success(summary)
+                            // 성공 시 사용 횟수 증가
+                            val newCount = summaryCount.value + 1
+                            aiPrefs.edit().putInt(KEY_SUMMARY_COUNT, newCount).apply()
+                            summaryCount.value = newCount
                         } catch (e: Exception) {
                             val errorMsg = when {
                                 e.message?.contains("token count exceeds") == true ||
@@ -233,7 +262,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                             inlineSummaryState = SummaryState.Error(errorMsg)
                         }
                     }
-                },
+                } } else null,
                 onSave = { memo ->
                     scope.launch {
                         if (memoId > 0 && existingMemo != null) {

@@ -194,7 +194,9 @@ class MainActivity : AppCompatActivity() {
                                             launchSingleTop = true
                                         }
                                     },
-                                    onBack = { navController.popBackStack() }
+                                    onBack = {
+                                        navController.popBackStack(HomeRoute.MAIN, inclusive = false)
+                                    }
                                 )
                             }
 

@@ -46,10 +46,20 @@ import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -97,10 +107,11 @@ private class UrlHighlightTransformation : VisualTransformation {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class, FlowPreview::class)
 @Composable
 fun MemoScreen(
     onSave: (MemoUiState) -> Unit,
+    onAutoSave: ((MemoUiState) -> Unit)? = null,
     onBack: () -> Unit = {},
     onDelete: ((Int) -> Unit)? = null,
     onYoutubeSummarize: ((url: String) -> Unit)? = null,
@@ -142,6 +153,62 @@ fun MemoScreen(
     // 요약 결과 표시 상태
     var showSummary by remember { mutableStateOf(false) }
 
+    // 자동저장용 현재 메모 상태
+    val currentMemo = remember(nameText, bodyText, categoryIndex) {
+        MemoUiState(
+            id = existingMemo.id,
+            name = nameText,
+            categoryId = categoryIndex + 1,
+            content = bodyText
+        )
+    }
+    val canAutoSave = nameText.isNotBlank() || bodyText.isNotBlank()
+
+    // 디바운스 자동저장
+    if (onAutoSave != null) {
+        var lastSaved by remember { mutableStateOf(existingMemo) }
+
+        LaunchedEffect(Unit) {
+            snapshotFlow { Triple(nameText, bodyText, categoryIndex) }
+                .drop(1)
+                .debounce(500)
+                .collectLatest { (name, body, catIdx) ->
+                    val memo = MemoUiState(
+                        id = existingMemo.id,
+                        name = name,
+                        categoryId = catIdx + 1,
+                        content = body
+                    )
+                    val saveable = name.isNotBlank() || body.isNotBlank()
+                    if (saveable && memo != lastSaved) {
+                        onAutoSave(memo)
+                        lastSaved = memo
+                    }
+                }
+        }
+
+        // Lifecycle 감지 — onPause/onStop 시 즉시 저장
+        val lifecycleOwner = LocalLifecycleOwner.current
+        DisposableEffect(lifecycleOwner) {
+            val observer = LifecycleEventObserver { _, event ->
+                if ((event == Lifecycle.Event.ON_PAUSE || event == Lifecycle.Event.ON_STOP) && canAutoSave) {
+                    val memo = MemoUiState(
+                        id = existingMemo.id,
+                        name = nameText,
+                        categoryId = categoryIndex + 1,
+                        content = bodyText
+                    )
+                    if (memo != lastSaved) {
+                        onAutoSave(memo)
+                        lastSaved = memo
+                    }
+                }
+            }
+            lifecycleOwner.lifecycle.addObserver(observer)
+            onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+        }
+    }
+
     val enabled = nameText.isNotBlank() && bodyText.isNotBlank()
     val colors = LocalAppColors.current  // ← CompositionLocal에서 현재 테마 색상 가져옴
 
@@ -168,7 +235,12 @@ fun MemoScreen(
                     tint = colors.topbarTitle,
                     modifier = Modifier
                         .size(24.dp)
-                        .clickable { onBack() }
+                        .clickable {
+                            if (onAutoSave != null && canAutoSave) {
+                                onAutoSave(currentMemo)
+                            }
+                            onBack()
+                        }
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 if (isNewMemo) {
@@ -429,8 +501,8 @@ fun MemoScreen(
                                 Text("브라우저에서 열기", fontSize = 16.sp, color = colors.textBody)
                             }
 
-                            // 🤖 AI 요약하기
-                            if (onYoutubeSummarize != null) {
+                            // 🤖 AI 요약하기 (1회만 가능)
+                            if (onYoutubeSummarize != null && !isSummarizing && summaryResult == null) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -501,22 +573,9 @@ fun MemoScreen(
                 }
             }
 
-            // 하단 액션 바 (새 메모: 저장 버튼 / 기존 메모: 복사·공유·삭제)
-            HorizontalDivider(color = colors.cardBorder)
-            if (isNewMemo) {
-                Box(modifier = Modifier.padding(horizontal = 30.dp, vertical = 12.dp)) {
-                    WantedButton(
-                        text = stringResource(R.string.save),
-                        modifier = Modifier.fillMaxWidth(),
-                        type = ButtonType.PRIMARY,
-                        variant = ButtonVariant.SOLID,
-                        enabled = enabled,
-                        onClick = {
-                            onSave(MemoUiState(id = existingMemo.id, name = nameText, categoryId = categoryIndex + 1, content = bodyText))
-                        }
-                    )
-                }
-            } else {
+            // 하단 액션 바 — 기존 메모(편집)일 때만 표시
+            if (!isNewMemo) {
+                HorizontalDivider(color = colors.cardBorder)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
