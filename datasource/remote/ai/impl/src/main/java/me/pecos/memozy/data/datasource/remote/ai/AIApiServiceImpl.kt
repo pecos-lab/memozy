@@ -17,7 +17,7 @@ import me.pecos.memozy.data.datasource.remote.ai.model.GeminiFileData
 import me.pecos.memozy.data.datasource.remote.ai.model.GeminiPart
 import me.pecos.memozy.data.datasource.remote.ai.model.GeminiRequest
 import me.pecos.memozy.data.datasource.remote.ai.model.GeminiResponse
-import me.pecos.memozy.datasource.remote.ai.impl.BuildConfig
+
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -69,9 +69,7 @@ class AIApiServiceImpl @Inject constructor(
         )
 
         val accumulated = StringBuilder()
-        httpClient.preparePost(
-            "models/${BuildConfig.AI_MODEL}:streamGenerateContent?alt=sse&key=${BuildConfig.AI_API_KEY}"
-        ) {
+        httpClient.preparePost("gemini-stream") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.execute { response ->
@@ -105,9 +103,7 @@ class AIApiServiceImpl @Inject constructor(
     }
 
     private suspend fun executeRequest(request: GeminiRequest): String {
-        val response: GeminiResponse = httpClient.post(
-            "models/${BuildConfig.AI_MODEL}:generateContent?key=${BuildConfig.AI_API_KEY}"
-        ) {
+        val response: GeminiResponse = httpClient.post("gemini-generate") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()

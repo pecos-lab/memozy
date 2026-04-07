@@ -71,7 +71,7 @@ abstract class AINetworkModule {
             }
 
             defaultRequest {
-                url(BuildConfig.AI_BASE_URL)
+                url("${BuildConfig.SUPABASE_URL}/functions/v1/")
             }
 
             HttpResponseValidator {
