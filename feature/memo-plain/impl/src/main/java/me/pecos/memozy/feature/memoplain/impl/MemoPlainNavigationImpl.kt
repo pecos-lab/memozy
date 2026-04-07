@@ -25,9 +25,12 @@ import androidx.navigation.compose.composable
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import me.pecos.memozy.data.datasource.local.AiUsageDao
 import me.pecos.memozy.data.datasource.local.YoutubeSummaryDao
+import me.pecos.memozy.data.datasource.local.entity.AiUsage
 import me.pecos.memozy.data.datasource.local.entity.Memo
 import me.pecos.memozy.data.datasource.local.entity.YoutubeSummary
+import java.util.Calendar
 import me.pecos.memozy.data.datasource.remote.ai.AIApiService
 import me.pecos.memozy.data.datasource.remote.ai.YouTubeCaptionService
 import me.pecos.memozy.data.repository.MemoRepository
@@ -44,13 +47,22 @@ class MemoPlainNavigationImpl @Inject constructor(
     private val repository: MemoRepository,
     private val aiApiService: AIApiService,
     private val youtubeSummaryDao: YoutubeSummaryDao,
-    private val captionService: YouTubeCaptionService
+    private val captionService: YouTubeCaptionService,
+    private val aiUsageDao: AiUsageDao
 ) : MemoPlainNavigation {
 
     companion object {
-        private const val PREF_NAME = "memozy_ai_usage"
-        private const val KEY_SUMMARY_COUNT = "youtube_summary_count"
-        private const val FREE_SUMMARY_LIMIT = 100
+        private const val FEATURE_YOUTUBE_SUMMARY = "youtube_summary"
+        private const val DAILY_FREE_LIMIT = 5
+
+        private fun startOfToday(): Long {
+            return Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+        }
 
         private val YOUTUBE_REGEX = Regex(
             """(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)[\w-]+"""
@@ -205,11 +217,12 @@ class MemoPlainNavigationImpl @Inject constructor(
                     existingMemo ?: MemoUiState(0, "", 1, "")
                 }
 
-            // AI 사용량 체크
-            val context = LocalContext.current
-            val aiPrefs = remember { context.getSharedPreferences(PREF_NAME, android.content.Context.MODE_PRIVATE) }
-            val summaryCount = remember { mutableStateOf(aiPrefs.getInt(KEY_SUMMARY_COUNT, 0)) }
-            val canSummarize = summaryCount.value < FREE_SUMMARY_LIMIT
+            // AI 사용량 체크 (일일 5회 제한)
+            var dailyUsageCount by remember { mutableStateOf(0) }
+            LaunchedEffect(Unit) {
+                dailyUsageCount = aiUsageDao.getCountSince(FEATURE_YOUTUBE_SUMMARY, startOfToday())
+            }
+            val canSummarize = dailyUsageCount < DAILY_FREE_LIMIT
 
             // 요약 상태 통합 (ACTION_SEND + 메모 내 링크 감지)
             var inlineSummaryState by remember { mutableStateOf<SummaryState>(SummaryState.Idle) }
@@ -248,8 +261,12 @@ class MemoPlainNavigationImpl @Inject constructor(
                         }
                     }
                 },
-                onYoutubeSummarize = if (canSummarize) { { url ->
+                onYoutubeSummarize = { url ->
                     scope.launch {
+                        if (!canSummarize) {
+                            inlineSummaryState = SummaryState.Error("오늘 무료 요약 횟수를 모두 사용했어요.")
+                            return@launch
+                        }
                         val videoId = extractVideoId(url)
                         // 캐시 조회
                         val cached = videoId?.let { youtubeSummaryDao.getByVideoId(it) }
@@ -280,9 +297,8 @@ class MemoPlainNavigationImpl @Inject constructor(
                             }
                             inlineSummaryState = SummaryState.Success(summary)
                             // 성공 시 사용 횟수 증가
-                            val newCount = summaryCount.value + 1
-                            aiPrefs.edit().putInt(KEY_SUMMARY_COUNT, newCount).apply()
-                            summaryCount.value = newCount
+                            aiUsageDao.insert(AiUsage(feature = FEATURE_YOUTUBE_SUMMARY))
+                            dailyUsageCount++
                         } catch (e: Exception) {
                             val errorMsg = when {
                                 e.message?.contains("token count exceeds") == true ||
@@ -297,7 +313,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                             inlineSummaryState = SummaryState.Error(errorMsg)
                         }
                     }
-                } } else null,
+                },
                 onSave = { memo ->
                     scope.launch {
                         if (memoId > 0 && existingMemo != null) {

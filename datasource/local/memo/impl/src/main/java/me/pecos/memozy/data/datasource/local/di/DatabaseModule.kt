@@ -14,6 +14,8 @@ import me.pecos.memozy.data.datasource.local.MIGRATION_2_3
 import me.pecos.memozy.data.datasource.local.MIGRATION_3_4
 import me.pecos.memozy.data.datasource.local.MIGRATION_4_5
 import me.pecos.memozy.data.datasource.local.MIGRATION_5_6
+import me.pecos.memozy.data.datasource.local.MIGRATION_6_7
+import me.pecos.memozy.data.datasource.local.AiUsageDao
 import me.pecos.memozy.data.datasource.local.MemoDao
 import me.pecos.memozy.data.datasource.local.MemoDatabase
 import me.pecos.memozy.data.datasource.local.YoutubeSummaryDao
@@ -33,7 +35,7 @@ object DatabaseModule {
             MemoDatabase::class.java,
             "memo_database"
         )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onCreate(db: SupportSQLiteDatabase) {
                     super.onCreate(db)
@@ -61,5 +63,10 @@ object DatabaseModule {
     @Provides
     fun provideYoutubeSummaryDao(database: MemoDatabase): YoutubeSummaryDao {
         return database.youtubeSummaryDao()
+    }
+
+    @Provides
+    fun provideAiUsageDao(database: MemoDatabase): AiUsageDao {
+        return database.aiUsageDao()
     }
 }
