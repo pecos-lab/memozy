@@ -1,5 +1,8 @@
 package me.pecos.memozy.presentation.screen.settings
 
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.rememberScrollState
@@ -16,6 +19,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,13 +57,39 @@ fun SettingsScreen(
     var showLicenseDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
+    var showRestoreDialog by remember { mutableStateOf(false) }
 
     val selectedLanguage by settingsViewModel.selectedLanguage.collectAsState()
     val selectedTheme by settingsViewModel.selectedTheme.collectAsState()
+    val backupResult by settingsViewModel.backupResult.collectAsState()
     val isDonationEnabled by settingsViewModel.isDonationEnabled.collectAsState()
     val colors = LocalAppColors.current
     val context = LocalContext.current
     val activity = LocalActivity.current
+
+    // SAF launchers
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri -> if (uri != null) settingsViewModel.exportBackup(uri) }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri -> if (uri != null) settingsViewModel.importBackup(uri) }
+
+    // 백업 결과 토스트
+    LaunchedEffect(backupResult) {
+        when (val result = backupResult) {
+            is BackupResult.Success -> {
+                Toast.makeText(context, context.getString(R.string.backup_success, result.message.toIntOrNull() ?: 0), Toast.LENGTH_SHORT).show()
+                settingsViewModel.clearBackupResult()
+            }
+            is BackupResult.Error -> {
+                Toast.makeText(context, context.getString(R.string.backup_error), Toast.LENGTH_SHORT).show()
+                settingsViewModel.clearBackupResult()
+            }
+            else -> {}
+        }
+    }
 
     val versionName = remember {
         context.packageManager.getPackageInfo(context.packageName, 0).versionName
@@ -149,6 +179,26 @@ fun SettingsScreen(
                     }
                 }
             }
+        }
+    }
+
+    if (showRestoreDialog) {
+        AppPopup(
+            onDismissRequest = { showRestoreDialog = false },
+            title = stringResource(R.string.backup_restore),
+            navigation = PopupNavigation.EMPHASIZED,
+            size = PopupSize.MEDIUM,
+            actionArea = PopupActionArea.NEUTRAL,
+            primaryButtonText = stringResource(R.string.backup_restore_action),
+            isPrimaryDestructive = true,
+            onPrimaryClick = {
+                showRestoreDialog = false
+                importLauncher.launch(arrayOf("application/json"))
+            },
+            secondaryButtonText = stringResource(R.string.cancel),
+            onSecondaryClick = { showRestoreDialog = false }
+        ) {
+            Text(stringResource(R.string.backup_restore_confirm), color = colors.textBody)
         }
     }
 
@@ -293,6 +343,33 @@ fun SettingsScreen(
                         variant = ButtonVariant.OUTLINED
                     ).copy(contentColor = colors.textTitle),
                     onClick = { onTrash() }
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                WantedButton(
+                    text = stringResource(R.string.backup_export),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    buttonDefault = WantedButtonDefaults.getDefault(
+                        type = ButtonType.ASSISTIVE,
+                        variant = ButtonVariant.OUTLINED
+                    ).copy(contentColor = colors.textTitle),
+                    onClick = {
+                        val fileName = "memozy_backup_${java.text.SimpleDateFormat("yyyyMMdd_HHmm", java.util.Locale.getDefault()).format(java.util.Date())}.json"
+                        exportLauncher.launch(fileName)
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                WantedButton(
+                    text = stringResource(R.string.backup_restore),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    buttonDefault = WantedButtonDefaults.getDefault(
+                        type = ButtonType.ASSISTIVE,
+                        variant = ButtonVariant.OUTLINED
+                    ).copy(contentColor = colors.textTitle),
+                    onClick = { showRestoreDialog = true }
                 )
 
                 if (isDonationEnabled) {

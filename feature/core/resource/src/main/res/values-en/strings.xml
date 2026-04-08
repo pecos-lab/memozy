@@ -77,6 +77,14 @@
     <string name="donation_error_message">Something went wrong during payment.\nPlease try again.</string>
     <string name="donation_loading">Connecting…</string>
 
+    <!-- Backup -->
+    <string name="backup_export">Export Backup</string>
+    <string name="backup_restore">Restore Backup</string>
+    <string name="backup_restore_action">Restore</string>
+    <string name="backup_restore_confirm">All existing memos will be deleted and replaced with the backup.\nThis action cannot be undone.</string>
+    <string name="backup_success">%d memos processed</string>
+    <string name="backup_error">An error occurred during backup</string>
+
     <!-- Trash -->
     <string name="trash_title">Trash</string>
     <string name="trash_empty">Trash is empty</string>
