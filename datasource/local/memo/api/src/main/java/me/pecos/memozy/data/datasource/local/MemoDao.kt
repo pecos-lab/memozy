@@ -50,6 +50,14 @@ interface MemoDao {
     @Query("SELECT COUNT(*) FROM memo WHERE deletedAt IS NOT NULL")
     fun getTrashCount(): Flow<Int>
 
+    // ── Backup & Restore ──
+
+    @Query("SELECT * FROM memo ORDER BY id ASC")
+    suspend fun getAllMemosForBackup(): List<Memo>
+
+    @Insert
+    suspend fun insertMemos(memos: List<Memo>)
+
     // ── Reminder ──
 
     @Query("UPDATE memo SET reminderAt = :reminderAt WHERE id = :id")

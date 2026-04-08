@@ -134,16 +134,29 @@ class MemoPlainNavigationImpl @Inject constructor(
         navGraphBuilder.composable(MemoPlainRoute.MEMO) { backStackEntry ->
             val memoIdStr = backStackEntry.arguments?.getString("memoId") ?: ""
             val isShared = memoIdStr.startsWith("shared_")
+            val isSharedImage = memoIdStr.startsWith("shared_image_")
+            val isSharedPdf = memoIdStr.startsWith("shared_pdf_")
             val memoId = memoIdStr.toIntOrNull() ?: -1
 
             // 공유 텍스트를 route parameter에서 디코딩
             val sharedText = remember {
-                if (isShared) {
+                if (isShared && !isSharedImage && !isSharedPdf) {
                     try {
                         java.net.URLDecoder.decode(memoIdStr.removePrefix("shared_"), "UTF-8")
                     } catch (e: Exception) { "" }
                 } else ""
             }
+
+            // 이미지/PDF URI 디코딩
+            val sharedFileUri = remember {
+                if (isSharedImage || isSharedPdf) {
+                    try {
+                        val prefix = if (isSharedImage) "shared_image_" else "shared_pdf_"
+                        android.net.Uri.parse(java.net.URLDecoder.decode(memoIdStr.removePrefix(prefix), "UTF-8"))
+                    } catch (e: Exception) { null }
+                } else null
+            }
+
             val youtubeUrl = remember { YOUTUBE_REGEX.find(sharedText)?.value }
 
             // YouTube 요약 상태
@@ -194,8 +207,28 @@ class MemoPlainNavigationImpl @Inject constructor(
                 }
             }
 
+            // 이미지 OCR 처리
+            var imageOcrState by remember { mutableStateOf<SummaryState>(SummaryState.Idle) }
+            val imageContext = LocalContext.current
+
+            LaunchedEffect(sharedFileUri, isSharedImage) {
+                if (isSharedImage && sharedFileUri != null && imageOcrState is SummaryState.Idle) {
+                    imageOcrState = SummaryState.Loading
+                    try {
+                        val bytes = imageContext.contentResolver.openInputStream(sharedFileUri)?.use { it.readBytes() }
+                            ?: throw Exception("Cannot read image")
+                        val base64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
+                        val mimeType = imageContext.contentResolver.getType(sharedFileUri) ?: "image/jpeg"
+                        val result = aiApiService.describeImage(base64, mimeType)
+                        imageOcrState = SummaryState.Success(result)
+                    } catch (e: Exception) {
+                        imageOcrState = SummaryState.Error(e.message ?: "이미지 처리 실패")
+                    }
+                }
+            }
+
             // 일반 공유 텍스트 프리필
-            val sharedMemo = remember(summaryState) {
+            val sharedMemo = remember(summaryState, imageOcrState) {
                 when {
                     youtubeUrl != null -> when (val state = summaryState) {
                         is SummaryState.Success -> {
@@ -206,6 +239,17 @@ class MemoPlainNavigationImpl @Inject constructor(
                         }
                         else -> null
                     }
+                    isSharedImage -> when (val state = imageOcrState) {
+                        is SummaryState.Success -> {
+                            val lines = state.text.split("\n", limit = 2)
+                            val title = lines.firstOrNull()?.take(50) ?: "이미지 메모"
+                            val content = state.text
+                            MemoUiState(0, title, 1, content)
+                        }
+                        is SummaryState.Error -> MemoUiState(0, "이미지 메모", 1, "[이미지 인식 실패: ${state.message}]")
+                        else -> null
+                    }
+                    isSharedPdf -> MemoUiState(0, "PDF 메모", 1, "[PDF 파일이 첨부되었습니다]")
                     isShared && sharedText.isNotEmpty() -> {
                         val lines = sharedText.split("\n", limit = 2)
                         val title = lines.firstOrNull()?.take(50) ?: ""
