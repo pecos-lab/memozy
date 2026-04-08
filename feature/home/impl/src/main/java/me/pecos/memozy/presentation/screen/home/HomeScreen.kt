@@ -18,11 +18,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
 import kotlin.math.roundToInt
 import androidx.compose.animation.core.animateFloatAsState
@@ -242,6 +243,12 @@ fun HomeScreen(
                 ) {
                     items(filteredList, key = { it.id }) { memo ->
                         val revealWidth = 80f
+                        // 카드 재배치/삭제 애니메이션
+                        val itemModifier = Modifier.animateItem(
+                            fadeInSpec = tween(300),
+                            fadeOutSpec = tween(300),
+                            placementSpec = tween(300)
+                        )
                         val revealPx = with(androidx.compose.ui.platform.LocalDensity.current) { revealWidth.dp.toPx() }
                         // 이 카드가 열려있는지 판단
                         val isOpen = swipedOpenId == memo.id
@@ -253,7 +260,7 @@ fun HomeScreen(
                             label = "swipeOffset"
                         )
 
-                        Box(modifier = Modifier.fillMaxWidth()) {
+                        Box(modifier = itemModifier.fillMaxWidth()) {
                             // 뒤쪽 액션 버튼
                             Row(
                                 modifier = Modifier
@@ -319,26 +326,26 @@ fun HomeScreen(
                             }
 
                             // 앞쪽 카드 (스와이프 이동)
+                            val dragState = rememberDraggableState { delta ->
+                                rawOffset = (rawOffset + delta).coerceIn(-revealPx, revealPx)
+                                swipedOpenId = memo.id
+                            }
                             Box(
                                 modifier = Modifier
                                     .offset { IntOffset(animatedOffset.roundToInt(), 0) }
-                                    .pointerInput(Unit) {
-                                        detectHorizontalDragGestures(
-                                            onDragEnd = {
-                                                val snapped = when {
-                                                    rawOffset > revealPx / 2 -> revealPx
-                                                    rawOffset < -revealPx / 2 -> -revealPx
-                                                    else -> 0f
-                                                }
-                                                rawOffset = snapped
-                                                swipedOpenId = if (snapped != 0f) memo.id else null
-                                            },
-                                            onHorizontalDrag = { _, dragAmount ->
-                                                rawOffset = (rawOffset + dragAmount).coerceIn(-revealPx, revealPx)
-                                                swipedOpenId = memo.id
+                                    .draggable(
+                                        state = dragState,
+                                        orientation = Orientation.Horizontal,
+                                        onDragStopped = {
+                                            val snapped = when {
+                                                rawOffset > revealPx / 2 -> revealPx
+                                                rawOffset < -revealPx / 2 -> -revealPx
+                                                else -> 0f
                                             }
-                                        )
-                                    }
+                                            rawOffset = snapped
+                                            swipedOpenId = if (snapped != 0f) memo.id else null
+                                        }
+                                    )
                                     .clickable {
                                         if (swipedOpenId != null) {
                                             swipedOpenId = null
