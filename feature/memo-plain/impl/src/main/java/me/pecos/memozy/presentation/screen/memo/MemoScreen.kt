@@ -29,6 +29,8 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.SmartDisplay
@@ -135,6 +137,7 @@ fun MemoScreen(
     isTranscribing: Boolean = false,
     transcriptionResult: String? = null,
     transcriptionError: String? = null,
+    audioPath: String? = null,
     existingMemo: MemoUiState = MemoUiState(0, "", 1, "")
 ) {
     val isNewMemo = existingMemo.id <= 0
@@ -346,6 +349,66 @@ fun MemoScreen(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
+
+                // 오디오 재생 바 (녹음 파일이 있는 메모)
+                val effectiveAudioPath = audioPath ?: existingMemo.audioPath
+                if (effectiveAudioPath != null && java.io.File(effectiveAudioPath).exists()) {
+                    var isPlaying by remember { mutableStateOf(false) }
+                    val mediaPlayer = remember {
+                        android.media.MediaPlayer().apply {
+                            setDataSource(effectiveAudioPath)
+                            prepare()
+                            setOnCompletionListener { isPlaying = false }
+                        }
+                    }
+
+                    DisposableEffect(Unit) {
+                        onDispose {
+                            mediaPlayer.release()
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(colors.chipBackground.copy(alpha = 0.5f))
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(colors.chipText)
+                                .clickable {
+                                    if (isPlaying) {
+                                        mediaPlayer.pause()
+                                        isPlaying = false
+                                    } else {
+                                        mediaPlayer.start()
+                                        isPlaying = true
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "🎙️ 녹음 파일",
+                            fontSize = 14.sp,
+                            color = colors.textBody,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
 
                 // 녹음 상태 인라인 표시 (녹음 중/변환 중일 때만)
                 if (isRecording || isTranscribing || transcriptionError != null) {
