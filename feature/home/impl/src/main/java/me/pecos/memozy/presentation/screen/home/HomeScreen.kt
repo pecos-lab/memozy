@@ -34,6 +34,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -261,27 +262,27 @@ fun HomeScreen(
                                     .clip(RoundedCornerShape(12.dp)),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                // 오른쪽 스와이프 → 편집 버튼 (왼쪽에 표시)
+                                // 오른쪽 스와이프 → 핀 토글 (왼쪽에 표시)
                                 Box(
                                     modifier = Modifier
                                         .width(revealWidth.dp)
                                         .fillMaxHeight()
-                                        .background(colors.chipText)
+                                        .background(if (memo.isPinned) colors.textSecondary else Color(0xFFFFA726))
                                         .clickable {
                                             swipedOpenId = null
-                                            onEdit(memo.id)
+                                            viewModel.togglePin(memo)
                                         },
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Icon(
-                                            Icons.Default.Edit,
+                                            Icons.Default.Star,
                                             contentDescription = null,
                                             tint = Color.White,
                                             modifier = Modifier.size(22.dp)
                                         )
                                         Text(
-                                            text = stringResource(R.string.edit_memo),
+                                            text = if (memo.isPinned) "고정 해제" else "고정",
                                             color = Color.White,
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Medium
