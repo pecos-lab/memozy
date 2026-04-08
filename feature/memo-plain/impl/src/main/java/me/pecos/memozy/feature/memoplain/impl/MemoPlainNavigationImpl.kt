@@ -248,6 +248,7 @@ class MemoPlainNavigationImpl @Inject constructor(
             var isTranscribing by remember { mutableStateOf(false) }
             var transcriptionResult by remember { mutableStateOf<String?>(null) }
             var transcriptionError by remember { mutableStateOf<String?>(null) }
+            var savedAudioPath by remember { mutableStateOf<String?>(null) }
             // 에러/결과 메시지 3초 후 자동 해제
             LaunchedEffect(transcriptionError) {
                 if (transcriptionError != null) {
@@ -360,15 +361,24 @@ class MemoPlainNavigationImpl @Inject constructor(
                         if (result.contains("받아쓰기") || result.contains("텍스트만 출력") || result.isBlank()) {
                             transcriptionError = "음성이 감지되지 않았어요. 다시 시도해주세요."
                             transcriptionResult = null
+                            audioFile.delete()
                         } else {
+                            // 오디오 파일을 영구 저장소로 이동
+                            val audioDir = java.io.File(context.filesDir, "audio")
+                            if (!audioDir.exists()) audioDir.mkdirs()
+                            val permanentFile = java.io.File(audioDir, "recording_${System.currentTimeMillis()}.m4a")
+                            audioFile.copyTo(permanentFile, overwrite = true)
+                            audioFile.delete()
+                            savedAudioPath = permanentFile.absolutePath
+
                             transcriptionResult = result
                             transcriptionError = null
                         }
                     } catch (e: Exception) {
                         transcriptionError = "음성 변환에 실패했어요."
+                        audioFile.delete()
                     } finally {
                         isTranscribing = false
-                        audioFile.delete()
                     }
                 }
             }
@@ -382,10 +392,11 @@ class MemoPlainNavigationImpl @Inject constructor(
                 onAutoSave = { memo ->
                     @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
                     GlobalScope.launch {
+                        val memoWithAudio = memo.copy(audioPath = savedAudioPath ?: memo.audioPath)
                         if (savedMemoId > 0) {
-                            repository.updateMemo(memo.copy(id = savedMemoId).toEntity())
-                        } else if (memo.name.isNotBlank() || memo.content.isNotBlank()) {
-                            val newId = repository.addMemo(memo.toEntity())
+                            repository.updateMemo(memoWithAudio.copy(id = savedMemoId).toEntity())
+                        } else if (memoWithAudio.name.isNotBlank() || memoWithAudio.content.isNotBlank()) {
+                            val newId = repository.addMemo(memoWithAudio.toEntity())
                             savedMemoId = newId.toInt()
                         }
                     }
@@ -400,6 +411,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                 isTranscribing = isTranscribing,
                 transcriptionResult = transcriptionResult,
                 transcriptionError = transcriptionError,
+                audioPath = savedAudioPath,
                 onYoutubeDetected = { videoId ->
                     scope.launch {
                         val title = captionService.fetchTitle(videoId)
@@ -463,13 +475,13 @@ class MemoPlainNavigationImpl @Inject constructor(
                 },
                 onSave = { memo ->
                     scope.launch {
+                        val memoWithAudio = memo.copy(audioPath = savedAudioPath ?: memo.audioPath)
                         if (savedMemoId > 0) {
-                            // 자동저장으로 이미 생성된 메모 → update
-                            repository.updateMemo(memo.copy(id = savedMemoId).toEntity())
+                            repository.updateMemo(memoWithAudio.copy(id = savedMemoId).toEntity())
                         } else if (memoId > 0 && existingMemo != null) {
-                            repository.updateMemo(memo.toEntity())
+                            repository.updateMemo(memoWithAudio.toEntity())
                         } else {
-                            repository.addMemo(memo.toEntity())
+                            repository.addMemo(memoWithAudio.toEntity())
                         }
                         onNavigateToHome()
                     }
@@ -488,7 +500,8 @@ class MemoPlainNavigationImpl @Inject constructor(
         id = id,
         name = name,
         categoryId = categoryId,
-        content = content
+        content = content,
+        audioPath = audioPath
     )
 
     private suspend fun summarizeVideo(

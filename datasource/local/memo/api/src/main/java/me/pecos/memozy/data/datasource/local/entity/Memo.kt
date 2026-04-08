@@ -14,5 +14,6 @@ data class Memo(
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
     val format: MemoFormat = MemoFormat.PLAIN,
-    val isPinned: Boolean = false
+    val isPinned: Boolean = false,
+    val audioPath: String? = null
 )
