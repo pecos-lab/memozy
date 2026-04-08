@@ -325,8 +325,9 @@ class MemoPlainNavigationImpl @Inject constructor(
                 mediaRecorder = null
                 isRecording = false
 
-                if (!audioFile.exists() || audioFile.length() == 0L) {
-                    transcriptionError = "녹음 파일이 비어있어요."
+                if (!audioFile.exists() || audioFile.length() < 1024) {
+                    transcriptionError = "녹음이 너무 짧아요. 다시 시도해주세요."
+                    audioFile.delete()
                     return
                 }
 
@@ -336,8 +337,14 @@ class MemoPlainNavigationImpl @Inject constructor(
                         val audioBytes = audioFile.readBytes()
                         val base64 = Base64.encodeToString(audioBytes, Base64.NO_WRAP)
                         val result = aiApiService.transcribeAudio(base64, "audio/mp4")
-                        transcriptionResult = result
-                        transcriptionError = null
+                        // Gemini가 프롬프트를 그대로 반환하는 경우 필터링
+                        if (result.contains("받아쓰기") || result.contains("텍스트만 출력") || result.isBlank()) {
+                            transcriptionError = "음성이 감지되지 않았어요. 다시 시도해주세요."
+                            transcriptionResult = null
+                        } else {
+                            transcriptionResult = result
+                            transcriptionError = null
+                        }
                     } catch (e: Exception) {
                         transcriptionError = "음성 변환에 실패했어요."
                     } finally {
