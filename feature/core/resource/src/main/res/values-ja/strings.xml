@@ -77,6 +77,18 @@
     <string name="donation_error_message">決済処理中に問題が発生しました。\nもう一度お試しください。</string>
     <string name="donation_loading">接続中…</string>
 
+    <!-- Export -->
+    <string name="memo_share">テキストで共有</string>
+    <string name="memo_export_md">Markdownで書き出し</string>
+
+    <!-- Backup -->
+    <string name="backup_export">バックアップを書き出す</string>
+    <string name="backup_restore">バックアップを復元</string>
+    <string name="backup_restore_action">復元</string>
+    <string name="backup_restore_confirm">既存のメモをすべて削除し、バックアップファイルから復元します。\nこの操作は元に戻せません。</string>
+    <string name="backup_success">%d件のメモを処理しました</string>
+    <string name="backup_error">バックアップ処理中にエラーが発生しました</string>
+
     <!-- Trash -->
     <string name="trash_title">ゴミ箱</string>
     <string name="trash_empty">ゴミ箱は空です</string>
