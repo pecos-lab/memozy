@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import me.pecos.memozy.feature.core.resource.CATEGORY_EMOJIS
 import me.pecos.memozy.feature.core.resource.CATEGORY_RES_IDS
 import me.pecos.memozy.presentation.screen.home.model.MemoUiState
+import me.pecos.memozy.presentation.screen.home.model.TagUiState
 import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.presentation.screen.home.util.formatMemoTime
 import me.pecos.memozy.presentation.theme.LocalAppColors
@@ -43,7 +44,8 @@ import me.pecos.memozy.presentation.theme.LocalAppColors
 
 @Composable
 fun MemoCardItem(
-    memo: MemoUiState
+    memo: MemoUiState,
+    tags: List<TagUiState> = emptyList()
 ) {
     val colors = LocalAppColors.current
     val context = LocalContext.current
@@ -98,18 +100,29 @@ fun MemoCardItem(
                             color = colors.textSecondary.copy(alpha = 0.7f)
                         )
                     }
-                    if (memo.categoryId in 1..CATEGORY_RES_IDS.size) {
-                        val categoryIndex = memo.categoryId - 1
-                        val categoryLabel = "${CATEGORY_EMOJIS[categoryIndex]} ${stringResource(CATEGORY_RES_IDS[categoryIndex])}"
+                    if (tags.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = categoryLabel,
-                            fontSize = 11.sp,
-                            color = colors.chipText,
-                            modifier = Modifier
-                                .background(colors.chipBackground, RoundedCornerShape(50))
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
-                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            tags.take(2).forEach { tag ->
+                                Text(
+                                    text = tag.name,
+                                    fontSize = 10.sp,
+                                    color = colors.chipText,
+                                    maxLines = 1,
+                                    modifier = Modifier
+                                        .background(colors.chipBackground, RoundedCornerShape(50))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                            if (tags.size > 2) {
+                                Text(
+                                    text = "+${tags.size - 2}",
+                                    fontSize = 10.sp,
+                                    color = colors.textSecondary,
+                                    modifier = Modifier.padding(start = 2.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }

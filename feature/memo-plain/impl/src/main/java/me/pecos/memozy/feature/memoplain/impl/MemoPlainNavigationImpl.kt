@@ -56,12 +56,25 @@ class MemoPlainNavigationImpl @Inject constructor(
     private val aiApiService: AIApiService,
     private val youtubeSummaryDao: YoutubeSummaryDao,
     private val captionService: YouTubeCaptionService,
-    private val aiUsageDao: AiUsageDao
+    private val aiUsageDao: AiUsageDao,
+    private val tagDao: me.pecos.memozy.data.datasource.local.TagDao
 ) : MemoPlainNavigation {
+
+    private suspend fun autoTag(memoId: Int, tagName: String) {
+        if (memoId <= 0) return
+        // 태그가 없으면 생성
+        val allTags = tagDao.getAllTagsOnce()
+        val tag = allTags.firstOrNull { it.name == tagName }
+            ?: run {
+                val newId = tagDao.insertTag(me.pecos.memozy.data.datasource.local.entity.Tag(name = tagName))
+                me.pecos.memozy.data.datasource.local.entity.Tag(id = newId.toInt(), name = tagName)
+            }
+        tagDao.insertMemoTag(me.pecos.memozy.data.datasource.local.entity.MemoTag(memoId = memoId, tagId = tag.id))
+    }
 
     companion object {
         private const val FEATURE_YOUTUBE_SUMMARY = "youtube_summary"
-        private const val DAILY_FREE_LIMIT = 5
+        private const val DAILY_FREE_LIMIT = 100
 
         private fun startOfToday(): Long {
             return Calendar.getInstance().apply {
@@ -166,9 +179,12 @@ class MemoPlainNavigationImpl @Inject constructor(
                                 "영상이 너무 길어 요약할 수 없어요. 약 30분 이하 영상을 시도해주세요."
                             e.message?.contains("Rate limit") == true ->
                                 "요청이 너무 많아요. 잠시 후 다시 시도해주세요."
+                            e.message?.contains("503") == true || e.message?.contains("UNAVAILABLE") == true ||
+                            e.message?.contains("high demand") == true ->
+                                "AI 서버가 일시적으로 바빠요. 잠시 후 다시 시도해주세요."
                             e.message?.contains("timeout") == true || e.message?.contains("Timeout") == true ->
                                 "응답 시간이 초과됐어요. 더 짧은 영상을 시도해주세요."
-                            else -> e.message ?: "요약 실패"
+                            else -> "요약 중 오류가 발생했어요. 다시 시도해주세요."
                         }
                         summaryState = SummaryState.Error(errorMsg)
                     }
@@ -217,7 +233,8 @@ class MemoPlainNavigationImpl @Inject constructor(
                             },
                             isPinned = it.isPinned,
                             audioPath = it.audioPath,
-                            styles = it.styles
+                            styles = it.styles,
+                            youtubeUrl = it.youtubeUrl
                         )
                     }
                     memoLoaded = true
@@ -372,10 +389,12 @@ class MemoPlainNavigationImpl @Inject constructor(
                             transcriptionResult = null
                             audioFile.delete()
                         } else {
-                            // 오디오 파일을 영구 저장소로 이동
+                            // 오디오 파일을 영구 저장소로 이동 (제목과 동일한 파일명)
                             val audioDir = java.io.File(context.filesDir, "audio")
                             if (!audioDir.exists()) audioDir.mkdirs()
-                            val permanentFile = java.io.File(audioDir, "recording_${System.currentTimeMillis()}.m4a")
+                            val now = java.text.SimpleDateFormat("yy.MM.dd HH:mm", java.util.Locale.getDefault()).format(java.util.Date())
+                            val safeFileName = "$now 녹음".replace(":", "-").replace("/", "-")
+                            val permanentFile = java.io.File(audioDir, "$safeFileName.m4a")
                             audioFile.copyTo(permanentFile, overwrite = true)
                             audioFile.delete()
                             savedAudioPath = permanentFile.absolutePath
@@ -474,6 +493,9 @@ class MemoPlainNavigationImpl @Inject constructor(
                                     "영상이 너무 길어 요약할 수 없어요. 약 30분 이하 영상을 시도해주세요."
                                 e.message?.contains("Rate limit") == true ->
                                     "요청이 너무 많아요. 잠시 후 다시 시도해주세요."
+                                e.message?.contains("503") == true || e.message?.contains("UNAVAILABLE") == true ||
+                                e.message?.contains("high demand") == true ->
+                                    "AI 서버가 일시적으로 바빠요. 잠시 후 다시 시도해주세요."
                                 e.message?.contains("timeout") == true || e.message?.contains("Timeout") == true ->
                                     "응답 시간이 초과됐어요. 더 짧은 영상을 시도해주세요."
                                 else -> "요약 중 오류가 발생했어요. 다시 시도해주세요."
@@ -485,12 +507,23 @@ class MemoPlainNavigationImpl @Inject constructor(
                 onSave = { memo ->
                     scope.launch {
                         val memoWithAudio = memo.copy(audioPath = savedAudioPath ?: memo.audioPath)
+                        val finalMemoId: Int
                         if (savedMemoId > 0) {
                             repository.updateMemo(memoWithAudio.copy(id = savedMemoId).toEntity())
+                            finalMemoId = savedMemoId
                         } else if (memoId > 0 && existingMemo != null) {
                             repository.updateMemo(memoWithAudio.toEntity())
+                            finalMemoId = memoId
                         } else {
-                            repository.addMemo(memoWithAudio.toEntity())
+                            finalMemoId = repository.addMemo(memoWithAudio.toEntity()).toInt()
+                        }
+                        // 자동 태그 부여
+                        if (memoWithAudio.audioPath != null) {
+                            autoTag(finalMemoId, "녹음")
+                        }
+                        val youtubeRegex = Regex("""(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)""")
+                        if (youtubeRegex.containsMatchIn(memoWithAudio.content) || inlineSummaryState is SummaryState.Success) {
+                            autoTag(finalMemoId, "유튜브")
                         }
                         onNavigateToHome()
                     }
@@ -511,7 +544,8 @@ class MemoPlainNavigationImpl @Inject constructor(
         categoryId = categoryId,
         content = content,
         audioPath = audioPath,
-        styles = styles
+        styles = styles,
+        youtubeUrl = youtubeUrl
     )
 
     private suspend fun summarizeVideo(

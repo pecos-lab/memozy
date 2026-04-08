@@ -104,11 +104,7 @@ class AIApiServiceImpl @Inject constructor(
     }
 
     override suspend fun transcribeAudio(audioBase64: String, mimeType: String, durationSeconds: Long): String {
-        val prompt = if (durationSeconds >= 60) {
-            "이 오디오를 한국어로 받아쓰기해줘. 30초 간격으로 타임스탬프를 포함해서 [MM:SS] 형식으로 구분해줘. 타임스탬프와 텍스트만 출력하고 다른 설명은 하지 마."
-        } else {
-            "이 오디오를 한국어로 받아쓰기해줘. 텍스트만 출력하고 다른 설명은 하지 마."
-        }
+        val prompt = "이 오디오를 한국어로 받아쓰기해줘. 텍스트만 출력하고 다른 설명은 하지 마."
 
         val request = GeminiRequest(
             contents = listOf(

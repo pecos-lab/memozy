@@ -16,14 +16,23 @@ import me.pecos.memozy.data.repository.model.MemoFormat
 import me.pecos.memozy.presentation.screen.home.model.MemoFormatUi
 import me.pecos.memozy.presentation.screen.home.model.MemoUiState
 import me.pecos.memozy.presentation.screen.home.model.SortOrder
+import me.pecos.memozy.data.datasource.local.TagDao
 import me.pecos.memozy.data.datasource.local.entity.Memo
+import me.pecos.memozy.data.datasource.local.entity.Tag
 import me.pecos.memozy.data.repository.MemoRepository
+import me.pecos.memozy.presentation.screen.home.model.TagUiState
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val repository: MemoRepository
+    private val repository: MemoRepository,
+    private val tagDao: TagDao
 ) : ViewModel() {
+
+    // 전체 태그 목록
+    val allTags = tagDao.getAllTags()
+        .map { list -> list.map { TagUiState(it.id, it.name, it.emoji) } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val uiState = repository.getMemos()
         .map { list -> list.map { it.toUiState() } }
@@ -43,12 +52,32 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    // -1 = 전체, 0~7 = 카테고리 인덱스
-    private val _selectedCategoryIndex = MutableStateFlow(-1)
-    val selectedCategoryIndex: StateFlow<Int> = _selectedCategoryIndex
+    // -1 = 전체, 0+ = 태그 ID
+    private val _selectedTagId = MutableStateFlow(-1)
+    val selectedTagId: StateFlow<Int> = _selectedTagId
+
+    // 하위호환: 기존 HomeScreen에서 사용
+    val selectedCategoryIndex: StateFlow<Int> = _selectedTagId
 
     fun setSelectedCategory(index: Int) {
-        _selectedCategoryIndex.value = index
+        _selectedTagId.value = index
+    }
+
+    fun setSelectedTag(tagId: Int) {
+        _selectedTagId.value = tagId
+    }
+
+    // 메모별 태그 로드
+    private val _memoTags = MutableStateFlow<Map<Int, List<TagUiState>>>(emptyMap())
+    val memoTags: StateFlow<Map<Int, List<TagUiState>>> = _memoTags
+
+    fun loadMemoTags(memoIds: List<Int>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val tagsMap = memoIds.associateWith { memoId ->
+                tagDao.getTagsForMemo(memoId).map { TagUiState(it.id, it.name, it.emoji) }
+            }
+            _memoTags.value = tagsMap
+        }
     }
 
     private val _searchQuery = MutableStateFlow("")
@@ -66,11 +95,18 @@ class MainViewModel @Inject constructor(
     }
 
     val filteredList: StateFlow<List<MemoUiState>> = combine(
-        uiState, _selectedCategoryIndex, _searchQuery, _sortOrder
-    ) { list, categoryIndex, query, sort ->
+        uiState, _selectedTagId, _searchQuery, _sortOrder, _memoTags
+    ) { list, tagId, query, sort, tagsMap ->
+        val youtubeRegex = Regex("""(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)""")
         list
             .filter { memo ->
-                categoryIndex == -1 || memo.categoryId == categoryIndex + 1
+                when (tagId) {
+                    -1 -> true // 전체
+                    -2 -> memo.audioPath == null && !youtubeRegex.containsMatchIn(memo.content) // 일반 메모
+                    -3 -> youtubeRegex.containsMatchIn(memo.content) // 유튜브
+                    -4 -> memo.audioPath != null // 녹음
+                    else -> tagsMap[memo.id]?.any { it.id == tagId } == true // 사용자 태그
+                }
             }
             .filter { memo ->
                 if (query.isBlank()) true
@@ -95,6 +131,18 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun createTag(name: String, emoji: String = "🏷️") {
+        viewModelScope.launch {
+            tagDao.insertTag(Tag(name = name, emoji = emoji))
+        }
+    }
+
+    fun deleteTag(tagId: Int) {
+        viewModelScope.launch {
+            tagDao.deleteTagById(tagId)
+        }
+    }
+
     fun togglePin(memo: MemoUiState) {
         viewModelScope.launch {
             repository.updateMemo(memo.copy(isPinned = !memo.isPinned).toMemo())
@@ -115,7 +163,8 @@ fun MemoUiState.toMemo(): Memo = Memo(
     },
     isPinned = this.isPinned,
     audioPath = this.audioPath,
-    styles = this.styles
+    styles = this.styles,
+    youtubeUrl = this.youtubeUrl
 )
 
 fun Memo.toUiState(): MemoUiState = MemoUiState(
@@ -131,5 +180,6 @@ fun Memo.toUiState(): MemoUiState = MemoUiState(
     },
     isPinned = this.isPinned,
     audioPath = this.audioPath,
-    styles = this.styles
+    styles = this.styles,
+    youtubeUrl = this.youtubeUrl
 )

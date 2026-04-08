@@ -45,6 +45,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -84,72 +85,28 @@ fun HomeScreen(
     viewModel: MainViewModel
 ) {
     val colors = LocalAppColors.current
-    val selectedCategoryIndex by viewModel.selectedCategoryIndex.collectAsState()
+    val selectedTagId by viewModel.selectedTagId.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val sortOrder by viewModel.sortOrder.collectAsState()
     val filteredList by viewModel.filteredList.collectAsState()
+    val allTags by viewModel.allTags.collectAsState()
+    val memoTags by viewModel.memoTags.collectAsState()
+    // 하위호환
+    val selectedCategoryIndex = selectedTagId
+
+    // 메모 태그 로드
+    LaunchedEffect(filteredList) {
+        viewModel.loadMemoTags(filteredList.map { it.id })
+    }
+
     // 스와이프 열린 카드 추적 — null이면 모두 닫힌 상태
     var swipedOpenId by remember { mutableStateOf<Int?>(null) }
     val listState = remember(sortOrder) { LazyListState() }
-    var showFilterDialog by remember { mutableStateOf(false) }
-    var tempCategoryIndex by remember(showFilterDialog, selectedCategoryIndex) { mutableIntStateOf(selectedCategoryIndex) }
+    // 태그 추가 다이얼로그
+    var showAddTagDialog by remember { mutableStateOf(false) }
 
-    val categoryLabels = CATEGORY_RES_IDS.mapIndexed { index, resId ->
-        "${CATEGORY_EMOJIS[index]} ${stringResource(resId)}"
-    }
-    val allLabel = "🗂️ ${stringResource(R.string.category_all)}"
-    val currentLabel = if (selectedCategoryIndex == -1) allLabel else categoryLabels[selectedCategoryIndex]
-
-    // ── 카테고리 필터 Popup ────────────────────────────────────────────────────
-    if (showFilterDialog) {
-        AppPopup(
-            onDismissRequest = { showFilterDialog = false },
-            title = stringResource(R.string.category_settings),
-            navigation = PopupNavigation.EMPHASIZED,
-            size = PopupSize.LARGE,
-            actionArea = PopupActionArea.NEUTRAL,
-            primaryButtonText = stringResource(R.string.save),
-            onPrimaryClick = {
-                viewModel.setSelectedCategory(tempCategoryIndex)
-                showFilterDialog = false
-            },
-            secondaryButtonText = stringResource(R.string.cancel),
-            onSecondaryClick = { showFilterDialog = false }
-        ) {
-            FlowRow(
-                maxItemsInEachRow = 3,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                val orderedIndices = listOf(-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-                orderedIndices.forEach { index ->
-                    val label = if (index == -1) allLabel else categoryLabels[index]
-                    val selected = tempCategoryIndex == index
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (selected) colors.chipBackground else Color.Transparent)
-                            .border(
-                                1.dp,
-                                if (selected) colors.chipText else colors.cardBorder,
-                                RoundedCornerShape(12.dp)
-                            )
-                            .clickable { tempCategoryIndex = index }
-                            .padding(horizontal = 4.dp, vertical = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = label, maxLines = 1, fontSize = 11.sp,
-                            color = if (selected) colors.chipText else colors.textSecondary
-                        )
-                    }
-                }
-            }
-        }
-    }
+    // 자동 뷰 필터 타입
+    // -1 = 전체, -2 = 일반메모, -3 = 유튜브, -4 = 녹음, 양수 = 사용자 태그 ID
 
     // containerColor 명시 → MaterialTheme.colorScheme.surface 무시
     Scaffold(containerColor = colors.screenBackground) { innerPadding ->
@@ -189,31 +146,72 @@ fun HomeScreen(
                     )
                 }
 
-                // 카테고리 필터 + 정렬 버튼
+                // 태그 필터 (드롭다운) + 정렬 버튼
+                var showFilterMenu by remember { mutableStateOf(false) }
+                val autoViews = listOf(
+                    -1 to "전체",
+                    -2 to "메모",
+                    -3 to "유튜브",
+                    -4 to "녹음"
+                )
+                val currentLabel = autoViews.firstOrNull { it.first == selectedTagId }?.second
+                    ?: allTags.firstOrNull { it.id == selectedTagId }?.name
+                    ?: "전체"
+
                 Row(
                     modifier = Modifier.padding(start = 16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .border(1.5.dp, colors.cardBorder, RoundedCornerShape(12.dp))
-                            .clickable { showFilterDialog = true }
-                            .padding(horizontal = 14.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = currentLabel,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = colors.textSecondary
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowDown,
-                            contentDescription = null,
-                            tint = colors.textSecondary,
-                            modifier = Modifier.size(16.dp)
-                        )
+                    Box {
+                        Row(
+                            modifier = Modifier
+                                .border(1.5.dp, colors.cardBorder, RoundedCornerShape(12.dp))
+                                .clickable { showFilterMenu = true }
+                                .padding(horizontal = 14.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = currentLabel,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = colors.textSecondary
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowDown,
+                                contentDescription = null,
+                                tint = colors.textSecondary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        androidx.compose.material3.DropdownMenu(
+                            expanded = showFilterMenu,
+                            onDismissRequest = { showFilterMenu = false }
+                        ) {
+                            // 자동 뷰
+                            autoViews.forEach { (id, label) ->
+                                androidx.compose.material3.DropdownMenuItem(
+                                    text = { Text(label, fontWeight = if (selectedTagId == id) FontWeight.Bold else FontWeight.Normal) },
+                                    onClick = { viewModel.setSelectedTag(id); showFilterMenu = false }
+                                )
+                            }
+                            if (allTags.isNotEmpty()) {
+                                androidx.compose.material3.HorizontalDivider()
+                                // 사용자 태그
+                                allTags.forEach { tag ->
+                                    androidx.compose.material3.DropdownMenuItem(
+                                        text = { Text(tag.name, fontWeight = if (selectedTagId == tag.id) FontWeight.Bold else FontWeight.Normal) },
+                                        onClick = { viewModel.setSelectedTag(tag.id); showFilterMenu = false }
+                                    )
+                                }
+                            }
+                            androidx.compose.material3.HorizontalDivider()
+                            // 태그 추가
+                            androidx.compose.material3.DropdownMenuItem(
+                                text = { Text("+ 태그 추가", color = colors.chipText) },
+                                onClick = { showFilterMenu = false; showAddTagDialog = true }
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Row(
@@ -354,7 +352,7 @@ fun HomeScreen(
                                         }
                                     }
                             ) {
-                                MemoCardItem(memo = memo)
+                                MemoCardItem(memo = memo, tags = memoTags[memo.id] ?: emptyList())
                             }
                         }
                     }
@@ -385,6 +383,39 @@ fun HomeScreen(
                 }
             }
         }
+    }
+
+    // 태그 추가 다이얼로그
+    if (showAddTagDialog) {
+        var tagName by remember { mutableStateOf("") }
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showAddTagDialog = false },
+            title = { Text("태그 추가", fontWeight = FontWeight.Bold) },
+            text = {
+                androidx.compose.material3.OutlinedTextField(
+                    value = tagName,
+                    onValueChange = { tagName = it },
+                    placeholder = { Text("태그 이름") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = {
+                        if (tagName.isNotBlank()) {
+                            viewModel.createTag(tagName.trim())
+                            showAddTagDialog = false
+                        }
+                    }
+                ) { Text("추가") }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = { showAddTagDialog = false }
+                ) { Text("취소") }
+            }
+        )
     }
 }
 

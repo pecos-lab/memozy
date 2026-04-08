@@ -15,9 +15,14 @@ import me.pecos.memozy.data.datasource.local.MIGRATION_3_4
 import me.pecos.memozy.data.datasource.local.MIGRATION_4_5
 import me.pecos.memozy.data.datasource.local.MIGRATION_5_6
 import me.pecos.memozy.data.datasource.local.MIGRATION_6_7
+import me.pecos.memozy.data.datasource.local.MIGRATION_7_8
+import me.pecos.memozy.data.datasource.local.MIGRATION_8_9
+import me.pecos.memozy.data.datasource.local.MIGRATION_9_10
+import me.pecos.memozy.data.datasource.local.MIGRATION_10_11
 import me.pecos.memozy.data.datasource.local.AiUsageDao
 import me.pecos.memozy.data.datasource.local.MemoDao
 import me.pecos.memozy.data.datasource.local.MemoDatabase
+import me.pecos.memozy.data.datasource.local.TagDao
 import me.pecos.memozy.data.datasource.local.YoutubeSummaryDao
 import me.pecos.memozy.data.datasource.local.chat.ChatMessageDao
 import me.pecos.memozy.data.datasource.local.chat.ChatSessionDao
@@ -68,5 +73,10 @@ object DatabaseModule {
     @Provides
     fun provideAiUsageDao(database: MemoDatabase): AiUsageDao {
         return database.aiUsageDao()
+    }
+
+    @Provides
+    fun provideTagDao(database: MemoDatabase): TagDao {
+        return database.tagDao()
     }
 }
