@@ -98,4 +98,13 @@
     <string name="trash_permanent_delete_action">영구 삭제</string>
     <string name="trash_permanent_delete_message">이 메모를 영구적으로 삭제합니다.\n복원할 수 없습니다.</string>
     <string name="trash_auto_delete_hint">삭제된 메모는 30일 후 자동으로 영구 삭제됩니다</string>
+
+    <!-- Quiz -->
+    <string name="quiz_title">메모 퀴즈</string>
+    <string name="quiz_generating">퀴즈를 만들고 있어요…</string>
+    <string name="quiz_retry">다시 도전</string>
+    <string name="quiz_next">다음 문제</string>
+    <string name="quiz_show_result">결과 보기</string>
+    <string name="quiz_explanation">해설</string>
+    <string name="quiz_back">돌아가기</string>
 </resources>

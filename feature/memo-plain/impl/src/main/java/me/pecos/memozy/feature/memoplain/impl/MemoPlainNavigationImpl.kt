@@ -129,7 +129,8 @@ class MemoPlainNavigationImpl @Inject constructor(
     override fun registerGraph(
         navGraphBuilder: NavGraphBuilder,
         onNavigateToHome: () -> Unit,
-        onBack: () -> Unit
+        onBack: () -> Unit,
+        onNavigateToQuiz: ((memoId: Int) -> Unit)?
     ) {
         navGraphBuilder.composable(MemoPlainRoute.MEMO) { backStackEntry ->
             val memoIdStr = backStackEntry.arguments?.getString("memoId") ?: ""
@@ -537,6 +538,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                 webSummaryResult = webSummaryResult,
                 webSummaryError = webSummaryError,
                 webPageTitle = webPageTitle,
+                onQuiz = if (onNavigateToQuiz != null) { id -> onNavigateToQuiz(id) } else null,
                 onSetReminder = { id, reminderAt ->
                     scope.launch {
                         repository.setReminder(id, reminderAt)
