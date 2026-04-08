@@ -10,6 +10,8 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import me.pecos.memozy.data.datasource.local.entity.Category
 import me.pecos.memozy.data.datasource.local.entity.Memo
 import me.pecos.memozy.data.datasource.local.entity.AiUsage
+import me.pecos.memozy.data.datasource.local.entity.MemoTag
+import me.pecos.memozy.data.datasource.local.entity.Tag
 import me.pecos.memozy.data.datasource.local.entity.YoutubeSummary
 import me.pecos.memozy.data.datasource.local.converter.MemoFormatConverter
 import me.pecos.memozy.data.datasource.local.chat.ChatMessageDao
@@ -147,6 +149,60 @@ val MIGRATION_9_10 = object : Migration(9, 10) {
     }
 }
 
+val MIGRATION_10_11 = object : Migration(10, 11) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        // 1. tag 테이블 생성
+        database.execSQL("""
+            CREATE TABLE IF NOT EXISTS `tag` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `name` TEXT NOT NULL,
+                `emoji` TEXT NOT NULL DEFAULT '🏷️',
+                `createdAt` INTEGER NOT NULL DEFAULT 0
+            )
+        """.trimIndent())
+
+        // 2. memo_tag 중간 테이블 생성
+        database.execSQL("""
+            CREATE TABLE IF NOT EXISTS `memo_tag` (
+                `memoId` INTEGER NOT NULL,
+                `tagId` INTEGER NOT NULL,
+                PRIMARY KEY(`memoId`, `tagId`),
+                FOREIGN KEY(`memoId`) REFERENCES `memo`(`id`) ON DELETE CASCADE,
+                FOREIGN KEY(`tagId`) REFERENCES `tag`(`id`) ON DELETE CASCADE
+            )
+        """.trimIndent())
+        database.execSQL("CREATE INDEX IF NOT EXISTS `index_memo_tag_memoId` ON `memo_tag` (`memoId`)")
+        database.execSQL("CREATE INDEX IF NOT EXISTS `index_memo_tag_tagId` ON `memo_tag` (`tagId`)")
+
+        // 3. 기존 카테고리를 태그로 마이그레이션
+        val categoryEmojis = mapOf(
+            1 to "📝", 2 to "💼", 3 to "💡", 4 to "✅", 5 to "📚",
+            6 to "📅", 7 to "💰", 8 to "🏃", 9 to "🏥", 10 to "✈️", 11 to "🛒"
+        )
+        val cursor = database.query("SELECT DISTINCT categoryId FROM memo WHERE categoryId BETWEEN 1 AND 11")
+        while (cursor.moveToNext()) {
+            val catId = cursor.getInt(0)
+            val emoji = categoryEmojis[catId] ?: "🏷️"
+            // 카테고리 이름 조회
+            val nameCursor = database.query("SELECT name FROM category WHERE id = $catId")
+            val name = if (nameCursor.moveToFirst()) nameCursor.getString(0) else "태그$catId"
+            nameCursor.close()
+            // 태그 삽입 (같은 ID 사용)
+            database.execSQL("INSERT OR IGNORE INTO `tag` (`id`, `name`, `emoji`, `createdAt`) VALUES ($catId, '$name', '$emoji', ${System.currentTimeMillis()})")
+        }
+        cursor.close()
+
+        // 4. 기존 memo.categoryId → memo_tag 연결
+        database.execSQL("INSERT OR IGNORE INTO `memo_tag` (`memoId`, `tagId`) SELECT `id`, `categoryId` FROM `memo` WHERE `categoryId` BETWEEN 1 AND 11")
+    }
+}
+
+val MIGRATION_11_12 = object : Migration(11, 12) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("ALTER TABLE memo ADD COLUMN youtubeUrl TEXT DEFAULT NULL")
+    }
+}
+
 private val PREPOPULATE_CALLBACK = object : RoomDatabase.Callback() {
     override fun onCreate(db: SupportSQLiteDatabase) {
         super.onCreate(db)
@@ -156,8 +212,8 @@ private val PREPOPULATE_CALLBACK = object : RoomDatabase.Callback() {
 
 @TypeConverters(MemoFormatConverter::class)
 @Database(
-    entities = [Memo::class, Category::class, ChatSession::class, ChatMessage::class, YoutubeSummary::class, AiUsage::class],
-    version = 10,
+    entities = [Memo::class, Category::class, ChatSession::class, ChatMessage::class, YoutubeSummary::class, AiUsage::class, Tag::class, MemoTag::class],
+    version = 12,
     exportSchema = true
 )
 abstract class MemoDatabase : RoomDatabase() {
@@ -167,6 +223,7 @@ abstract class MemoDatabase : RoomDatabase() {
     abstract fun chatMessageDao(): ChatMessageDao
     abstract fun youtubeSummaryDao(): YoutubeSummaryDao
     abstract fun aiUsageDao(): AiUsageDao
+    abstract fun tagDao(): TagDao
 
     companion object {
         @Volatile
@@ -179,7 +236,7 @@ abstract class MemoDatabase : RoomDatabase() {
                     MemoDatabase::class.java,
                     "memo_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
                     .addCallback(PREPOPULATE_CALLBACK)
                     .build()
                 INSTANCE = instance

@@ -10,5 +10,13 @@ data class MemoUiState(
     val format: MemoFormatUi = MemoFormatUi.PLAIN,
     val isPinned: Boolean = false,
     val audioPath: String? = null,
-    val styles: String? = null
+    val styles: String? = null,
+    val youtubeUrl: String? = null,
+    val tags: List<TagUiState> = emptyList()
+)
+
+data class TagUiState(
+    val id: Int,
+    val name: String,
+    val emoji: String = "🏷️"
 )

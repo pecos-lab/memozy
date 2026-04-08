@@ -16,5 +16,6 @@ data class Memo(
     val format: MemoFormat = MemoFormat.PLAIN,
     val isPinned: Boolean = false,
     val audioPath: String? = null,
-    val styles: String? = null // JSON: [{start,end,bold,italic,strikethrough,color}]
+    val styles: String? = null, // JSON: [{start,end,bold,italic,strikethrough,color}]
+    val youtubeUrl: String? = null
 )
