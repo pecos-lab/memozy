@@ -52,4 +52,8 @@ class MemoRepositoryImpl @Inject constructor(private val memoDao: MemoDao) : Mem
     }
 
     override fun getTrashCount(): Flow<Int> = memoDao.getTrashCount()
+
+    override suspend fun setReminder(id: Int, reminderAt: Long?) {
+        memoDao.setReminder(id, reminderAt)
+    }
 }

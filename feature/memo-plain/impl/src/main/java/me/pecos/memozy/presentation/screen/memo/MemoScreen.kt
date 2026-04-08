@@ -35,14 +35,20 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.SmartDisplay
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -189,6 +195,7 @@ fun MemoScreen(
     webSummaryResult: String? = null,
     webSummaryError: String? = null,
     webPageTitle: String? = null,
+    onSetReminder: ((memoId: Int, reminderAt: Long?) -> Unit)? = null,
     existingMemo: MemoUiState = MemoUiState(0, "", 1, "")
 ) {
     val isNewMemo = existingMemo.id <= 0
@@ -1048,6 +1055,50 @@ fun MemoScreen(
                     }
                 }
 
+                // ⏰ 리마인더
+                if (onSetReminder != null && !isNewMemo) {
+                    var showReminderPicker by remember { mutableStateOf(false) }
+                    val reminderTime = existingMemo.reminderAt
+                    val hasReminder = reminderTime != null && reminderTime > System.currentTimeMillis()
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(
+                                if (hasReminder) Color(0xFFFFA726).copy(alpha = 0.15f)
+                                else colors.chipBackground
+                            )
+                            .clickable { showReminderPicker = true }
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Notifications, contentDescription = null,
+                            tint = if (hasReminder) Color(0xFFFFA726) else colors.chipText,
+                            modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = if (hasReminder) "알림" else "알림",
+                            fontSize = 12.sp,
+                            color = if (hasReminder) Color(0xFFFFA726) else colors.chipText,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
+                    if (showReminderPicker) {
+                        ReminderPickerDialog(
+                            currentReminder = existingMemo.reminderAt,
+                            onDismiss = { showReminderPicker = false },
+                            onConfirm = { reminderAt ->
+                                onSetReminder(existingMemo.id, reminderAt)
+                                showReminderPicker = false
+                            },
+                            onCancel = {
+                                onSetReminder(existingMemo.id, null)
+                                showReminderPicker = false
+                            }
+                        )
+                    }
+                }
+
                 Spacer(modifier = Modifier.weight(1f))
             }
         } // outer Column
@@ -1212,6 +1263,76 @@ fun MemoScreen(
             dismissButton = {
                 TextButton(onClick = { showYoutubeDialog = false }) {
                     Text("취소", color = colors.textSecondary)
+                }
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ReminderPickerDialog(
+    currentReminder: Long?,
+    onDismiss: () -> Unit,
+    onConfirm: (Long) -> Unit,
+    onCancel: () -> Unit
+) {
+    val calendar = java.util.Calendar.getInstance()
+    if (currentReminder != null) calendar.timeInMillis = currentReminder
+
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = calendar.timeInMillis
+    )
+    var showTimePicker by remember { mutableStateOf(false) }
+    val colors = me.pecos.memozy.presentation.theme.LocalAppColors.current
+
+    if (!showTimePicker) {
+        DatePickerDialog(
+            onDismissRequest = onDismiss,
+            confirmButton = {
+                TextButton(onClick = { showTimePicker = true }) {
+                    Text("다음")
+                }
+            },
+            dismissButton = {
+                if (currentReminder != null) {
+                    TextButton(onClick = onCancel) {
+                        Text("알림 해제", color = Color(0xFFE24B4A))
+                    }
+                }
+                TextButton(onClick = onDismiss) {
+                    Text("취소")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    } else {
+        val timePickerState = rememberTimePickerState(
+            initialHour = calendar.get(java.util.Calendar.HOUR_OF_DAY),
+            initialMinute = calendar.get(java.util.Calendar.MINUTE)
+        )
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text("시간 선택") },
+            text = { TimePicker(state = timePickerState) },
+            confirmButton = {
+                TextButton(onClick = {
+                    val selectedDate = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
+                    val cal = java.util.Calendar.getInstance().apply {
+                        timeInMillis = selectedDate
+                        set(java.util.Calendar.HOUR_OF_DAY, timePickerState.hour)
+                        set(java.util.Calendar.MINUTE, timePickerState.minute)
+                        set(java.util.Calendar.SECOND, 0)
+                    }
+                    onConfirm(cal.timeInMillis)
+                }) {
+                    Text("확인")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) {
+                    Text("이전")
                 }
             }
         )

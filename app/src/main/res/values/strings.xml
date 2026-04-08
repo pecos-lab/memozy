@@ -6,4 +6,9 @@
     <string name="widget_description">최근 메모를 빠르게 확인하고 새 메모를 작성하세요</string>
     <string name="widget_empty">메모가 없어요</string>
     <string name="widget_untitled">제목 없음</string>
+
+    <!-- Reminder -->
+    <string name="reminder_notification_title">메모 리마인더</string>
+    <string name="reminder_channel_name">메모 알림</string>
+    <string name="reminder_channel_desc">메모 리마인더 알림</string>
 </resources>

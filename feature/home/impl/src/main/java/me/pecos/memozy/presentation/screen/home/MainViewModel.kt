@@ -165,7 +165,8 @@ fun MemoUiState.toMemo(): Memo = Memo(
     audioPath = this.audioPath,
     styles = this.styles,
     youtubeUrl = this.youtubeUrl,
-    deletedAt = this.deletedAt
+    deletedAt = this.deletedAt,
+    reminderAt = this.reminderAt
 )
 
 fun Memo.toUiState(): MemoUiState = MemoUiState(
@@ -183,5 +184,6 @@ fun Memo.toUiState(): MemoUiState = MemoUiState(
     audioPath = this.audioPath,
     styles = this.styles,
     youtubeUrl = this.youtubeUrl,
-    deletedAt = this.deletedAt
+    deletedAt = this.deletedAt,
+    reminderAt = this.reminderAt
 )

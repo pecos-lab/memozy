@@ -57,4 +57,9 @@ interface MemoDao {
 
     @Insert
     suspend fun insertMemos(memos: List<Memo>)
+
+    // ── Reminder ──
+
+    @Query("UPDATE memo SET reminderAt = :reminderAt WHERE id = :id")
+    suspend fun setReminder(id: Int, reminderAt: Long?)
 }
