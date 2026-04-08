@@ -28,7 +28,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -120,6 +123,12 @@ fun MemoScreen(
     summaryResult: String? = null,
     summaryError: String? = null,
     youtubeTitle: String? = null,
+    onStartRecording: (() -> Unit)? = null,
+    onStopRecording: (() -> Unit)? = null,
+    isRecording: Boolean = false,
+    isTranscribing: Boolean = false,
+    transcriptionResult: String? = null,
+    transcriptionError: String? = null,
     existingMemo: MemoUiState = MemoUiState(0, "", 1, "")
 ) {
     val isNewMemo = existingMemo.id <= 0
@@ -315,7 +324,75 @@ fun MemoScreen(
                     }
                 )
 
+                // 녹음 결과를 본문에 삽입
+                LaunchedEffect(transcriptionResult) {
+                    if (transcriptionResult != null) {
+                        bodyText = if (bodyText.isBlank()) transcriptionResult
+                        else "$bodyText\n\n$transcriptionResult"
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
+
+                // 녹음 버튼 + 상태
+                if (onStartRecording != null) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    ) {
+                        // 마이크 / 중지 버튼
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(if (isRecording) Color(0xFFE24B4A) else colors.chipBackground)
+                                .clickable {
+                                    if (isRecording) onStopRecording?.invoke()
+                                    else onStartRecording()
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = if (isRecording) Icons.Default.Stop else Icons.Default.Mic,
+                                contentDescription = null,
+                                tint = if (isRecording) Color.White else colors.chipText,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        when {
+                            isRecording -> Text(
+                                text = "🔴 녹음 중... 탭하여 중지",
+                                fontSize = 13.sp,
+                                color = Color(0xFFE24B4A),
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            isTranscribing -> {
+                                androidx.compose.material3.CircularProgressIndicator(
+                                    modifier = Modifier.size(14.dp),
+                                    strokeWidth = 2.dp,
+                                    color = colors.textSecondary
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "음성 변환 중...",
+                                    fontSize = 13.sp,
+                                    color = colors.textSecondary
+                                )
+                            }
+                            transcriptionError != null -> Text(
+                                text = "⚠️ $transcriptionError",
+                                fontSize = 13.sp,
+                                color = Color(0xFFE65100)
+                            )
+                            else -> Text(
+                                text = "음성으로 메모하기",
+                                fontSize = 13.sp,
+                                color = colors.textSecondary
+                            )
+                        }
+                    }
+                }
 
                 // 내용 — YouTube 링크 감지
                 var selectedYoutubeUrl by remember { mutableStateOf<String?>(null) }

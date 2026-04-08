@@ -17,10 +17,17 @@ data class GeminiContent(
 data class GeminiPart(
     val text: String? = null,
     val fileData: GeminiFileData? = null,
+    val inlineData: GeminiInlineData? = null,
 )
 
 @Serializable
 data class GeminiFileData(
     val mimeType: String,
     val fileUri: String,
+)
+
+@Serializable
+data class GeminiInlineData(
+    val mimeType: String,
+    val data: String, // base64 encoded
 )

@@ -1,7 +1,15 @@
 package me.pecos.memozy.feature.memoplain.impl
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.media.MediaRecorder
+import android.os.Build
+import android.util.Base64
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
@@ -217,6 +225,8 @@ class MemoPlainNavigationImpl @Inject constructor(
                     existingMemo ?: MemoUiState(0, "", 1, "")
                 }
 
+            val context = LocalContext.current
+
             // AI 사용량 체크 (일일 5회 제한)
             var dailyUsageCount by remember { mutableStateOf(0) }
             LaunchedEffect(Unit) {
@@ -230,6 +240,110 @@ class MemoPlainNavigationImpl @Inject constructor(
             LaunchedEffect(summaryState) {
                 if (summaryState !is SummaryState.Idle) {
                     inlineSummaryState = summaryState
+                }
+            }
+
+            // 녹음/STT 상태
+            var isRecording by remember { mutableStateOf(false) }
+            var isTranscribing by remember { mutableStateOf(false) }
+            var transcriptionResult by remember { mutableStateOf<String?>(null) }
+            var transcriptionError by remember { mutableStateOf<String?>(null) }
+            var mediaRecorder by remember { mutableStateOf<MediaRecorder?>(null) }
+            val audioFile = remember(context) { java.io.File(context.cacheDir, "recording.m4a") }
+
+            val permissionLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { granted ->
+                if (granted) {
+                    // 권한 획득 → 녹음 시작
+                    try {
+                        val recorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            MediaRecorder(context)
+                        } else {
+                            @Suppress("DEPRECATION")
+                            MediaRecorder()
+                        }
+                        recorder.apply {
+                            setAudioSource(MediaRecorder.AudioSource.MIC)
+                            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                            setAudioSamplingRate(16000)
+                            setAudioEncodingBitRate(64000)
+                            setOutputFile(audioFile.absolutePath)
+                            prepare()
+                            start()
+                        }
+                        mediaRecorder = recorder
+                        isRecording = true
+                        transcriptionError = null
+                    } catch (e: Exception) {
+                        transcriptionError = "녹음을 시작할 수 없어요."
+                    }
+                } else {
+                    transcriptionError = "마이크 권한이 필요해요."
+                }
+            }
+
+            fun startRecording() {
+                transcriptionResult = null
+                val hasPermission = ContextCompat.checkSelfPermission(
+                    context, Manifest.permission.RECORD_AUDIO
+                ) == PackageManager.PERMISSION_GRANTED
+                if (hasPermission) {
+                    try {
+                        val recorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            MediaRecorder(context)
+                        } else {
+                            @Suppress("DEPRECATION")
+                            MediaRecorder()
+                        }
+                        recorder.apply {
+                            setAudioSource(MediaRecorder.AudioSource.MIC)
+                            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                            setAudioSamplingRate(16000)
+                            setAudioEncodingBitRate(64000)
+                            setOutputFile(audioFile.absolutePath)
+                            prepare()
+                            start()
+                        }
+                        mediaRecorder = recorder
+                        isRecording = true
+                        transcriptionError = null
+                    } catch (e: Exception) {
+                        transcriptionError = "녹음을 시작할 수 없어요."
+                    }
+                } else {
+                    permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                }
+            }
+
+            fun stopRecordingAndTranscribe() {
+                try {
+                    mediaRecorder?.apply { stop(); release() }
+                } catch (_: Exception) { }
+                mediaRecorder = null
+                isRecording = false
+
+                if (!audioFile.exists() || audioFile.length() == 0L) {
+                    transcriptionError = "녹음 파일이 비어있어요."
+                    return
+                }
+
+                isTranscribing = true
+                scope.launch {
+                    try {
+                        val audioBytes = audioFile.readBytes()
+                        val base64 = Base64.encodeToString(audioBytes, Base64.NO_WRAP)
+                        val result = aiApiService.transcribeAudio(base64, "audio/mp4")
+                        transcriptionResult = result
+                        transcriptionError = null
+                    } catch (e: Exception) {
+                        transcriptionError = "음성 변환에 실패했어요."
+                    } finally {
+                        isTranscribing = false
+                        audioFile.delete()
+                    }
                 }
             }
 
@@ -254,6 +368,12 @@ class MemoPlainNavigationImpl @Inject constructor(
                 summaryResult = (inlineSummaryState as? SummaryState.Success)?.text,
                 summaryError = (inlineSummaryState as? SummaryState.Error)?.message,
                 youtubeTitle = youtubeTitle,
+                onStartRecording = { startRecording() },
+                onStopRecording = { stopRecordingAndTranscribe() },
+                isRecording = isRecording,
+                isTranscribing = isTranscribing,
+                transcriptionResult = transcriptionResult,
+                transcriptionError = transcriptionError,
                 onYoutubeDetected = { videoId ->
                     scope.launch {
                         val title = captionService.fetchTitle(videoId)

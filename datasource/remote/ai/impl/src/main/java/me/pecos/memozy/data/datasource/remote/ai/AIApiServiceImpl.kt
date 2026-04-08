@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
 import me.pecos.memozy.data.datasource.remote.ai.model.GeminiContent
 import me.pecos.memozy.data.datasource.remote.ai.model.GeminiFileData
+import me.pecos.memozy.data.datasource.remote.ai.model.GeminiInlineData
 import me.pecos.memozy.data.datasource.remote.ai.model.GeminiPart
 import me.pecos.memozy.data.datasource.remote.ai.model.GeminiRequest
 import me.pecos.memozy.data.datasource.remote.ai.model.GeminiResponse
@@ -100,6 +101,26 @@ class AIApiServiceImpl @Inject constructor(
         if (accumulated.isEmpty()) {
             throw AIException.UnknownException("Empty streaming response from Gemini")
         }
+    }
+
+    override suspend fun transcribeAudio(audioBase64: String, mimeType: String): String {
+        val request = GeminiRequest(
+            contents = listOf(
+                GeminiContent(
+                    parts = listOf(
+                        GeminiPart(
+                            inlineData = GeminiInlineData(
+                                mimeType = mimeType,
+                                data = audioBase64,
+                            )
+                        ),
+                        GeminiPart(text = "이 오디오를 한국어로 받아쓰기해줘. 텍스트만 출력하고 다른 설명은 하지 마."),
+                    )
+                )
+            )
+        )
+
+        return executeRequest(request)
     }
 
     private suspend fun executeRequest(request: GeminiRequest): String {
