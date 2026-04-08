@@ -20,7 +20,7 @@ android {
     }
 
     defaultConfig {
-        buildConfigField("String", "SUPABASE_URL", "\"${localProperties.getProperty("supabase.url", "https://pwgddlqaasmgjbyhadsf.supabase.co")}\"")
+        buildConfigField("String", "SUPABASE_URL", "\"${localProperties.getProperty("supabase.url", "")}\"")
     }
 }
 

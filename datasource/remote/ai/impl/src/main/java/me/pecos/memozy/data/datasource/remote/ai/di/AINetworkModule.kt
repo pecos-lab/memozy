@@ -61,7 +61,7 @@ abstract class AINetworkModule {
             }
 
             install(Logging) {
-                level = LogLevel.BODY
+                level = if (BuildConfig.DEBUG) LogLevel.HEADERS else LogLevel.NONE
             }
 
             install(HttpTimeout) {
