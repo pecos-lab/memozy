@@ -17,5 +17,6 @@ data class Memo(
     val isPinned: Boolean = false,
     val audioPath: String? = null,
     val styles: String? = null, // JSON: [{start,end,bold,italic,strikethrough,color}]
-    val youtubeUrl: String? = null
+    val youtubeUrl: String? = null,
+    val deletedAt: Long? = null
 )

@@ -213,7 +213,15 @@ class MainActivity : AppCompatActivity() {
                                     SettingsScreen(
                                         onBack = { navController.popBackStack() },
                                         onDonation = { navController.navigate("donation") },
+                                        onTrash = { navController.navigate(HomeRoute.TRASH) },
                                         settingsViewModel = settingsViewModel
+                                    )
+                                }
+                                composable(HomeRoute.TRASH) {
+                                    val trashViewModel: me.pecos.memozy.presentation.screen.trash.TrashViewModel = viewModel()
+                                    me.pecos.memozy.presentation.screen.trash.TrashScreen(
+                                        viewModel = trashViewModel,
+                                        onBack = { navController.popBackStack() }
                                     )
                                 }
                                 composable("donation") {

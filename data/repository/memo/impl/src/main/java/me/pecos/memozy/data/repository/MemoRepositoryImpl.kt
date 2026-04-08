@@ -30,4 +30,26 @@ class MemoRepositoryImpl @Inject constructor(private val memoDao: MemoDao) : Mem
     override suspend fun getRecentMemos(limit: Int): List<Memo> {
         return memoDao.getRecentMemos(limit)
     }
+
+    // ── Trash ──
+
+    override suspend fun softDeleteMemo(id: Int) {
+        memoDao.softDeleteMemoById(id)
+    }
+
+    override suspend fun restoreMemo(id: Int) {
+        memoDao.restoreMemoById(id)
+    }
+
+    override fun getDeletedMemos(): Flow<List<Memo>> = memoDao.getDeletedMemos()
+
+    override suspend fun emptyTrash() {
+        memoDao.emptyTrash()
+    }
+
+    override suspend fun purgeOldTrash(threshold: Long) {
+        memoDao.purgeOldTrash(threshold)
+    }
+
+    override fun getTrashCount(): Flow<Int> = memoDao.getTrashCount()
 }

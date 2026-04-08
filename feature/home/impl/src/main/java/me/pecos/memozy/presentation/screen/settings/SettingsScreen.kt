@@ -46,6 +46,7 @@ import me.pecos.memozy.presentation.theme.LocalAppColors
 fun SettingsScreen(
     onBack: () -> Unit = {},
     onDonation: () -> Unit = {},
+    onTrash: () -> Unit = {},
     settingsViewModel: SettingsViewModel = viewModel()
 ) {
     var showClearDialog by remember { mutableStateOf(false) }
@@ -280,6 +281,18 @@ fun SettingsScreen(
                         variant = ButtonVariant.OUTLINED
                     ).copy(contentColor = colors.textTitle),
                     onClick = { showLicenseDialog = true }
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                WantedButton(
+                    text = stringResource(R.string.trash_title),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    buttonDefault = WantedButtonDefaults.getDefault(
+                        type = ButtonType.ASSISTIVE,
+                        variant = ButtonVariant.OUTLINED
+                    ).copy(contentColor = colors.textTitle),
+                    onClick = { onTrash() }
                 )
 
                 if (isDonationEnabled) {
