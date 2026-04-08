@@ -13,6 +13,7 @@ data class MemoUiState(
     val styles: String? = null,
     val youtubeUrl: String? = null,
     val deletedAt: Long? = null,
+    val reminderAt: Long? = null,
     val tags: List<TagUiState> = emptyList()
 )
 

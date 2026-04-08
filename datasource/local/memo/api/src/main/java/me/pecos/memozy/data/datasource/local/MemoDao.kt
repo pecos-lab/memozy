@@ -49,4 +49,9 @@ interface MemoDao {
 
     @Query("SELECT COUNT(*) FROM memo WHERE deletedAt IS NOT NULL")
     fun getTrashCount(): Flow<Int>
+
+    // ── Reminder ──
+
+    @Query("UPDATE memo SET reminderAt = :reminderAt WHERE id = :id")
+    suspend fun setReminder(id: Int, reminderAt: Long?)
 }

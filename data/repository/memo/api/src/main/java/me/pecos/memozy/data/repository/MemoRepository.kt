@@ -19,4 +19,5 @@ interface MemoRepository {
     suspend fun emptyTrash()
     suspend fun purgeOldTrash(threshold: Long)
     fun getTrashCount(): Flow<Int>
+    suspend fun setReminder(id: Int, reminderAt: Long?)
 }
