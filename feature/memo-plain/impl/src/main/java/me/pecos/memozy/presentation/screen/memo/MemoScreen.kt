@@ -341,6 +341,68 @@ fun MemoScreen(
                         }
                 )
                 Spacer(modifier = Modifier.weight(1f))
+
+                // 공유 버튼 (기존 메모만 표시)
+                if (!isNewMemo) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = stringResource(R.string.memo_share),
+                        tint = colors.textSecondary,
+                        modifier = Modifier
+                            .size(22.dp)
+                            .clickable {
+                                val shareText = buildString {
+                                    if (nameText.isNotBlank()) {
+                                        appendLine(nameText)
+                                        appendLine()
+                                    }
+                                    append(safeContent())
+                                }
+                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_SUBJECT, nameText)
+                                    putExtra(Intent.EXTRA_TEXT, shareText)
+                                }
+                                context.startActivity(Intent.createChooser(shareIntent, null))
+                            }
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    // 마크다운 내보내기
+                    Icon(
+                        imageVector = Icons.Default.Download,
+                        contentDescription = stringResource(R.string.memo_export_md),
+                        tint = colors.textSecondary,
+                        modifier = Modifier
+                            .size(22.dp)
+                            .clickable {
+                                val mdContent = buildString {
+                                    if (nameText.isNotBlank()) {
+                                        appendLine("# $nameText")
+                                        appendLine()
+                                    }
+                                    append(safeContent())
+                                }
+                                val fileName = (nameText.ifBlank { "memo" })
+                                    .replace(Regex("[^a-zA-Z0-9가-힣ぁ-ヶ一-龠\\s_-]"), "")
+                                    .take(50)
+                                    .trim()
+                                val file = java.io.File(context.cacheDir, "${fileName}.md")
+                                file.writeText(mdContent)
+                                val uri = androidx.core.content.FileProvider.getUriForFile(
+                                    context, "${context.packageName}.fileprovider", file
+                                )
+                                val exportIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/markdown"
+                                    putExtra(Intent.EXTRA_STREAM, uri)
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+                                context.startActivity(Intent.createChooser(exportIntent, null))
+                            }
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                }
+
                 // 완료 버튼 (새 메모 + 기존 메모 모두 표시)
                 Text(
                     text = "완료",

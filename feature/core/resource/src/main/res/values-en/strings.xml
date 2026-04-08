@@ -77,6 +77,10 @@
     <string name="donation_error_message">Something went wrong during payment.\nPlease try again.</string>
     <string name="donation_loading">Connecting…</string>
 
+    <!-- Export -->
+    <string name="memo_share">Share as text</string>
+    <string name="memo_export_md">Export as Markdown</string>
+
     <!-- Trash -->
     <string name="trash_title">Trash</string>
     <string name="trash_empty">Trash is empty</string>
