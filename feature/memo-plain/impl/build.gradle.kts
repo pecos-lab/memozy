@@ -20,4 +20,5 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.richeditor.compose)
+    implementation(libs.coil.compose)
 }

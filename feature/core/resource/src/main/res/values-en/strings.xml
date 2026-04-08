@@ -101,6 +101,12 @@
     <string name="trash_permanent_delete_message">This memo will be permanently deleted.\nIt cannot be restored.</string>
     <string name="trash_auto_delete_hint">Deleted memos are permanently removed after 30 days</string>
 
+    <!-- Summary Card -->
+    <string name="summary_card_web">Web Page</string>
+    <string name="summary_card_open">Open Original</string>
+    <string name="summary_card_view_summary">View Summary</string>
+    <string name="summary_card_summarize">AI Summary</string>
+
     <!-- Quiz -->
     <string name="quiz_title">Memo Quiz</string>
     <string name="quiz_generating">Generating quiz…</string>

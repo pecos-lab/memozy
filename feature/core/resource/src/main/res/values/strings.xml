@@ -99,6 +99,12 @@
     <string name="trash_permanent_delete_message">이 메모를 영구적으로 삭제합니다.\n복원할 수 없습니다.</string>
     <string name="trash_auto_delete_hint">삭제된 메모는 30일 후 자동으로 영구 삭제됩니다</string>
 
+    <!-- Summary Card -->
+    <string name="summary_card_web">웹페이지</string>
+    <string name="summary_card_open">원본 보기</string>
+    <string name="summary_card_view_summary">요약 보기</string>
+    <string name="summary_card_summarize">AI 요약</string>
+
     <!-- Quiz -->
     <string name="quiz_title">메모 퀴즈</string>
     <string name="quiz_generating">퀴즈를 만들고 있어요…</string>

@@ -832,78 +832,46 @@ fun MemoScreen(
                     }
                 }
 
-                // 유튜브 칩 (서식 툴바 아래)
+                // 유튜브 요약 카드 (SummaryCard)
                 val youtubeUrlDisplay = detectedYoutubeUrl ?: savedYoutubeUrl ?: ""
                 val hasYoutubeSummaryContent = bodyText.contains("핵심 키워드") || bodyText.contains("한줄 요약") || bodyText.contains("타임라인별")
                 if ((detectedYoutubeUrl != null || summaryResult != null || youtubeTitle != null || hasYoutubeSummaryContent) && !youtubeChipDismissed) {
                     Spacer(modifier = Modifier.height(12.dp))
-                    Box {
-                        Column {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
-                                    .background(colors.chipBackground.copy(alpha = 0.5f))
-                                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(text = "▶", fontSize = 14.sp)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Column(modifier = Modifier.weight(1f)) {
-                                    val chipTitle = youtubeTitle ?: nameText.takeIf { it.isNotBlank() }
-                                    if (chipTitle != null) {
-                                        Text(chipTitle, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = colors.textBody, maxLines = 2)
-                                    }
-                                    if (youtubeUrlDisplay.isNotBlank()) {
-                                        Text(youtubeUrlDisplay, fontSize = 11.sp, color = Color(0xFF2196F3), maxLines = 1,
-                                            style = TextStyle(textDecoration = TextDecoration.Underline),
-                                            modifier = Modifier.clickable { selectedYoutubeUrl = youtubeUrlDisplay })
-                                    } else if (chipTitle == null) {
-                                        Text("📺 유튜브 요약", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = colors.textBody)
-                                    }
-                                }
-                                if (onYoutubeSummarize != null && !isSummarizing && summaryResult == null) {
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("🤖 요약", fontSize = 12.sp, color = colors.chipText, fontWeight = FontWeight.SemiBold,
-                                        modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(colors.chipBackground)
-                                            .clickable { detectedYoutubeUrl?.let { onYoutubeSummarize(it) } }
-                                            .padding(horizontal = 8.dp, vertical = 4.dp))
+                    val videoId = youtubeUrlDisplay.let {
+                        Regex("""(?:v=|youtu\.be/|shorts/)([a-zA-Z0-9_-]{11})""").find(it)?.groupValues?.get(1)
+                    }
+                    me.pecos.memozy.presentation.screen.memo.components.SummaryCard(
+                        sourceType = me.pecos.memozy.presentation.screen.memo.components.SummarySourceType.YOUTUBE,
+                        url = youtubeUrlDisplay,
+                        title = youtubeTitle ?: nameText.takeIf { it.isNotBlank() },
+                        imageUrl = videoId?.let { "https://img.youtube.com/vi/$it/hqdefault.jpg" },
+                        hasSummary = summaryResult != null || hasYoutubeSummaryContent,
+                        onViewSummary = if (onYoutubeSummarize != null) {
+                            {
+                                if (summaryResult != null || hasYoutubeSummaryContent) {
+                                    selectedYoutubeUrl = youtubeUrlDisplay
+                                } else {
+                                    detectedYoutubeUrl?.let { onYoutubeSummarize(it) }
                                 }
                             }
-                        }
-                        // X 삭제 버튼
-                        Icon(Icons.Default.Close, contentDescription = null, tint = colors.textSecondary,
-                            modifier = Modifier.size(16.dp).align(Alignment.TopEnd).clickable { youtubeChipDismissed = true; showSummary = false })
-                    }
+                        } else null,
+                        onDismiss = { youtubeChipDismissed = true; showSummary = false }
+                    )
                 }
 
-                // 웹 요약 칩 (유튜브 칩 아래)
+                // 웹 요약 카드 (SummaryCard)
                 if ((webSummaryResult != null || savedWebUrl != null) && !webChipDismissed) {
                     Spacer(modifier = Modifier.height(12.dp))
-                    Box {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
-                                .background(colors.chipBackground.copy(alpha = 0.5f))
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(text = "🔗", fontSize = 14.sp)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                val webTitle = webPageTitle ?: nameText.takeIf { it.isNotBlank() }
-                                if (webTitle != null) {
-                                    Text(webTitle, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = colors.textBody, maxLines = 2)
-                                }
-                                if (savedWebUrl != null) {
-                                    Text(savedWebUrl!!, fontSize = 11.sp, color = Color(0xFF2196F3), maxLines = 1,
-                                        style = TextStyle(textDecoration = TextDecoration.Underline),
-                                        modifier = Modifier.clickable { selectedWebUrl = savedWebUrl })
-                                } else if (webTitle == null) {
-                                    Text("🔗 웹페이지 요약", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = colors.textBody)
-                                }
-                            }
-                        }
-                        Icon(Icons.Default.Close, contentDescription = null, tint = colors.textSecondary,
-                            modifier = Modifier.size(16.dp).align(Alignment.TopEnd).clickable { webChipDismissed = true })
-                    }
+                    me.pecos.memozy.presentation.screen.memo.components.SummaryCard(
+                        sourceType = me.pecos.memozy.presentation.screen.memo.components.SummarySourceType.WEB,
+                        url = savedWebUrl ?: "",
+                        title = webPageTitle ?: nameText.takeIf { it.isNotBlank() },
+                        hasSummary = webSummaryResult != null,
+                        onViewSummary = if (savedWebUrl != null) {
+                            { selectedWebUrl = savedWebUrl }
+                        } else null,
+                        onDismiss = { webChipDismissed = true }
+                    )
                 }
 
                 // 오디오 재생 바 (서식 툴바 아래)
