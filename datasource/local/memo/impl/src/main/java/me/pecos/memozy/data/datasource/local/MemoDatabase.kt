@@ -129,6 +129,12 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
     }
 }
 
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("ALTER TABLE memo ADD COLUMN isPinned INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
 private val PREPOPULATE_CALLBACK = object : RoomDatabase.Callback() {
     override fun onCreate(db: SupportSQLiteDatabase) {
         super.onCreate(db)
@@ -139,7 +145,7 @@ private val PREPOPULATE_CALLBACK = object : RoomDatabase.Callback() {
 @TypeConverters(MemoFormatConverter::class)
 @Database(
     entities = [Memo::class, Category::class, ChatSession::class, ChatMessage::class, YoutubeSummary::class, AiUsage::class],
-    version = 7,
+    version = 8,
     exportSchema = true
 )
 abstract class MemoDatabase : RoomDatabase() {
@@ -161,7 +167,7 @@ abstract class MemoDatabase : RoomDatabase() {
                     MemoDatabase::class.java,
                     "memo_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
                     .addCallback(PREPOPULATE_CALLBACK)
                     .build()
                 INSTANCE = instance

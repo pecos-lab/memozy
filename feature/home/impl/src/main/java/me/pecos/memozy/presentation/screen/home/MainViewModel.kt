@@ -94,6 +94,12 @@ class MainViewModel @Inject constructor(
             repository.updateMemo(memo.toMemo())
         }
     }
+
+    fun togglePin(memo: MemoUiState) {
+        viewModelScope.launch {
+            repository.updateMemo(memo.copy(isPinned = !memo.isPinned).toMemo())
+        }
+    }
 }
 
 fun MemoUiState.toMemo(): Memo = Memo(
@@ -106,7 +112,8 @@ fun MemoUiState.toMemo(): Memo = Memo(
     format = when (this.format) {
         MemoFormatUi.MARKDOWN -> MemoFormat.MARKDOWN
         MemoFormatUi.PLAIN -> MemoFormat.PLAIN
-    }
+    },
+    isPinned = this.isPinned
 )
 
 fun Memo.toUiState(): MemoUiState = MemoUiState(
@@ -119,5 +126,6 @@ fun Memo.toUiState(): MemoUiState = MemoUiState(
     format = when (this.format) {
         MemoFormat.MARKDOWN -> MemoFormatUi.MARKDOWN
         MemoFormat.PLAIN -> MemoFormatUi.PLAIN
-    }
+    },
+    isPinned = this.isPinned
 )

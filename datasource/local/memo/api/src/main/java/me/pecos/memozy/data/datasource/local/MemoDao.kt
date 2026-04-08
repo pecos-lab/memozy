@@ -9,7 +9,7 @@ import me.pecos.memozy.data.datasource.local.entity.Memo
 
 @Dao
 interface MemoDao {
-    @Query("SELECT * FROM memo ORDER BY id DESC")
+    @Query("SELECT * FROM memo ORDER BY isPinned DESC, id DESC")
     fun getAllMemos(): Flow<List<Memo>>
 
     @Insert

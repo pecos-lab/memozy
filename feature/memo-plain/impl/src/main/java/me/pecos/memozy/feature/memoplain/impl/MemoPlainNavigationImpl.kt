@@ -444,7 +444,10 @@ class MemoPlainNavigationImpl @Inject constructor(
                 },
                 onSave = { memo ->
                     scope.launch {
-                        if (memoId > 0 && existingMemo != null) {
+                        if (savedMemoId > 0) {
+                            // 자동저장으로 이미 생성된 메모 → update
+                            repository.updateMemo(memo.copy(id = savedMemoId).toEntity())
+                        } else if (memoId > 0 && existingMemo != null) {
                             repository.updateMemo(memo.toEntity())
                         } else {
                             repository.addMemo(memo.toEntity())
