@@ -76,4 +76,10 @@
     <string name="donation_error_title">Payment Error</string>
     <string name="donation_error_message">Something went wrong during payment.\nPlease try again.</string>
     <string name="donation_loading">Connecting…</string>
+
+    <!-- Widget -->
+    <string name="widget_name">Memozy Recent Memos</string>
+    <string name="widget_description">Quickly view recent memos and create new ones</string>
+    <string name="widget_empty">No memos yet</string>
+    <string name="widget_untitled">Untitled</string>
 </resources>

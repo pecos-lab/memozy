@@ -76,4 +76,10 @@
     <string name="donation_error_title">決済エラー</string>
     <string name="donation_error_message">決済処理中に問題が発生しました。\nもう一度お試しください。</string>
     <string name="donation_loading">接続中…</string>
+
+    <!-- Widget -->
+    <string name="widget_name">Memozy 最近のメモ</string>
+    <string name="widget_description">最近のメモを素早く確認して新しいメモを作成</string>
+    <string name="widget_empty">メモがまだありません</string>
+    <string name="widget_untitled">タイトルなし</string>
 </resources>
