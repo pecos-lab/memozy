@@ -144,17 +144,40 @@ class MainActivity : AppCompatActivity() {
                         }
 
                         // ACTION_SEND 공유 수신 처리
-                        val sharedText = remember {
-                            if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
-                                intent.getStringExtra(Intent.EXTRA_TEXT)?.take(4096)
+                        val sharedRoute = remember {
+                            if (intent?.action == Intent.ACTION_SEND) {
+                                val type = intent.type ?: ""
+                                when {
+                                    type == "text/plain" -> {
+                                        val text = intent.getStringExtra(Intent.EXTRA_TEXT)?.take(4096)
+                                        if (text != null) {
+                                            val encoded = java.net.URLEncoder.encode(text, "UTF-8")
+                                            MemoPlainRoute.createRoute("shared_$encoded")
+                                        } else null
+                                    }
+                                    type.startsWith("image/") -> {
+                                        @Suppress("DEPRECATION")
+                                        val uri = intent.getParcelableExtra<android.net.Uri>(Intent.EXTRA_STREAM)
+                                        if (uri != null) {
+                                            val encoded = java.net.URLEncoder.encode(uri.toString(), "UTF-8")
+                                            MemoPlainRoute.createRoute("shared_image_$encoded")
+                                        } else null
+                                    }
+                                    type == "application/pdf" -> {
+                                        @Suppress("DEPRECATION")
+                                        val uri = intent.getParcelableExtra<android.net.Uri>(Intent.EXTRA_STREAM)
+                                        if (uri != null) {
+                                            val encoded = java.net.URLEncoder.encode(uri.toString(), "UTF-8")
+                                            MemoPlainRoute.createRoute("shared_pdf_$encoded")
+                                        } else null
+                                    }
+                                    else -> null
+                                }
                             } else null
                         }
-                        LaunchedEffect(sharedText) {
-                            if (sharedText != null) {
-                                val encoded = java.net.URLEncoder.encode(sharedText, "UTF-8")
-                                navController.navigate(
-                                    MemoPlainRoute.createRoute("shared_$encoded")
-                                )
+                        LaunchedEffect(sharedRoute) {
+                            if (sharedRoute != null) {
+                                navController.navigate(sharedRoute)
                             }
                         }
 

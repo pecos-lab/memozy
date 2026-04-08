@@ -125,6 +125,28 @@ class AIApiServiceImpl @Inject constructor(
         return executeRequest(request)
     }
 
+    override suspend fun describeImage(imageBase64: String, mimeType: String): String {
+        val prompt = "이 이미지의 텍스트를 모두 추출해줘. 텍스트가 없으면 이미지 내용을 간결하게 설명해줘. 텍스트만 출력하고 다른 설명은 하지 마."
+
+        val request = GeminiRequest(
+            contents = listOf(
+                GeminiContent(
+                    parts = listOf(
+                        GeminiPart(
+                            inlineData = GeminiInlineData(
+                                mimeType = mimeType,
+                                data = imageBase64,
+                            )
+                        ),
+                        GeminiPart(text = prompt),
+                    )
+                )
+            )
+        )
+
+        return executeRequest(request)
+    }
+
     private suspend fun executeRequest(request: GeminiRequest): String {
         val response: GeminiResponse = httpClient.post("gemini-generate") {
             contentType(ContentType.Application.Json)
