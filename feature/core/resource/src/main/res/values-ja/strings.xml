@@ -100,4 +100,13 @@
     <string name="trash_permanent_delete_action">完全に削除</string>
     <string name="trash_permanent_delete_message">このメモを完全に削除します。\n復元できません。</string>
     <string name="trash_auto_delete_hint">削除されたメモは30日後に自動的に完全削除されます</string>
+
+    <!-- Quiz -->
+    <string name="quiz_title">メモクイズ</string>
+    <string name="quiz_generating">クイズを作成中…</string>
+    <string name="quiz_retry">もう一度</string>
+    <string name="quiz_next">次へ</string>
+    <string name="quiz_show_result">結果を見る</string>
+    <string name="quiz_explanation">解説</string>
+    <string name="quiz_back">戻る</string>
 </resources>

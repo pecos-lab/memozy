@@ -14,6 +14,7 @@ dependencies {
     implementation(projects.feature.memoPlain.api)
     implementation(projects.datasource.local.memo.api)
     implementation(projects.data.repository.memo.api)
+    implementation(projects.datasource.remote.ai.api)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)

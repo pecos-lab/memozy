@@ -100,4 +100,13 @@
     <string name="trash_permanent_delete_action">Delete Permanently</string>
     <string name="trash_permanent_delete_message">This memo will be permanently deleted.\nIt cannot be restored.</string>
     <string name="trash_auto_delete_hint">Deleted memos are permanently removed after 30 days</string>
+
+    <!-- Quiz -->
+    <string name="quiz_title">Memo Quiz</string>
+    <string name="quiz_generating">Generating quiz…</string>
+    <string name="quiz_retry">Try Again</string>
+    <string name="quiz_next">Next</string>
+    <string name="quiz_show_result">Show Results</string>
+    <string name="quiz_explanation">Explanation</string>
+    <string name="quiz_back">Go Back</string>
 </resources>

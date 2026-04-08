@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.SmartDisplay
 import androidx.compose.foundation.shape.CircleShape
@@ -196,6 +197,7 @@ fun MemoScreen(
     webSummaryError: String? = null,
     webPageTitle: String? = null,
     onSetReminder: ((memoId: Int, reminderAt: Long?) -> Unit)? = null,
+    onQuiz: ((memoId: Int) -> Unit)? = null,
     existingMemo: MemoUiState = MemoUiState(0, "", 1, "")
 ) {
     val isNewMemo = existingMemo.id <= 0
@@ -1096,6 +1098,23 @@ fun MemoScreen(
                                 showReminderPicker = false
                             }
                         )
+                    }
+                }
+
+                // 🧠 퀴즈
+                if (onQuiz != null && !isNewMemo && existingMemo.content.length >= 20) {
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(colors.chipBackground)
+                            .clickable { onQuiz(existingMemo.id) }
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Quiz, contentDescription = null,
+                            tint = colors.chipText, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("퀴즈", fontSize = 12.sp, color = colors.chipText, fontWeight = FontWeight.SemiBold)
                     }
                 }
 
