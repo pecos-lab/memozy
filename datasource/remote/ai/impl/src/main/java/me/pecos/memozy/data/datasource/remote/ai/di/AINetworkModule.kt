@@ -22,6 +22,8 @@ import kotlinx.serialization.json.Json
 import me.pecos.memozy.data.datasource.remote.ai.AIApiService
 import me.pecos.memozy.data.datasource.remote.ai.AIApiServiceImpl
 import me.pecos.memozy.data.datasource.remote.ai.AIException
+import me.pecos.memozy.data.datasource.remote.ai.WebScrapeService
+import me.pecos.memozy.data.datasource.remote.ai.WebScrapeServiceImpl
 import me.pecos.memozy.data.datasource.remote.ai.YouTubeCaptionService
 import me.pecos.memozy.data.datasource.remote.ai.YouTubeCaptionServiceImpl
 import javax.inject.Qualifier
@@ -43,6 +45,10 @@ abstract class AINetworkModule {
     @Binds
     @Singleton
     abstract fun bindYouTubeCaptionService(impl: YouTubeCaptionServiceImpl): YouTubeCaptionService
+
+    @Binds
+    @Singleton
+    abstract fun bindWebScrapeService(impl: WebScrapeServiceImpl): WebScrapeService
 
     companion object {
 

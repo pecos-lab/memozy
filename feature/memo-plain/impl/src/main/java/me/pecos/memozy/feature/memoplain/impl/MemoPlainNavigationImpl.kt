@@ -57,7 +57,8 @@ class MemoPlainNavigationImpl @Inject constructor(
     private val youtubeSummaryDao: YoutubeSummaryDao,
     private val captionService: YouTubeCaptionService,
     private val aiUsageDao: AiUsageDao,
-    private val tagDao: me.pecos.memozy.data.datasource.local.TagDao
+    private val tagDao: me.pecos.memozy.data.datasource.local.TagDao,
+    private val webScrapeService: me.pecos.memozy.data.datasource.remote.ai.WebScrapeService
 ) : MemoPlainNavigation {
 
     private suspend fun autoTag(memoId: Int, tagName: String) {
@@ -97,29 +98,31 @@ class MemoPlainNavigationImpl @Inject constructor(
             VIDEO_ID_REGEX.find(url)?.groupValues?.get(1)
 
         private val SUMMARY_PROMPT = """
-            |이 유튜브 영상을 한국어로 상세하게 요약해줘. 인사말이나 부가 설명 없이 아래 형식만 정확히 출력해:
+            |이 유튜브 영상을 한국어로 간결하게 요약해줘. 인사말이나 부가 설명 없이 아래 형식만 정확히 출력해:
             |
             |📋 한줄 요약
             |영상의 핵심을 한 문장으로 요약
             |
-            |📌 핵심 키워드
-            |#키워드1 #키워드2 #키워드3 #키워드4 #키워드5
+            |📌 키워드
+            |#키워드1 #키워드2 #키워드3
             |
-            |⏰ 타임라인별 상세 요약
-            |각 주제/구간별로 나눠서 아래처럼 정리해줘:
+            |📖 핵심 내용
+            |- 가장 중요한 내용 3~5개를 각 1줄로 정리
+        """.trimMargin()
+
+        private val WEB_SUMMARY_PROMPT = """
+            |이 웹페이지 내용을 한국어로 간결하게 요약해줘. 인사말이나 부가 설명 없이 아래 형식만 정확히 출력해:
             |
-            |[00:00] 섹션 제목
-            |- 상세 설명 (2~3문장)
-            |- 중요한 내용이나 인사이트
+            |📋 한줄 요약
+            |페이지의 핵심을 한 문장으로 요약
             |
-            |[다음 구간] 섹션 제목
-            |- 상세 설명
-            |- 중요한 내용이나 인사이트
+            |📌 키워드
+            |#키워드1 #키워드2 #키워드3
             |
-            |(영상 흐름에 따라 모든 구간을 빠짐없이 정리)
-            |
+            |📖 핵심 내용
+            |- 가장 중요한 내용 3~5개를 각 1줄로 정리
             |💡 핵심 인사이트
-            |- 영상에서 얻을 수 있는 주요 인사이트를 정리
+            |- 이 글에서 얻을 수 있는 주요 인사이트를 정리
         """.trimMargin()
     }
 
@@ -411,6 +414,15 @@ class MemoPlainNavigationImpl @Inject constructor(
                 }
             }
 
+            // 웹 요약 상태
+            var isWebSummarizing by remember { mutableStateOf(false) }
+            var webSummaryResult by remember { mutableStateOf<String?>(null) }
+            var webSummaryError by remember { mutableStateOf<String?>(null) }
+            var webPageTitle by remember { mutableStateOf<String?>(null) }
+
+            // 현재 진행 중인 요약 Job (취소용)
+            var currentSummarizeJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+
             // 자동저장용 memoId 추적 (새 메모 insert 후 update로 전환)
             var savedMemoId by remember { mutableStateOf(memoId) }
 
@@ -440,6 +452,47 @@ class MemoPlainNavigationImpl @Inject constructor(
                 transcriptionResult = transcriptionResult,
                 transcriptionError = transcriptionError,
                 audioPath = savedAudioPath,
+                onCancelSummarize = {
+                    currentSummarizeJob?.cancel()
+                    currentSummarizeJob = null
+                    inlineSummaryState = SummaryState.Idle
+                    isWebSummarizing = false
+                    isTranscribing = false
+                },
+                onWebSummarize = { url ->
+                    currentSummarizeJob = scope.launch {
+                        isWebSummarizing = true
+                        webSummaryError = null
+                        try {
+                            val content = webScrapeService.scrapeWebPage(url)
+                            if (content == null) {
+                                webSummaryError = "웹페이지를 불러올 수 없어요."
+                            } else {
+                                webPageTitle = content.title
+                                val summary = retryOn503 {
+                                    aiApiService.generateContent(
+                                        "$WEB_SUMMARY_PROMPT\n\n아래는 웹페이지 내용입니다:\n\n${content.text}"
+                                    )
+                                }
+                                webSummaryResult = summary
+                            }
+                        } catch (e: Exception) {
+                            webSummaryError = when {
+                                e.message?.contains("503") == true || e.message?.contains("UNAVAILABLE") == true ->
+                                    "AI 서버가 일시적으로 바빠요. 잠시 후 다시 시도해주세요."
+                                e.message?.contains("timeout") == true || e.message?.contains("Timeout") == true ->
+                                    "응답 시간이 초과됐어요. 더 짧은 페이지를 시도해주세요."
+                                else -> "요약 중 오류가 발생했어요. 다시 시도해주세요."
+                            }
+                        } finally {
+                            isWebSummarizing = false
+                        }
+                    }
+                },
+                isWebSummarizing = isWebSummarizing,
+                webSummaryResult = webSummaryResult,
+                webSummaryError = webSummaryError,
+                webPageTitle = webPageTitle,
                 onYoutubeDetected = { videoId ->
                     scope.launch {
                         val title = captionService.fetchTitle(videoId)
@@ -449,7 +502,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                     }
                 },
                 onYoutubeSummarize = { url ->
-                    scope.launch {
+                    currentSummarizeJob = scope.launch {
                         if (!canSummarize) {
                             inlineSummaryState = SummaryState.Error("오늘 무료 요약 횟수를 모두 사용했어요.")
                             return@launch
@@ -525,6 +578,9 @@ class MemoPlainNavigationImpl @Inject constructor(
                         if (youtubeRegex.containsMatchIn(memoWithAudio.content) || inlineSummaryState is SummaryState.Success) {
                             autoTag(finalMemoId, "유튜브")
                         }
+                        if (webSummaryResult != null) {
+                            autoTag(finalMemoId, "웹")
+                        }
                         onNavigateToHome()
                     }
                 },
@@ -548,6 +604,19 @@ class MemoPlainNavigationImpl @Inject constructor(
         youtubeUrl = youtubeUrl
     )
 
+    // 503 에러 시 1회만 재시도 (5초 후)
+    private suspend fun <T> retryOn503(block: suspend () -> T): T {
+        try {
+            return block()
+        } catch (e: Exception) {
+            if (e.message?.contains("503") == true || e.message?.contains("UNAVAILABLE") == true || e.message?.contains("high demand") == true) {
+                kotlinx.coroutines.delay(5000)
+                return block() // 1회만 재시도
+            }
+            throw e
+        }
+    }
+
     private suspend fun summarizeVideo(
         videoId: String,
         videoUrl: String,
@@ -560,16 +629,22 @@ class MemoPlainNavigationImpl @Inject constructor(
         }
         val captions = videoInfo?.captions?.take(15000)
         if (captions != null) {
+            // 자막 추출 후 잠시 대기 (Gemini RPM 제한 방지)
+            kotlinx.coroutines.delay(1000)
             // 자막 기반 요약 (텍스트만, 빠르고 저렴)
-            return aiApiService.generateContent(
-                "$SUMMARY_PROMPT\n\n아래는 영상의 자막입니다:\n\n$captions"
-            )
+            return retryOn503 {
+                aiApiService.generateContent(
+                    "$SUMMARY_PROMPT\n\n아래는 영상의 자막입니다:\n\n$captions"
+                )
+            }
         }
         // 2. 자막 없으면 fallback — 영상 직접 분석
-        return aiApiService.generateContentWithVideo(
-            prompt = SUMMARY_PROMPT,
-            videoUrl = videoUrl,
-        )
+        return retryOn503 {
+            aiApiService.generateContentWithVideo(
+                prompt = SUMMARY_PROMPT,
+                videoUrl = videoUrl,
+            )
+        }
     }
 }
 

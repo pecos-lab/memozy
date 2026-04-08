@@ -128,7 +128,12 @@ fun MemoCardItem(
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = memo.content,
+                text = memo.content
+                    .replace(Regex("<br\\s*/?>"), "\n")
+                    .replace(Regex("<[^>]+>"), "")
+                    .replace("&nbsp;", " ")
+                    .replace("&amp;", "&")
+                    .trim(),
                 color = colors.textBody,
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis
