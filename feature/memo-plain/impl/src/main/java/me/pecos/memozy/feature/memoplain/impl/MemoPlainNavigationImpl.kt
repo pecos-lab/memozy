@@ -252,6 +252,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                 },
                 isSummarizing = inlineSummaryState is SummaryState.Loading,
                 summaryResult = (inlineSummaryState as? SummaryState.Success)?.text,
+                summaryError = (inlineSummaryState as? SummaryState.Error)?.message,
                 youtubeTitle = youtubeTitle,
                 onYoutubeDetected = { videoId ->
                     scope.launch {

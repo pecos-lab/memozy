@@ -118,6 +118,7 @@ fun MemoScreen(
     onYoutubeDetected: ((videoId: String) -> Unit)? = null,
     isSummarizing: Boolean = false,
     summaryResult: String? = null,
+    summaryError: String? = null,
     youtubeTitle: String? = null,
     existingMemo: MemoUiState = MemoUiState(0, "", 1, "")
 ) {
@@ -423,6 +424,28 @@ fun MemoScreen(
                                         .background(colors.chipBackground)
                                         .clickable { onYoutubeSummarize(detectedYoutubeUrl) }
                                         .padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+
+                        // 제한 도달 에러 메시지
+                        if (summaryError != null) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0xFFFFF3E0))
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(text = "⚠️", fontSize = 16.sp)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = summaryError,
+                                    fontSize = 13.sp,
+                                    color = Color(0xFFE65100),
+                                    lineHeight = 18.sp
                                 )
                             }
                         }
