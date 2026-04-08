@@ -134,7 +134,7 @@ class MainActivity : AppCompatActivity() {
                         // ACTION_SEND 공유 수신 처리
                         val sharedText = remember {
                             if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
-                                intent.getStringExtra(Intent.EXTRA_TEXT)
+                                intent.getStringExtra(Intent.EXTRA_TEXT)?.take(4096)
                             } else null
                         }
                         LaunchedEffect(sharedText) {

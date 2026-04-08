@@ -11,6 +11,7 @@ import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.request.header
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.statement.bodyAsText
@@ -72,6 +73,7 @@ abstract class AINetworkModule {
 
             defaultRequest {
                 url("${BuildConfig.SUPABASE_URL}/functions/v1/")
+                header("x-app-key", BuildConfig.APP_SECRET_KEY)
             }
 
             HttpResponseValidator {
