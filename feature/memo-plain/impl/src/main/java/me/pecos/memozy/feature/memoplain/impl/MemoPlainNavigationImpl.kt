@@ -187,7 +187,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                                 "AI 서버가 일시적으로 바빠요. 잠시 후 다시 시도해주세요."
                             e.message?.contains("timeout") == true || e.message?.contains("Timeout") == true ->
                                 "응답 시간이 초과됐어요. 더 짧은 영상을 시도해주세요."
-                            else -> "요약 중 오류가 발생했어요. 다시 시도해주세요."
+                            else -> "DEBUG: ${e::class.simpleName}: ${e.message}"
                         }
                         summaryState = SummaryState.Error(errorMsg)
                     }
@@ -482,7 +482,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                                     "AI 서버가 일시적으로 바빠요. 잠시 후 다시 시도해주세요."
                                 e.message?.contains("timeout") == true || e.message?.contains("Timeout") == true ->
                                     "응답 시간이 초과됐어요. 더 짧은 페이지를 시도해주세요."
-                                else -> "요약 중 오류가 발생했어요. 다시 시도해주세요."
+                                else -> "DEBUG: ${e::class.simpleName}: ${e.message}"
                             }
                         } finally {
                             isWebSummarizing = false
@@ -551,7 +551,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                                     "AI 서버가 일시적으로 바빠요. 잠시 후 다시 시도해주세요."
                                 e.message?.contains("timeout") == true || e.message?.contains("Timeout") == true ->
                                     "응답 시간이 초과됐어요. 더 짧은 영상을 시도해주세요."
-                                else -> "요약 중 오류가 발생했어요. 다시 시도해주세요."
+                                else -> "DEBUG: ${e::class.simpleName}: ${e.message}"
                             }
                             inlineSummaryState = SummaryState.Error(errorMsg)
                         }
@@ -604,17 +604,32 @@ class MemoPlainNavigationImpl @Inject constructor(
         youtubeUrl = youtubeUrl
     )
 
-    // 503 에러 시 1회만 재시도 (5초 후)
+    // 503 에러 시 최대 3회 재시도 (exponential backoff)
     private suspend fun <T> retryOn503(block: suspend () -> T): T {
+        val delays = longArrayOf(3_000, 6_000, 12_000)
+        var lastException: Exception? = null
+        // 첫 시도
         try {
             return block()
         } catch (e: Exception) {
-            if (e.message?.contains("503") == true || e.message?.contains("UNAVAILABLE") == true || e.message?.contains("high demand") == true) {
-                kotlinx.coroutines.delay(5000)
-                return block() // 1회만 재시도
+            if (e.message?.contains("503") != true && e.message?.contains("UNAVAILABLE") != true && e.message?.contains("high demand") != true) {
+                throw e
             }
-            throw e
+            lastException = e
         }
+        // 재시도
+        for (delay in delays) {
+            kotlinx.coroutines.delay(delay)
+            try {
+                return block()
+            } catch (e: Exception) {
+                if (e.message?.contains("503") != true && e.message?.contains("UNAVAILABLE") != true && e.message?.contains("high demand") != true) {
+                    throw e
+                }
+                lastException = e
+            }
+        }
+        throw lastException!!
     }
 
     private suspend fun summarizeVideo(
