@@ -101,6 +101,12 @@
     <string name="trash_permanent_delete_message">このメモを完全に削除します。\n復元できません。</string>
     <string name="trash_auto_delete_hint">削除されたメモは30日後に自動的に完全削除されます</string>
 
+    <!-- Summary Card -->
+    <string name="summary_card_web">ウェブページ</string>
+    <string name="summary_card_open">元を見る</string>
+    <string name="summary_card_view_summary">要約を見る</string>
+    <string name="summary_card_summarize">AI要約</string>
+
     <!-- Quiz -->
     <string name="quiz_title">メモクイズ</string>
     <string name="quiz_generating">クイズを作成中…</string>
