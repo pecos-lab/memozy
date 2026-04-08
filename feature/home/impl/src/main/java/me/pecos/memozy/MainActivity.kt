@@ -99,6 +99,18 @@ class MainActivity : AppCompatActivity() {
         super.attachBaseContext(newBase.createConfigurationContext(config))
     }
 
+    private fun getWidgetMemoRoute(intent: Intent?): String? {
+        val action = intent?.getStringExtra("widget_action") ?: return null
+        return when (action) {
+            "new_memo" -> MemoPlainRoute.createRoute("-${System.currentTimeMillis()}")
+            "open_memo" -> {
+                val memoId = intent.getIntExtra("widget_memo_id", -1)
+                if (memoId > 0) MemoPlainRoute.createRoute(memoId.toString()) else null
+            }
+            else -> null
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -143,6 +155,14 @@ class MainActivity : AppCompatActivity() {
                                 navController.navigate(
                                     MemoPlainRoute.createRoute("shared_$encoded")
                                 )
+                            }
+                        }
+
+                        // 위젯 액션 처리
+                        val widgetRoute = remember { getWidgetMemoRoute(intent) }
+                        LaunchedEffect(widgetRoute) {
+                            if (widgetRoute != null) {
+                                navController.navigate(widgetRoute)
                             }
                         }
 

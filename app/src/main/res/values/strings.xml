@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Memozy</string>
+
+    <!-- Widget -->
+    <string name="widget_name">Memozy 최근 메모</string>
+    <string name="widget_description">최근 메모를 빠르게 확인하고 새 메모를 작성하세요</string>
+    <string name="widget_empty">메모가 없어요</string>
+    <string name="widget_untitled">제목 없음</string>
 </resources>

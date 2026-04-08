@@ -26,4 +26,7 @@ interface MemoDao {
 
     @Query("DELETE FROM memo")
     suspend fun clearAllMemos()
+
+    @Query("SELECT * FROM memo ORDER BY updatedAt DESC LIMIT :limit")
+    suspend fun getRecentMemos(limit: Int): List<Memo>
 }

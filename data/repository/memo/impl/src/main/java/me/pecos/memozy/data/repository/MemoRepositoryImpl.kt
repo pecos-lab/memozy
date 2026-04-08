@@ -26,4 +26,8 @@ class MemoRepositoryImpl @Inject constructor(private val memoDao: MemoDao) : Mem
     override suspend fun clearAllMemos() {
         memoDao.clearAllMemos()
     }
+
+    override suspend fun getRecentMemos(limit: Int): List<Memo> {
+        return memoDao.getRecentMemos(limit)
+    }
 }

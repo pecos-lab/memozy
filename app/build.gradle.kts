@@ -30,9 +30,11 @@ android {
 dependencies {
     // 모듈 - Hilt 바인딩을 위해 implementation 필요
     implementation(projects.datasource.local.memo.impl)
+    implementation(projects.datasource.local.memo.api) // 위젯에서 Memo 엔티티 참조
     implementation(projects.datasource.local.chat.impl)
     implementation(projects.datasource.remote.ai.impl)
     implementation(projects.data.repository.memo.impl)
+    implementation(projects.data.repository.memo.api) // 위젯에서 MemoRepository 참조
     implementation(projects.data.repository.chat.impl)
     implementation(projects.feature.home.impl)
     implementation(projects.feature.memoPlain.impl)
@@ -43,6 +45,10 @@ dependencies {
 
     // MemozyApplication
     implementation(libs.android.joda)
+
+    // glance widget
+    implementation(libs.glance.appwidget)
+    implementation(libs.glance.material3)
 
     // firebase
     implementation(platform(libs.firebase.bom))
