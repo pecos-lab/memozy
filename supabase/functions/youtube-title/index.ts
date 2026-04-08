@@ -1,9 +1,13 @@
 import "@supabase/functions-js/edge-runtime.d.ts";
+import { verifyAppAuth } from "../_shared/auth.ts";
 
 Deno.serve(async (req) => {
   if (req.method !== "GET") {
     return new Response("Method Not Allowed", { status: 405 });
   }
+
+  const authError = verifyAppAuth(req);
+  if (authError) return authError;
 
   try {
     const url = new URL(req.url);

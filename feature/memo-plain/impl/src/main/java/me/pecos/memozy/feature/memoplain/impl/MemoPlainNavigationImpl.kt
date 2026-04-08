@@ -248,7 +248,23 @@ class MemoPlainNavigationImpl @Inject constructor(
             var isTranscribing by remember { mutableStateOf(false) }
             var transcriptionResult by remember { mutableStateOf<String?>(null) }
             var transcriptionError by remember { mutableStateOf<String?>(null) }
+            // 에러/결과 메시지 3초 후 자동 해제
+            LaunchedEffect(transcriptionError) {
+                if (transcriptionError != null) {
+                    kotlinx.coroutines.delay(3000)
+                    transcriptionError = null
+                }
+            }
+            LaunchedEffect(transcriptionResult) {
+                if (transcriptionResult != null) {
+                    // 본문에 삽입된 후 상태 초기화 (MemoScreen에서 LaunchedEffect로 삽입)
+                    kotlinx.coroutines.delay(500)
+                    transcriptionResult = null
+                }
+            }
+
             var mediaRecorder by remember { mutableStateOf<MediaRecorder?>(null) }
+            var recordingStartTime by remember { mutableStateOf(0L) }
             val audioFile = remember(context) { java.io.File(context.cacheDir, "recording.m4a") }
 
             val permissionLauncher = rememberLauncherForActivityResult(
@@ -274,6 +290,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                             start()
                         }
                         mediaRecorder = recorder
+                        recordingStartTime = System.currentTimeMillis()
                         isRecording = true
                         transcriptionError = null
                     } catch (e: Exception) {
@@ -308,6 +325,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                             start()
                         }
                         mediaRecorder = recorder
+                        recordingStartTime = System.currentTimeMillis()
                         isRecording = true
                         transcriptionError = null
                     } catch (e: Exception) {
@@ -322,6 +340,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                 try {
                     mediaRecorder?.apply { stop(); release() }
                 } catch (_: Exception) { }
+                val durationSeconds = (System.currentTimeMillis() - recordingStartTime) / 1000
                 mediaRecorder = null
                 isRecording = false
 
@@ -336,7 +355,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                     try {
                         val audioBytes = audioFile.readBytes()
                         val base64 = Base64.encodeToString(audioBytes, Base64.NO_WRAP)
-                        val result = aiApiService.transcribeAudio(base64, "audio/mp4")
+                        val result = aiApiService.transcribeAudio(base64, "audio/mp4", durationSeconds)
                         // Gemini가 프롬프트를 그대로 반환하는 경우 필터링
                         if (result.contains("받아쓰기") || result.contains("텍스트만 출력") || result.isBlank()) {
                             transcriptionError = "음성이 감지되지 않았어요. 다시 시도해주세요."
@@ -436,7 +455,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                                     "요청이 너무 많아요. 잠시 후 다시 시도해주세요."
                                 e.message?.contains("timeout") == true || e.message?.contains("Timeout") == true ->
                                     "응답 시간이 초과됐어요. 더 짧은 영상을 시도해주세요."
-                                else -> e.message ?: "요약 실패"
+                                else -> "요약 중 오류가 발생했어요. 다시 시도해주세요."
                             }
                             inlineSummaryState = SummaryState.Error(errorMsg)
                         }

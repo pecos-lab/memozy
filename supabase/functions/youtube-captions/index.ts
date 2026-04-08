@@ -1,4 +1,5 @@
 import "@supabase/functions-js/edge-runtime.d.ts";
+import { verifyAppAuth } from "../_shared/auth.ts";
 
 const SUPADATA_API_KEY = Deno.env.get("SUPADATA_API_KEY")!;
 
@@ -6,6 +7,9 @@ Deno.serve(async (req) => {
   if (req.method !== "GET") {
     return new Response("Method Not Allowed", { status: 405 });
   }
+
+  const authError = verifyAppAuth(req);
+  if (authError) return authError;
 
   try {
     const reqUrl = new URL(req.url);
