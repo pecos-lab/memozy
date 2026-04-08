@@ -49,4 +49,21 @@ interface TagDao {
     // 태그에 연결된 메모 ID 조회
     @Query("SELECT memoId FROM memo_tag WHERE tagId = :tagId")
     fun getMemoIdsForTag(tagId: Int): Flow<List<Int>>
+
+    // ── Backup & Restore ──
+
+    @Query("SELECT * FROM memo_tag")
+    suspend fun getAllMemoTagsOnce(): List<MemoTag>
+
+    @Insert
+    suspend fun insertTags(tags: List<Tag>)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertMemoTags(memoTags: List<MemoTag>)
+
+    @Query("DELETE FROM memo_tag")
+    suspend fun deleteAllMemoTags()
+
+    @Query("DELETE FROM tag")
+    suspend fun deleteAllTags()
 }

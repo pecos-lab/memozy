@@ -76,10 +76,17 @@
     <string name="donation_error_message">결제 처리 중 문제가 발생했습니다.\n다시 시도해 주세요.</string>
     <string name="donation_loading">연결 중…</string>
 
-    <!-- Trash -->
     <!-- Export -->
     <string name="memo_share">텍스트 공유</string>
     <string name="memo_export_md">마크다운 내보내기</string>
+
+    <!-- Backup -->
+    <string name="backup_export">백업 내보내기</string>
+    <string name="backup_restore">백업 복원</string>
+    <string name="backup_restore_action">복원</string>
+    <string name="backup_restore_confirm">기존 메모를 모두 삭제하고 백업 파일로 복원합니다.\n이 작업은 되돌릴 수 없습니다.</string>
+    <string name="backup_success">%d개 메모가 처리되었습니다</string>
+    <string name="backup_error">백업 처리 중 오류가 발생했습니다</string>
 
     <string name="trash_title">휴지통</string>
     <string name="trash_empty">휴지통이 비어 있어요</string>
