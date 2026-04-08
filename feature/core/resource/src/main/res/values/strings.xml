@@ -77,6 +77,10 @@
     <string name="donation_loading">연결 중…</string>
 
     <!-- Trash -->
+    <!-- Export -->
+    <string name="memo_share">텍스트 공유</string>
+    <string name="memo_export_md">마크다운 내보내기</string>
+
     <string name="trash_title">휴지통</string>
     <string name="trash_empty">휴지통이 비어 있어요</string>
     <string name="trash_empty_action">비우기</string>
