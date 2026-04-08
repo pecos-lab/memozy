@@ -15,5 +15,6 @@ data class Memo(
     val updatedAt: Long = System.currentTimeMillis(),
     val format: MemoFormat = MemoFormat.PLAIN,
     val isPinned: Boolean = false,
-    val audioPath: String? = null
+    val audioPath: String? = null,
+    val styles: String? = null // JSON: [{start,end,bold,italic,strikethrough,color}]
 )

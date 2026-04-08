@@ -9,5 +9,6 @@ data class MemoUiState(
     val updatedAt: Long = 0L,
     val format: MemoFormatUi = MemoFormatUi.PLAIN,
     val isPinned: Boolean = false,
-    val audioPath: String? = null
+    val audioPath: String? = null,
+    val styles: String? = null
 )

@@ -9,6 +9,8 @@ class MemoRepositoryImpl @Inject constructor(private val memoDao: MemoDao) : Mem
 
     override fun getMemos(): Flow<List<Memo>> = memoDao.getAllMemos()
 
+    override suspend fun getMemoById(id: Int): Memo? = memoDao.getMemoById(id)
+
     override suspend fun addMemo(memo: Memo): Long {
         return memoDao.insertMemo(memo)
     }

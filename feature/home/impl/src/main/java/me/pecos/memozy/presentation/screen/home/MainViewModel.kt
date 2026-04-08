@@ -114,7 +114,8 @@ fun MemoUiState.toMemo(): Memo = Memo(
         MemoFormatUi.PLAIN -> MemoFormat.PLAIN
     },
     isPinned = this.isPinned,
-    audioPath = this.audioPath
+    audioPath = this.audioPath,
+    styles = this.styles
 )
 
 fun Memo.toUiState(): MemoUiState = MemoUiState(
@@ -129,5 +130,6 @@ fun Memo.toUiState(): MemoUiState = MemoUiState(
         MemoFormat.PLAIN -> MemoFormatUi.PLAIN
     },
     isPinned = this.isPinned,
-    audioPath = this.audioPath
+    audioPath = this.audioPath,
+    styles = this.styles
 )
