@@ -18,6 +18,9 @@ interface MemoDao {
     @Update
     suspend fun updateMemo(memo: Memo)
 
+    @Query("SELECT * FROM memo WHERE id = :id")
+    suspend fun getMemoById(id: Int): Memo?
+
     @Query("DELETE FROM memo WHERE id = :id")
     suspend fun deleteMemoById(id: Int)
 

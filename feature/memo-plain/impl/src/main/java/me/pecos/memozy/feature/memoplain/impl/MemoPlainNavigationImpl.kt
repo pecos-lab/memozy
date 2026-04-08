@@ -197,25 +197,34 @@ class MemoPlainNavigationImpl @Inject constructor(
                 }
             }
 
-            val memos by repository.getMemos()
-                .map { list ->
-                    list.map { memo ->
+            // 기존 메모 직접 조회 (suspend, 빠름)
+            var existingMemo by remember { mutableStateOf<MemoUiState?>(null) }
+            var memoLoaded by remember { mutableStateOf(memoId <= 0) }
+            LaunchedEffect(memoId) {
+                if (memoId > 0) {
+                    val memo = repository.getMemoById(memoId)
+                    existingMemo = memo?.let {
                         MemoUiState(
-                            id = memo.id,
-                            name = memo.name,
-                            categoryId = memo.categoryId,
-                            content = memo.content,
-                            createdAt = memo.createdAt,
-                            updatedAt = memo.updatedAt,
-                            format = when (memo.format) {
+                            id = it.id,
+                            name = it.name,
+                            categoryId = it.categoryId,
+                            content = it.content,
+                            createdAt = it.createdAt,
+                            updatedAt = it.updatedAt,
+                            format = when (it.format) {
                                 MemoFormat.MARKDOWN -> MemoFormatUi.MARKDOWN
                                 MemoFormat.PLAIN -> MemoFormatUi.PLAIN
-                            }
+                            },
+                            isPinned = it.isPinned,
+                            audioPath = it.audioPath,
+                            styles = it.styles
                         )
                     }
+                    memoLoaded = true
                 }
-                .collectAsState(initial = emptyList())
-            val existingMemo = memos.firstOrNull { it.id == memoId }
+            }
+
+            if (!memoLoaded) return@composable
 
             // 요약 에러 시 원본 URL만 프리필
             val finalMemo = sharedMemo
@@ -501,7 +510,8 @@ class MemoPlainNavigationImpl @Inject constructor(
         name = name,
         categoryId = categoryId,
         content = content,
-        audioPath = audioPath
+        audioPath = audioPath,
+        styles = styles
     )
 
     private suspend fun summarizeVideo(

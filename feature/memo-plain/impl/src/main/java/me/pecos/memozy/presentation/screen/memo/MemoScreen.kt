@@ -49,8 +49,13 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.material.icons.filled.FormatBold
+import androidx.compose.material.icons.filled.FormatItalic
+import androidx.compose.material.icons.filled.FormatStrikethrough
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
@@ -74,6 +79,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
@@ -98,6 +105,41 @@ import me.pecos.memozy.presentation.theme.LocalAppColors
 private val YOUTUBE_URL_REGEX = Regex(
     """(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)[\w\-]+(?:[&?][\w\-=]*)*"""
 )
+
+private class StyleVisualTransformation(
+    private val styles: List<TextSpanStyle>
+) : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val result = buildAnnotatedString {
+            append(text)
+            // 사용자 서식 적용
+            for (style in styles) {
+                if (style.start >= text.length || style.end > text.length || style.start >= style.end) continue
+                addStyle(
+                    SpanStyle(
+                        fontWeight = if (style.bold) FontWeight.Bold else null,
+                        fontStyle = if (style.italic) FontStyle.Italic else null,
+                        textDecoration = if (style.strikethrough) TextDecoration.LineThrough else null,
+                        color = style.color?.let {
+                            try { Color(android.graphics.Color.parseColor(it)) } catch (_: Exception) { Color.Unspecified }
+                        } ?: Color.Unspecified
+                    ),
+                    start = style.start,
+                    end = style.end
+                )
+            }
+            // YouTube URL 하이라이트
+            YOUTUBE_URL_REGEX.findAll(text.text).forEach { match ->
+                addStyle(
+                    SpanStyle(color = Color(0xFF2196F3), textDecoration = TextDecoration.Underline),
+                    start = match.range.first,
+                    end = match.range.last + 1
+                )
+            }
+        }
+        return TransformedText(result, OffsetMapping.Identity)
+    }
+}
 
 private class UrlHighlightTransformation : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
@@ -163,6 +205,7 @@ fun MemoScreen(
         mutableStateOf((existingMemo.categoryId - 1).coerceIn(0, CATEGORY_RES_IDS.size - 1))
     }
     var bodyText by remember { mutableStateOf(existingMemo.content) }
+    val richTextState = com.mohamedrejeb.richeditor.model.rememberRichTextState()
     if (!initialized && existingMemo.id > 0 && existingMemo.name.isNotEmpty()) {
         nameText = existingMemo.name
         categoryIndex = (existingMemo.categoryId - 1).coerceIn(0, CATEGORY_RES_IDS.size - 1)
@@ -200,7 +243,8 @@ fun MemoScreen(
             id = existingMemo.id,
             name = nameText,
             categoryId = categoryIndex + 1,
-            content = bodyText
+            content = bodyText,
+            styles = richTextState.toHtml().takeIf { it.isNotBlank() }
         )
     }
     val canAutoSave = nameText.isNotBlank() || bodyText.isNotBlank()
@@ -292,7 +336,7 @@ fun MemoScreen(
                     color = colors.chipText,
                     modifier = Modifier
                         .clickable {
-                            onSave(MemoUiState(id = existingMemo.id, name = nameText, categoryId = categoryIndex + 1, content = bodyText))
+                            onSave(MemoUiState(id = existingMemo.id, name = nameText, categoryId = categoryIndex + 1, content = bodyText, styles = richTextState.toHtml().takeIf { it.isNotBlank() }))
                         }
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 )
@@ -343,8 +387,11 @@ fun MemoScreen(
                 // 녹음 결과를 본문에 삽입
                 LaunchedEffect(transcriptionResult) {
                     if (transcriptionResult != null) {
-                        bodyText = if (bodyText.isBlank()) transcriptionResult
-                        else "$bodyText\n\n$transcriptionResult"
+                        val current = richTextState.annotatedString.text
+                        val newText = if (current.isBlank()) transcriptionResult
+                        else "$current\n\n$transcriptionResult"
+                        richTextState.setText(newText)
+                        bodyText = newText
                     }
                 }
 
@@ -445,22 +492,157 @@ fun MemoScreen(
                     }
                 }
 
+                // 초기 내용 로드 (HTML 저장 방식)
+                LaunchedEffect(Unit) {
+                    val savedStyles = existingMemo.styles
+                    if (savedStyles != null) {
+                        richTextState.setHtml(savedStyles)
+                    } else if (bodyText.isNotEmpty()) {
+                        richTextState.setText(bodyText)
+                    }
+                }
+
+                // richTextState → bodyText 동기화
+                LaunchedEffect(richTextState.annotatedString) {
+                    val plainText = richTextState.annotatedString.text
+                    if (plainText != bodyText) {
+                        bodyText = plainText
+                    }
+                }
+
+                // 서식 툴바
+                var showColorPicker by remember { mutableStateOf(false) }
+                var savedColorSelection by remember { mutableStateOf(androidx.compose.ui.text.TextRange.Zero) }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val activeBg = colors.chipBackground
+                    val activeTint = colors.chipText
+
+                    // Bold
+                    val isBold = richTextState.currentSpanStyle.fontWeight == FontWeight.Bold
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isBold) activeBg else activeBg.copy(alpha = 0.4f))
+                            .pointerInput(Unit) {
+                                detectTapGestures(onPress = {
+                                    richTextState.toggleSpanStyle(SpanStyle(fontWeight = FontWeight.Bold))
+                                    tryAwaitRelease()
+                                })
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.FormatBold, contentDescription = null, tint = activeTint, modifier = Modifier.size(20.dp))
+                    }
+                    // Italic
+                    val isItalic = richTextState.currentSpanStyle.fontStyle == FontStyle.Italic
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isItalic) activeBg else activeBg.copy(alpha = 0.4f))
+                            .pointerInput(Unit) {
+                                detectTapGestures(onPress = {
+                                    richTextState.toggleSpanStyle(SpanStyle(fontStyle = FontStyle.Italic))
+                                    tryAwaitRelease()
+                                })
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.FormatItalic, contentDescription = null, tint = activeTint, modifier = Modifier.size(20.dp))
+                    }
+                    // Strikethrough
+                    val isStrike = richTextState.currentSpanStyle.textDecoration == TextDecoration.LineThrough
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isStrike) activeBg else activeBg.copy(alpha = 0.4f))
+                            .pointerInput(Unit) {
+                                detectTapGestures(onPress = {
+                                    richTextState.toggleSpanStyle(SpanStyle(textDecoration = TextDecoration.LineThrough))
+                                    tryAwaitRelease()
+                                })
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.FormatStrikethrough, contentDescription = null, tint = activeTint, modifier = Modifier.size(20.dp))
+                    }
+                    // 색상 버튼 (탭하면 인라인으로 색상 펼침)
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (showColorPicker) activeBg else activeBg.copy(alpha = 0.4f))
+                            .pointerInput(Unit) {
+                                detectTapGestures(onPress = {
+                                    savedColorSelection = richTextState.selection
+                                    showColorPicker = !showColorPicker
+                                    tryAwaitRelease()
+                                })
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("A", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = activeTint)
+                            Box(modifier = Modifier.width(16.dp).height(3.dp).background(Color(0xFFFF0000), RoundedCornerShape(1.dp)))
+                        }
+                    }
+
+                }
+
+                // 색상 팔레트 — 툴바 아래 별도 Row
+                if (showColorPicker) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        val textColors = listOf(
+                            "#FF0000", "#FF9800", "#FFEB3B", "#4CAF50",
+                            "#2196F3", "#9C27B0", "#795548", "#607D8B"
+                        )
+                        textColors.forEach { hex ->
+                            Box(
+                                modifier = Modifier
+                                    .size(22.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(android.graphics.Color.parseColor(hex)))
+                                    .pointerInput(hex) {
+                                        detectTapGestures(onPress = {
+                                            if (savedColorSelection.start != savedColorSelection.end) {
+                                                richTextState.addSpanStyle(
+                                                    SpanStyle(color = Color(android.graphics.Color.parseColor(hex))),
+                                                    savedColorSelection
+                                                )
+                                            }
+                                            showColorPicker = false
+                                            tryAwaitRelease()
+                                        })
+                                    }
+                            )
+                        }
+                    }
+                }
+
                 // 내용 — YouTube 링크 감지
                 var selectedYoutubeUrl by remember { mutableStateOf<String?>(null) }
                 val sheetState = rememberModalBottomSheetState()
 
-                val urlHighlight = remember { UrlHighlightTransformation() }
-
-                BasicTextField(
-                    value = bodyText,
+                com.mohamedrejeb.richeditor.ui.BasicRichTextEditor(
+                    state = richTextState,
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 150.dp)
                         .focusRequester(bodyFocusRequester),
-                    onValueChange = { newText ->
-                        bodyText = newText
-                    },
-                    visualTransformation = urlHighlight,
                     textStyle = TextStyle(
                         fontSize = 15.sp,
                         lineHeight = 24.sp,
@@ -472,7 +654,7 @@ fun MemoScreen(
                     ),
                     decorationBox = { innerTextField ->
                         Box(modifier = Modifier.heightIn(min = 150.dp)) {
-                            if (bodyText.isEmpty()) {
+                            if (richTextState.annotatedString.text.isEmpty()) {
                                 Text(
                                     text = stringResource(R.string.memo_content_placeholder),
                                     fontSize = 15.sp,
