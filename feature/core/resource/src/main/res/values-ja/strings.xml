@@ -76,4 +76,16 @@
     <string name="donation_error_title">決済エラー</string>
     <string name="donation_error_message">決済処理中に問題が発生しました。\nもう一度お試しください。</string>
     <string name="donation_loading">接続中…</string>
+
+    <!-- Trash -->
+    <string name="trash_title">ゴミ箱</string>
+    <string name="trash_empty">ゴミ箱は空です</string>
+    <string name="trash_empty_action">空にする</string>
+    <string name="trash_empty_confirm_title">ゴミ箱を空にする</string>
+    <string name="trash_empty_confirm_message">すべてのメモが完全に削除されます。\nこの操作は元に戻せません。</string>
+    <string name="trash_restore">復元</string>
+    <string name="trash_permanent_delete_title">完全に削除</string>
+    <string name="trash_permanent_delete_action">完全に削除</string>
+    <string name="trash_permanent_delete_message">このメモを完全に削除します。\n復元できません。</string>
+    <string name="trash_auto_delete_hint">削除されたメモは30日後に自動的に完全削除されます</string>
 </resources>

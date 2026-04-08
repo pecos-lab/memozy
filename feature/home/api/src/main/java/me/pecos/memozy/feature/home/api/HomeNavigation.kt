@@ -8,6 +8,7 @@ import androidx.navigation.NavGraphBuilder
 object HomeRoute {
     const val MAIN = "main"
     const val SETTINGS = "settings"
+    const val TRASH = "trash"
 }
 
 interface HomeNavigation {

@@ -11,4 +11,12 @@ interface MemoRepository {
     suspend fun updateMemo(memo: Memo)
     suspend fun clearAllMemos()
     suspend fun getRecentMemos(limit: Int = 5): List<Memo>
+
+    // ── Trash ──
+    suspend fun softDeleteMemo(id: Int)
+    suspend fun restoreMemo(id: Int)
+    fun getDeletedMemos(): Flow<List<Memo>>
+    suspend fun emptyTrash()
+    suspend fun purgeOldTrash(threshold: Long)
+    fun getTrashCount(): Flow<Int>
 }

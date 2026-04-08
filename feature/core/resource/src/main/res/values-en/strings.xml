@@ -76,4 +76,16 @@
     <string name="donation_error_title">Payment Error</string>
     <string name="donation_error_message">Something went wrong during payment.\nPlease try again.</string>
     <string name="donation_loading">Connecting…</string>
+
+    <!-- Trash -->
+    <string name="trash_title">Trash</string>
+    <string name="trash_empty">Trash is empty</string>
+    <string name="trash_empty_action">Empty</string>
+    <string name="trash_empty_confirm_title">Empty Trash</string>
+    <string name="trash_empty_confirm_message">All memos will be permanently deleted.\nThis action cannot be undone.</string>
+    <string name="trash_restore">Restore</string>
+    <string name="trash_permanent_delete_title">Delete Permanently</string>
+    <string name="trash_permanent_delete_action">Delete Permanently</string>
+    <string name="trash_permanent_delete_message">This memo will be permanently deleted.\nIt cannot be restored.</string>
+    <string name="trash_auto_delete_hint">Deleted memos are permanently removed after 30 days</string>
 </resources>

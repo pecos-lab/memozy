@@ -75,4 +75,16 @@
     <string name="donation_error_title">결제 오류</string>
     <string name="donation_error_message">결제 처리 중 문제가 발생했습니다.\n다시 시도해 주세요.</string>
     <string name="donation_loading">연결 중…</string>
+
+    <!-- Trash -->
+    <string name="trash_title">휴지통</string>
+    <string name="trash_empty">휴지통이 비어 있어요</string>
+    <string name="trash_empty_action">비우기</string>
+    <string name="trash_empty_confirm_title">휴지통 비우기</string>
+    <string name="trash_empty_confirm_message">모든 메모가 영구 삭제됩니다.\n이 작업은 되돌릴 수 없습니다.</string>
+    <string name="trash_restore">복원</string>
+    <string name="trash_permanent_delete_title">영구 삭제</string>
+    <string name="trash_permanent_delete_action">영구 삭제</string>
+    <string name="trash_permanent_delete_message">이 메모를 영구적으로 삭제합니다.\n복원할 수 없습니다.</string>
+    <string name="trash_auto_delete_hint">삭제된 메모는 30일 후 자동으로 영구 삭제됩니다</string>
 </resources>

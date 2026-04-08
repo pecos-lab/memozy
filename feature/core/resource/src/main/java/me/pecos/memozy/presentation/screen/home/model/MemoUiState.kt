@@ -12,6 +12,7 @@ data class MemoUiState(
     val audioPath: String? = null,
     val styles: String? = null,
     val youtubeUrl: String? = null,
+    val deletedAt: Long? = null,
     val tags: List<TagUiState> = emptyList()
 )
 

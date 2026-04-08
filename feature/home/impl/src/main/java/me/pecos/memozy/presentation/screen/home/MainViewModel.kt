@@ -121,7 +121,7 @@ class MainViewModel @Inject constructor(
 
     fun deleteMemo(id: Int) {
         viewModelScope.launch {
-            repository.deleteMemo(id)
+            repository.softDeleteMemo(id)
         }
     }
 
@@ -164,7 +164,8 @@ fun MemoUiState.toMemo(): Memo = Memo(
     isPinned = this.isPinned,
     audioPath = this.audioPath,
     styles = this.styles,
-    youtubeUrl = this.youtubeUrl
+    youtubeUrl = this.youtubeUrl,
+    deletedAt = this.deletedAt
 )
 
 fun Memo.toUiState(): MemoUiState = MemoUiState(
@@ -181,5 +182,6 @@ fun Memo.toUiState(): MemoUiState = MemoUiState(
     isPinned = this.isPinned,
     audioPath = this.audioPath,
     styles = this.styles,
-    youtubeUrl = this.youtubeUrl
+    youtubeUrl = this.youtubeUrl,
+    deletedAt = this.deletedAt
 )
