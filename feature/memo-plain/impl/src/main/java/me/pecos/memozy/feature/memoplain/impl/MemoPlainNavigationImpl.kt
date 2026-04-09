@@ -718,6 +718,13 @@ class MemoPlainNavigationImpl @Inject constructor(
                         if (webSummaryResult != null) {
                             autoTag(finalMemoId, "웹")
                         }
+                        val hasAutoTag = memoWithAudio.audioPath != null
+                            || youtubeRegex.containsMatchIn(memoWithAudio.content)
+                            || inlineSummaryState is SummaryState.Success
+                            || webSummaryResult != null
+                        if (!hasAutoTag) {
+                            autoTag(finalMemoId, "메모")
+                        }
                         onNavigateToHome()
                     }
                 },

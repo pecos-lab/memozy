@@ -3,6 +3,7 @@ package me.pecos.memozy.presentation.screen.home.components
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -45,7 +46,8 @@ import me.pecos.memozy.presentation.theme.LocalAppColors
 @Composable
 fun MemoCardItem(
     memo: MemoUiState,
-    tags: List<TagUiState> = emptyList()
+    tags: List<TagUiState> = emptyList(),
+    onTagsClick: (() -> Unit)? = null
 ) {
     val colors = LocalAppColors.current
     val context = LocalContext.current
@@ -102,7 +104,10 @@ fun MemoCardItem(
                     }
                     if (tags.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(4.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = if (onTagsClick != null) Modifier.clickable(onClick = onTagsClick) else Modifier
+                        ) {
                             tags.take(2).forEach { tag ->
                                 Text(
                                     text = tag.name,

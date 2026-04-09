@@ -55,6 +55,9 @@ interface MemoDao {
 
     // ── Backup & Restore ──
 
+    @Query("SELECT * FROM memo WHERE deletedAt IS NULL ORDER BY id ASC")
+    suspend fun getAllMemosOnce(): List<Memo>
+
     @Query("SELECT * FROM memo ORDER BY id ASC")
     suspend fun getAllMemosForBackup(): List<Memo>
 
