@@ -156,6 +156,8 @@
     <string name="cancel_reminder">Cancel Reminder</string>
 
     <!-- Summary Mode -->
+    <string name="summary_collapse">Collapse Summary</string>
+    <string name="summary_expand">View Summary</string>
     <string name="summary_mode_simple">Quick Summary</string>
     <string name="summary_mode_detailed">Detailed Summary</string>
     <string name="youtube_url_copied">YouTube URL copied</string>

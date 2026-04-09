@@ -154,6 +154,8 @@
     <string name="cancel_reminder">알림 해제</string>
 
     <!-- Summary Mode -->
+    <string name="summary_collapse">요약 접기</string>
+    <string name="summary_expand">요약 보기</string>
     <string name="summary_mode_simple">간단 요약</string>
     <string name="summary_mode_detailed">상세 요약</string>
     <string name="youtube_url_copied">유튜브 URL이 복사되었습니다</string>

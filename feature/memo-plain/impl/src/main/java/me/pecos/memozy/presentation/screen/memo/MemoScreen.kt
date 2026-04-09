@@ -222,7 +222,11 @@ fun MemoScreen(
     var categoryIndex by remember {
         mutableStateOf((existingMemo.categoryId - 1).coerceIn(0, CATEGORY_RES_IDS.size - 1))
     }
-    var bodyText by remember { mutableStateOf(existingMemo.content) }
+    var bodyText by remember {
+        val content = existingMemo.content
+        val summaryStart = content.indexOf("📋")
+        mutableStateOf(if (summaryStart > 0) content.substring(0, summaryStart).trim() else if (summaryStart == 0) "" else content)
+    }
     val richTextState = com.mohamedrejeb.richeditor.model.rememberRichTextState()
     // 초기 HTML 스냅샷 — setHtml 직후 캡처, 이후 toHtml()과 비교하여 변경 감지
     var initialHtml by remember { mutableStateOf("") }
@@ -259,41 +263,63 @@ fun MemoScreen(
     // 요약 결과 표시 상태
     var showSummary by remember { mutableStateOf(false) }
 
-    // 요약 완료 시 메모 본문의 URL을 요약 텍스트로 대체 + 제목 설정
+    // 요약 콘텐츠 접기/펼치기 상태
+    // 기존 메모 본문에서 요약 부분 분리
+    val initialSummary = remember(existingMemo.id) {
+        val content = existingMemo.content
+        val summaryStart = content.indexOf("📋")
+        if (summaryStart >= 0) content.substring(summaryStart) else null
+    }
+    val initialBody = remember(existingMemo.id) {
+        val content = existingMemo.content
+        val summaryStart = content.indexOf("📋")
+        if (summaryStart > 0) content.substring(0, summaryStart).trim() else if (summaryStart == 0) "" else content
+    }
+    var summaryText by remember { mutableStateOf(initialSummary) }
+    var isSummaryExpanded by remember { mutableStateOf(false) }
+    var webSummaryText by remember { mutableStateOf<String?>(null) }
+    var isWebSummaryExpanded by remember { mutableStateOf(true) }
+
+    // 요약 완료 시 별도 상태로 분리 (본문에 삽입하지 않음)
     var summaryApplied by remember { mutableStateOf(false) }
     var currentSummaryMode by remember { mutableStateOf<SummaryMode?>(null) }
     LaunchedEffect(summaryResult, isSummarizing) {
         if (summaryResult != null && !isSummarizing && !summaryApplied) {
-            // 요약 전 URL 저장
             if (savedYoutubeUrl == null) savedYoutubeUrl = detectedYoutubeUrl
-            val newText = YOUTUBE_URL_REGEX.replace(bodyText) { summaryResult }.trim()
+            // URL을 본문에서 제거
+            val newText = YOUTUBE_URL_REGEX.replace(bodyText, "").trim()
             bodyText = newText
             richTextState.setHtml(newText.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>"))
+            // 요약 텍스트를 별도 상태에 저장
+            summaryText = summaryResult
             if (youtubeTitle != null && nameText.isBlank()) {
                 nameText = youtubeTitle
             }
             summaryApplied = true
-
         }
     }
 
-    // 웹 요약 완료 시 본문에 삽입
+    // 웹 요약 완료 시 별도 상태로 분리
     var webSummaryApplied by remember { mutableStateOf(false) }
     LaunchedEffect(webSummaryResult, isWebSummarizing) {
         if (webSummaryResult != null && !isWebSummarizing && !webSummaryApplied) {
-            val newText = if (bodyText.isBlank()) webSummaryResult else "$bodyText\n\n$webSummaryResult"
-            bodyText = newText
-            richTextState.setHtml(newText.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>"))
+            webSummaryText = webSummaryResult
             if (webPageTitle != null && nameText.isBlank()) {
                 nameText = webPageTitle
             }
             webSummaryApplied = true
-
         }
     }
 
 
-    fun safeContent(): String = richTextState.toHtml().ifBlank { bodyText }
+    fun safeContent(): String {
+        val editorContent = richTextState.toHtml().ifBlank { bodyText }
+        val parts = mutableListOf<String>()
+        summaryText?.let { parts.add(it) }
+        webSummaryText?.let { parts.add(it) }
+        if (editorContent.isNotBlank()) parts.add(editorContent)
+        return parts.joinToString("\n\n")
+    }
     fun safeStyles(): String? = richTextState.toHtml().takeIf { it.isNotBlank() }
 
     val canAutoSave = nameText.isNotBlank() || bodyText.isNotBlank()
@@ -513,6 +539,76 @@ fun MemoScreen(
                     if (plainText != bodyText) {
                         bodyText = plainText
                     }
+                }
+
+                // ── 요약 콘텐츠 접기/펼치기 ──
+                // 유튜브 요약
+                if (summaryText != null) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(colors.cardBackground)
+                            .padding(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { isSummaryExpanded = !isSummaryExpanded },
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = if (isSummaryExpanded) "▼ ${stringResource(R.string.summary_collapse)}" else "▶ ${stringResource(R.string.summary_expand)}",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.chipText
+                            )
+                        }
+                        if (isSummaryExpanded) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = summaryText!!,
+                                fontSize = 14.sp,
+                                lineHeight = 22.sp,
+                                color = colors.textBody
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+                // 웹 요약
+                if (webSummaryText != null) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(colors.cardBackground)
+                            .padding(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { isWebSummaryExpanded = !isWebSummaryExpanded },
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = if (isWebSummaryExpanded) "▼ ${stringResource(R.string.summary_collapse)}" else "▶ ${stringResource(R.string.summary_expand)}",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.chipText
+                            )
+                        }
+                        if (isWebSummaryExpanded) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = webSummaryText!!,
+                                fontSize = 14.sp,
+                                lineHeight = 22.sp,
+                                color = colors.textBody
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
 
                 // 내용 — YouTube 링크 감지

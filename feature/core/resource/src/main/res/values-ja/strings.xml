@@ -156,6 +156,8 @@
     <string name="cancel_reminder">リマインダー解除</string>
 
     <!-- Summary Mode -->
+    <string name="summary_collapse">要約を閉じる</string>
+    <string name="summary_expand">要約を見る</string>
     <string name="summary_mode_simple">簡単要約</string>
     <string name="summary_mode_detailed">詳細要約</string>
     <string name="youtube_url_copied">YouTube URLがコピーされました</string>
