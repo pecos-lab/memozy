@@ -82,6 +82,15 @@ class MainActivity : AppCompatActivity() {
 
     private val billingManager by lazy { BillingManager(this) }
 
+    // 공유 Intent 상태 — singleTask에서 onNewIntent 처리
+    private val _currentIntent = androidx.compose.runtime.mutableStateOf<Intent?>(null)
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        _currentIntent.value = intent
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         billingManager.disconnect()
@@ -144,13 +153,15 @@ class MainActivity : AppCompatActivity() {
                             )
                         }
 
-                        // ACTION_SEND 공유 수신 처리
-                        val sharedRoute = remember {
-                            if (intent?.action == Intent.ACTION_SEND) {
-                                val type = intent.type ?: ""
+                        // ACTION_SEND 공유 수신 처리 (onNewIntent 대응)
+                        val newIntent by _currentIntent
+                        val activeIntent = newIntent ?: intent
+                        val sharedRoute = remember(activeIntent) {
+                            if (activeIntent?.action == Intent.ACTION_SEND) {
+                                val type = activeIntent.type ?: ""
                                 when {
                                     type == "text/plain" -> {
-                                        val text = intent.getStringExtra(Intent.EXTRA_TEXT)?.take(4096)
+                                        val text = activeIntent.getStringExtra(Intent.EXTRA_TEXT)?.take(4096)
                                         if (text != null) {
                                             val encoded = java.net.URLEncoder.encode(text, "UTF-8")
                                             MemoPlainRoute.createRoute("shared_$encoded")
@@ -158,7 +169,7 @@ class MainActivity : AppCompatActivity() {
                                     }
                                     type.startsWith("image/") -> {
                                         @Suppress("DEPRECATION")
-                                        val uri = intent.getParcelableExtra<android.net.Uri>(Intent.EXTRA_STREAM)
+                                        val uri = activeIntent.getParcelableExtra<android.net.Uri>(Intent.EXTRA_STREAM)
                                         if (uri != null) {
                                             val encoded = java.net.URLEncoder.encode(uri.toString(), "UTF-8")
                                             MemoPlainRoute.createRoute("shared_image_$encoded")
@@ -166,7 +177,7 @@ class MainActivity : AppCompatActivity() {
                                     }
                                     type == "application/pdf" -> {
                                         @Suppress("DEPRECATION")
-                                        val uri = intent.getParcelableExtra<android.net.Uri>(Intent.EXTRA_STREAM)
+                                        val uri = activeIntent.getParcelableExtra<android.net.Uri>(Intent.EXTRA_STREAM)
                                         if (uri != null) {
                                             val encoded = java.net.URLEncoder.encode(uri.toString(), "UTF-8")
                                             MemoPlainRoute.createRoute("shared_pdf_$encoded")
