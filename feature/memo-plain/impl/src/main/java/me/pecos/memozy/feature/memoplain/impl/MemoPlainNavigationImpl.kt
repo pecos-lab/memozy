@@ -550,6 +550,8 @@ class MemoPlainNavigationImpl @Inject constructor(
                         if (savedMemoId > 0) {
                             repository.updateMemo(memoWithAudio.copy(id = savedMemoId).toEntity())
                         } else if (memoWithAudio.name.isNotBlank() || memoWithAudio.content.isNotBlank()) {
+                            // 즉시 임시 ID 설정하여 race condition 방지
+                            savedMemoId = -999
                             val newId = repository.addMemo(memoWithAudio.toEntity())
                             savedMemoId = newId.toInt()
                         }
@@ -691,6 +693,11 @@ class MemoPlainNavigationImpl @Inject constructor(
                     scope.launch {
                         val memoWithAudio = memo.copy(audioPath = savedAudioPath ?: memo.audioPath)
                         val finalMemoId: Int
+                        // savedMemoId == -999 은 autoSave가 진행 중 → 완료 대기
+                        if (savedMemoId == -999) {
+                            // autoSave가 완료될 때까지 대기
+                            while (savedMemoId == -999) { kotlinx.coroutines.delay(50) }
+                        }
                         if (savedMemoId > 0) {
                             repository.updateMemo(memoWithAudio.copy(id = savedMemoId).toEntity())
                             finalMemoId = savedMemoId
