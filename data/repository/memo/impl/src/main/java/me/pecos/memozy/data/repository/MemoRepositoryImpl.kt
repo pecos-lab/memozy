@@ -37,6 +37,10 @@ class MemoRepositoryImpl @Inject constructor(private val memoDao: MemoDao) : Mem
         memoDao.softDeleteMemoById(id)
     }
 
+    override suspend fun softDeleteMemos(ids: List<Int>) {
+        memoDao.softDeleteMemosByIds(ids)
+    }
+
     override suspend fun restoreMemo(id: Int) {
         memoDao.restoreMemoById(id)
     }

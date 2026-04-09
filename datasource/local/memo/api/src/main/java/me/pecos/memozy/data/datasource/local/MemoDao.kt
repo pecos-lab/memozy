@@ -35,6 +35,9 @@ interface MemoDao {
     @Query("UPDATE memo SET deletedAt = :deletedAt, isPinned = 0 WHERE id = :id")
     suspend fun softDeleteMemoById(id: Int, deletedAt: Long = System.currentTimeMillis())
 
+    @Query("UPDATE memo SET deletedAt = :deletedAt, isPinned = 0 WHERE id IN (:ids)")
+    suspend fun softDeleteMemosByIds(ids: List<Int>, deletedAt: Long = System.currentTimeMillis())
+
     @Query("UPDATE memo SET deletedAt = NULL WHERE id = :id")
     suspend fun restoreMemoById(id: Int)
 

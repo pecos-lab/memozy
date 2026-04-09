@@ -165,6 +165,15 @@
     <string name="trash_days_left">%d日後に完全削除</string>
     <string name="trash_soon_delete">まもなく完全削除</string>
 
+    <!-- Multi-select -->
+    <string name="select">選択</string>
+    <string name="selected_count">%d件選択</string>
+    <string name="delete_selected_title">選択したメモを削除</string>
+    <string name="delete_selected_message">選択した%d件のメモを削除しますか？\n削除されたメモはゴミ箱に移動します。</string>
+    <string name="select_all">全選択</string>
+    <string name="deselect_all">選択解除</string>
+    <string name="delete_action">削除</string>
+
     <!-- Quiz -->
     <string name="quiz_title">メモクイズ</string>
     <string name="quiz_generating">クイズを作成中…</string>

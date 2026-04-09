@@ -125,6 +125,12 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun deleteMemos(ids: Set<Int>) {
+        viewModelScope.launch {
+            repository.softDeleteMemos(ids.toList())
+        }
+    }
+
     fun updateMemo(memo: MemoUiState) {
         viewModelScope.launch {
             repository.updateMemo(memo.toMemo())
