@@ -119,7 +119,9 @@ import me.pecos.memozy.presentation.screen.memo.components.WebLinkBottomSheet
 import me.pecos.memozy.presentation.screen.memo.components.WebSummaryInlineCard
 import me.pecos.memozy.presentation.screen.memo.components.WebUrlDialog
 import me.pecos.memozy.presentation.screen.memo.components.YouTubeSummaryInlineCard
+import me.pecos.memozy.presentation.screen.memo.components.YouTubeLinkBottomSheet
 import me.pecos.memozy.presentation.screen.memo.components.YouTubeUrlDialog
+import me.pecos.memozy.presentation.screen.memo.components.MemoActionBar
 import me.pecos.memozy.presentation.theme.LocalAppColors
 
 private val YOUTUBE_URL_REGEX = Regex(
@@ -680,132 +682,22 @@ fun MemoScreen(
 
                 // YouTube 링크 바텀시트
                 if (selectedYoutubeUrl != null) {
-                    ModalBottomSheet(
-                        onDismissRequest = { selectedYoutubeUrl = null },
-                        sheetState = sheetState,
-                        containerColor = colors.cardBackground
-                    ) {
-                        val url = selectedYoutubeUrl!!
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 24.dp, vertical = 8.dp)
-                                .padding(bottom = 24.dp)
-                        ) {
-                            Text(
-                                text = "YouTube 링크",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.textTitle
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = url,
-                                fontSize = 13.sp,
-                                color = colors.textSecondary,
-                                maxLines = 1
-                            )
-                            Spacer(modifier = Modifier.height(20.dp))
-
-                            // 📋 링크 복사
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .clickable {
-                                        clipboardManager.setText(AnnotatedString(url))
-                                        selectedYoutubeUrl = null
-                                    }
-                                    .padding(vertical = 14.dp, horizontal = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("📋", fontSize = 20.sp)
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(stringResource(R.string.copy_link), fontSize = 16.sp, color = colors.textBody)
-                            }
-
-                            // 🌐 브라우저에서 열기
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .clickable {
-                                        val fullUrl = if (url.startsWith("http")) url else "https://$url"
-                                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(fullUrl)))
-                                        selectedYoutubeUrl = null
-                                    }
-                                    .padding(vertical = 14.dp, horizontal = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("🌐", fontSize = 20.sp)
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(stringResource(R.string.open_in_browser), fontSize = 16.sp, color = colors.textBody)
-                            }
-
-                            // ▶ YouTube에서 열기
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .clickable {
-                                        val fullUrl = if (url.startsWith("http")) url else "https://$url"
-                                        val ytIntent = Intent(Intent.ACTION_VIEW, Uri.parse(fullUrl)).apply {
-                                            setPackage("com.google.android.youtube")
-                                        }
-                                        try {
-                                            context.startActivity(ytIntent)
-                                        } catch (_: Exception) {
-                                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(fullUrl)))
-                                        }
-                                        selectedYoutubeUrl = null
-                                    }
-                                    .padding(vertical = 14.dp, horizontal = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("▶️", fontSize = 20.sp)
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(stringResource(R.string.open_in_youtube), fontSize = 16.sp, color = colors.textBody)
-                            }
-
-                            // 🤖 AI 요약하기 — 간단/상세 선택
-                            if (onYoutubeSummarize != null && !isSummarizing && summaryResult == null) {
-                                // 간단 요약
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .clickable {
-                                            currentSummaryMode = SummaryMode.SIMPLE
-                                            onYoutubeSummarize(url, SummaryMode.SIMPLE)
-                                            selectedYoutubeUrl = null
-                                        }
-                                        .padding(vertical = 14.dp, horizontal = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text("⚡", fontSize = 20.sp)
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text(stringResource(R.string.summary_mode_simple), fontSize = 16.sp, color = colors.textBody)
-                                }
-                                // 상세 요약
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .clickable {
-                                            currentSummaryMode = SummaryMode.DETAILED
-                                            onYoutubeSummarize(url, SummaryMode.DETAILED)
-                                            selectedYoutubeUrl = null
-                                        }
-                                        .padding(vertical = 14.dp, horizontal = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text("📑", fontSize = 20.sp)
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text(stringResource(R.string.summary_mode_detailed), fontSize = 16.sp, color = colors.textBody)
-                                }
-                            }
+                    YouTubeLinkBottomSheet(
+                        url = selectedYoutubeUrl!!,
+                        colors = colors,
+                        context = context,
+                        clipboardManager = clipboardManager,
+                        isSummarizing = isSummarizing,
+                        isWebSummarizing = isWebSummarizing,
+                        summaryResult = summaryResult,
+                        onSummarize = onYoutubeSummarize,
+                        onDismiss = { selectedYoutubeUrl = null },
+                        onSummarizeAndDismiss = { url, mode ->
+                            currentSummaryMode = mode
+                            onYoutubeSummarize?.invoke(url, mode)
+                            selectedYoutubeUrl = null
                         }
-                    }
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -901,170 +793,30 @@ fun MemoScreen(
                 Spacer(modifier = Modifier.height(20.dp))
             }
 
-            // 하단 AI 액션 바 — 항상 표시
-            HorizontalDivider(color = colors.cardBorder)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // 🎙️ 녹음
-                if (onStartRecording != null) {
-                    val recordingBusy = isRecording || isTranscribing
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                if (isRecording) Color(0xFFE24B4A)
-                                else if (isTranscribing) colors.chipBackground.copy(alpha = 0.3f)
-                                else colors.chipBackground
-                            )
-                            .clickable(enabled = !isTranscribing) {
-                                if (isRecording) onStopRecording?.invoke()
-                                else onStartRecording()
-                            }
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = if (isRecording) Icons.Default.Stop else Icons.Default.Mic,
-                            contentDescription = null,
-                            tint = if (isRecording) Color.White else colors.chipText,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = if (isRecording) stringResource(R.string.recording_stop) else stringResource(R.string.recording_start),
-                            fontSize = 12.sp,
-                            color = if (isRecording) Color.White else colors.chipText,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
-
-                // 📺 유튜브 요약 (항상 표시)
-                if (onYoutubeSummarize != null) {
-                    val hasYoutubeUrl = detectedYoutubeUrl != null
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                if (isSummarizing || isWebSummarizing) colors.chipBackground.copy(alpha = 0.3f)
-                                else if (hasYoutubeUrl) Color(0xFF2196F3).copy(alpha = 0.1f)
-                                else colors.chipBackground
-                            )
-                            .clickable(enabled = !isSummarizing && !isWebSummarizing) {
-                                youtubeChipDismissed = false
-                                if (hasYoutubeUrl) {
-                                    currentSummaryMode = SummaryMode.SIMPLE
-                                    onYoutubeSummarize(detectedYoutubeUrl ?: return@clickable, SummaryMode.SIMPLE)
-                                } else {
-                                    showYoutubeDialog = true
-                                }
-                            }
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.SmartDisplay,
-                            contentDescription = null,
-                            tint = if (hasYoutubeUrl) Color(0xFF2196F3) else colors.chipText,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = stringResource(R.string.youtube_label),
-                            fontSize = 12.sp,
-                            color = if (hasYoutubeUrl) Color(0xFF2196F3) else colors.chipText,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
-
-                // 🔗 웹 요약
-                if (onWebSummarize != null) {
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                if (isSummarizing || isWebSummarizing) colors.chipBackground.copy(alpha = 0.3f)
-                                else colors.chipBackground
-                            )
-                            .clickable(enabled = !isSummarizing && !isWebSummarizing) { showWebDialog = true }
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.Link, contentDescription = null, tint = colors.chipText, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(R.string.link_label), fontSize = 12.sp, color = colors.chipText, fontWeight = FontWeight.SemiBold)
-                    }
-                }
-
-                // ⏰ 리마인더
-                if (onSetReminder != null && !isNewMemo) {
-                    var showReminderPicker by remember { mutableStateOf(false) }
-                    val reminderTime = existingMemo.reminderAt
-                    val hasReminder = reminderTime != null && reminderTime > System.currentTimeMillis()
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                if (hasReminder) Color(0xFFFFA726).copy(alpha = 0.15f)
-                                else colors.chipBackground
-                            )
-                            .clickable { showReminderPicker = true }
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.Notifications, contentDescription = null,
-                            tint = if (hasReminder) Color(0xFFFFA726) else colors.chipText,
-                            modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = stringResource(R.string.notification_label),
-                            fontSize = 12.sp,
-                            color = if (hasReminder) Color(0xFFFFA726) else colors.chipText,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-
-                    if (showReminderPicker) {
-                        ReminderPickerDialog(
-                            currentReminder = existingMemo.reminderAt,
-                            onDismiss = { showReminderPicker = false },
-                            onConfirm = { reminderAt ->
-                                onSetReminder(existingMemo.id, reminderAt)
-                                showReminderPicker = false
-                            },
-                            onCancel = {
-                                onSetReminder(existingMemo.id, null)
-                                showReminderPicker = false
-                            }
-                        )
-                    }
-                }
-
-                // 🧠 퀴즈
-                if (onQuiz != null && !isNewMemo && existingMemo.content.length >= 20) {
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(colors.chipBackground)
-                            .clickable { onQuiz(existingMemo.id) }
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.Quiz, contentDescription = null,
-                            tint = colors.chipText, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(R.string.quiz_label), fontSize = 12.sp, color = colors.chipText, fontWeight = FontWeight.SemiBold)
-                    }
-                }
-
-                Spacer(modifier = Modifier.weight(1f))
-            }
+            // 하단 AI 액션 바
+            MemoActionBar(
+                colors = colors,
+                isNewMemo = isNewMemo,
+                existingMemo = existingMemo,
+                onStartRecording = onStartRecording,
+                onStopRecording = onStopRecording,
+                isRecording = isRecording,
+                isTranscribing = isTranscribing,
+                onYoutubeSummarize = onYoutubeSummarize,
+                isSummarizing = isSummarizing,
+                isWebSummarizing = isWebSummarizing,
+                detectedYoutubeUrl = detectedYoutubeUrl,
+                onYoutubeChipClick = {
+                    youtubeChipDismissed = false
+                    currentSummaryMode = SummaryMode.SIMPLE
+                    detectedYoutubeUrl?.let { onYoutubeSummarize?.invoke(it, SummaryMode.SIMPLE) }
+                },
+                onYoutubeDialogOpen = { showYoutubeDialog = true },
+                onWebSummarize = onWebSummarize,
+                onWebDialogOpen = { showWebDialog = true },
+                onSetReminder = onSetReminder,
+                onQuiz = onQuiz
+            )
         } // outer Column
     }
 
