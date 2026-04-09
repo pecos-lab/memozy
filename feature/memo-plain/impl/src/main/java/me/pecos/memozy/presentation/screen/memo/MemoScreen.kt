@@ -112,6 +112,16 @@ import me.pecos.memozy.presentation.screen.home.model.MemoUiState
 import me.pecos.memozy.feature.core.resource.CATEGORY_EMOJIS
 import me.pecos.memozy.feature.core.resource.CATEGORY_RES_IDS
 import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.presentation.screen.memo.components.AudioPlayerBar
+import me.pecos.memozy.presentation.screen.memo.components.FormattingToolbar
+import me.pecos.memozy.presentation.screen.memo.components.ReminderPickerDialog
+import me.pecos.memozy.presentation.screen.memo.components.WebLinkBottomSheet
+import me.pecos.memozy.presentation.screen.memo.components.WebSummaryInlineCard
+import me.pecos.memozy.presentation.screen.memo.components.WebUrlDialog
+import me.pecos.memozy.presentation.screen.memo.components.YouTubeSummaryInlineCard
+import me.pecos.memozy.presentation.screen.memo.components.YouTubeLinkBottomSheet
+import me.pecos.memozy.presentation.screen.memo.components.YouTubeUrlDialog
+import me.pecos.memozy.presentation.screen.memo.components.MemoActionBar
 import me.pecos.memozy.presentation.theme.LocalAppColors
 
 private val YOUTUBE_URL_REGEX = Regex(
@@ -577,348 +587,53 @@ fun MemoScreen(
                 }
                 val showYoutubeInline = summaryText != null || (youtubeUrlDisplay.isNotBlank() && !youtubeChipDismissed && (detectedYoutubeUrl != null || summaryResult != null || youtubeTitle != null))
                 if (showYoutubeInline) {
-                    // 접힌 상태: 한 줄 토글만 표시
-                    if (!isSummaryExpanded) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(colors.cardBackground)
-                                .clickable { isSummaryExpanded = true }
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("▶ ${stringResource(R.string.summary_expand)}", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = colors.chipText)
-                            Spacer(modifier = Modifier.weight(1f))
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(youtubeTitle ?: "YouTube", fontSize = 12.sp, color = colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
-                    }
-
-                    // 펼친 상태: 전체 카드
-                    if (isSummaryExpanded) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(colors.cardBackground)
-                    ) {
-                        // 썸네일
-                        if (ytVideoId != null) {
-                            coil.compose.AsyncImage(
-                                model = "https://img.youtube.com/vi/$ytVideoId/hqdefault.jpg",
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(16f / 9f)
-                                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
-                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                            )
-                        }
-
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            // 소스 태그
-                            Text("▶ YouTube", fontSize = 11.sp, color = colors.textSecondary, fontWeight = FontWeight.Medium)
-                            Spacer(modifier = Modifier.height(4.dp))
-
-                            // 제목
-                            Text(
-                                text = youtubeTitle ?: nameText.takeIf { it.isNotBlank() } ?: youtubeUrlDisplay,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colors.textTitle,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            if (youtubeUrlDisplay.isNotBlank()) {
-                                Text(youtubeUrlDisplay, fontSize = 11.sp, color = Color(0xFF2196F3), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            }
-
-                            // 액션 버튼
-                            Spacer(modifier = Modifier.height(10.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                // 원본 보기
-                                Row(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(colors.chipBackground)
-                                        .clickable {
-                                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(youtubeUrlDisplay)).apply {
-                                                setPackage("com.google.android.youtube")
-                                            }
-                                            try { context.startActivity(intent) } catch (_: Exception) {
-                                                context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(youtubeUrlDisplay)))
-                                            }
-                                        }
-                                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text("🔗", fontSize = 12.sp)
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(stringResource(R.string.summary_card_open), fontSize = 11.sp, color = colors.chipText, fontWeight = FontWeight.Medium)
-                                }
-                                // 복사
-                                Row(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(colors.chipBackground)
-                                        .clickable {
-                                            clipboardManager.setText(AnnotatedString(youtubeUrlDisplay))
-                                            android.widget.Toast.makeText(context, context.getString(R.string.youtube_url_copied), android.widget.Toast.LENGTH_SHORT).show()
-                                        }
-                                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(Icons.Default.ContentCopy, null, tint = colors.chipText, modifier = Modifier.size(14.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(stringResource(R.string.memo_copy), fontSize = 11.sp, color = colors.chipText, fontWeight = FontWeight.Medium)
-                                }
-                                // 요약 버튼 (간단/상세)
-                                if (onYoutubeSummarize != null && summaryText == null) {
-                                    Row(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(Color(0xFF2196F3).copy(alpha = 0.1f))
-                                            .clickable {
-                                                currentSummaryMode = SummaryMode.SIMPLE
-                                                detectedYoutubeUrl?.let { onYoutubeSummarize(it, SummaryMode.SIMPLE) }
-                                            }
-                                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(stringResource(R.string.summary_mode_simple), fontSize = 11.sp, color = Color(0xFF2196F3), fontWeight = FontWeight.Medium)
-                                    }
-                                    Row(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(Color(0xFFFF9800).copy(alpha = 0.1f))
-                                            .clickable {
-                                                currentSummaryMode = SummaryMode.DETAILED
-                                                detectedYoutubeUrl?.let { onYoutubeSummarize(it, SummaryMode.DETAILED) }
-                                            }
-                                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(stringResource(R.string.summary_mode_detailed), fontSize = 11.sp, color = Color(0xFFFF9800), fontWeight = FontWeight.Medium)
-                                    }
-                                }
-                                // 요약 완료 후 반대 모드
-                                if (onYoutubeSummarize != null && summaryText != null) {
-                                    val altMode = if (currentSummaryMode == SummaryMode.DETAILED) SummaryMode.SIMPLE else SummaryMode.DETAILED
-                                    val altLabel = if (altMode == SummaryMode.SIMPLE) stringResource(R.string.summary_mode_simple) else stringResource(R.string.summary_mode_detailed)
-                                    val altColor = if (altMode == SummaryMode.SIMPLE) Color(0xFF2196F3) else Color(0xFFFF9800)
-                                    Row(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(altColor.copy(alpha = 0.1f))
-                                            .clickable {
-                                                summaryText = null
-                                                summaryApplied = false
-                                                currentSummaryMode = altMode
-                                                detectedYoutubeUrl?.let { onYoutubeSummarize(it, altMode) }
-                                            }
-                                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(altLabel, fontSize = 11.sp, color = altColor, fontWeight = FontWeight.Medium)
-                                    }
-                                }
-                            }
-
-                            // 유튜브 요약 중 로딩
-                            if (isSummarizing) {
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    androidx.compose.material3.CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = colors.textSecondary)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(stringResource(R.string.youtube_summarizing), fontSize = 13.sp, color = colors.textSecondary, modifier = Modifier.weight(1f))
-                                    Icon(Icons.Default.Close, contentDescription = null, tint = colors.textSecondary,
-                                        modifier = Modifier.size(16.dp).clickable { onCancelSummarize?.invoke() })
-                                }
-                            }
-
-                            // 요약 텍스트
-                            if (summaryText != null) {
-                                Spacer(modifier = Modifier.height(10.dp))
-                                HorizontalDivider(color = colors.cardBorder)
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(summaryText!!, fontSize = 14.sp, lineHeight = 22.sp, color = colors.textBody)
-                            }
-
-                            // 접기 버튼 — 요약 결과 있을 때만
-                            if (summaryText != null) {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable { isSummaryExpanded = false },
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center
-                                ) {
-                                    Text("▼ ${stringResource(R.string.summary_collapse)}", fontSize = 12.sp, color = colors.textSecondary)
-                                }
-                            }
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    } // if (isSummaryExpanded)
+                    YouTubeSummaryInlineCard(
+                        youtubeUrl = youtubeUrlDisplay,
+                        videoId = ytVideoId,
+                        title = youtubeTitle,
+                        memoTitle = nameText,
+                        isExpanded = isSummaryExpanded,
+                        onExpandToggle = { isSummaryExpanded = it },
+                        summaryText = summaryText,
+                        isSummarizing = isSummarizing,
+                        currentSummaryMode = currentSummaryMode,
+                        onSummarize = onYoutubeSummarize,
+                        onCancelSummarize = onCancelSummarize,
+                        onResummarize = { altMode ->
+                            summaryText = null
+                            summaryApplied = false
+                            currentSummaryMode = altMode
+                            detectedYoutubeUrl?.let { onYoutubeSummarize?.invoke(it, altMode) }
+                        },
+                        colors = colors,
+                        context = context,
+                        clipboardManager = clipboardManager
+                    )
                 }
 
                 // ── 웹 요약 인라인 카드 ──
                 val showWebInline = webSummaryText != null || (savedWebUrl != null && !webChipDismissed)
-                if (showWebInline) {
-                    // 접힌 상태
-                    if (!isWebSummaryExpanded) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(colors.cardBackground)
-                                .clickable { isWebSummaryExpanded = true }
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("▶ ${stringResource(R.string.summary_expand)}", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = colors.chipText)
-                            Spacer(modifier = Modifier.weight(1f))
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(webPageTitle ?: stringResource(R.string.summary_card_web), fontSize = 12.sp, color = colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
-                    }
-
-                    // 펼친 상태
-                    if (isWebSummaryExpanded) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(colors.cardBackground)
-                            .padding(12.dp)
-                    ) {
-                        Text("🔗 ${stringResource(R.string.summary_card_web)}", fontSize = 11.sp, color = colors.textSecondary, fontWeight = FontWeight.Medium)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = webPageTitle ?: savedWebUrl ?: "",
-                            fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = colors.textTitle,
-                            maxLines = 2, overflow = TextOverflow.Ellipsis
-                        )
-                        if (savedWebUrl != null) {
-                            Text(savedWebUrl!!, fontSize = 11.sp, color = Color(0xFF2196F3), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        }
-
-                        // 액션 버튼
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            // 원본 보기
-                            Row(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(colors.chipBackground)
-                                    .clickable {
-                                        savedWebUrl?.let { url ->
-                                            context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url)))
-                                        }
-                                    }
-                                    .padding(horizontal = 10.dp, vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("🔗", fontSize = 12.sp)
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(stringResource(R.string.summary_card_open), fontSize = 11.sp, color = colors.chipText, fontWeight = FontWeight.Medium)
-                            }
-                            // 복사
-                            Row(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(colors.chipBackground)
-                                    .clickable {
-                                        savedWebUrl?.let { url ->
-                                            clipboardManager.setText(AnnotatedString(url))
-                                            android.widget.Toast.makeText(context, context.getString(R.string.web_url_copied), android.widget.Toast.LENGTH_SHORT).show()
-                                        }
-                                    }
-                                    .padding(horizontal = 10.dp, vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(Icons.Default.ContentCopy, null, tint = colors.chipText, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(stringResource(R.string.memo_copy), fontSize = 11.sp, color = colors.chipText, fontWeight = FontWeight.Medium)
-                            }
-                            // 요약 버튼
-                            if (onWebSummarize != null && webSummaryText == null) {
-                                Row(
-                                    modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color(0xFF2196F3).copy(alpha = 0.1f))
-                                        .clickable { savedWebUrl?.let { onWebSummarize(it, SummaryMode.SIMPLE) } }
-                                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) { Text(stringResource(R.string.summary_mode_simple), fontSize = 11.sp, color = Color(0xFF2196F3), fontWeight = FontWeight.Medium) }
-                                Row(
-                                    modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color(0xFFFF9800).copy(alpha = 0.1f))
-                                        .clickable { savedWebUrl?.let { onWebSummarize(it, SummaryMode.DETAILED) } }
-                                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) { Text(stringResource(R.string.summary_mode_detailed), fontSize = 11.sp, color = Color(0xFFFF9800), fontWeight = FontWeight.Medium) }
-                            }
-                            // 웹 요약 완료 후 반대 모드
-                            if (onWebSummarize != null && webSummaryText != null) {
-                                val webAltMode = if (currentSummaryMode == SummaryMode.DETAILED) SummaryMode.SIMPLE else SummaryMode.DETAILED
-                                val webAltLabel = if (webAltMode == SummaryMode.SIMPLE) stringResource(R.string.summary_mode_simple) else stringResource(R.string.summary_mode_detailed)
-                                val webAltColor = if (webAltMode == SummaryMode.SIMPLE) Color(0xFF2196F3) else Color(0xFFFF9800)
-                                Row(
-                                    modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(webAltColor.copy(alpha = 0.1f))
-                                        .clickable {
-                                            webSummaryText = null
-                                            webSummaryApplied = false
-                                            currentSummaryMode = webAltMode
-                                            savedWebUrl?.let { onWebSummarize(it, webAltMode) }
-                                        }
-                                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) { Text(webAltLabel, fontSize = 11.sp, color = webAltColor, fontWeight = FontWeight.Medium) }
-                            }
-                        }
-
-                        // 웹 요약 중 로딩
-                        if (isWebSummarizing) {
-                            Spacer(modifier = Modifier.height(10.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                androidx.compose.material3.CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = colors.textSecondary)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.web_summarizing), fontSize = 13.sp, color = colors.textSecondary, modifier = Modifier.weight(1f))
-                                Icon(Icons.Default.Close, contentDescription = null, tint = colors.textSecondary,
-                                    modifier = Modifier.size(16.dp).clickable { onCancelSummarize?.invoke() })
-                            }
-                        }
-
-                        // 요약 텍스트
-                        if (webSummaryText != null) {
-                            Spacer(modifier = Modifier.height(10.dp))
-                            HorizontalDivider(color = colors.cardBorder)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(webSummaryText!!, fontSize = 14.sp, lineHeight = 22.sp, color = colors.textBody)
-                        }
-
-                        // 접기 버튼 — 요약 결과 있을 때만
-                        if (webSummaryText != null) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth().clickable { isWebSummaryExpanded = false },
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                Text("▼ ${stringResource(R.string.summary_collapse)}", fontSize = 12.sp, color = colors.textSecondary)
-                            }
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    } // if (isWebSummaryExpanded)
+                if (showWebInline && savedWebUrl != null) {
+                    WebSummaryInlineCard(
+                        webUrl = savedWebUrl!!,
+                        pageTitle = webPageTitle,
+                        isExpanded = isWebSummaryExpanded,
+                        onExpandToggle = { isWebSummaryExpanded = it },
+                        summaryText = webSummaryText,
+                        isWebSummarizing = isWebSummarizing,
+                        currentSummaryMode = currentSummaryMode,
+                        onSummarize = onWebSummarize,
+                        onCancelSummarize = onCancelSummarize,
+                        onResummarize = { altMode ->
+                            webSummaryText = null
+                            webSummaryApplied = false
+                            currentSummaryMode = altMode
+                            savedWebUrl?.let { onWebSummarize?.invoke(it, altMode) }
+                        },
+                        colors = colors,
+                        context = context,
+                        clipboardManager = clipboardManager
+                    )
                 }
 
                 // 내용 — YouTube 링크 감지
@@ -967,208 +682,28 @@ fun MemoScreen(
 
                 // YouTube 링크 바텀시트
                 if (selectedYoutubeUrl != null) {
-                    ModalBottomSheet(
-                        onDismissRequest = { selectedYoutubeUrl = null },
-                        sheetState = sheetState,
-                        containerColor = colors.cardBackground
-                    ) {
-                        val url = selectedYoutubeUrl!!
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 24.dp, vertical = 8.dp)
-                                .padding(bottom = 24.dp)
-                        ) {
-                            Text(
-                                text = "YouTube 링크",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.textTitle
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = url,
-                                fontSize = 13.sp,
-                                color = colors.textSecondary,
-                                maxLines = 1
-                            )
-                            Spacer(modifier = Modifier.height(20.dp))
-
-                            // 📋 링크 복사
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .clickable {
-                                        clipboardManager.setText(AnnotatedString(url))
-                                        selectedYoutubeUrl = null
-                                    }
-                                    .padding(vertical = 14.dp, horizontal = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("📋", fontSize = 20.sp)
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(stringResource(R.string.copy_link), fontSize = 16.sp, color = colors.textBody)
-                            }
-
-                            // 🌐 브라우저에서 열기
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .clickable {
-                                        val fullUrl = if (url.startsWith("http")) url else "https://$url"
-                                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(fullUrl)))
-                                        selectedYoutubeUrl = null
-                                    }
-                                    .padding(vertical = 14.dp, horizontal = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("🌐", fontSize = 20.sp)
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(stringResource(R.string.open_in_browser), fontSize = 16.sp, color = colors.textBody)
-                            }
-
-                            // ▶ YouTube에서 열기
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .clickable {
-                                        val fullUrl = if (url.startsWith("http")) url else "https://$url"
-                                        val ytIntent = Intent(Intent.ACTION_VIEW, Uri.parse(fullUrl)).apply {
-                                            setPackage("com.google.android.youtube")
-                                        }
-                                        try {
-                                            context.startActivity(ytIntent)
-                                        } catch (_: Exception) {
-                                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(fullUrl)))
-                                        }
-                                        selectedYoutubeUrl = null
-                                    }
-                                    .padding(vertical = 14.dp, horizontal = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("▶️", fontSize = 20.sp)
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(stringResource(R.string.open_in_youtube), fontSize = 16.sp, color = colors.textBody)
-                            }
-
-                            // 🤖 AI 요약하기 — 간단/상세 선택
-                            if (onYoutubeSummarize != null && !isSummarizing && summaryResult == null) {
-                                // 간단 요약
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .clickable {
-                                            currentSummaryMode = SummaryMode.SIMPLE
-                                            onYoutubeSummarize(url, SummaryMode.SIMPLE)
-                                            selectedYoutubeUrl = null
-                                        }
-                                        .padding(vertical = 14.dp, horizontal = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text("⚡", fontSize = 20.sp)
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text(stringResource(R.string.summary_mode_simple), fontSize = 16.sp, color = colors.textBody)
-                                }
-                                // 상세 요약
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .clickable {
-                                            currentSummaryMode = SummaryMode.DETAILED
-                                            onYoutubeSummarize(url, SummaryMode.DETAILED)
-                                            selectedYoutubeUrl = null
-                                        }
-                                        .padding(vertical = 14.dp, horizontal = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text("📑", fontSize = 20.sp)
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text(stringResource(R.string.summary_mode_detailed), fontSize = 16.sp, color = colors.textBody)
-                                }
-                            }
+                    YouTubeLinkBottomSheet(
+                        url = selectedYoutubeUrl!!,
+                        colors = colors,
+                        context = context,
+                        clipboardManager = clipboardManager,
+                        isSummarizing = isSummarizing,
+                        isWebSummarizing = isWebSummarizing,
+                        summaryResult = summaryResult,
+                        onSummarize = onYoutubeSummarize,
+                        onDismiss = { selectedYoutubeUrl = null },
+                        onSummarizeAndDismiss = { url, mode ->
+                            currentSummaryMode = mode
+                            onYoutubeSummarize?.invoke(url, mode)
+                            selectedYoutubeUrl = null
                         }
-                    }
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // 서식 툴바 (본문 아래)
-                var showColorPicker by remember { mutableStateOf(false) }
-                var savedColorSelection by remember { mutableStateOf(androidx.compose.ui.text.TextRange.Zero) }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val activeBg = colors.chipBackground
-                    val activeTint = colors.chipText
-
-                    val isBold = richTextState.currentSpanStyle.fontWeight == FontWeight.Bold
-                    Box(
-                        modifier = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp))
-                            .background(if (isBold) activeBg else activeBg.copy(alpha = 0.4f))
-                            .pointerInput(Unit) { detectTapGestures(onPress = { richTextState.toggleSpanStyle(SpanStyle(fontWeight = FontWeight.Bold)); tryAwaitRelease() }) },
-                        contentAlignment = Alignment.Center
-                    ) { Icon(Icons.Default.FormatBold, contentDescription = null, tint = activeTint, modifier = Modifier.size(20.dp)) }
-
-                    val isItalic = richTextState.currentSpanStyle.fontStyle == FontStyle.Italic
-                    Box(
-                        modifier = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp))
-                            .background(if (isItalic) activeBg else activeBg.copy(alpha = 0.4f))
-                            .pointerInput(Unit) { detectTapGestures(onPress = { richTextState.toggleSpanStyle(SpanStyle(fontStyle = FontStyle.Italic)); tryAwaitRelease() }) },
-                        contentAlignment = Alignment.Center
-                    ) { Icon(Icons.Default.FormatItalic, contentDescription = null, tint = activeTint, modifier = Modifier.size(20.dp)) }
-
-                    val isStrike = richTextState.currentSpanStyle.textDecoration == TextDecoration.LineThrough
-                    Box(
-                        modifier = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp))
-                            .background(if (isStrike) activeBg else activeBg.copy(alpha = 0.4f))
-                            .pointerInput(Unit) { detectTapGestures(onPress = { richTextState.toggleSpanStyle(SpanStyle(textDecoration = TextDecoration.LineThrough)); tryAwaitRelease() }) },
-                        contentAlignment = Alignment.Center
-                    ) { Icon(Icons.Default.FormatStrikethrough, contentDescription = null, tint = activeTint, modifier = Modifier.size(20.dp)) }
-
-                    Box(
-                        modifier = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp))
-                            .background(if (showColorPicker) activeBg else activeBg.copy(alpha = 0.4f))
-                            .pointerInput(Unit) { detectTapGestures(onPress = { savedColorSelection = richTextState.selection; showColorPicker = !showColorPicker; tryAwaitRelease() }) },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("A", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = activeTint)
-                            Box(modifier = Modifier.width(16.dp).height(3.dp).background(Color(0xFFFF0000), RoundedCornerShape(1.dp)))
-                        }
-                    }
-                }
-
-                if (showColorPicker) {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        listOf("#000000", "#FF0000", "#FF9800", "#FFEB3B", "#4CAF50", "#2196F3", "#9C27B0", "#795548", "#607D8B").forEach { hex ->
-                            Box(
-                                modifier = Modifier.size(22.dp).clip(CircleShape)
-                                    .background(Color(android.graphics.Color.parseColor(hex)))
-                                    .pointerInput(hex) {
-                                        detectTapGestures(onPress = {
-                                            if (savedColorSelection.start != savedColorSelection.end) {
-                                                richTextState.addSpanStyle(SpanStyle(color = Color(android.graphics.Color.parseColor(hex))), savedColorSelection)
-                                    
-                                            }
-                                            showColorPicker = false; tryAwaitRelease()
-                                        })
-                                    }
-                            )
-                        }
-                    }
-                }
+                FormattingToolbar(richTextState = richTextState, colors = colors)
 
                 // ── 상태 메시지 영역 (서식 툴바 아래, 칩 위) ──
                 var transcriptionErrorDismissed by remember { mutableStateOf(false) }
@@ -1246,455 +781,83 @@ fun MemoScreen(
                 var audioChipDismissed by remember { mutableStateOf(false) }
                 val effectiveAudioPath = audioPath ?: existingMemo.audioPath
                 if (effectiveAudioPath != null && java.io.File(effectiveAudioPath).exists() && !audioChipDismissed) {
-                    var isPlaying by remember { mutableStateOf(false) }
-                    val mediaPlayer = remember {
-                        android.media.MediaPlayer().apply {
-                            setDataSource(effectiveAudioPath)
-                            prepare()
-                            setOnCompletionListener { isPlaying = false }
-                        }
-                    }
-                    DisposableEffect(Unit) { onDispose { mediaPlayer.release() } }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Box {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
-                            .background(colors.chipBackground.copy(alpha = 0.5f))
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier.size(36.dp).clip(CircleShape).background(colors.chipText)
-                                .clickable { if (isPlaying) { mediaPlayer.pause(); isPlaying = false } else { mediaPlayer.start(); isPlaying = true } },
-                            contentAlignment = Alignment.Center
-                        ) { Icon(if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp)) }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text("🎙️ ${nameText.ifBlank { stringResource(R.string.recording_file) }}", fontSize = 14.sp, color = colors.textBody, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), maxLines = 1)
-                        Icon(Icons.Default.Download, contentDescription = null, tint = colors.textSecondary,
-                            modifier = Modifier.size(20.dp).clickable {
-                                val source = java.io.File(effectiveAudioPath); val dest = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
-                                val target = java.io.File(dest, "memozy_${System.currentTimeMillis()}.m4a"); source.copyTo(target, overwrite = true)
-                                android.widget.Toast.makeText(context, "📁 " + context.getString(R.string.saved_to_downloads), android.widget.Toast.LENGTH_LONG).show()
-                            })
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Icon(Icons.Default.Share, contentDescription = null, tint = colors.textSecondary,
-                            modifier = Modifier.size(20.dp).clickable {
-                                val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", java.io.File(effectiveAudioPath))
-                                val shareIntent = Intent(Intent.ACTION_SEND).apply { type = "audio/mp4"; putExtra(Intent.EXTRA_STREAM, uri); addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) }
-                                context.startActivity(Intent.createChooser(shareIntent, null))
-                            })
-                    }
-                    Icon(Icons.Default.Close, contentDescription = null, tint = colors.textSecondary,
-                        modifier = Modifier.size(16.dp).align(Alignment.TopEnd).clickable { audioChipDismissed = true })
-                    }
+                    AudioPlayerBar(
+                        audioPath = effectiveAudioPath,
+                        memoTitle = nameText,
+                        colors = colors,
+                        context = context,
+                        onDismiss = { audioChipDismissed = true }
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
             }
 
-            // 하단 AI 액션 바 — 항상 표시
-            HorizontalDivider(color = colors.cardBorder)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // 🎙️ 녹음
-                if (onStartRecording != null) {
-                    val recordingBusy = isRecording || isTranscribing
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                if (isRecording) Color(0xFFE24B4A)
-                                else if (isTranscribing) colors.chipBackground.copy(alpha = 0.3f)
-                                else colors.chipBackground
-                            )
-                            .clickable(enabled = !isTranscribing) {
-                                if (isRecording) onStopRecording?.invoke()
-                                else onStartRecording()
-                            }
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = if (isRecording) Icons.Default.Stop else Icons.Default.Mic,
-                            contentDescription = null,
-                            tint = if (isRecording) Color.White else colors.chipText,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = if (isRecording) stringResource(R.string.recording_stop) else stringResource(R.string.recording_start),
-                            fontSize = 12.sp,
-                            color = if (isRecording) Color.White else colors.chipText,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
-
-                // 📺 유튜브 요약 (항상 표시)
-                if (onYoutubeSummarize != null) {
-                    val hasYoutubeUrl = detectedYoutubeUrl != null
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                if (isSummarizing || isWebSummarizing) colors.chipBackground.copy(alpha = 0.3f)
-                                else if (hasYoutubeUrl) Color(0xFF2196F3).copy(alpha = 0.1f)
-                                else colors.chipBackground
-                            )
-                            .clickable(enabled = !isSummarizing && !isWebSummarizing) {
-                                youtubeChipDismissed = false
-                                if (hasYoutubeUrl) {
-                                    currentSummaryMode = SummaryMode.SIMPLE
-                                    onYoutubeSummarize(detectedYoutubeUrl ?: return@clickable, SummaryMode.SIMPLE)
-                                } else {
-                                    showYoutubeDialog = true
-                                }
-                            }
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.SmartDisplay,
-                            contentDescription = null,
-                            tint = if (hasYoutubeUrl) Color(0xFF2196F3) else colors.chipText,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = stringResource(R.string.youtube_label),
-                            fontSize = 12.sp,
-                            color = if (hasYoutubeUrl) Color(0xFF2196F3) else colors.chipText,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
-
-                // 🔗 웹 요약
-                if (onWebSummarize != null) {
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                if (isSummarizing || isWebSummarizing) colors.chipBackground.copy(alpha = 0.3f)
-                                else colors.chipBackground
-                            )
-                            .clickable(enabled = !isSummarizing && !isWebSummarizing) { showWebDialog = true }
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.Link, contentDescription = null, tint = colors.chipText, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(R.string.link_label), fontSize = 12.sp, color = colors.chipText, fontWeight = FontWeight.SemiBold)
-                    }
-                }
-
-                // ⏰ 리마인더
-                if (onSetReminder != null && !isNewMemo) {
-                    var showReminderPicker by remember { mutableStateOf(false) }
-                    val reminderTime = existingMemo.reminderAt
-                    val hasReminder = reminderTime != null && reminderTime > System.currentTimeMillis()
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                if (hasReminder) Color(0xFFFFA726).copy(alpha = 0.15f)
-                                else colors.chipBackground
-                            )
-                            .clickable { showReminderPicker = true }
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.Notifications, contentDescription = null,
-                            tint = if (hasReminder) Color(0xFFFFA726) else colors.chipText,
-                            modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = stringResource(R.string.notification_label),
-                            fontSize = 12.sp,
-                            color = if (hasReminder) Color(0xFFFFA726) else colors.chipText,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-
-                    if (showReminderPicker) {
-                        ReminderPickerDialog(
-                            currentReminder = existingMemo.reminderAt,
-                            onDismiss = { showReminderPicker = false },
-                            onConfirm = { reminderAt ->
-                                onSetReminder(existingMemo.id, reminderAt)
-                                showReminderPicker = false
-                            },
-                            onCancel = {
-                                onSetReminder(existingMemo.id, null)
-                                showReminderPicker = false
-                            }
-                        )
-                    }
-                }
-
-                // 🧠 퀴즈
-                if (onQuiz != null && !isNewMemo && existingMemo.content.length >= 20) {
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(colors.chipBackground)
-                            .clickable { onQuiz(existingMemo.id) }
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.Quiz, contentDescription = null,
-                            tint = colors.chipText, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(R.string.quiz_label), fontSize = 12.sp, color = colors.chipText, fontWeight = FontWeight.SemiBold)
-                    }
-                }
-
-                Spacer(modifier = Modifier.weight(1f))
-            }
+            // 하단 AI 액션 바
+            MemoActionBar(
+                colors = colors,
+                isNewMemo = isNewMemo,
+                existingMemo = existingMemo,
+                onStartRecording = onStartRecording,
+                onStopRecording = onStopRecording,
+                isRecording = isRecording,
+                isTranscribing = isTranscribing,
+                onYoutubeSummarize = onYoutubeSummarize,
+                isSummarizing = isSummarizing,
+                isWebSummarizing = isWebSummarizing,
+                detectedYoutubeUrl = detectedYoutubeUrl,
+                onYoutubeChipClick = {
+                    youtubeChipDismissed = false
+                    currentSummaryMode = SummaryMode.SIMPLE
+                    detectedYoutubeUrl?.let { onYoutubeSummarize?.invoke(it, SummaryMode.SIMPLE) }
+                },
+                onYoutubeDialogOpen = { showYoutubeDialog = true },
+                onWebSummarize = onWebSummarize,
+                onWebDialogOpen = { showWebDialog = true },
+                onSetReminder = onSetReminder,
+                onQuiz = onQuiz
+            )
         } // outer Column
     }
 
     // 웹 URL 입력 다이얼로그
     if (showWebDialog && onWebSummarize != null) {
-        var webUrlInput by remember { mutableStateOf("") }
-        val clipText = clipboardManager.getText()?.text ?: ""
-
-        AlertDialog(
-            onDismissRequest = { showWebDialog = false },
-            title = { Text(stringResource(R.string.web_summary_title), fontWeight = FontWeight.Bold) },
-            text = {
-                Column {
-                    Text(stringResource(R.string.web_summary_desc), fontSize = 14.sp, color = LocalAppColors.current.textSecondary)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    OutlinedTextField(
-                        value = webUrlInput,
-                        onValueChange = { webUrlInput = it },
-                        placeholder = { Text("https://...", fontSize = 14.sp) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    if (clipText.isNotBlank() && webUrlInput.isBlank()) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "📋 ${stringResource(R.string.paste_clipboard)}: $clipText",
-                            fontSize = 13.sp,
-                            color = Color(0xFF2196F3),
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(6.dp))
-                                .clickable { webUrlInput = clipText }
-                                .padding(vertical = 4.dp)
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                val isValid = webUrlInput.startsWith("http")
-                TextButton(
-                    onClick = {
-                        if (isValid) {
-                            savedWebUrl = webUrlInput.trim()
-                            webChipDismissed = false
-                            showWebDialog = false
-                        }
-                    },
-                    enabled = isValid
-                ) { Text(stringResource(R.string.confirm), color = if (isValid) Color(0xFF2196F3) else LocalAppColors.current.textSecondary) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showWebDialog = false }) { Text(stringResource(R.string.cancel), color = LocalAppColors.current.textSecondary) }
+        WebUrlDialog(
+            clipboardManager = clipboardManager,
+            onDismiss = { showWebDialog = false },
+            onUrlConfirmed = { url ->
+                savedWebUrl = url
+                webChipDismissed = false
+                showWebDialog = false
             }
         )
     }
 
     // 웹 링크 바텀시트
     if (selectedWebUrl != null) {
-        ModalBottomSheet(
-            onDismissRequest = { selectedWebUrl = null },
-            sheetState = rememberModalBottomSheetState(),
-            containerColor = LocalAppColors.current.cardBackground
-        ) {
-            val url = selectedWebUrl!!
-            val sheetColors = LocalAppColors.current
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp).padding(bottom = 24.dp)
-            ) {
-                Text(stringResource(R.string.web_link), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sheetColors.textTitle)
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(url, fontSize = 13.sp, color = sheetColors.textSecondary, maxLines = 2)
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // 📋 링크 복사
-                Row(
-                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-                        .clickable { clipboardManager.setText(AnnotatedString(url)); selectedWebUrl = null }
-                        .padding(vertical = 14.dp, horizontal = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("📋", fontSize = 20.sp); Spacer(modifier = Modifier.width(12.dp))
-                    Text(stringResource(R.string.copy_link), fontSize = 16.sp, color = sheetColors.textBody)
-                }
-
-                // 🌐 브라우저에서 열기
-                Row(
-                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-                        .clickable {
-                            val fullUrl = if (url.startsWith("http")) url else "https://$url"
-                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(fullUrl)))
-                            selectedWebUrl = null
-                        }
-                        .padding(vertical = 14.dp, horizontal = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("🌐", fontSize = 20.sp); Spacer(modifier = Modifier.width(12.dp))
-                    Text(stringResource(R.string.open_in_browser), fontSize = 16.sp, color = sheetColors.textBody)
-                }
-            }
-        }
+        WebLinkBottomSheet(
+            url = selectedWebUrl!!,
+            clipboardManager = clipboardManager,
+            context = context,
+            onDismiss = { selectedWebUrl = null }
+        )
     }
 
     // 유튜브 URL 입력 다이얼로그
     if (showYoutubeDialog && onYoutubeSummarize != null) {
-        var urlInput by remember { mutableStateOf("") }
-        val clipText = clipboardManager.getText()?.text ?: ""
-        val clipHasYoutube = remember(clipText) { YOUTUBE_URL_REGEX.containsMatchIn(clipText) }
-
-        AlertDialog(
-            onDismissRequest = { showYoutubeDialog = false },
-            title = { Text(stringResource(R.string.youtube_summary_title), fontWeight = FontWeight.Bold) },
-            text = {
-                Column {
-                    Text(
-                        text = stringResource(R.string.youtube_summary_desc),
-                        fontSize = 14.sp,
-                        color = colors.textSecondary
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    OutlinedTextField(
-                        value = urlInput,
-                        onValueChange = { urlInput = it },
-                        placeholder = { Text("https://youtu.be/...", fontSize = 14.sp) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    if (clipText.isNotBlank() && urlInput.isBlank()) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "📋 ${stringResource(R.string.paste_clipboard)}: $clipText",
-                            fontSize = 13.sp,
-                            color = Color(0xFF2196F3),
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(6.dp))
-                                .clickable { urlInput = clipText }
-                                .padding(vertical = 4.dp)
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                val isValid = YOUTUBE_URL_REGEX.containsMatchIn(urlInput)
-                TextButton(
-                    onClick = {
-                        val url = YOUTUBE_URL_REGEX.find(urlInput)?.value ?: return@TextButton
-                        bodyText = if (bodyText.isBlank()) url else "$bodyText\n$url"
-                        showYoutubeDialog = false
-                    },
-                    enabled = isValid
-                ) {
-                    Text(stringResource(R.string.confirm), color = if (isValid) Color(0xFF2196F3) else colors.textSecondary)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showYoutubeDialog = false }) {
-                    Text(stringResource(R.string.cancel), color = colors.textSecondary)
-                }
+        YouTubeUrlDialog(
+            colors = colors,
+            clipboardManager = clipboardManager,
+            onDismiss = { showYoutubeDialog = false },
+            onUrlAdded = { url ->
+                bodyText = if (bodyText.isBlank()) url else "$bodyText\n$url"
+                showYoutubeDialog = false
             }
         )
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ReminderPickerDialog(
-    currentReminder: Long?,
-    onDismiss: () -> Unit,
-    onConfirm: (Long) -> Unit,
-    onCancel: () -> Unit
-) {
-    val calendar = java.util.Calendar.getInstance()
-    if (currentReminder != null) calendar.timeInMillis = currentReminder
-
-    val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = calendar.timeInMillis
-    )
-    var showTimePicker by remember { mutableStateOf(false) }
-    val colors = me.pecos.memozy.presentation.theme.LocalAppColors.current
-
-    if (!showTimePicker) {
-        DatePickerDialog(
-            onDismissRequest = onDismiss,
-            confirmButton = {
-                TextButton(onClick = { showTimePicker = true }) {
-                    Text(stringResource(R.string.next_step))
-                }
-            },
-            dismissButton = {
-                if (currentReminder != null) {
-                    TextButton(onClick = onCancel) {
-                        Text(stringResource(R.string.cancel_reminder), color = Color(0xFFE24B4A))
-                    }
-                }
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
-        ) {
-            DatePicker(state = datePickerState)
-        }
-    } else {
-        val timePickerState = rememberTimePickerState(
-            initialHour = calendar.get(java.util.Calendar.HOUR_OF_DAY),
-            initialMinute = calendar.get(java.util.Calendar.MINUTE)
-        )
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = { Text(stringResource(R.string.time_select)) },
-            text = { TimePicker(state = timePickerState) },
-            confirmButton = {
-                TextButton(onClick = {
-                    val selectedDate = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
-                    val cal = java.util.Calendar.getInstance().apply {
-                        timeInMillis = selectedDate
-                        set(java.util.Calendar.HOUR_OF_DAY, timePickerState.hour)
-                        set(java.util.Calendar.MINUTE, timePickerState.minute)
-                        set(java.util.Calendar.SECOND, 0)
-                    }
-                    onConfirm(cal.timeInMillis)
-                }) {
-                    Text(stringResource(R.string.confirm))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showTimePicker = false }) {
-                    Text(stringResource(R.string.previous))
-                }
-            }
-        )
-    }
-}
+// ReminderPickerDialog → components/ReminderPickerDialog.kt로 분리됨
 
 @Preview(showBackground = true)
 @Composable
