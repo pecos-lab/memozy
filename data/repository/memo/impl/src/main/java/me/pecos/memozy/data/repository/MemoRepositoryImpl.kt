@@ -31,6 +31,8 @@ class MemoRepositoryImpl @Inject constructor(private val memoDao: MemoDao) : Mem
         return memoDao.getRecentMemos(limit)
     }
 
+    override suspend fun getMemosOnce(): List<Memo> = memoDao.getAllMemosOnce()
+
     // ── Trash ──
 
     override suspend fun softDeleteMemo(id: Int) {

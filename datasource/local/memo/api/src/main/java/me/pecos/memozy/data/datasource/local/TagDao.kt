@@ -9,6 +9,13 @@ import kotlinx.coroutines.flow.Flow
 import me.pecos.memozy.data.datasource.local.entity.MemoTag
 import me.pecos.memozy.data.datasource.local.entity.Tag
 
+data class MemoTagRelation(
+    val memoId: Int,
+    val tagId: Int,
+    val tagName: String,
+    val tagEmoji: String
+)
+
 @Dao
 interface TagDao {
     @Query("SELECT * FROM tag ORDER BY name ASC")
@@ -49,6 +56,14 @@ interface TagDao {
     // 태그에 연결된 메모 ID 조회
     @Query("SELECT memoId FROM memo_tag WHERE tagId = :tagId")
     fun getMemoIdsForTag(tagId: Int): Flow<List<Int>>
+
+    // 전체 메모-태그 관계를 태그 정보 포함해서 조회 (reactive)
+    @Query("""
+        SELECT mt.memoId, t.id AS tagId, t.name AS tagName, t.emoji AS tagEmoji
+        FROM memo_tag mt
+        INNER JOIN tag t ON mt.tagId = t.id
+    """)
+    fun getAllMemoTagRelationsFlow(): Flow<List<MemoTagRelation>>
 
     // ── Backup & Restore ──
 
