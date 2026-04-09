@@ -33,6 +33,8 @@ import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.outlined.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Star
@@ -105,6 +107,11 @@ fun HomeScreen(
     // 태그 추가 다이얼로그
     var showAddTagDialog by remember { mutableStateOf(false) }
 
+    // 다중 선택 모드
+    var isSelectionMode by remember { mutableStateOf(false) }
+    var selectedIds by remember { mutableStateOf(setOf<Int>()) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+
     // 자동 뷰 필터 타입
     // -1 = 전체, -2 = 일반메모, -3 = 유튜브, -4 = 녹음, 양수 = 사용자 태그 ID
 
@@ -125,28 +132,87 @@ fun HomeScreen(
                     .padding(horizontal = 16.dp)
                     .padding(top = 24.dp)
             ) {
-                // 제목 + 메모 개수
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Memozy",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.topbarTitle,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Text(
-                        text = stringResource(R.string.memo_count, filteredList.size),
-                        fontSize = 12.sp,
-                        color = colors.textSecondary
-                    )
+                // 제목 + 메모 개수 / 선택 모드 헤더
+                if (!isSelectionMode) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Memozy",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.topbarTitle,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            text = stringResource(R.string.memo_count, filteredList.size),
+                            fontSize = 12.sp,
+                            color = colors.textSecondary
+                        )
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = stringResource(R.string.cancel),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = colors.chipText,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    isSelectionMode = false
+                                    selectedIds = emptySet()
+                                }
+                                .padding(horizontal = 8.dp, vertical = 6.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = stringResource(R.string.selected_count, selectedIds.size),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.topbarTitle,
+                            modifier = Modifier.weight(1f)
+                        )
+                        val allSelected = selectedIds.size == filteredList.size && filteredList.isNotEmpty()
+                        Text(
+                            text = if (allSelected) stringResource(R.string.deselect_all) else stringResource(R.string.select_all),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = colors.chipText,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    selectedIds = if (allSelected) emptySet()
+                                                  else filteredList.map { it.id }.toSet()
+                                }
+                                .padding(horizontal = 8.dp, vertical = 6.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.delete_action),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (selectedIds.isNotEmpty()) Color(0xFFE24B4A) else colors.textSecondary,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable(enabled = selectedIds.isNotEmpty()) {
+                                    showDeleteConfirm = true
+                                }
+                                .padding(horizontal = 14.dp, vertical = 6.dp)
+                        )
+                    }
                 }
 
-                // 태그 필터 (드롭다운) + 정렬 버튼
+                // 태그 필터 (드롭다운) + 정렬 버튼 — 선택 모드에서 숨김
+                if (!isSelectionMode) {
                 var showFilterMenu by remember { mutableStateOf(false) }
                 val filterAllLabel = stringResource(R.string.filter_all)
                 val autoViews = listOf(
@@ -232,7 +298,22 @@ fun HomeScreen(
                             color = colors.textSecondary
                         )
                     }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(R.string.select),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = colors.textSecondary,
+                        modifier = Modifier
+                            .border(1.5.dp, colors.cardBorder, RoundedCornerShape(12.dp))
+                            .clickable {
+                                isSelectionMode = true
+                                swipedOpenId = null
+                            }
+                            .padding(horizontal = 14.dp, vertical = 6.dp)
+                    )
                 }
+                } // if (!isSelectionMode)
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -241,119 +322,135 @@ fun HomeScreen(
                     modifier = Modifier.weight(1f)
                 ) {
                     items(filteredList, key = { it.id }) { memo ->
-                        val revealWidth = 80f
-                        // 카드 재배치/삭제 애니메이션
                         val itemModifier = Modifier.animateItem(
                             fadeInSpec = tween(300),
                             fadeOutSpec = tween(300),
                             placementSpec = tween(300)
                         )
-                        val revealPx = with(androidx.compose.ui.platform.LocalDensity.current) { revealWidth.dp.toPx() }
-                        // 이 카드가 열려있는지 판단
-                        val isOpen = swipedOpenId == memo.id
-                        var rawOffset by remember { mutableStateOf(0f) }
-                        val offsetX = if (isOpen) rawOffset else 0f
-                        val animatedOffset by animateFloatAsState(
-                            targetValue = offsetX,
-                            animationSpec = tween(200),
-                            label = "swipeOffset"
-                        )
 
-                        Box(modifier = itemModifier.fillMaxWidth()) {
-                            // 뒤쪽 액션 버튼
+                        if (isSelectionMode) {
+                            // ── 선택 모드: 체크 + 카드 (스와이프 없음) ──
+                            val isSelected = memo.id in selectedIds
                             Row(
-                                modifier = Modifier
-                                    .matchParentSize()
-                                    .padding(horizontal = 16.dp, vertical = 6.dp)
-                                    .clip(RoundedCornerShape(12.dp)),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                // 오른쪽 스와이프 → 핀 토글 (왼쪽에 표시)
-                                Box(
-                                    modifier = Modifier
-                                        .width(revealWidth.dp)
-                                        .fillMaxHeight()
-                                        .background(if (memo.isPinned) colors.textSecondary else Color(0xFFFFA726))
-                                        .clickable {
-                                            swipedOpenId = null
-                                            viewModel.togglePin(memo)
-                                        },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Icon(
-                                            Icons.Default.Star,
-                                            contentDescription = null,
-                                            tint = Color.White,
-                                            modifier = Modifier.size(22.dp)
-                                        )
-                                        Text(
-                                            text = if (memo.isPinned) stringResource(R.string.unpin) else stringResource(R.string.pin),
-                                            color = Color.White,
-                                            fontSize = 10.sp,
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                    }
-                                }
-                                // 왼쪽 스와이프 → 삭제 버튼 (오른쪽에 표시)
-                                Box(
-                                    modifier = Modifier
-                                        .width(revealWidth.dp)
-                                        .fillMaxHeight()
-                                        .background(Color(0xFFE24B4A))
-                                        .clickable {
-                                            swipedOpenId = null
-                                            onDelete(memo.id)
-                                        },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Icon(
-                                            Icons.Default.Delete,
-                                            contentDescription = null,
-                                            tint = Color.White,
-                                            modifier = Modifier.size(22.dp)
-                                        )
-                                        Text(
-                                            text = stringResource(R.string.delete_memo),
-                                            color = Color.White,
-                                            fontSize = 10.sp,
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                    }
-                                }
-                            }
-
-                            // 앞쪽 카드 (스와이프 이동)
-                            val dragState = rememberDraggableState { delta ->
-                                rawOffset = (rawOffset + delta).coerceIn(-revealPx, revealPx)
-                                swipedOpenId = memo.id
-                            }
-                            Box(
-                                modifier = Modifier
-                                    .offset { IntOffset(animatedOffset.roundToInt(), 0) }
-                                    .draggable(
-                                        state = dragState,
-                                        orientation = Orientation.Horizontal,
-                                        onDragStopped = {
-                                            val snapped = when {
-                                                rawOffset > revealPx / 2 -> revealPx
-                                                rawOffset < -revealPx / 2 -> -revealPx
-                                                else -> 0f
-                                            }
-                                            rawOffset = snapped
-                                            swipedOpenId = if (snapped != 0f) memo.id else null
-                                        }
-                                    )
+                                modifier = itemModifier
+                                    .fillMaxWidth()
                                     .clickable {
-                                        if (swipedOpenId != null) {
-                                            swipedOpenId = null
-                                        } else {
-                                            onEdit(memo.id)
+                                        selectedIds = if (isSelected) selectedIds - memo.id
+                                                      else selectedIds + memo.id
+                                    },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier.width(40.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = if (isSelected) Icons.Default.CheckCircle
+                                                      else Icons.Outlined.RadioButtonUnchecked,
+                                        contentDescription = null,
+                                        tint = if (isSelected) Color(0xFF2196F3) else colors.textSecondary,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                                Box(modifier = Modifier.weight(1f)) {
+                                    MemoCardItem(memo = memo, tags = memoTags[memo.id] ?: emptyList())
+                                }
+                            }
+                        } else {
+                            // ── 일반 모드: 스와이프 (기존 로직) ──
+                            val revealWidth = 80f
+                            val revealPx = with(androidx.compose.ui.platform.LocalDensity.current) { revealWidth.dp.toPx() }
+                            val isOpen = swipedOpenId == memo.id
+                            var rawOffset by remember { mutableStateOf(0f) }
+                            val offsetX = if (isOpen) rawOffset else 0f
+                            val animatedOffset by animateFloatAsState(
+                                targetValue = offsetX,
+                                animationSpec = tween(200),
+                                label = "swipeOffset"
+                            )
+
+                            Box(modifier = itemModifier.fillMaxWidth()) {
+                                // 뒤쪽 액션 버튼
+                                Row(
+                                    modifier = Modifier
+                                        .matchParentSize()
+                                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                                        .clip(RoundedCornerShape(12.dp)),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    // 핀 토글
+                                    Box(
+                                        modifier = Modifier
+                                            .width(revealWidth.dp)
+                                            .fillMaxHeight()
+                                            .background(if (memo.isPinned) colors.textSecondary else Color(0xFFFFA726))
+                                            .clickable {
+                                                swipedOpenId = null
+                                                viewModel.togglePin(memo)
+                                            },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Icon(Icons.Default.Star, null, tint = Color.White, modifier = Modifier.size(22.dp))
+                                            Text(
+                                                text = if (memo.isPinned) stringResource(R.string.unpin) else stringResource(R.string.pin),
+                                                color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Medium
+                                            )
                                         }
                                     }
-                            ) {
-                                MemoCardItem(memo = memo, tags = memoTags[memo.id] ?: emptyList())
+                                    // 삭제
+                                    Box(
+                                        modifier = Modifier
+                                            .width(revealWidth.dp)
+                                            .fillMaxHeight()
+                                            .background(Color(0xFFE24B4A))
+                                            .clickable {
+                                                swipedOpenId = null
+                                                onDelete(memo.id)
+                                            },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Icon(Icons.Default.Delete, null, tint = Color.White, modifier = Modifier.size(22.dp))
+                                            Text(
+                                                text = stringResource(R.string.delete_memo),
+                                                color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Medium
+                                            )
+                                        }
+                                    }
+                                }
+
+                                // 앞쪽 카드
+                                val dragState = rememberDraggableState { delta ->
+                                    rawOffset = (rawOffset + delta).coerceIn(-revealPx, revealPx)
+                                    swipedOpenId = memo.id
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .offset { IntOffset(animatedOffset.roundToInt(), 0) }
+                                        .draggable(
+                                            state = dragState,
+                                            orientation = Orientation.Horizontal,
+                                            onDragStopped = {
+                                                val snapped = when {
+                                                    rawOffset > revealPx / 2 -> revealPx
+                                                    rawOffset < -revealPx / 2 -> -revealPx
+                                                    else -> 0f
+                                                }
+                                                rawOffset = snapped
+                                                swipedOpenId = if (snapped != 0f) memo.id else null
+                                            }
+                                        )
+                                        .clickable {
+                                            if (swipedOpenId != null) {
+                                                swipedOpenId = null
+                                            } else {
+                                                onEdit(memo.id)
+                                            }
+                                        }
+                                ) {
+                                    MemoCardItem(memo = memo, tags = memoTags[memo.id] ?: emptyList())
+                                }
                             }
                         }
                     }
@@ -383,6 +480,32 @@ fun HomeScreen(
                     )
                 }
             }
+        }
+    }
+
+    // 다중 선택 삭제 확인 다이얼로그
+    if (showDeleteConfirm) {
+        me.pecos.memozy.presentation.components.AppPopup(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = stringResource(R.string.delete_selected_title),
+            navigation = me.pecos.memozy.presentation.components.PopupNavigation.EMPHASIZED,
+            size = me.pecos.memozy.presentation.components.PopupSize.MEDIUM,
+            actionArea = me.pecos.memozy.presentation.components.PopupActionArea.NEUTRAL,
+            primaryButtonText = stringResource(R.string.delete_action),
+            isPrimaryDestructive = true,
+            onPrimaryClick = {
+                viewModel.deleteMemos(selectedIds)
+                showDeleteConfirm = false
+                isSelectionMode = false
+                selectedIds = emptySet()
+            },
+            secondaryButtonText = stringResource(R.string.cancel),
+            onSecondaryClick = { showDeleteConfirm = false }
+        ) {
+            Text(
+                stringResource(R.string.delete_selected_message, selectedIds.size),
+                color = colors.textBody
+            )
         }
     }
 

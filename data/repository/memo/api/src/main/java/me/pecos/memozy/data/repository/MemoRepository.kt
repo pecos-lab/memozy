@@ -14,6 +14,7 @@ interface MemoRepository {
 
     // ── Trash ──
     suspend fun softDeleteMemo(id: Int)
+    suspend fun softDeleteMemos(ids: List<Int>)
     suspend fun restoreMemo(id: Int)
     fun getDeletedMemos(): Flow<List<Memo>>
     suspend fun emptyTrash()

@@ -165,6 +165,15 @@
     <string name="trash_days_left">Permanently deleted in %d days</string>
     <string name="trash_soon_delete">Permanently deleted soon</string>
 
+    <!-- Multi-select -->
+    <string name="select">Select</string>
+    <string name="selected_count">%d selected</string>
+    <string name="delete_selected_title">Delete Selected Memos</string>
+    <string name="delete_selected_message">Delete %d selected memos?\nDeleted memos will be moved to trash.</string>
+    <string name="select_all">Select All</string>
+    <string name="deselect_all">Deselect All</string>
+    <string name="delete_action">Delete</string>
+
     <!-- Quiz -->
     <string name="quiz_title">Memo Quiz</string>
     <string name="quiz_generating">Generating quiz…</string>
