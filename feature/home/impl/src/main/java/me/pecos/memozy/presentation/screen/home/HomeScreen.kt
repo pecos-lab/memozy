@@ -148,15 +148,16 @@ fun HomeScreen(
 
                 // 태그 필터 (드롭다운) + 정렬 버튼
                 var showFilterMenu by remember { mutableStateOf(false) }
+                val filterAllLabel = stringResource(R.string.filter_all)
                 val autoViews = listOf(
-                    -1 to "전체",
-                    -2 to "메모",
-                    -3 to "유튜브",
-                    -4 to "녹음"
+                    -1 to filterAllLabel,
+                    -2 to stringResource(R.string.filter_memo),
+                    -3 to stringResource(R.string.filter_youtube),
+                    -4 to stringResource(R.string.filter_recording)
                 )
                 val currentLabel = autoViews.firstOrNull { it.first == selectedTagId }?.second
                     ?: allTags.firstOrNull { it.id == selectedTagId }?.name
-                    ?: "전체"
+                    ?: filterAllLabel
 
                 Row(
                     modifier = Modifier.padding(start = 16.dp),
@@ -287,7 +288,7 @@ fun HomeScreen(
                                             modifier = Modifier.size(22.dp)
                                         )
                                         Text(
-                                            text = if (memo.isPinned) "고정 해제" else "고정",
+                                            text = if (memo.isPinned) stringResource(R.string.unpin) else stringResource(R.string.pin),
                                             color = Color.White,
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Medium
@@ -314,7 +315,7 @@ fun HomeScreen(
                                             modifier = Modifier.size(22.dp)
                                         )
                                         Text(
-                                            text = "메모 삭제",
+                                            text = stringResource(R.string.delete_memo),
                                             color = Color.White,
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Medium
@@ -390,12 +391,12 @@ fun HomeScreen(
         var tagName by remember { mutableStateOf("") }
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { showAddTagDialog = false },
-            title = { Text("태그 추가", fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.add_tag), fontWeight = FontWeight.Bold) },
             text = {
                 androidx.compose.material3.OutlinedTextField(
                     value = tagName,
                     onValueChange = { tagName = it },
-                    placeholder = { Text("태그 이름") },
+                    placeholder = { Text(stringResource(R.string.tag_name)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -408,12 +409,12 @@ fun HomeScreen(
                             showAddTagDialog = false
                         }
                     }
-                ) { Text("추가") }
+                ) { Text(stringResource(R.string.add)) }
             },
             dismissButton = {
                 androidx.compose.material3.TextButton(
                     onClick = { showAddTagDialog = false }
-                ) { Text("취소") }
+                ) { Text(stringResource(R.string.cancel)) }
             }
         )
     }

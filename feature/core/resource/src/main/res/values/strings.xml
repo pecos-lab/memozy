@@ -105,6 +105,58 @@
     <string name="summary_card_view_summary">요약 보기</string>
     <string name="summary_card_summarize">AI 요약</string>
 
+    <!-- Filter -->
+    <string name="filter_all">전체</string>
+    <string name="filter_memo">메모</string>
+    <string name="filter_youtube">유튜브</string>
+    <string name="filter_recording">녹음</string>
+
+    <!-- Actions -->
+    <string name="pin">고정</string>
+    <string name="unpin">고정 해제</string>
+    <string name="delete_memo">메모 삭제</string>
+    <string name="add_tag">태그 추가</string>
+    <string name="tag_name">태그 이름</string>
+    <string name="add">추가</string>
+    <string name="confirm">확인</string>
+    <string name="previous">이전</string>
+    <string name="next_step">다음</string>
+    <string name="summarize">요약하기</string>
+
+    <!-- Memo Actions -->
+    <string name="copy_link">링크 복사</string>
+    <string name="open_in_browser">브라우저에서 열기</string>
+    <string name="open_in_youtube">YouTube에서 열기</string>
+    <string name="ai_summarize">AI 요약하기</string>
+    <string name="link_label">링크</string>
+    <string name="quiz_label">퀴즈</string>
+    <string name="notification_label">알림</string>
+    <string name="web_link">웹페이지 링크</string>
+    <string name="paste_clipboard">붙여넣기</string>
+
+    <!-- Status -->
+    <string name="recording_tap_to_stop">녹음 중… 탭하여 중지</string>
+    <string name="transcribing">음성 변환 중…</string>
+    <string name="web_summarizing">웹페이지 요약 중…</string>
+    <string name="youtube_summarizing">유튜브 요약 중…</string>
+    <string name="recording_file">녹음 파일</string>
+    <string name="recording_start">녹음</string>
+    <string name="recording_stop">중지</string>
+    <string name="youtube_label">유튜브</string>
+    <string name="saved_to_downloads">내 파일 > Download 에 저장됨</string>
+
+    <!-- Dialogs -->
+    <string name="web_summary_title">웹페이지 요약</string>
+    <string name="web_summary_desc">요약할 웹페이지 URL을 입력해주세요</string>
+    <string name="youtube_summary_title">유튜브 영상 요약</string>
+    <string name="youtube_summary_desc">요약할 YouTube URL을 입력해주세요</string>
+    <string name="time_select">시간 선택</string>
+    <string name="cancel_reminder">알림 해제</string>
+
+    <!-- Trash Extra -->
+    <string name="trash_days_left">%d일 후 영구 삭제</string>
+    <string name="trash_soon_delete">곧 영구 삭제</string>
+
     <!-- Quiz -->
     <string name="quiz_title">메모 퀴즈</string>
     <string name="quiz_generating">퀴즈를 만들고 있어요…</string>

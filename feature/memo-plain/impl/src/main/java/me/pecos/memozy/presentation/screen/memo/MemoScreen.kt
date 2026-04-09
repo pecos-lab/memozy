@@ -601,7 +601,7 @@ fun MemoScreen(
                             ) {
                                 Text("📋", fontSize = 20.sp)
                                 Spacer(modifier = Modifier.width(12.dp))
-                                Text("링크 복사", fontSize = 16.sp, color = colors.textBody)
+                                Text(stringResource(R.string.copy_link), fontSize = 16.sp, color = colors.textBody)
                             }
 
                             // 🌐 브라우저에서 열기
@@ -619,7 +619,7 @@ fun MemoScreen(
                             ) {
                                 Text("🌐", fontSize = 20.sp)
                                 Spacer(modifier = Modifier.width(12.dp))
-                                Text("브라우저에서 열기", fontSize = 16.sp, color = colors.textBody)
+                                Text(stringResource(R.string.open_in_browser), fontSize = 16.sp, color = colors.textBody)
                             }
 
                             // ▶ YouTube에서 열기
@@ -644,7 +644,7 @@ fun MemoScreen(
                             ) {
                                 Text("▶️", fontSize = 20.sp)
                                 Spacer(modifier = Modifier.width(12.dp))
-                                Text("YouTube에서 열기", fontSize = 16.sp, color = colors.textBody)
+                                Text(stringResource(R.string.open_in_youtube), fontSize = 16.sp, color = colors.textBody)
                             }
 
                             // 🤖 AI 요약하기 (1회만 가능)
@@ -662,7 +662,7 @@ fun MemoScreen(
                                 ) {
                                     Text("🤖", fontSize = 20.sp)
                                     Spacer(modifier = Modifier.width(12.dp))
-                                    Text("AI 요약하기", fontSize = 16.sp, color = colors.textBody)
+                                    Text(stringResource(R.string.ai_summarize), fontSize = 16.sp, color = colors.textBody)
                                 }
                             }
                         }
@@ -757,7 +757,7 @@ fun MemoScreen(
                             Icon(Icons.Default.Stop, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
                         }
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text("🔴 녹음 중... 탭하여 중지", fontSize = 13.sp, color = Color(0xFFE24B4A), fontWeight = FontWeight.SemiBold)
+                        Text("🔴 " + stringResource(R.string.recording_tap_to_stop), fontSize = 13.sp, color = Color(0xFFE24B4A), fontWeight = FontWeight.SemiBold)
                     }
                 }
                 // 음성 변환 중
@@ -766,7 +766,7 @@ fun MemoScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         androidx.compose.material3.CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = colors.textSecondary)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("음성 변환 중...", fontSize = 13.sp, color = colors.textSecondary, modifier = Modifier.weight(1f))
+                        Text(stringResource(R.string.transcribing), fontSize = 13.sp, color = colors.textSecondary, modifier = Modifier.weight(1f))
                         Icon(Icons.Default.Close, contentDescription = null, tint = colors.textSecondary,
                             modifier = Modifier.size(16.dp).clickable { onCancelSummarize?.invoke() })
                     }
@@ -789,7 +789,7 @@ fun MemoScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         androidx.compose.material3.CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = colors.textSecondary)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("웹페이지 요약 중...", fontSize = 13.sp, color = colors.textSecondary, modifier = Modifier.weight(1f))
+                        Text(stringResource(R.string.web_summarizing), fontSize = 13.sp, color = colors.textSecondary, modifier = Modifier.weight(1f))
                         Icon(Icons.Default.Close, contentDescription = null, tint = colors.textSecondary,
                             modifier = Modifier.size(16.dp).clickable { onCancelSummarize?.invoke() })
                     }
@@ -812,7 +812,7 @@ fun MemoScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         androidx.compose.material3.CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = colors.textSecondary)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("유튜브 요약 중...", fontSize = 13.sp, color = colors.textSecondary, modifier = Modifier.weight(1f))
+                        Text(stringResource(R.string.youtube_summarizing), fontSize = 13.sp, color = colors.textSecondary, modifier = Modifier.weight(1f))
                         Icon(Icons.Default.Close, contentDescription = null, tint = colors.textSecondary,
                             modifier = Modifier.size(16.dp).clickable { onCancelSummarize?.invoke() })
                     }
@@ -902,12 +902,12 @@ fun MemoScreen(
                             contentAlignment = Alignment.Center
                         ) { Icon(if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp)) }
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text("🎙️ ${nameText.ifBlank { "녹음 파일" }}", fontSize = 14.sp, color = colors.textBody, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), maxLines = 1)
+                        Text("🎙️ ${nameText.ifBlank { stringResource(R.string.recording_file) }}", fontSize = 14.sp, color = colors.textBody, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), maxLines = 1)
                         Icon(Icons.Default.Download, contentDescription = null, tint = colors.textSecondary,
                             modifier = Modifier.size(20.dp).clickable {
                                 val source = java.io.File(effectiveAudioPath); val dest = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
                                 val target = java.io.File(dest, "memozy_${System.currentTimeMillis()}.m4a"); source.copyTo(target, overwrite = true)
-                                android.widget.Toast.makeText(context, "📁 내 파일 > Download 에 저장됨", android.widget.Toast.LENGTH_LONG).show()
+                                android.widget.Toast.makeText(context, "📁 " + context.getString(R.string.saved_to_downloads), android.widget.Toast.LENGTH_LONG).show()
                             })
                         Spacer(modifier = Modifier.width(12.dp))
                         Icon(Icons.Default.Share, contentDescription = null, tint = colors.textSecondary,
@@ -960,7 +960,7 @@ fun MemoScreen(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = if (isRecording) "중지" else "녹음",
+                            text = if (isRecording) stringResource(R.string.recording_stop) else stringResource(R.string.recording_start),
                             fontSize = 12.sp,
                             color = if (isRecording) Color.White else colors.chipText,
                             fontWeight = FontWeight.SemiBold
@@ -998,7 +998,7 @@ fun MemoScreen(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "유튜브",
+                            text = stringResource(R.string.youtube_label),
                             fontSize = 12.sp,
                             color = if (hasYoutubeUrl) Color(0xFF2196F3) else colors.chipText,
                             fontWeight = FontWeight.SemiBold
@@ -1021,7 +1021,7 @@ fun MemoScreen(
                     ) {
                         Icon(Icons.Default.Link, contentDescription = null, tint = colors.chipText, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("링크", fontSize = 12.sp, color = colors.chipText, fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.link_label), fontSize = 12.sp, color = colors.chipText, fontWeight = FontWeight.SemiBold)
                     }
                 }
 
@@ -1046,7 +1046,7 @@ fun MemoScreen(
                             modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = if (hasReminder) "알림" else "알림",
+                            text = stringResource(R.string.notification_label),
                             fontSize = 12.sp,
                             color = if (hasReminder) Color(0xFFFFA726) else colors.chipText,
                             fontWeight = FontWeight.SemiBold
@@ -1082,7 +1082,7 @@ fun MemoScreen(
                         Icon(Icons.Default.Quiz, contentDescription = null,
                             tint = colors.chipText, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("퀴즈", fontSize = 12.sp, color = colors.chipText, fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.quiz_label), fontSize = 12.sp, color = colors.chipText, fontWeight = FontWeight.SemiBold)
                     }
                 }
 
@@ -1098,10 +1098,10 @@ fun MemoScreen(
 
         AlertDialog(
             onDismissRequest = { showWebDialog = false },
-            title = { Text("웹페이지 요약", fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.web_summary_title), fontWeight = FontWeight.Bold) },
             text = {
                 Column {
-                    Text("요약할 웹페이지 URL을 입력해주세요", fontSize = 14.sp, color = LocalAppColors.current.textSecondary)
+                    Text(stringResource(R.string.web_summary_desc), fontSize = 14.sp, color = LocalAppColors.current.textSecondary)
                     Spacer(modifier = Modifier.height(12.dp))
                     OutlinedTextField(
                         value = webUrlInput,
@@ -1113,7 +1113,7 @@ fun MemoScreen(
                     if (clipText.isNotBlank() && webUrlInput.isBlank()) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "📋 붙여넣기: $clipText",
+                            text = "📋 ${stringResource(R.string.paste_clipboard)}: $clipText",
                             fontSize = 13.sp,
                             color = Color(0xFF2196F3),
                             fontWeight = FontWeight.SemiBold,
@@ -1138,10 +1138,10 @@ fun MemoScreen(
                         }
                     },
                     enabled = isValid
-                ) { Text("요약하기", color = if (isValid) Color(0xFF2196F3) else LocalAppColors.current.textSecondary) }
+                ) { Text(stringResource(R.string.summarize), color = if (isValid) Color(0xFF2196F3) else LocalAppColors.current.textSecondary) }
             },
             dismissButton = {
-                TextButton(onClick = { showWebDialog = false }) { Text("취소", color = LocalAppColors.current.textSecondary) }
+                TextButton(onClick = { showWebDialog = false }) { Text(stringResource(R.string.cancel), color = LocalAppColors.current.textSecondary) }
             }
         )
     }
@@ -1158,7 +1158,7 @@ fun MemoScreen(
             Column(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp).padding(bottom = 24.dp)
             ) {
-                Text("웹페이지 링크", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sheetColors.textTitle)
+                Text(stringResource(R.string.web_link), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = sheetColors.textTitle)
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(url, fontSize = 13.sp, color = sheetColors.textSecondary, maxLines = 2)
                 Spacer(modifier = Modifier.height(20.dp))
@@ -1171,7 +1171,7 @@ fun MemoScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text("📋", fontSize = 20.sp); Spacer(modifier = Modifier.width(12.dp))
-                    Text("링크 복사", fontSize = 16.sp, color = sheetColors.textBody)
+                    Text(stringResource(R.string.copy_link), fontSize = 16.sp, color = sheetColors.textBody)
                 }
 
                 // 🌐 브라우저에서 열기
@@ -1186,7 +1186,7 @@ fun MemoScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text("🌐", fontSize = 20.sp); Spacer(modifier = Modifier.width(12.dp))
-                    Text("브라우저에서 열기", fontSize = 16.sp, color = sheetColors.textBody)
+                    Text(stringResource(R.string.open_in_browser), fontSize = 16.sp, color = sheetColors.textBody)
                 }
             }
         }
@@ -1200,11 +1200,11 @@ fun MemoScreen(
 
         AlertDialog(
             onDismissRequest = { showYoutubeDialog = false },
-            title = { Text("유튜브 영상 요약", fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.youtube_summary_title), fontWeight = FontWeight.Bold) },
             text = {
                 Column {
                     Text(
-                        text = "요약할 YouTube URL을 입력해주세요",
+                        text = stringResource(R.string.youtube_summary_desc),
                         fontSize = 14.sp,
                         color = colors.textSecondary
                     )
@@ -1219,7 +1219,7 @@ fun MemoScreen(
                     if (clipText.isNotBlank() && urlInput.isBlank()) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "📋 붙여넣기: $clipText",
+                            text = "📋 ${stringResource(R.string.paste_clipboard)}: $clipText",
                             fontSize = 13.sp,
                             color = Color(0xFF2196F3),
                             fontWeight = FontWeight.SemiBold,
@@ -1244,12 +1244,12 @@ fun MemoScreen(
                     },
                     enabled = isValid
                 ) {
-                    Text("요약하기", color = if (isValid) Color(0xFF2196F3) else colors.textSecondary)
+                    Text(stringResource(R.string.summarize), color = if (isValid) Color(0xFF2196F3) else colors.textSecondary)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showYoutubeDialog = false }) {
-                    Text("취소", color = colors.textSecondary)
+                    Text(stringResource(R.string.cancel), color = colors.textSecondary)
                 }
             }
         )
@@ -1278,17 +1278,17 @@ private fun ReminderPickerDialog(
             onDismissRequest = onDismiss,
             confirmButton = {
                 TextButton(onClick = { showTimePicker = true }) {
-                    Text("다음")
+                    Text(stringResource(R.string.next_step))
                 }
             },
             dismissButton = {
                 if (currentReminder != null) {
                     TextButton(onClick = onCancel) {
-                        Text("알림 해제", color = Color(0xFFE24B4A))
+                        Text(stringResource(R.string.cancel_reminder), color = Color(0xFFE24B4A))
                     }
                 }
                 TextButton(onClick = onDismiss) {
-                    Text("취소")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         ) {
@@ -1301,7 +1301,7 @@ private fun ReminderPickerDialog(
         )
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("시간 선택") },
+            title = { Text(stringResource(R.string.time_select)) },
             text = { TimePicker(state = timePickerState) },
             confirmButton = {
                 TextButton(onClick = {
@@ -1314,12 +1314,12 @@ private fun ReminderPickerDialog(
                     }
                     onConfirm(cal.timeInMillis)
                 }) {
-                    Text("확인")
+                    Text(stringResource(R.string.confirm))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showTimePicker = false }) {
-                    Text("이전")
+                    Text(stringResource(R.string.previous))
                 }
             }
         )

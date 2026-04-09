@@ -107,6 +107,58 @@
     <string name="summary_card_view_summary">View Summary</string>
     <string name="summary_card_summarize">AI Summary</string>
 
+    <!-- Filter -->
+    <string name="filter_all">All</string>
+    <string name="filter_memo">Memo</string>
+    <string name="filter_youtube">YouTube</string>
+    <string name="filter_recording">Recording</string>
+
+    <!-- Actions -->
+    <string name="pin">Pin</string>
+    <string name="unpin">Unpin</string>
+    <string name="delete_memo">Delete Memo</string>
+    <string name="add_tag">Add Tag</string>
+    <string name="tag_name">Tag Name</string>
+    <string name="add">Add</string>
+    <string name="confirm">OK</string>
+    <string name="previous">Previous</string>
+    <string name="next_step">Next</string>
+    <string name="summarize">Summarize</string>
+
+    <!-- Memo Actions -->
+    <string name="copy_link">Copy Link</string>
+    <string name="open_in_browser">Open in Browser</string>
+    <string name="open_in_youtube">Open in YouTube</string>
+    <string name="ai_summarize">AI Summarize</string>
+    <string name="link_label">Link</string>
+    <string name="quiz_label">Quiz</string>
+    <string name="notification_label">Notification</string>
+    <string name="web_link">Web Page Link</string>
+    <string name="paste_clipboard">Paste</string>
+
+    <!-- Status -->
+    <string name="recording_tap_to_stop">Recording… Tap to stop</string>
+    <string name="transcribing">Transcribing…</string>
+    <string name="web_summarizing">Summarizing web page…</string>
+    <string name="youtube_summarizing">Summarizing YouTube…</string>
+    <string name="recording_file">Recording File</string>
+    <string name="recording_start">Record</string>
+    <string name="recording_stop">Stop</string>
+    <string name="youtube_label">YouTube</string>
+    <string name="saved_to_downloads">Saved to Downloads</string>
+
+    <!-- Dialogs -->
+    <string name="web_summary_title">Web Page Summary</string>
+    <string name="web_summary_desc">Enter the URL to summarize</string>
+    <string name="youtube_summary_title">YouTube Video Summary</string>
+    <string name="youtube_summary_desc">Enter the YouTube URL to summarize</string>
+    <string name="time_select">Select Time</string>
+    <string name="cancel_reminder">Cancel Reminder</string>
+
+    <!-- Trash Extra -->
+    <string name="trash_days_left">Permanently deleted in %d days</string>
+    <string name="trash_soon_delete">Permanently deleted soon</string>
+
     <!-- Quiz -->
     <string name="quiz_title">Memo Quiz</string>
     <string name="quiz_generating">Generating quiz…</string>

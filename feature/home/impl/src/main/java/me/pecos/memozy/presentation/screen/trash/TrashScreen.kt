@@ -263,13 +263,14 @@ private fun TrashMemoItem(
     }
 }
 
+@Composable
 private fun formatDeletedTime(deletedAt: Long?): String {
     if (deletedAt == null) return ""
     val now = System.currentTimeMillis()
     val daysLeft = 30 - TimeUnit.MILLISECONDS.toDays(now - deletedAt)
     return if (daysLeft > 0) {
-        "${daysLeft}일 후 영구 삭제"
+        stringResource(R.string.trash_days_left, daysLeft.toInt())
     } else {
-        "곧 영구 삭제"
+        stringResource(R.string.trash_soon_delete)
     }
 }

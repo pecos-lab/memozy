@@ -44,6 +44,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -241,7 +242,7 @@ class MainActivity : AppCompatActivity() {
                                     )
                                 }
                                 composable(HomeRoute.TRASH) {
-                                    val trashViewModel: me.pecos.memozy.presentation.screen.trash.TrashViewModel = viewModel()
+                                    val trashViewModel: me.pecos.memozy.presentation.screen.trash.TrashViewModel = hiltViewModel()
                                     me.pecos.memozy.presentation.screen.trash.TrashScreen(
                                         viewModel = trashViewModel,
                                         onBack = { navController.popBackStack() }
@@ -254,7 +255,7 @@ class MainActivity : AppCompatActivity() {
                                     )
                                 }
                                 composable(HomeRoute.QUIZ) {
-                                    val quizViewModel: me.pecos.memozy.presentation.screen.quiz.QuizViewModel = viewModel()
+                                    val quizViewModel: me.pecos.memozy.presentation.screen.quiz.QuizViewModel = hiltViewModel()
                                     me.pecos.memozy.presentation.screen.quiz.QuizScreen(
                                         viewModel = quizViewModel,
                                         onBack = { navController.popBackStack() }

@@ -25,4 +25,5 @@ dependencies {
     implementation(libs.billing.ktx)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.hilt.navigation.compose)
 }

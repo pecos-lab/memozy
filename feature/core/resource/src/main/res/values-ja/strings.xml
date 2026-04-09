@@ -107,6 +107,58 @@
     <string name="summary_card_view_summary">要約を見る</string>
     <string name="summary_card_summarize">AI要約</string>
 
+    <!-- Filter -->
+    <string name="filter_all">すべて</string>
+    <string name="filter_memo">メモ</string>
+    <string name="filter_youtube">YouTube</string>
+    <string name="filter_recording">録音</string>
+
+    <!-- Actions -->
+    <string name="pin">ピン留め</string>
+    <string name="unpin">ピン解除</string>
+    <string name="delete_memo">メモを削除</string>
+    <string name="add_tag">タグを追加</string>
+    <string name="tag_name">タグ名</string>
+    <string name="add">追加</string>
+    <string name="confirm">確認</string>
+    <string name="previous">前へ</string>
+    <string name="next_step">次へ</string>
+    <string name="summarize">要約する</string>
+
+    <!-- Memo Actions -->
+    <string name="copy_link">リンクをコピー</string>
+    <string name="open_in_browser">ブラウザで開く</string>
+    <string name="open_in_youtube">YouTubeで開く</string>
+    <string name="ai_summarize">AI要約する</string>
+    <string name="link_label">リンク</string>
+    <string name="quiz_label">クイズ</string>
+    <string name="notification_label">通知</string>
+    <string name="web_link">ウェブページリンク</string>
+    <string name="paste_clipboard">貼り付け</string>
+
+    <!-- Status -->
+    <string name="recording_tap_to_stop">録音中… タップで停止</string>
+    <string name="transcribing">音声変換中…</string>
+    <string name="web_summarizing">ウェブページ要約中…</string>
+    <string name="youtube_summarizing">YouTube要約中…</string>
+    <string name="recording_file">録音ファイル</string>
+    <string name="recording_start">録音</string>
+    <string name="recording_stop">停止</string>
+    <string name="youtube_label">YouTube</string>
+    <string name="saved_to_downloads">ダウンロードに保存しました</string>
+
+    <!-- Dialogs -->
+    <string name="web_summary_title">ウェブページ要約</string>
+    <string name="web_summary_desc">要約するURLを入力してください</string>
+    <string name="youtube_summary_title">YouTube動画要約</string>
+    <string name="youtube_summary_desc">要約するYouTube URLを入力してください</string>
+    <string name="time_select">時間選択</string>
+    <string name="cancel_reminder">リマインダー解除</string>
+
+    <!-- Trash Extra -->
+    <string name="trash_days_left">%d日後に完全削除</string>
+    <string name="trash_soon_delete">まもなく完全削除</string>
+
     <!-- Quiz -->
     <string name="quiz_title">メモクイズ</string>
     <string name="quiz_generating">クイズを作成中…</string>
