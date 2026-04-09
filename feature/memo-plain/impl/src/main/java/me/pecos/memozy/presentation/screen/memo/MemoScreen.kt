@@ -177,7 +177,7 @@ fun MemoScreen(
     onAutoSave: ((MemoUiState) -> Unit)? = null,
     onBack: () -> Unit = {},
     onDelete: ((Int) -> Unit)? = null,
-    onYoutubeSummarize: ((url: String) -> Unit)? = null,
+    onYoutubeSummarize: ((url: String, mode: SummaryMode) -> Unit)? = null,
     onYoutubeDetected: ((videoId: String) -> Unit)? = null,
     isSummarizing: Boolean = false,
     summaryResult: String? = null,
@@ -190,7 +190,7 @@ fun MemoScreen(
     transcriptionResult: String? = null,
     transcriptionError: String? = null,
     audioPath: String? = null,
-    onWebSummarize: ((url: String) -> Unit)? = null,
+    onWebSummarize: ((url: String, mode: SummaryMode) -> Unit)? = null,
     onCancelSummarize: (() -> Unit)? = null,
     isWebSummarizing: Boolean = false,
     webSummaryResult: String? = null,
@@ -261,6 +261,7 @@ fun MemoScreen(
 
     // 요약 완료 시 메모 본문의 URL을 요약 텍스트로 대체 + 제목 설정
     var summaryApplied by remember { mutableStateOf(false) }
+    var currentSummaryMode by remember { mutableStateOf<SummaryMode?>(null) }
     LaunchedEffect(summaryResult, isSummarizing) {
         if (summaryResult != null && !isSummarizing && !summaryApplied) {
             // 요약 전 URL 저장
@@ -647,27 +648,48 @@ fun MemoScreen(
                                 Text(stringResource(R.string.open_in_youtube), fontSize = 16.sp, color = colors.textBody)
                             }
 
-                            // 🤖 AI 요약하기 (1회만 가능)
+                            // 🤖 AI 요약하기 — 간단/상세 선택
                             if (onYoutubeSummarize != null && !isSummarizing && summaryResult == null) {
+                                // 간단 요약
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(12.dp))
                                         .clickable {
-                                            onYoutubeSummarize(url)
+                                            currentSummaryMode = SummaryMode.SIMPLE
+                                            onYoutubeSummarize(url, SummaryMode.SIMPLE)
                                             selectedYoutubeUrl = null
                                         }
                                         .padding(vertical = 14.dp, horizontal = 4.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text("🤖", fontSize = 20.sp)
+                                    Text("⚡", fontSize = 20.sp)
                                     Spacer(modifier = Modifier.width(12.dp))
-                                    Text(stringResource(R.string.ai_summarize), fontSize = 16.sp, color = colors.textBody)
+                                    Text(stringResource(R.string.summary_mode_simple), fontSize = 16.sp, color = colors.textBody)
+                                }
+                                // 상세 요약
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .clickable {
+                                            currentSummaryMode = SummaryMode.DETAILED
+                                            onYoutubeSummarize(url, SummaryMode.DETAILED)
+                                            selectedYoutubeUrl = null
+                                        }
+                                        .padding(vertical = 14.dp, horizontal = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("📑", fontSize = 20.sp)
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(stringResource(R.string.summary_mode_detailed), fontSize = 16.sp, color = colors.textBody)
                                 }
                             }
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(12.dp))
 
                 // 서식 툴바 (본문 아래)
                 var showColorPicker by remember { mutableStateOf(false) }
@@ -846,14 +868,12 @@ fun MemoScreen(
                         title = youtubeTitle ?: nameText.takeIf { it.isNotBlank() },
                         imageUrl = videoId?.let { "https://img.youtube.com/vi/$it/hqdefault.jpg" },
                         hasSummary = summaryResult != null || hasYoutubeSummaryContent,
-                        onViewSummary = if (onYoutubeSummarize != null) {
-                            {
-                                if (summaryResult != null || hasYoutubeSummaryContent) {
-                                    selectedYoutubeUrl = youtubeUrlDisplay
-                                } else {
-                                    detectedYoutubeUrl?.let { onYoutubeSummarize(it) }
-                                }
-                            }
+                        summaryMode = currentSummaryMode,
+                        onViewSummary = if (summaryResult != null || hasYoutubeSummaryContent) {
+                            { selectedYoutubeUrl = youtubeUrlDisplay }
+                        } else null,
+                        onSummarize = if (onYoutubeSummarize != null) {
+                            { mode -> detectedYoutubeUrl?.let { onYoutubeSummarize(it, mode) } }
                         } else null,
                         onDismiss = { youtubeChipDismissed = true; showSummary = false }
                     )
@@ -975,14 +995,15 @@ fun MemoScreen(
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
                             .background(
-                                if (isSummarizing) colors.chipBackground.copy(alpha = 0.3f)
+                                if (isSummarizing || isWebSummarizing) colors.chipBackground.copy(alpha = 0.3f)
                                 else if (hasYoutubeUrl) Color(0xFF2196F3).copy(alpha = 0.1f)
                                 else colors.chipBackground
                             )
-                            .clickable(enabled = !isSummarizing) {
+                            .clickable(enabled = !isSummarizing && !isWebSummarizing) {
                                 youtubeChipDismissed = false
                                 if (hasYoutubeUrl) {
-                                    onYoutubeSummarize(detectedYoutubeUrl ?: return@clickable)
+                                    currentSummaryMode = SummaryMode.SIMPLE
+                                    onYoutubeSummarize(detectedYoutubeUrl ?: return@clickable, SummaryMode.SIMPLE)
                                 } else {
                                     showYoutubeDialog = true
                                 }
@@ -1012,10 +1033,10 @@ fun MemoScreen(
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
                             .background(
-                                if (isWebSummarizing) colors.chipBackground.copy(alpha = 0.3f)
+                                if (isSummarizing || isWebSummarizing) colors.chipBackground.copy(alpha = 0.3f)
                                 else colors.chipBackground
                             )
-                            .clickable(enabled = !isWebSummarizing) { showWebDialog = true }
+                            .clickable(enabled = !isSummarizing && !isWebSummarizing) { showWebDialog = true }
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -1128,17 +1149,30 @@ fun MemoScreen(
             },
             confirmButton = {
                 val isValid = webUrlInput.startsWith("http")
-                TextButton(
-                    onClick = {
-                        if (isValid) {
-                            savedWebUrl = webUrlInput.trim()
-                            webChipDismissed = false
-                            onWebSummarize(webUrlInput.trim())
-                            showWebDialog = false
-                        }
-                    },
-                    enabled = isValid
-                ) { Text(stringResource(R.string.summarize), color = if (isValid) Color(0xFF2196F3) else LocalAppColors.current.textSecondary) }
+                Row {
+                    TextButton(
+                        onClick = {
+                            if (isValid) {
+                                savedWebUrl = webUrlInput.trim()
+                                webChipDismissed = false
+                                onWebSummarize(webUrlInput.trim(), SummaryMode.DETAILED)
+                                showWebDialog = false
+                            }
+                        },
+                        enabled = isValid
+                    ) { Text(stringResource(R.string.summary_mode_detailed), color = if (isValid) Color(0xFFFF9800) else LocalAppColors.current.textSecondary) }
+                    TextButton(
+                        onClick = {
+                            if (isValid) {
+                                savedWebUrl = webUrlInput.trim()
+                                webChipDismissed = false
+                                onWebSummarize(webUrlInput.trim(), SummaryMode.SIMPLE)
+                                showWebDialog = false
+                            }
+                        },
+                        enabled = isValid
+                    ) { Text(stringResource(R.string.summary_mode_simple), color = if (isValid) Color(0xFF2196F3) else LocalAppColors.current.textSecondary) }
+                }
             },
             dismissButton = {
                 TextButton(onClick = { showWebDialog = false }) { Text(stringResource(R.string.cancel), color = LocalAppColors.current.textSecondary) }
@@ -1244,7 +1278,7 @@ fun MemoScreen(
                     },
                     enabled = isValid
                 ) {
-                    Text(stringResource(R.string.summarize), color = if (isValid) Color(0xFF2196F3) else colors.textSecondary)
+                    Text(stringResource(R.string.confirm), color = if (isValid) Color(0xFF2196F3) else colors.textSecondary)
                 }
             },
             dismissButton = {

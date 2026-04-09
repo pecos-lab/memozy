@@ -153,6 +153,12 @@
     <string name="time_select">시간 선택</string>
     <string name="cancel_reminder">알림 해제</string>
 
+    <!-- Summary Mode -->
+    <string name="summary_mode_simple">간단 요약</string>
+    <string name="summary_mode_detailed">상세 요약</string>
+    <string name="youtube_url_copied">유튜브 URL이 복사되었습니다</string>
+    <string name="web_url_copied">웹 URL이 복사되었습니다</string>
+
     <!-- Trash Extra -->
     <string name="trash_days_left">%d일 후 영구 삭제</string>
     <string name="trash_soon_delete">곧 영구 삭제</string>

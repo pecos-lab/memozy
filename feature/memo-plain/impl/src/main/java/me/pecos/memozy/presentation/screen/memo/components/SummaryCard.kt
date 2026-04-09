@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.presentation.screen.memo.SummaryMode
 import me.pecos.memozy.presentation.theme.LocalAppColors
 
 enum class SummarySourceType { YOUTUBE, WEB, TWITTER }
@@ -52,7 +53,9 @@ fun SummaryCard(
     title: String?,
     imageUrl: String? = null,
     hasSummary: Boolean = false,
+    summaryMode: SummaryMode? = null,
     onViewSummary: (() -> Unit)? = null,
+    onSummarize: ((SummaryMode) -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
     val colors = LocalAppColors.current
@@ -154,32 +157,6 @@ fun SummaryCard(
                         Text(stringResource(R.string.summary_card_open), fontSize = 11.sp, color = colors.chipText, fontWeight = FontWeight.Medium)
                     }
 
-                    // 요약 보기
-                    if (onViewSummary != null) {
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(
-                                    if (hasSummary) colors.chipBackground
-                                    else Color(0xFF2196F3).copy(alpha = 0.1f)
-                                )
-                                .clickable { onViewSummary() }
-                                .padding(horizontal = 10.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(Icons.Default.Summarize, null,
-                                tint = if (hasSummary) colors.chipText else Color(0xFF2196F3),
-                                modifier = Modifier.size(14.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = if (hasSummary) stringResource(R.string.summary_card_view_summary) else stringResource(R.string.summary_card_summarize),
-                                fontSize = 11.sp,
-                                color = if (hasSummary) colors.chipText else Color(0xFF2196F3),
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
-
                     // URL 복사
                     Row(
                         modifier = Modifier
@@ -188,12 +165,64 @@ fun SummaryCard(
                             .clickable {
                                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                 clipboard.setPrimaryClip(ClipData.newPlainText("url", url))
-                                Toast.makeText(context, context.getString(R.string.memo_copied), Toast.LENGTH_SHORT).show()
+                                val toastMsg = when (sourceType) {
+                                    SummarySourceType.YOUTUBE -> context.getString(R.string.youtube_url_copied)
+                                    SummarySourceType.WEB -> context.getString(R.string.web_url_copied)
+                                    else -> context.getString(R.string.memo_copied)
+                                }
+                                Toast.makeText(context, toastMsg, Toast.LENGTH_SHORT).show()
                             }
                             .padding(horizontal = 10.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(Icons.Default.ContentCopy, null, tint = colors.chipText, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(stringResource(R.string.memo_copy), fontSize = 11.sp, color = colors.chipText, fontWeight = FontWeight.Medium)
+                    }
+
+                    if (hasSummary && onSummarize != null) {
+                        // 요약 완료 → 반대 모드 버튼
+                        val altMode = if (summaryMode == SummaryMode.DETAILED) SummaryMode.SIMPLE else SummaryMode.DETAILED
+                        val altLabel = if (altMode == SummaryMode.SIMPLE) stringResource(R.string.summary_mode_simple) else stringResource(R.string.summary_mode_detailed)
+                        val altColor = if (altMode == SummaryMode.SIMPLE) Color(0xFF2196F3) else Color(0xFFFF9800)
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(altColor.copy(alpha = 0.1f))
+                                .clickable { onSummarize(altMode) }
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Summarize, null, tint = altColor, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(altLabel, fontSize = 11.sp, color = altColor, fontWeight = FontWeight.Medium)
+                        }
+                    } else if (!hasSummary && onSummarize != null) {
+                        // 아직 요약 안 됨 → 두 모드 모두 표시
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xFF2196F3).copy(alpha = 0.1f))
+                                .clickable { onSummarize(SummaryMode.SIMPLE) }
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Summarize, null, tint = Color(0xFF2196F3), modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(stringResource(R.string.summary_mode_simple), fontSize = 11.sp, color = Color(0xFF2196F3), fontWeight = FontWeight.Medium)
+                        }
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xFFFF9800).copy(alpha = 0.1f))
+                                .clickable { onSummarize(SummaryMode.DETAILED) }
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Summarize, null, tint = Color(0xFFFF9800), modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(stringResource(R.string.summary_mode_detailed), fontSize = 11.sp, color = Color(0xFFFF9800), fontWeight = FontWeight.Medium)
+                        }
                     }
                 }
             }

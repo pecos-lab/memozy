@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import me.pecos.memozy.presentation.screen.memo.SummaryMode
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Column
@@ -97,33 +98,93 @@ class MemoPlainNavigationImpl @Inject constructor(
         fun extractVideoId(url: String): String? =
             VIDEO_ID_REGEX.find(url)?.groupValues?.get(1)
 
-        private val SUMMARY_PROMPT = """
-            |이 유튜브 영상을 한국어로 간결하게 요약해줘. 인사말이나 부가 설명 없이 아래 형식만 정확히 출력해:
-            |
-            |📋 한줄 요약
-            |영상의 핵심을 한 문장으로 요약
-            |
-            |📌 키워드
-            |#키워드1 #키워드2 #키워드3
-            |
-            |📖 핵심 내용
-            |- 가장 중요한 내용 3~5개를 각 1줄로 정리
-        """.trimMargin()
+        private fun langInstruction(lang: String) = when (lang) {
+            "en" -> "in English"
+            "ja" -> "日本語で"
+            else -> "한국어로"
+        }
 
-        private val WEB_SUMMARY_PROMPT = """
-            |이 웹페이지 내용을 한국어로 간결하게 요약해줘. 인사말이나 부가 설명 없이 아래 형식만 정확히 출력해:
-            |
-            |📋 한줄 요약
-            |페이지의 핵심을 한 문장으로 요약
-            |
-            |📌 키워드
-            |#키워드1 #키워드2 #키워드3
-            |
-            |📖 핵심 내용
-            |- 가장 중요한 내용 3~5개를 각 1줄로 정리
-            |💡 핵심 인사이트
-            |- 이 글에서 얻을 수 있는 주요 인사이트를 정리
-        """.trimMargin()
+        private fun buildYoutubePrompt(mode: SummaryMode, lang: String): String {
+            val l = langInstruction(lang)
+            return when (mode) {
+                SummaryMode.SIMPLE -> """
+                    |이 유튜브 영상을 ${l} 간결하게 요약해줘. 인사말이나 부가 설명 없이 아래 형식만 정확히 출력해:
+                    |
+                    |📋 한줄 요약
+                    |영상의 핵심을 한 문장으로 요약
+                    |
+                    |📌 키워드
+                    |#키워드1 #키워드2 #키워드3
+                    |
+                    |📖 핵심 내용
+                    |- 가장 중요한 내용 3~5개를 각 1줄로 정리
+                """.trimMargin()
+                SummaryMode.DETAILED -> """
+                    |이 유튜브 영상을 ${l} 상세하게 요약해줘. 인사말이나 부가 설명 없이 아래 형식만 정확히 출력해:
+                    |
+                    |📋 한줄 요약
+                    |영상의 핵심을 한 문장으로 요약
+                    |
+                    |📌 핵심 키워드
+                    |#키워드1 #키워드2 #키워드3 #키워드4 #키워드5
+                    |
+                    |⏰ 타임라인별 상세 요약
+                    |각 주제/구간별로 나눠서 아래처럼 정리해줘:
+                    |
+                    |[00:00] 섹션 제목
+                    |- 상세 설명 (2~3문장)
+                    |- 중요한 내용이나 인사이트
+                    |
+                    |[다음 구간] 섹션 제목
+                    |- 상세 설명
+                    |- 중요한 내용이나 인사이트
+                    |
+                    |(영상 흐름에 따라 모든 구간을 빠짐없이 정리)
+                    |
+                    |💡 핵심 인사이트
+                    |- 영상에서 얻을 수 있는 주요 인사이트를 정리
+                """.trimMargin()
+            }
+        }
+
+        private fun buildWebPrompt(mode: SummaryMode, lang: String): String {
+            val l = langInstruction(lang)
+            return when (mode) {
+                SummaryMode.SIMPLE -> """
+                    |이 웹페이지 내용을 ${l} 간결하게 요약해줘. 인사말이나 부가 설명 없이 아래 형식만 정확히 출력해:
+                    |
+                    |📋 한줄 요약
+                    |페이지의 핵심을 한 문장으로 요약
+                    |
+                    |📌 키워드
+                    |#키워드1 #키워드2 #키워드3
+                    |
+                    |📖 핵심 내용
+                    |- 가장 중요한 내용 3~5개를 각 1줄로 정리
+                """.trimMargin()
+                SummaryMode.DETAILED -> """
+                    |이 웹페이지 내용을 ${l} 상세하게 요약해줘. 인사말이나 부가 설명 없이 아래 형식만 정확히 출력해:
+                    |
+                    |📋 한줄 요약
+                    |페이지의 핵심을 한 문장으로 요약
+                    |
+                    |📌 핵심 키워드
+                    |#키워드1 #키워드2 #키워드3 #키워드4 #키워드5
+                    |
+                    |📖 섹션별 상세 요약
+                    |각 섹션/주제별로 나눠서 아래처럼 정리해줘:
+                    |
+                    |[섹션 제목]
+                    |- 상세 설명 (2~3문장)
+                    |- 중요한 내용이나 인사이트
+                    |
+                    |(모든 섹션을 빠짐없이 정리)
+                    |
+                    |💡 핵심 인사이트
+                    |- 이 글에서 얻을 수 있는 주요 인사이트를 정리
+                """.trimMargin()
+            }
+        }
     }
 
     override fun registerGraph(
@@ -164,6 +225,12 @@ class MemoPlainNavigationImpl @Inject constructor(
             var summaryState by remember { mutableStateOf<SummaryState>(SummaryState.Idle) }
             var youtubeTitle by remember { mutableStateOf<String?>(null) }
 
+            val preContext = LocalContext.current
+            val languageCode = remember {
+                preContext.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE)
+                    .getString("language_code", "ko") ?: "ko"
+            }
+
             val scope = rememberCoroutineScope()
 
             // YouTube URL이면 자동 요약 시작 (캐시 우선 조회)
@@ -180,6 +247,8 @@ class MemoPlainNavigationImpl @Inject constructor(
                     try {
                         val summary = summarizeVideo(
                             videoId!!, youtubeUrl,
+                            mode = SummaryMode.SIMPLE,
+                            lang = languageCode,
                             onTitleFound = { title -> youtubeTitle = title }
                         )
                         // 캐시 저장
@@ -504,7 +573,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                     isWebSummarizing = false
                     isTranscribing = false
                 },
-                onWebSummarize = { url ->
+                onWebSummarize = { url, mode ->
                     currentSummarizeJob = scope.launch {
                         isWebSummarizing = true
                         webSummaryError = null
@@ -514,9 +583,10 @@ class MemoPlainNavigationImpl @Inject constructor(
                                 webSummaryError = "웹페이지를 불러올 수 없어요."
                             } else {
                                 webPageTitle = content.title
+                                val webPrompt = buildWebPrompt(mode, languageCode)
                                 val summary = retryOn503 {
                                     aiApiService.generateContent(
-                                        "$WEB_SUMMARY_PROMPT\n\n아래는 웹페이지 내용입니다:\n\n${content.text}"
+                                        "$webPrompt\n\n아래는 웹페이지 내용입니다:\n\n${content.text}"
                                     )
                                 }
                                 webSummaryResult = summary
@@ -558,7 +628,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                         }
                     }
                 },
-                onYoutubeSummarize = { url ->
+                onYoutubeSummarize = { url, mode ->
                     currentSummarizeJob = scope.launch {
                         if (!canSummarize) {
                             inlineSummaryState = SummaryState.Error("오늘 무료 요약 횟수를 모두 사용했어요.")
@@ -572,15 +642,18 @@ class MemoPlainNavigationImpl @Inject constructor(
                             return@launch
                         }
                         inlineSummaryState = SummaryState.Loading
+                        val ytPrompt = buildYoutubePrompt(mode, languageCode)
                         try {
                             val summary = if (videoId != null) {
                                 summarizeVideo(
                                     videoId, url,
+                                    mode = mode,
+                                    lang = languageCode,
                                     onTitleFound = { title -> youtubeTitle = title }
                                 )
                             } else {
                                 aiApiService.generateContentWithVideo(
-                                    prompt = SUMMARY_PROMPT,
+                                    prompt = ytPrompt,
                                     videoUrl = url,
                                 )
                             }
@@ -692,8 +765,11 @@ class MemoPlainNavigationImpl @Inject constructor(
     private suspend fun summarizeVideo(
         videoId: String,
         videoUrl: String,
+        mode: SummaryMode = SummaryMode.SIMPLE,
+        lang: String = "ko",
         onTitleFound: ((String) -> Unit)? = null
     ): String {
+        val prompt = buildYoutubePrompt(mode, lang)
         // 1. 자막 + 제목 추출 시도
         val videoInfo = captionService.extractVideoInfo(videoId)
         if (videoInfo != null) {
@@ -706,14 +782,14 @@ class MemoPlainNavigationImpl @Inject constructor(
             // 자막 기반 요약 (텍스트만, 빠르고 저렴)
             return retryOn503 {
                 aiApiService.generateContent(
-                    "$SUMMARY_PROMPT\n\n아래는 영상의 자막입니다:\n\n$captions"
+                    "$prompt\n\n아래는 영상의 자막입니다:\n\n$captions"
                 )
             }
         }
         // 2. 자막 없으면 fallback — 영상 직접 분석
         return retryOn503 {
             aiApiService.generateContentWithVideo(
-                prompt = SUMMARY_PROMPT,
+                prompt = prompt,
                 videoUrl = videoUrl,
             )
         }

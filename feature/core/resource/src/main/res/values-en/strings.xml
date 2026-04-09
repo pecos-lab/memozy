@@ -155,6 +155,12 @@
     <string name="time_select">Select Time</string>
     <string name="cancel_reminder">Cancel Reminder</string>
 
+    <!-- Summary Mode -->
+    <string name="summary_mode_simple">Quick Summary</string>
+    <string name="summary_mode_detailed">Detailed Summary</string>
+    <string name="youtube_url_copied">YouTube URL copied</string>
+    <string name="web_url_copied">Web URL copied</string>
+
     <!-- Trash Extra -->
     <string name="trash_days_left">Permanently deleted in %d days</string>
     <string name="trash_soon_delete">Permanently deleted soon</string>
