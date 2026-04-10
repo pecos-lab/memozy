@@ -21,4 +21,5 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.richeditor.compose)
     implementation(libs.coil.compose)
+    implementation(libs.haze)
 }

@@ -47,7 +47,7 @@ fun WebSummaryInlineCard(
     onExpandToggle: (Boolean) -> Unit,
     summaryText: String?,
     isWebSummarizing: Boolean,
-    currentSummaryMode: SummaryMode,
+    currentSummaryMode: SummaryMode?,
     onSummarize: ((String, SummaryMode) -> Unit)?,
     onCancelSummarize: (() -> Unit)?,
     onResummarize: (SummaryMode) -> Unit,

@@ -123,6 +123,19 @@ import me.pecos.memozy.presentation.screen.memo.components.YouTubeLinkBottomShee
 import me.pecos.memozy.presentation.screen.memo.components.YouTubeUrlDialog
 import me.pecos.memozy.presentation.screen.memo.components.MemoActionBar
 import me.pecos.memozy.presentation.theme.LocalAppColors
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 
 private val YOUTUBE_URL_REGEX = Regex(
     """(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)[\w\-]+(?:[&?][\w\-=]*)*"""
@@ -386,12 +399,30 @@ fun MemoScreen(
 
     // containerColor 명시 → MaterialTheme.colorScheme.surface 무시
     Scaffold(
-        containerColor = colors.screenBackground
+        containerColor = colors.screenBackground,
+        contentWindowInsets = WindowInsets(0)
     ) { innerPadding ->
+        val isKeyboardVisible = WindowInsets.isImeVisible
+        val hazeState = rememberHazeState()
+        val isSystemDark = colors.screenBackground == Color(0xFF1C1C1E)
+        val glassStyle = remember(isSystemDark) {
+            HazeStyle(
+                blurRadius = 24.dp,
+                backgroundColor = if (isSystemDark) Color(0xFF1C1C1E).copy(alpha = 0.01f)
+                    else Color.White.copy(alpha = 0.01f),
+                tints = listOf(
+                    HazeTint(
+                        color = if (isSystemDark) Color(0xFF2C2C2E).copy(alpha = 0.35f)
+                        else Color.White.copy(alpha = 0.45f)
+                    )
+                )
+            )
+        }
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .imePadding()
         ) {
             // 상단 바
             Row(
@@ -492,6 +523,7 @@ fun MemoScreen(
             Column(
                 modifier = Modifier
                     .weight(1f)
+                    .hazeSource(hazeState)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 30.dp, vertical = 16.dp)
             ) {
@@ -702,10 +734,7 @@ fun MemoScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // 서식 툴바 (본문 아래)
-                FormattingToolbar(richTextState = richTextState, colors = colors)
-
-                // ── 상태 메시지 영역 (서식 툴바 아래, 칩 위) ──
+                // ── 상태 메시지 영역 ──
                 var transcriptionErrorDismissed by remember { mutableStateOf(false) }
                 LaunchedEffect(transcriptionError) { if (transcriptionError != null) transcriptionErrorDismissed = false }
                 var webErrorDismissed by remember { mutableStateOf(false) }
@@ -793,30 +822,55 @@ fun MemoScreen(
                 Spacer(modifier = Modifier.height(20.dp))
             }
 
-            // 하단 AI 액션 바
-            MemoActionBar(
-                colors = colors,
-                isNewMemo = isNewMemo,
-                existingMemo = existingMemo,
-                onStartRecording = onStartRecording,
-                onStopRecording = onStopRecording,
-                isRecording = isRecording,
-                isTranscribing = isTranscribing,
-                onYoutubeSummarize = onYoutubeSummarize,
-                isSummarizing = isSummarizing,
-                isWebSummarizing = isWebSummarizing,
-                detectedYoutubeUrl = detectedYoutubeUrl,
-                onYoutubeChipClick = {
-                    youtubeChipDismissed = false
-                    currentSummaryMode = SummaryMode.SIMPLE
-                    detectedYoutubeUrl?.let { onYoutubeSummarize?.invoke(it, SummaryMode.SIMPLE) }
-                },
-                onYoutubeDialogOpen = { showYoutubeDialog = true },
-                onWebSummarize = onWebSummarize,
-                onWebDialogOpen = { showWebDialog = true },
-                onSetReminder = onSetReminder,
-                onQuiz = onQuiz
-            )
+            // 서식 툴바 — 키보드가 올라올 때만 표시 (키보드 위 고정 바)
+            AnimatedVisibility(
+                visible = isKeyboardVisible,
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+            ) {
+                val keyboardBarBorder = if (isSystemDark) Color(0xFF3A3A3C) else Color(0xFFBFC1C6)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .hazeEffect(state = hazeState, style = glassStyle)
+                ) {
+                    HorizontalDivider(color = keyboardBarBorder, thickness = 0.5.dp)
+                    // 액션 버튼 (왼쪽) + 서식 툴바 (오른쪽) — 한 줄 배치
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        MemoActionBar(
+                            colors = colors,
+                            isNewMemo = isNewMemo,
+                            existingMemo = existingMemo,
+                            onStartRecording = onStartRecording,
+                            onStopRecording = onStopRecording,
+                            isRecording = isRecording,
+                            isTranscribing = isTranscribing,
+                            onYoutubeSummarize = onYoutubeSummarize,
+                            isSummarizing = isSummarizing,
+                            isWebSummarizing = isWebSummarizing,
+                            detectedYoutubeUrl = detectedYoutubeUrl,
+                            onYoutubeChipClick = {
+                                youtubeChipDismissed = false
+                                currentSummaryMode = SummaryMode.SIMPLE
+                                detectedYoutubeUrl?.let { onYoutubeSummarize?.invoke(it, SummaryMode.SIMPLE) }
+                            },
+                            onYoutubeDialogOpen = { showYoutubeDialog = true },
+                            onWebSummarize = onWebSummarize,
+                            onWebDialogOpen = { showWebDialog = true },
+                            onSetReminder = onSetReminder,
+                            onQuiz = onQuiz
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        FormattingToolbar(richTextState = richTextState, colors = colors)
+                    }
+                }
+            }
         } // outer Column
     }
 

@@ -2,6 +2,7 @@ import me.pecos.memozy.convention.extension.setNamespace
 
 plugins {
     id("memozy.android.application")
+    id("memozy.compose")
     id("memozy.hilt")
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
@@ -36,6 +37,7 @@ dependencies {
     implementation(projects.data.repository.memo.impl)
     implementation(projects.data.repository.memo.api) // 위젯에서 MemoRepository 참조
     implementation(projects.data.repository.chat.impl)
+    implementation(projects.feature.core.resource)
     implementation(projects.feature.home.impl)
     implementation(projects.feature.memoPlain.impl)
 
