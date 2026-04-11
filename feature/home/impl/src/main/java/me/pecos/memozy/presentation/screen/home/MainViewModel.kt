@@ -126,7 +126,8 @@ class MainViewModel @Inject constructor(
             .filter { memo ->
                 if (query.isBlank()) true
                 else memo.name.contains(query, ignoreCase = true) ||
-                        memo.content.contains(query, ignoreCase = true)
+                        memo.content.contains(query, ignoreCase = true) ||
+                        memo.summaryContent?.contains(query, ignoreCase = true) == true
             }
             .let { filtered ->
                 if (sort == SortOrder.NEWEST) filtered else filtered.reversed()
@@ -183,7 +184,8 @@ fun MemoUiState.toMemo(): Memo = Memo(
     styles = this.styles,
     youtubeUrl = this.youtubeUrl,
     deletedAt = this.deletedAt,
-    reminderAt = this.reminderAt
+    reminderAt = this.reminderAt,
+    summaryContent = this.summaryContent
 )
 
 fun Memo.toUiState(): MemoUiState = MemoUiState(
@@ -202,5 +204,6 @@ fun Memo.toUiState(): MemoUiState = MemoUiState(
     styles = this.styles,
     youtubeUrl = this.youtubeUrl,
     deletedAt = this.deletedAt,
-    reminderAt = this.reminderAt
+    reminderAt = this.reminderAt,
+    summaryContent = this.summaryContent
 )

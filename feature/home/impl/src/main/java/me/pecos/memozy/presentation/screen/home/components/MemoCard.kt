@@ -138,7 +138,8 @@ fun MemoCardItem(
                     .replace(Regex("<[^>]+>"), "")
                     .replace("&nbsp;", " ")
                     .replace("&amp;", "&")
-                    .trim(),
+                    .trim()
+                    .ifBlank { memo.summaryContent?.take(200) ?: "" },
                 color = colors.textBody,
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis

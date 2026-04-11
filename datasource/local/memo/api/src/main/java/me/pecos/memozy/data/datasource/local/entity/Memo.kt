@@ -19,5 +19,6 @@ data class Memo(
     val styles: String? = null, // JSON: [{start,end,bold,italic,strikethrough,color}]
     val youtubeUrl: String? = null,
     val deletedAt: Long? = null,
-    val reminderAt: Long? = null
+    val reminderAt: Long? = null,
+    val summaryContent: String? = null
 )

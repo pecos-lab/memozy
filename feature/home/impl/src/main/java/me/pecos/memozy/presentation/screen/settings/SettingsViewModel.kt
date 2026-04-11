@@ -128,6 +128,7 @@ class SettingsViewModel @Inject constructor(
                         put("styles", m.styles ?: JSONObject.NULL)
                         put("youtubeUrl", m.youtubeUrl ?: JSONObject.NULL)
                         put("deletedAt", m.deletedAt ?: JSONObject.NULL)
+                        put("summaryContent", m.summaryContent ?: JSONObject.NULL)
                     })
                 }
             })
@@ -200,11 +201,19 @@ class SettingsViewModel @Inject constructor(
         val memosArray = json.getJSONArray("memos")
         val memos = (0 until memosArray.length()).map { i ->
             val m = memosArray.getJSONObject(i)
+            var content = m.getString("content")
+            var summaryContent = m.optString("summaryContent").takeIf { it != "null" && it.isNotEmpty() }
+            // 레거시 백업 호환: summaryContent 없고 content에 📋 포함 시 분리
+            if (summaryContent == null && content.contains("📋")) {
+                val idx = content.indexOf("📋")
+                summaryContent = content.substring(idx)
+                content = if (idx > 0) content.substring(0, idx).trim() else ""
+            }
             Memo(
                 id = m.getInt("id"),
                 name = m.getString("name"),
                 categoryId = m.optInt("categoryId", 1),
-                content = m.getString("content"),
+                content = content,
                 createdAt = m.optLong("createdAt", System.currentTimeMillis()),
                 updatedAt = m.optLong("updatedAt", System.currentTimeMillis()),
                 format = try { MemoFormat.valueOf(m.optString("format", "PLAIN")) } catch (_: Exception) { MemoFormat.PLAIN },
@@ -212,7 +221,8 @@ class SettingsViewModel @Inject constructor(
                 audioPath = m.optString("audioPath").takeIf { it != "null" && it.isNotEmpty() },
                 styles = m.optString("styles").takeIf { it != "null" && it.isNotEmpty() },
                 youtubeUrl = m.optString("youtubeUrl").takeIf { it != "null" && it.isNotEmpty() },
-                deletedAt = if (m.isNull("deletedAt")) null else m.optLong("deletedAt")
+                deletedAt = if (m.isNull("deletedAt")) null else m.optLong("deletedAt"),
+                summaryContent = summaryContent
             )
         }
         if (memos.isNotEmpty()) memoDao.insertMemos(memos)
