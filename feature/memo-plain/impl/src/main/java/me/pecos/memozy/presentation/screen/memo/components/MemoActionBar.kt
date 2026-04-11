@@ -85,7 +85,7 @@ fun MemoActionBar(
         }
 
         // 📺 유튜브 요약
-        if (onYoutubeSummarize != null) {
+        if (onYoutubeSummarize != null && !isSummarizing && !isWebSummarizing) {
             val hasYoutubeUrl = detectedYoutubeUrl != null
             Box(
                 modifier = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp))
@@ -108,7 +108,7 @@ fun MemoActionBar(
         }
 
         // 🔗 웹 요약
-        if (onWebSummarize != null) {
+        if (onWebSummarize != null && !isSummarizing && !isWebSummarizing) {
             Box(
                 modifier = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp))
                     .background(

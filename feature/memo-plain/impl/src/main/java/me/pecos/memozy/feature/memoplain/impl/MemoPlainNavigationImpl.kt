@@ -76,6 +76,9 @@ class MemoPlainNavigationImpl @Inject constructor(
 
     companion object {
         private const val FEATURE_YOUTUBE_SUMMARY = "youtube_summary"
+        private const val FEATURE_WEB_SUMMARY = "web_summary"
+        private const val FEATURE_TRANSCRIPTION = "transcription"
+        private const val FEATURE_IMAGE_OCR = "image_ocr"
         private const val DAILY_FREE_LIMIT = 100
 
         private fun startOfToday(): Long {
@@ -237,8 +240,8 @@ class MemoPlainNavigationImpl @Inject constructor(
             LaunchedEffect(youtubeUrl) {
                 if (youtubeUrl != null && summaryState is SummaryState.Idle) {
                     val videoId = extractVideoId(youtubeUrl)
-                    // 캐��� 조회
-                    val cached = videoId?.let { youtubeSummaryDao.getByVideoId(it) }
+                    // 캐시 조회
+                    val cached = videoId?.let { youtubeSummaryDao.getByKey(it, SummaryMode.SIMPLE.name, languageCode) }
                     if (cached != null) {
                         summaryState = SummaryState.Success(cached.summary)
                         return@LaunchedEffect
@@ -254,6 +257,8 @@ class MemoPlainNavigationImpl @Inject constructor(
                         // 캐시 저장
                         youtubeSummaryDao.insert(YoutubeSummary(
                             videoId = videoId,
+                            mode = SummaryMode.SIMPLE.name,
+                            language = languageCode,
                             url = youtubeUrl,
                             summary = summary
                         ))
@@ -291,6 +296,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                         val mimeType = imageContext.contentResolver.getType(sharedFileUri) ?: "image/jpeg"
                         val result = aiApiService.describeImage(base64, mimeType)
                         imageOcrState = SummaryState.Success(result)
+                        aiUsageDao.insert(AiUsage(feature = FEATURE_IMAGE_OCR))
                     } catch (e: Exception) {
                         imageOcrState = SummaryState.Error(e.message ?: "이미지 처리 실패")
                     }
@@ -518,6 +524,7 @@ class MemoPlainNavigationImpl @Inject constructor(
 
                             transcriptionResult = result
                             transcriptionError = null
+                            aiUsageDao.insert(AiUsage(feature = FEATURE_TRANSCRIPTION))
                         }
                     } catch (e: Exception) {
                         transcriptionError = "음성 변환에 실패했어요."
@@ -592,6 +599,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                                     )
                                 }
                                 webSummaryResult = summary
+                                aiUsageDao.insert(AiUsage(feature = FEATURE_WEB_SUMMARY))
                             }
                         } catch (e: Exception) {
                             webSummaryError = when {
@@ -637,8 +645,8 @@ class MemoPlainNavigationImpl @Inject constructor(
                             return@launch
                         }
                         val videoId = extractVideoId(url)
-                        // 캐시 조회
-                        val cached = videoId?.let { youtubeSummaryDao.getByVideoId(it) }
+                        // 캐시 조회 (mode + language 기반)
+                        val cached = videoId?.let { youtubeSummaryDao.getByKey(it, mode.name, languageCode) }
                         if (cached != null) {
                             inlineSummaryState = SummaryState.Success(cached.summary)
                             return@launch
@@ -663,6 +671,8 @@ class MemoPlainNavigationImpl @Inject constructor(
                             if (videoId != null) {
                                 youtubeSummaryDao.insert(YoutubeSummary(
                                     videoId = videoId,
+                                    mode = mode.name,
+                                    language = languageCode,
                                     url = url,
                                     summary = summary
                                 ))

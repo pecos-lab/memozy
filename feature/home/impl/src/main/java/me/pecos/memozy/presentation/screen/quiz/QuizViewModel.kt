@@ -7,6 +7,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import me.pecos.memozy.data.datasource.local.AiUsageDao
+import me.pecos.memozy.data.datasource.local.entity.AiUsage
 import me.pecos.memozy.data.datasource.remote.ai.AIApiService
 import me.pecos.memozy.data.repository.MemoRepository
 import org.json.JSONArray
@@ -22,7 +24,8 @@ sealed class QuizState {
 class QuizViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val repository: MemoRepository,
-    private val aiApiService: AIApiService
+    private val aiApiService: AIApiService,
+    private val aiUsageDao: AiUsageDao
 ) : ViewModel() {
 
     private val memoId: Int = savedStateHandle.get<String>("memoId")?.toIntOrNull() ?: -1
@@ -80,6 +83,7 @@ $content"""
                     _quizState.value = QuizState.Error("퀴즈를 생성할 수 없습니다")
                 } else {
                     _quizState.value = QuizState.Ready(questions)
+                    aiUsageDao.insert(AiUsage(feature = "quiz"))
                 }
             } catch (e: Exception) {
                 _quizState.value = QuizState.Error(e.message ?: "퀴즈 생성 실패")
