@@ -124,17 +124,7 @@ fun WebSummaryInlineCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) { Text(stringResource(R.string.summary_mode_detailed), fontSize = 11.sp, color = Color(0xFFFF9800), fontWeight = FontWeight.Medium) }
                 }
-                if (onSummarize != null && summaryText != null) {
-                    val altMode = if (currentSummaryMode == SummaryMode.DETAILED) SummaryMode.SIMPLE else SummaryMode.DETAILED
-                    val altLabel = if (altMode == SummaryMode.SIMPLE) stringResource(R.string.summary_mode_simple) else stringResource(R.string.summary_mode_detailed)
-                    val altColor = if (altMode == SummaryMode.SIMPLE) Color(0xFF2196F3) else Color(0xFFFF9800)
-                    Row(
-                        modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(altColor.copy(alpha = 0.1f))
-                            .clickable { onResummarize(altMode) }
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) { Text(altLabel, fontSize = 11.sp, color = altColor, fontWeight = FontWeight.Medium) }
-                }
+                // 요약 완료 후 요약 버튼 숨김 (원본보기, 복사만 표시)
             }
 
             // 로딩

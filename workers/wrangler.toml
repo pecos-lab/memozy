@@ -1,0 +1,12 @@
+name = "memozy-api"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+# Gemini API가 한국 리전을 지원하지 않아 US에서 실행
+[placement]
+mode = "smart"
+
+# secrets (set via `wrangler secret put`):
+#   GEMINI_API_KEY
+#   SUPADATA_API_KEY
+#   APP_SECRET_KEY
