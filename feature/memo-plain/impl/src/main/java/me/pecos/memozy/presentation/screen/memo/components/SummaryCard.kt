@@ -180,24 +180,7 @@ fun SummaryCard(
                         Text(stringResource(R.string.memo_copy), fontSize = 11.sp, color = colors.chipText, fontWeight = FontWeight.Medium)
                     }
 
-                    if (hasSummary && onSummarize != null) {
-                        // 요약 완료 → 반대 모드 버튼
-                        val altMode = if (summaryMode == SummaryMode.DETAILED) SummaryMode.SIMPLE else SummaryMode.DETAILED
-                        val altLabel = if (altMode == SummaryMode.SIMPLE) stringResource(R.string.summary_mode_simple) else stringResource(R.string.summary_mode_detailed)
-                        val altColor = if (altMode == SummaryMode.SIMPLE) Color(0xFF2196F3) else Color(0xFFFF9800)
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(altColor.copy(alpha = 0.1f))
-                                .clickable { onSummarize(altMode) }
-                                .padding(horizontal = 10.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(Icons.Default.Summarize, null, tint = altColor, modifier = Modifier.size(14.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(altLabel, fontSize = 11.sp, color = altColor, fontWeight = FontWeight.Medium)
-                        }
-                    } else if (!hasSummary && onSummarize != null) {
+                    if (!hasSummary && onSummarize != null) {
                         // 아직 요약 안 됨 → 두 모드 모두 표시
                         Row(
                             modifier = Modifier
