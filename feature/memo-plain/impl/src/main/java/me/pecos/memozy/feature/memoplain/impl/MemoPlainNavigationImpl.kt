@@ -304,8 +304,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                         is SummaryState.Success -> {
                             val lines = state.text.split("\n", limit = 2)
                             val title = lines.firstOrNull()?.replace(Regex("^#+\\s*"), "")?.take(50) ?: "유튜브 요약"
-                            val content = "${state.text}\n\n원본: $youtubeUrl"
-                            MemoUiState(0, title, 1, content)
+                            MemoUiState(0, title, 1, "원본: $youtubeUrl", summaryContent = state.text)
                         }
                         else -> null
                     }
@@ -351,7 +350,8 @@ class MemoPlainNavigationImpl @Inject constructor(
                             isPinned = it.isPinned,
                             audioPath = it.audioPath,
                             styles = it.styles,
-                            youtubeUrl = it.youtubeUrl
+                            youtubeUrl = it.youtubeUrl,
+                            summaryContent = it.summaryContent
                         )
                     }
                     memoLoaded = true
@@ -745,7 +745,8 @@ class MemoPlainNavigationImpl @Inject constructor(
         content = content,
         audioPath = audioPath,
         styles = styles,
-        youtubeUrl = youtubeUrl
+        youtubeUrl = youtubeUrl,
+        summaryContent = summaryContent
     )
 
     // 503 에러 시 최대 3회 재시도 (exponential backoff)

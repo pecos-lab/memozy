@@ -247,11 +247,7 @@ fun MemoScreen(
     var categoryIndex by remember {
         mutableStateOf((existingMemo.categoryId - 1).coerceIn(0, CATEGORY_RES_IDS.size - 1))
     }
-    var bodyText by remember {
-        val content = existingMemo.content
-        val summaryStart = content.indexOf("📋")
-        mutableStateOf(if (summaryStart > 0) content.substring(0, summaryStart).trim() else if (summaryStart == 0) "" else content)
-    }
+    var bodyText by remember { mutableStateOf(existingMemo.content) }
     val richTextState = com.mohamedrejeb.richeditor.model.rememberRichTextState()
     // 초기 HTML 스냅샷 — setHtml 직후 캡처, 이후 toHtml()과 비교하여 변경 감지
     var initialHtml by remember { mutableStateOf("") }
@@ -259,11 +255,7 @@ fun MemoScreen(
     if (!initialized && existingMemo.id > 0 && existingMemo.name.isNotEmpty()) {
         nameText = existingMemo.name
         categoryIndex = (existingMemo.categoryId - 1).coerceIn(0, CATEGORY_RES_IDS.size - 1)
-        // 요약 분리: 📋 기준으로 본문만 설정
-        val content = existingMemo.content
-        val summaryStart = content.indexOf("📋")
-        bodyText = if (summaryStart > 0) content.substring(0, summaryStart).trim()
-                   else if (summaryStart == 0) "" else content
+        bodyText = existingMemo.content
         initialized = true
     }
     // HTML-to-HTML 비교로 변경 감지 (setHtml 왕복에 의한 false positive 방지)
@@ -292,18 +284,8 @@ fun MemoScreen(
     // 요약 결과 표시 상태
     var showSummary by remember { mutableStateOf(false) }
 
-    // 요약 콘텐츠 접기/펼치기 상태
-    // 기존 메모 본문에서 요약 부분 분리
-    val initialSummary = remember(existingMemo.id) {
-        val content = existingMemo.content
-        val summaryStart = content.indexOf("📋")
-        if (summaryStart >= 0) content.substring(summaryStart) else null
-    }
-    val initialBody = remember(existingMemo.id) {
-        val content = existingMemo.content
-        val summaryStart = content.indexOf("📋")
-        if (summaryStart > 0) content.substring(0, summaryStart).trim() else if (summaryStart == 0) "" else content
-    }
+    // 요약 콘텐츠 접기/펼치기 상태 (summaryContent 별도 컬럼에서 로드)
+    val initialSummary = remember(existingMemo.id) { existingMemo.summaryContent }
     var summaryText by remember { mutableStateOf(initialSummary) }
     var isSummaryExpanded by remember { mutableStateOf(initialSummary == null) }
     var webSummaryText by remember { mutableStateOf<String?>(null) }
@@ -344,28 +326,10 @@ fun MemoScreen(
 
 
     fun safeContent(): String {
-        // 에디터 내용은 HTML로 유지 (저장-로드 사이클 안정성)
         val editorHtml = richTextState.toHtml().trim()
-        // HTML에서 요약 부분 제거 (📋가 포함된 경우)
-        val plainCheck = richTextState.annotatedString.text
-        val cleanEditor = if (plainCheck.contains("📋")) {
-            // plain text 기준으로 📋 위치 찾아서 HTML에서도 해당 부분 이전만 사용
-            val plainIdx = plainCheck.indexOf("📋")
-            if (plainIdx > 0) {
-                // 📋 이전의 plain text에 해당하는 HTML 부분만 사용
-                val beforeSummary = plainCheck.substring(0, plainIdx).trim()
-                if (beforeSummary.isNotBlank()) {
-                    beforeSummary.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
-                } else ""
-            } else ""
-        } else editorHtml
-
-        val parts = mutableListOf<String>()
-        val activeSummary = summaryText ?: webSummaryText
-        activeSummary?.let { parts.add(it) }
-        if (cleanEditor.isNotBlank() && cleanEditor != "<p><br></p>") parts.add(cleanEditor)
-        return parts.joinToString("\n\n")
+        return if (editorHtml.isNotBlank() && editorHtml != "<p><br></p>") editorHtml else ""
     }
+    fun safeSummaryContent(): String? = summaryText ?: webSummaryText
     fun safeStyles(): String? = richTextState.toHtml().takeIf { it.isNotBlank() }
 
     val canAutoSave = nameText.isNotBlank() || bodyText.isNotBlank() || summaryText != null || webSummaryText != null
@@ -385,7 +349,8 @@ fun MemoScreen(
                         categoryId = categoryIndex + 1,
                         content = newContent,
                         styles = safeStyles(),
-                        youtubeUrl = savedYoutubeUrl
+                        youtubeUrl = savedYoutubeUrl,
+                        summaryContent = safeSummaryContent()
                     ))
                 }
             }
@@ -513,7 +478,7 @@ fun MemoScreen(
                     color = colors.chipText,
                     modifier = Modifier
                         .clickable {
-                            onSave(MemoUiState(id = existingMemo.id, name = nameText, categoryId = categoryIndex + 1, content = safeContent(), styles = safeStyles(), youtubeUrl = savedYoutubeUrl))
+                            onSave(MemoUiState(id = existingMemo.id, name = nameText, categoryId = categoryIndex + 1, content = safeContent(), styles = safeStyles(), youtubeUrl = savedYoutubeUrl, summaryContent = safeSummaryContent()))
                         }
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 )
@@ -581,14 +546,10 @@ fun MemoScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // 초기 내용 로드 — 요약 분리 후 본문만 setHtml + initialHtml 캡처
+                // 초기 내용 로드 — 본문만 setHtml + initialHtml 캡처
                 var contentInitialized by remember { mutableStateOf(false) }
                 LaunchedEffect(Unit) {
-                    val content = existingMemo.content
-                    // 📋 기준으로 요약 분리 → 에디터에는 본문만 설정
-                    val summaryIdx = content.indexOf("📋")
-                    val editorContent = if (summaryIdx > 0) content.substring(0, summaryIdx).trim()
-                                        else if (summaryIdx == 0) "" else content
+                    val editorContent = existingMemo.content
                     if (editorContent.isNotEmpty()) {
                         val html = if (editorContent.contains("<") && editorContent.contains(">")) {
                             editorContent

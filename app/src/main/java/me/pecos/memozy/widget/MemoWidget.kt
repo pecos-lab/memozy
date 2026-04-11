@@ -131,10 +131,11 @@ class MemoWidget : GlanceAppWidget() {
                                         ),
                                         maxLines = 1
                                     )
-                                    if (memo.content.isNotBlank()) {
+                                    val widgetContent = memo.content.ifBlank { memo.summaryContent ?: "" }
+                                    if (widgetContent.isNotBlank()) {
                                         Spacer(modifier = GlanceModifier.height(2.dp))
                                         Text(
-                                            text = memo.content.take(80),
+                                            text = widgetContent.take(80),
                                             style = TextStyle(
                                                 color = MemoWidgetColors.body,
                                                 fontSize = 12.sp
