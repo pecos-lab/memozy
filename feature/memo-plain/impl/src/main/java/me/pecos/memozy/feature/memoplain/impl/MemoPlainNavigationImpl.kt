@@ -29,6 +29,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import kotlinx.coroutines.GlobalScope
@@ -196,7 +202,13 @@ class MemoPlainNavigationImpl @Inject constructor(
         onBack: () -> Unit,
         onNavigateToQuiz: ((memoId: Int) -> Unit)?
     ) {
-        navGraphBuilder.composable(MemoPlainRoute.MEMO) { backStackEntry ->
+        navGraphBuilder.composable(
+            MemoPlainRoute.MEMO,
+            enterTransition = { fadeIn(tween(150)) },
+            exitTransition = { fadeOut(tween(150)) },
+            popEnterTransition = { fadeIn(tween(150)) },
+            popExitTransition = { fadeOut(tween(150)) }
+        ) { backStackEntry ->
             val memoIdStr = backStackEntry.arguments?.getString("memoId") ?: ""
             val isShared = memoIdStr.startsWith("shared_")
             val isSharedImage = memoIdStr.startsWith("shared_image_")

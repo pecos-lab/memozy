@@ -166,6 +166,14 @@ class MainViewModel @Inject constructor(
     fun togglePin(memo: MemoUiState) {
         viewModelScope.launch { repository.updateMemo(memo.copy(isPinned = !memo.isPinned).toMemo()) }
     }
+
+    fun pinMemos(ids: Set<Int>, pin: Boolean) {
+        viewModelScope.launch {
+            filteredList.value.filter { it.id in ids }.forEach { memo ->
+                repository.updateMemo(memo.copy(isPinned = pin).toMemo())
+            }
+        }
+    }
 }
 
 fun MemoUiState.toMemo(): Memo = Memo(

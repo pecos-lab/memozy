@@ -12,7 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -47,7 +48,8 @@ import me.pecos.memozy.presentation.theme.LocalAppColors
 fun MemoCardItem(
     memo: MemoUiState,
     tags: List<TagUiState> = emptyList(),
-    onTagsClick: (() -> Unit)? = null
+    onTagsClick: (() -> Unit)? = null,
+    @Suppress("UNUSED_PARAMETER") isInSelectionMode: Boolean = false
 ) {
     val colors = LocalAppColors.current
     val context = LocalContext.current
@@ -65,7 +67,7 @@ fun MemoCardItem(
         elevation = CardDefaults.cardElevation(0.dp),
         colors = CardDefaults.cardColors(containerColor = colors.cardBackground)
     ) {
-        Column(modifier = Modifier.padding(16.dp).animateContentSize(tween(200))) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()

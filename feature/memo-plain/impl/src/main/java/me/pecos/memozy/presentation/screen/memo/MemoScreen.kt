@@ -395,7 +395,7 @@ fun MemoScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
-                    .padding(top = 24.dp, bottom = 12.dp)
+                    .padding(top = 42.dp, bottom = 12.dp)
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
