@@ -15,7 +15,6 @@ interface MemoPlainNavigation {
     fun registerGraph(
         navGraphBuilder: NavGraphBuilder,
         onNavigateToHome: () -> Unit,
-        onBack: () -> Unit,
-        onNavigateToQuiz: ((memoId: Int) -> Unit)? = null
+        onBack: () -> Unit
     )
 }

@@ -199,8 +199,7 @@ class MemoPlainNavigationImpl @Inject constructor(
     override fun registerGraph(
         navGraphBuilder: NavGraphBuilder,
         onNavigateToHome: () -> Unit,
-        onBack: () -> Unit,
-        onNavigateToQuiz: ((memoId: Int) -> Unit)?
+        onBack: () -> Unit
     ) {
         navGraphBuilder.composable(
             MemoPlainRoute.MEMO,
@@ -630,18 +629,6 @@ class MemoPlainNavigationImpl @Inject constructor(
                 webSummaryResult = webSummaryResult,
                 webSummaryError = webSummaryError,
                 webPageTitle = webPageTitle,
-                onQuiz = if (onNavigateToQuiz != null) { id -> onNavigateToQuiz(id) } else null,
-                onSetReminder = { id, reminderAt ->
-                    scope.launch {
-                        repository.setReminder(id, reminderAt)
-                        if (reminderAt != null) {
-                            val title = existingMemo?.name ?: "메모"
-                            me.pecos.memozy.presentation.reminder.ReminderScheduler.schedule(context, id, title, reminderAt)
-                        } else {
-                            me.pecos.memozy.presentation.reminder.ReminderScheduler.cancel(context, id)
-                        }
-                    }
-                },
                 onYoutubeDetected = { videoId ->
                     scope.launch {
                         val title = captionService.fetchTitle(videoId)
