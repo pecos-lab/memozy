@@ -1,6 +1,9 @@
 <resources>
     <!-- Settings -->
     <string name="settings">설정</string>
+    <string name="section_theme">테마</string>
+    <string name="section_data">데이터</string>
+    <string name="section_other">기타</string>
     <string name="language_settings">언어설정</string>
     <string name="open_source_license">오픈 소스 라이센스</string>
     <string name="reset_memos">메모 초기화</string>

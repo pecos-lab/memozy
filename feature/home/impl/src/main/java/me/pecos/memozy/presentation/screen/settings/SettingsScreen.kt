@@ -80,13 +80,23 @@ fun SettingsScreen(
     LaunchedEffect(backupResult) {
         when (val result = backupResult) {
             is BackupResult.Success -> {
-                Toast.makeText(context, context.getString(R.string.backup_success, result.message.toIntOrNull() ?: 0), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.backup_success, result.message.toIntOrNull() ?: 0),
+                    Toast.LENGTH_SHORT
+                ).show()
                 settingsViewModel.clearBackupResult()
             }
+
             is BackupResult.Error -> {
-                Toast.makeText(context, context.getString(R.string.backup_error), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.backup_error),
+                    Toast.LENGTH_SHORT
+                ).show()
                 settingsViewModel.clearBackupResult()
             }
+
             else -> {}
         }
     }
@@ -223,7 +233,8 @@ fun SettingsScreen(
     }
 
     if (showLicenseDialog) {
-        val apacheLicense = "Licensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0"
+        val apacheLicense =
+            "Licensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0"
 
         @Composable
         fun LicenseItem(text: String) {
@@ -299,9 +310,25 @@ fun SettingsScreen(
                     color = colors.topbarTitle,
                     modifier = Modifier.padding(start = 16.dp, bottom = 12.dp)
                 )
+
+                HorizontalDivider(
+                    thickness = 0.3.dp ,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+
+                Text(
+                    text = stringResource(R.string.section_theme),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.topbarTitle,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp, top = 12.dp)
+                )
+
                 WantedButton(
                     text = stringResource(R.string.language_settings),
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
                     buttonDefault = WantedButtonDefaults.getDefault(
                         type = ButtonType.ASSISTIVE,
                         variant = ButtonVariant.OUTLINED
@@ -313,7 +340,9 @@ fun SettingsScreen(
 
                 WantedButton(
                     text = stringResource(R.string.theme_settings),
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
                     buttonDefault = WantedButtonDefaults.getDefault(
                         type = ButtonType.ASSISTIVE,
                         variant = ButtonVariant.OUTLINED
@@ -323,21 +352,27 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                WantedButton(
-                    text = stringResource(R.string.open_source_license),
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                    buttonDefault = WantedButtonDefaults.getDefault(
-                        type = ButtonType.ASSISTIVE,
-                        variant = ButtonVariant.OUTLINED
-                    ).copy(contentColor = colors.textTitle),
-                    onClick = { showLicenseDialog = true }
+
+                HorizontalDivider(
+                    thickness = 0.3.dp ,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+
+                Text(
+                    text = stringResource(R.string.section_data),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.topbarTitle,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp, top = 12.dp)
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 WantedButton(
                     text = stringResource(R.string.trash_title),
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
                     buttonDefault = WantedButtonDefaults.getDefault(
                         type = ButtonType.ASSISTIVE,
                         variant = ButtonVariant.OUTLINED
@@ -349,13 +384,20 @@ fun SettingsScreen(
 
                 WantedButton(
                     text = stringResource(R.string.backup_export),
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
                     buttonDefault = WantedButtonDefaults.getDefault(
                         type = ButtonType.ASSISTIVE,
                         variant = ButtonVariant.OUTLINED
                     ).copy(contentColor = colors.textTitle),
                     onClick = {
-                        val fileName = "memozy_backup_${java.text.SimpleDateFormat("yyyyMMdd_HHmm", java.util.Locale.getDefault()).format(java.util.Date())}.json"
+                        val fileName = "memozy_backup_${
+                            java.text.SimpleDateFormat(
+                                "yyyyMMdd_HHmm",
+                                java.util.Locale.getDefault()
+                            ).format(java.util.Date())
+                        }.json"
                         exportLauncher.launch(fileName)
                     }
                 )
@@ -364,7 +406,9 @@ fun SettingsScreen(
 
                 WantedButton(
                     text = stringResource(R.string.backup_restore),
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
                     buttonDefault = WantedButtonDefaults.getDefault(
                         type = ButtonType.ASSISTIVE,
                         variant = ButtonVariant.OUTLINED
@@ -377,7 +421,9 @@ fun SettingsScreen(
 
                     WantedButton(
                         text = stringResource(R.string.donation_button),
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
                         buttonDefault = WantedButtonDefaults.getDefault(
                             type = ButtonType.ASSISTIVE,
                             variant = ButtonVariant.OUTLINED
@@ -390,23 +436,50 @@ fun SettingsScreen(
 
                 WantedButton(
                     text = stringResource(R.string.reset_memos),
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
                     buttonDefault = WantedButtonDefaults.getDefault(
                         type = ButtonType.ASSISTIVE,
                         variant = ButtonVariant.OUTLINED
                     ).copy(contentColor = Color(0xFFE24B4A)),
                     onClick = { showClearDialog = true }
                 )
-            }
 
-            Text(
-                text = "v$versionName",
-                fontSize = 12.sp,
-                color = colors.textSecondary,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 12.dp)
-            )
+                HorizontalDivider(
+                    thickness = 0.3.dp ,
+                    modifier = Modifier.padding(start = 16.dp , top = 12.dp)
+                )
+
+                Text(
+                    text = stringResource(R.string.section_other),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.topbarTitle,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp, top = 12.dp)
+                )
+
+                WantedButton(
+                    text = stringResource(R.string.open_source_license),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    buttonDefault = WantedButtonDefaults.getDefault(
+                        type = ButtonType.ASSISTIVE,
+                        variant = ButtonVariant.OUTLINED
+                    ).copy(contentColor = colors.textTitle),
+                    onClick = { showLicenseDialog = true }
+                )
+
+                Text(
+                    text = "v$versionName",
+                    fontSize = 12.sp,
+                    color = colors.textSecondary,
+                    modifier = Modifier
+                        .padding(top = 12.dp)
+                        .align(alignment = Alignment.CenterHorizontally)
+                )
+            }
         }
     }
 }
