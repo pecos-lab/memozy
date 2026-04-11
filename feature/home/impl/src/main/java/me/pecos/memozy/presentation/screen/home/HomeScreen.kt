@@ -140,6 +140,7 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        Spacer(modifier = Modifier.weight(1f))
                         // 전체선택
                         Text(
                             text = if (allSelected) stringResource(R.string.deselect_all)
@@ -155,7 +156,6 @@ fun HomeScreen(
                                 }
                                 .padding(horizontal = 12.dp, vertical = 6.dp)
                         )
-                        Spacer(modifier = Modifier.weight(1f))
                         // 고정
                         Text(
                             text = stringResource(R.string.pin),
