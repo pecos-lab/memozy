@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -98,7 +99,22 @@ fun YouTubeSummaryInlineCard(
                     maxLines = 2, overflow = TextOverflow.Ellipsis
                 )
                 if (youtubeUrl.isNotBlank()) {
-                    Text(youtubeUrl, fontSize = 11.sp, color = Color(0xFF2196F3), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(colors.chipBackground.copy(alpha = 0.5f))
+                            .padding(horizontal = 6.dp, vertical = 3.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Link, contentDescription = null,
+                            tint = Color(0xFF2196F3),
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(youtubeUrl, fontSize = 10.sp, color = Color(0xFF2196F3), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
                 }
 
                 // 액션 버튼

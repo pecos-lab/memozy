@@ -42,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -54,6 +55,7 @@ import com.wanted.android.wanted.design.theme.DesignSystemTheme
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import me.pecos.memozy.data.billing.BillingManager
 import me.pecos.memozy.feature.home.api.HomeRoute
@@ -205,9 +207,9 @@ class MainActivity : AppCompatActivity() {
                         val navBg = appColors.navBackground
                         val glassStyle = remember(navBg) {
                             HazeStyle(
-                                blurRadius = 20.dp,
-                                backgroundColor = navBg,
-                                tints = listOf(HazeTint(color = navBg.copy(alpha = 0.4f)))
+                                blurRadius = 24.dp,
+                                backgroundColor = navBg.copy(alpha = 0.15f),
+                                tints = listOf(HazeTint(color = navBg.copy(alpha = 0.45f)))
                             )
                         }
 
@@ -219,7 +221,7 @@ class MainActivity : AppCompatActivity() {
                             NavHost(
                                 navController = navController,
                                 startDestination = HomeRoute.MAIN,
-                                modifier = Modifier.fillMaxSize(),
+                                modifier = Modifier.fillMaxSize().hazeSource(state = hazeState),
                                 enterTransition = { fadeIn(tween(150)) },
                                 exitTransition = { fadeOut(tween(150)) },
                                 popEnterTransition = { fadeIn(tween(150)) },
@@ -301,14 +303,8 @@ class MainActivity : AppCompatActivity() {
                                         modifier = Modifier
                                             .fillMaxHeight()
                                             .aspectRatio(1f)
-                                            .shadow(
-                                                elevation = 16.dp,
-                                                shape = CircleShape,
-                                                ambientColor = Color.Black.copy(alpha = 0.28f),
-                                                spotColor = Color.Black.copy(alpha = 0.18f)
-                                            )
                                             .clip(CircleShape)
-                                            .hazeEffect(state = hazeState, style = glassStyle)
+                                            .background(appColors.navBackground.copy(alpha = 0.75f))
                                             .border(1.dp, appColors.navBorder, CircleShape)
                                             .clickable {
                                                 navController.navigate(

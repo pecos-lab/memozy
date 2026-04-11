@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -126,11 +128,14 @@ fun HomeScreen(
     var selectedIds by remember { mutableStateOf(setOf<Int>()) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
-    Scaffold(containerColor = colors.screenBackground) { innerPadding ->
+    Scaffold(
+        containerColor = colors.screenBackground,
+        contentWindowInsets = WindowInsets(0)
+    ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(top = innerPadding.calculateTopPadding())
                 .clickable(
                     indication = null,
                     interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
@@ -296,7 +301,8 @@ fun HomeScreen(
 
                 LazyColumn(
                     state = listState,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(bottom = 100.dp)
                 ) {
                     items(filteredList, key = { it.id }) { memo ->
                         val itemModifier = Modifier.animateItem(
