@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
+
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -91,13 +91,12 @@ fun HomeScreen(
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
     Scaffold(
-        containerColor = colors.screenBackground,
-        contentWindowInsets = WindowInsets(0)
+        containerColor = colors.screenBackground
     ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = innerPadding.calculateTopPadding())
+                .padding(innerPadding)
                 .clickable(
                     indication = null,
                     interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
@@ -106,8 +105,7 @@ fun HomeScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 24.dp)
+                    .padding(horizontal = 16.dp, vertical = 24.dp)
             ) {
                 // 제목 + 메모 개수 (항상 표시)
                 Row(
