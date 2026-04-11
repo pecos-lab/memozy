@@ -64,21 +64,8 @@ class MemoPlainNavigationImpl @Inject constructor(
     private val youtubeSummaryDao: YoutubeSummaryDao,
     private val captionService: YouTubeCaptionService,
     private val aiUsageDao: AiUsageDao,
-    private val tagDao: me.pecos.memozy.data.datasource.local.TagDao,
     private val webScrapeService: me.pecos.memozy.data.datasource.remote.ai.WebScrapeService
 ) : MemoPlainNavigation {
-
-    private suspend fun autoTag(memoId: Int, tagName: String) {
-        if (memoId <= 0) return
-        // 태그가 없으면 생성
-        val allTags = tagDao.getAllTagsOnce()
-        val tag = allTags.firstOrNull { it.name == tagName }
-            ?: run {
-                val newId = tagDao.insertTag(me.pecos.memozy.data.datasource.local.entity.Tag(name = tagName))
-                me.pecos.memozy.data.datasource.local.entity.Tag(id = newId.toInt(), name = tagName)
-            }
-        tagDao.insertMemoTag(me.pecos.memozy.data.datasource.local.entity.MemoTag(memoId = memoId, tagId = tag.id))
-    }
 
     companion object {
         private const val FEATURE_YOUTUBE_SUMMARY = "youtube_summary"
@@ -715,24 +702,6 @@ class MemoPlainNavigationImpl @Inject constructor(
                             finalMemoId = memoId
                         } else {
                             finalMemoId = repository.addMemo(memoWithAudio.toEntity()).toInt()
-                        }
-                        // 자동 태그 부여
-                        if (memoWithAudio.audioPath != null) {
-                            autoTag(finalMemoId, "녹음")
-                        }
-                        val youtubeRegex = Regex("""(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)""")
-                        if (youtubeRegex.containsMatchIn(memoWithAudio.content) || inlineSummaryState is SummaryState.Success) {
-                            autoTag(finalMemoId, "유튜브")
-                        }
-                        if (webSummaryResult != null) {
-                            autoTag(finalMemoId, "웹")
-                        }
-                        val hasAutoTag = memoWithAudio.audioPath != null
-                            || youtubeRegex.containsMatchIn(memoWithAudio.content)
-                            || inlineSummaryState is SummaryState.Success
-                            || webSummaryResult != null
-                        if (!hasAutoTag) {
-                            autoTag(finalMemoId, "메모")
                         }
                         onNavigateToHome()
                     }

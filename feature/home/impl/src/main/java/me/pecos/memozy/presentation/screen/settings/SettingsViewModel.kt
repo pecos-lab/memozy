@@ -12,10 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.pecos.memozy.data.datasource.local.MemoDao
-import me.pecos.memozy.data.datasource.local.TagDao
 import me.pecos.memozy.data.datasource.local.entity.Memo
-import me.pecos.memozy.data.datasource.local.entity.MemoTag
-import me.pecos.memozy.data.datasource.local.entity.Tag
 import me.pecos.memozy.data.repository.MemoRepository
 import me.pecos.memozy.data.repository.model.MemoFormat
 import org.json.JSONArray
@@ -41,8 +38,7 @@ sealed class BackupResult {
 class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val repository: MemoRepository,
-    private val memoDao: MemoDao,
-    private val tagDao: TagDao
+    private val memoDao: MemoDao
 ) : ViewModel() {
 
     private val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
@@ -106,8 +102,6 @@ class SettingsViewModel @Inject constructor(
 
     private suspend fun buildBackupJson(): JSONObject {
         val memos = memoDao.getAllMemosForBackup()
-        val tags = tagDao.getAllTagsOnce()
-        val memoTags = tagDao.getAllMemoTagsOnce()
 
         return JSONObject().apply {
             put("version", 1)
@@ -129,24 +123,6 @@ class SettingsViewModel @Inject constructor(
                         put("youtubeUrl", m.youtubeUrl ?: JSONObject.NULL)
                         put("deletedAt", m.deletedAt ?: JSONObject.NULL)
                         put("summaryContent", m.summaryContent ?: JSONObject.NULL)
-                    })
-                }
-            })
-            put("tags", JSONArray().apply {
-                tags.forEach { t ->
-                    put(JSONObject().apply {
-                        put("id", t.id)
-                        put("name", t.name)
-                        put("emoji", t.emoji)
-                        put("createdAt", t.createdAt)
-                    })
-                }
-            })
-            put("memoTags", JSONArray().apply {
-                memoTags.forEach { mt ->
-                    put(JSONObject().apply {
-                        put("memoId", mt.memoId)
-                        put("tagId", mt.tagId)
                     })
                 }
             })
@@ -179,25 +155,9 @@ class SettingsViewModel @Inject constructor(
     }
 
     private suspend fun restoreFromJson(json: JSONObject) {
-        // 1. 기존 데이터 삭제 (순서 중요: junction → child)
-        tagDao.deleteAllMemoTags()
         memoDao.clearAllMemos()
-        tagDao.deleteAllTags()
 
-        // 2. 태그 복원
-        val tagsArray = json.getJSONArray("tags")
-        val tags = (0 until tagsArray.length()).map { i ->
-            val t = tagsArray.getJSONObject(i)
-            Tag(
-                id = t.getInt("id"),
-                name = t.getString("name"),
-                emoji = t.optString("emoji", "🏷️"),
-                createdAt = t.optLong("createdAt", System.currentTimeMillis())
-            )
-        }
-        if (tags.isNotEmpty()) tagDao.insertTags(tags)
-
-        // 3. 메모 복원
+        // 메모 복원
         val memosArray = json.getJSONArray("memos")
         val memos = (0 until memosArray.length()).map { i ->
             val m = memosArray.getJSONObject(i)
@@ -226,13 +186,5 @@ class SettingsViewModel @Inject constructor(
             )
         }
         if (memos.isNotEmpty()) memoDao.insertMemos(memos)
-
-        // 4. 메모-태그 관계 복원
-        val memoTagsArray = json.getJSONArray("memoTags")
-        val memoTags = (0 until memoTagsArray.length()).map { i ->
-            val mt = memoTagsArray.getJSONObject(i)
-            MemoTag(memoId = mt.getInt("memoId"), tagId = mt.getInt("tagId"))
-        }
-        if (memoTags.isNotEmpty()) tagDao.insertMemoTags(memoTags)
     }
 }

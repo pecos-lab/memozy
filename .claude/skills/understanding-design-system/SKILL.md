@@ -23,6 +23,7 @@ Shadcn Compose 기반 디자인 시스템의 구조와 사용법을 이해하기
 - [Alert Dialog](components/alert-dialog.md) — 응답을 요구하는 모달 다이얼로그
 - [Avatar](components/avatar.md) — 사용자 이미지 + 폴백
 - [Badge](components/badge.md) — 상태/카테고리 배지
+- [Bottom Sheet](components/bottom-sheet.md) — 하단 오버레이 시트 (Hug/Flexible/Fill/Fixed)
 - [Button](components/button.md) — 클릭 가능한 버튼 (8가지 Variant)
 - [Calendar](components/calendar.md) — 날짜 선택 필드
 - [Card](components/card.md) — 헤더/콘텐츠/푸터 카드
@@ -35,6 +36,7 @@ Shadcn Compose 기반 디자인 시스템의 구조와 사용법을 이해하기
 - [Dropdown Menu](components/dropdown-menu.md) — 액션 드롭다운 메뉴
 - [Input](components/input.md) — 폼 입력 필드 (7가지 Variant)
 - [Popover](components/popover.md) — 포탈 콘텐츠 팝오버
+- [Popup](components/popup.md) — 모달 팝업 (Medium/Large/Xlarge, 5가지 Navigation, 5가지 Action)
 - [Progress](components/progress.md) — 진행률 표시 바
 - [Radio Group](components/radio-group.md) — 단일 선택 라디오 버튼
 - [Select](components/select.md) — 옵션 목록 선택

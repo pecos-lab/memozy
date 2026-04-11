@@ -10,8 +10,6 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import me.pecos.memozy.data.datasource.local.entity.Category
 import me.pecos.memozy.data.datasource.local.entity.Memo
 import me.pecos.memozy.data.datasource.local.entity.AiUsage
-import me.pecos.memozy.data.datasource.local.entity.MemoTag
-import me.pecos.memozy.data.datasource.local.entity.Tag
 import me.pecos.memozy.data.datasource.local.entity.YoutubeSummary
 import me.pecos.memozy.data.datasource.local.converter.MemoFormatConverter
 import me.pecos.memozy.data.datasource.local.chat.ChatMessageDao
@@ -257,6 +255,13 @@ val MIGRATION_15_16 = object : Migration(15, 16) {
     }
 }
 
+val MIGRATION_16_17 = object : Migration(16, 17) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("DROP TABLE IF EXISTS `memo_tag`")
+        database.execSQL("DROP TABLE IF EXISTS `tag`")
+    }
+}
+
 private val PREPOPULATE_CALLBACK = object : RoomDatabase.Callback() {
     override fun onCreate(db: SupportSQLiteDatabase) {
         super.onCreate(db)
@@ -266,8 +271,8 @@ private val PREPOPULATE_CALLBACK = object : RoomDatabase.Callback() {
 
 @TypeConverters(MemoFormatConverter::class)
 @Database(
-    entities = [Memo::class, Category::class, ChatSession::class, ChatMessage::class, YoutubeSummary::class, AiUsage::class, Tag::class, MemoTag::class],
-    version = 16,
+    entities = [Memo::class, Category::class, ChatSession::class, ChatMessage::class, YoutubeSummary::class, AiUsage::class],
+    version = 17,
     exportSchema = true
 )
 abstract class MemoDatabase : RoomDatabase() {
@@ -277,7 +282,6 @@ abstract class MemoDatabase : RoomDatabase() {
     abstract fun chatMessageDao(): ChatMessageDao
     abstract fun youtubeSummaryDao(): YoutubeSummaryDao
     abstract fun aiUsageDao(): AiUsageDao
-    abstract fun tagDao(): TagDao
 
     companion object {
         @Volatile
