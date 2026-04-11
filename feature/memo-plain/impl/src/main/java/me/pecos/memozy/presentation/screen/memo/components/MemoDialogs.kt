@@ -3,6 +3,7 @@ package me.pecos.memozy.presentation.screen.memo.components
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,14 +11,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,6 +39,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.presentation.components.AppPopup
+import me.pecos.memozy.presentation.components.PopupActionArea
+import me.pecos.memozy.presentation.components.PopupNavigation
+import me.pecos.memozy.presentation.components.PopupSize
 import me.pecos.memozy.presentation.theme.AppColors
 
 private val YOUTUBE_URL_REGEX = Regex(
@@ -51,45 +58,51 @@ fun YouTubeUrlDialog(
 ) {
     var urlInput by remember { mutableStateOf("") }
     val clipText = clipboardManager.getText()?.text ?: ""
+    val isValid = YOUTUBE_URL_REGEX.containsMatchIn(urlInput)
 
-    AlertDialog(
+    AppPopup(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.youtube_summary_title), fontWeight = FontWeight.Bold) },
-        text = {
-            Column {
-                Text(stringResource(R.string.youtube_summary_desc), fontSize = 14.sp, color = colors.textSecondary)
-                Spacer(modifier = Modifier.height(12.dp))
-                OutlinedTextField(
-                    value = urlInput, onValueChange = { urlInput = it },
-                    placeholder = { Text("https://youtu.be/...", fontSize = 14.sp) },
-                    singleLine = true, modifier = Modifier.fillMaxWidth()
+        title = stringResource(R.string.youtube_summary_title),
+        navigation = PopupNavigation.EMPHASIZED,
+        size = PopupSize.MEDIUM,
+        actionArea = PopupActionArea.NEUTRAL,
+        primaryButtonText = stringResource(R.string.confirm),
+        onPrimaryClick = if (isValid) {
+            { YOUTUBE_URL_REGEX.find(urlInput)?.value?.let { onUrlAdded(it) } }
+        } else null,
+        secondaryButtonText = stringResource(R.string.cancel),
+        onSecondaryClick = onDismiss
+    ) {
+        Text(stringResource(R.string.youtube_summary_desc), fontSize = 14.sp, color = colors.textSecondary)
+        Spacer(modifier = Modifier.height(12.dp))
+        OutlinedTextField(
+            value = urlInput, onValueChange = { urlInput = it },
+            placeholder = { Text("https://youtu.be/...", fontSize = 14.sp) },
+            singleLine = true, modifier = Modifier.fillMaxWidth()
+        )
+        if (clipText.isNotBlank() && urlInput.isBlank()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(colors.chipBackground.copy(alpha = 0.6f))
+                    .clickable { urlInput = clipText }
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.Link, contentDescription = null,
+                    tint = Color(0xFF2196F3), modifier = Modifier.size(14.dp)
                 )
-                if (clipText.isNotBlank() && urlInput.isBlank()) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "📋 ${stringResource(R.string.paste_clipboard)}: $clipText",
-                        fontSize = 13.sp, color = Color(0xFF2196F3), fontWeight = FontWeight.SemiBold,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(6.dp))
-                            .clickable { urlInput = clipText }.padding(vertical = 4.dp)
-                    )
-                }
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = clipText, fontSize = 12.sp,
+                    color = Color(0xFF2196F3), fontWeight = FontWeight.Medium,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis
+                )
             }
-        },
-        confirmButton = {
-            val isValid = YOUTUBE_URL_REGEX.containsMatchIn(urlInput)
-            TextButton(
-                onClick = {
-                    val url = YOUTUBE_URL_REGEX.find(urlInput)?.value ?: return@TextButton
-                    onUrlAdded(url)
-                },
-                enabled = isValid
-            ) { Text(stringResource(R.string.confirm), color = if (isValid) Color(0xFF2196F3) else colors.textSecondary) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel), color = colors.textSecondary) }
         }
-    )
+    }
 }
 
 @Composable
@@ -101,42 +114,51 @@ fun WebUrlDialog(
     var webUrlInput by remember { mutableStateOf("") }
     val clipText = clipboardManager.getText()?.text ?: ""
     val colors = me.pecos.memozy.presentation.theme.LocalAppColors.current
+    val isValid = webUrlInput.startsWith("http")
 
-    AlertDialog(
+    AppPopup(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.web_summary_title), fontWeight = FontWeight.Bold) },
-        text = {
-            Column {
-                Text(stringResource(R.string.web_summary_desc), fontSize = 14.sp, color = colors.textSecondary)
-                Spacer(modifier = Modifier.height(12.dp))
-                OutlinedTextField(
-                    value = webUrlInput, onValueChange = { webUrlInput = it },
-                    placeholder = { Text("https://...", fontSize = 14.sp) },
-                    singleLine = true, modifier = Modifier.fillMaxWidth()
+        title = stringResource(R.string.web_summary_title),
+        navigation = PopupNavigation.EMPHASIZED,
+        size = PopupSize.MEDIUM,
+        actionArea = PopupActionArea.NEUTRAL,
+        primaryButtonText = stringResource(R.string.confirm),
+        onPrimaryClick = if (isValid) {
+            { onUrlConfirmed(webUrlInput.trim()) }
+        } else null,
+        secondaryButtonText = stringResource(R.string.cancel),
+        onSecondaryClick = onDismiss
+    ) {
+        Text(stringResource(R.string.web_summary_desc), fontSize = 14.sp, color = colors.textSecondary)
+        Spacer(modifier = Modifier.height(12.dp))
+        OutlinedTextField(
+            value = webUrlInput, onValueChange = { webUrlInput = it },
+            placeholder = { Text("https://...", fontSize = 14.sp) },
+            singleLine = true, modifier = Modifier.fillMaxWidth()
+        )
+        if (clipText.isNotBlank() && webUrlInput.isBlank()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(colors.chipBackground.copy(alpha = 0.6f))
+                    .clickable { webUrlInput = clipText }
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.Link, contentDescription = null,
+                    tint = Color(0xFF2196F3), modifier = Modifier.size(14.dp)
                 )
-                if (clipText.isNotBlank() && webUrlInput.isBlank()) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "📋 ${stringResource(R.string.paste_clipboard)}: $clipText",
-                        fontSize = 13.sp, color = Color(0xFF2196F3), fontWeight = FontWeight.SemiBold,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(6.dp))
-                            .clickable { webUrlInput = clipText }.padding(vertical = 4.dp)
-                    )
-                }
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = clipText, fontSize = 12.sp,
+                    color = Color(0xFF2196F3), fontWeight = FontWeight.Medium,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis
+                )
             }
-        },
-        confirmButton = {
-            val isValid = webUrlInput.startsWith("http")
-            TextButton(
-                onClick = { if (isValid) onUrlConfirmed(webUrlInput.trim()) },
-                enabled = isValid
-            ) { Text(stringResource(R.string.confirm), color = if (isValid) Color(0xFF2196F3) else colors.textSecondary) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel), color = colors.textSecondary) }
         }
-    )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

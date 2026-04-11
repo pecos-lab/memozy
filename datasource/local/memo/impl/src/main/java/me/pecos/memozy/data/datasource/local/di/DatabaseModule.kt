@@ -19,16 +19,15 @@ import me.pecos.memozy.data.datasource.local.MIGRATION_7_8
 import me.pecos.memozy.data.datasource.local.MIGRATION_8_9
 import me.pecos.memozy.data.datasource.local.MIGRATION_9_10
 import me.pecos.memozy.data.datasource.local.MIGRATION_10_11
-
 import me.pecos.memozy.data.datasource.local.MIGRATION_11_12
 import me.pecos.memozy.data.datasource.local.MIGRATION_12_13
 import me.pecos.memozy.data.datasource.local.MIGRATION_13_14
 import me.pecos.memozy.data.datasource.local.MIGRATION_14_15
 import me.pecos.memozy.data.datasource.local.MIGRATION_15_16
+import me.pecos.memozy.data.datasource.local.MIGRATION_16_17
 import me.pecos.memozy.data.datasource.local.AiUsageDao
 import me.pecos.memozy.data.datasource.local.MemoDao
 import me.pecos.memozy.data.datasource.local.MemoDatabase
-import me.pecos.memozy.data.datasource.local.TagDao
 import me.pecos.memozy.data.datasource.local.YoutubeSummaryDao
 import me.pecos.memozy.data.datasource.local.chat.ChatMessageDao
 import me.pecos.memozy.data.datasource.local.chat.ChatSessionDao
@@ -46,7 +45,7 @@ object DatabaseModule {
             MemoDatabase::class.java,
             "memo_database"
         )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17)
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onCreate(db: SupportSQLiteDatabase) {
                     super.onCreate(db)
@@ -81,8 +80,4 @@ object DatabaseModule {
         return database.aiUsageDao()
     }
 
-    @Provides
-    fun provideTagDao(database: MemoDatabase): TagDao {
-        return database.tagDao()
-    }
 }

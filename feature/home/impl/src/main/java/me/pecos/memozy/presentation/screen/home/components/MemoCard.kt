@@ -1,9 +1,7 @@
 package me.pecos.memozy.presentation.screen.home.components
 
 import android.content.Context
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,9 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -34,21 +29,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import me.pecos.memozy.feature.core.resource.CATEGORY_EMOJIS
-import me.pecos.memozy.feature.core.resource.CATEGORY_RES_IDS
 import me.pecos.memozy.presentation.screen.home.model.MemoUiState
-import me.pecos.memozy.presentation.screen.home.model.TagUiState
 import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.presentation.screen.home.util.formatMemoTime
 import me.pecos.memozy.presentation.theme.LocalAppColors
 
-// ── 메모 카드 (프리뷰 전용) ──────────────────────────────────────────────────
-
 @Composable
 fun MemoCardItem(
     memo: MemoUiState,
-    tags: List<TagUiState> = emptyList(),
-    onTagsClick: (() -> Unit)? = null,
     @Suppress("UNUSED_PARAMETER") isInSelectionMode: Boolean = false
 ) {
     val colors = LocalAppColors.current
@@ -103,33 +91,6 @@ fun MemoCardItem(
                             fontSize = 11.sp,
                             color = colors.textSecondary.copy(alpha = 0.7f)
                         )
-                    }
-                    if (tags.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            modifier = if (onTagsClick != null) Modifier.clickable(onClick = onTagsClick) else Modifier
-                        ) {
-                            tags.take(2).forEach { tag ->
-                                Text(
-                                    text = tag.name,
-                                    fontSize = 10.sp,
-                                    color = colors.chipText,
-                                    maxLines = 1,
-                                    modifier = Modifier
-                                        .background(colors.chipBackground, RoundedCornerShape(50))
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                                )
-                            }
-                            if (tags.size > 2) {
-                                Text(
-                                    text = "+${tags.size - 2}",
-                                    fontSize = 10.sp,
-                                    color = colors.textSecondary,
-                                    modifier = Modifier.padding(start = 2.dp)
-                                )
-                            }
-                        }
                     }
                 }
             }

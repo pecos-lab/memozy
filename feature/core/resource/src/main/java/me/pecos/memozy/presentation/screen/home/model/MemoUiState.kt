@@ -14,12 +14,5 @@ data class MemoUiState(
     val youtubeUrl: String? = null,
     val deletedAt: Long? = null,
     val reminderAt: Long? = null,
-    val summaryContent: String? = null,
-    val tags: List<TagUiState> = emptyList()
-)
-
-data class TagUiState(
-    val id: Int,
-    val name: String,
-    val emoji: String = "🏷️"
+    val summaryContent: String? = null
 )
