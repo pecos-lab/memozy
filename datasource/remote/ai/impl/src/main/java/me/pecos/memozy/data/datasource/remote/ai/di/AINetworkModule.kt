@@ -78,7 +78,7 @@ abstract class AINetworkModule {
             }
 
             defaultRequest {
-                url("${BuildConfig.SUPABASE_URL}/functions/v1/")
+                url("${BuildConfig.WORKER_URL}/")
                 header("x-app-key", BuildConfig.APP_SECRET_KEY)
             }
 
