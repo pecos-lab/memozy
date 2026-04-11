@@ -1,6 +1,8 @@
 package me.pecos.memozy.presentation.screen.quiz
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -177,7 +179,9 @@ fun QuizScreen(
                                         hasAnswered && isCorrect -> Color(0xFF4CAF50).copy(alpha = 0.12f)
                                         hasAnswered && isSelected && !isCorrect -> Color(0xFFE24B4A).copy(alpha = 0.12f)
                                         else -> colors.cardBackground
-                                    }, label = "optionBg"
+                                    },
+                                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                                    label = "optionBg"
                                 )
                                 val borderColor by animateColorAsState(
                                     when {
@@ -185,7 +189,9 @@ fun QuizScreen(
                                         hasAnswered && isSelected && !isCorrect -> Color(0xFFE24B4A)
                                         isSelected -> colors.chipText
                                         else -> colors.cardBorder
-                                    }, label = "optionBorder"
+                                    },
+                                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                                    label = "optionBorder"
                                 )
 
                                 Row(

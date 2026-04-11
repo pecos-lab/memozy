@@ -18,9 +18,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -29,8 +28,13 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.IntOffset
 import kotlin.math.roundToInt
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -130,7 +134,7 @@ fun HomeScreen(
                 .clickable(
                     indication = null,
                     interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
-                ) { swipedOpenId = null }
+                ) { }
         ) {
             Column(
                 modifier = Modifier
@@ -138,44 +142,31 @@ fun HomeScreen(
                     .padding(horizontal = 16.dp)
                     .padding(top = 24.dp)
             ) {
-                // 제목 + 메모 개수 / 선택 모드 헤더
-                if (!isSelectionMode) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Memozy",
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.topbarTitle,
-                            modifier = Modifier.weight(1f)
-                        )
+                // 제목 + 메모 개수 (항상 표시)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (isSelectionMode) stringResource(R.string.selected_count, selectedIds.size) else "Memozy",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.topbarTitle,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (!isSelectionMode) {
                         Text(
                             text = stringResource(R.string.memo_count, filteredList.size),
                             fontSize = 12.sp,
                             color = colors.textSecondary
                         )
                     }
-                } else {
-                    // Row 1: "N개 선택됨" (Memozy 텍스트 자리)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = stringResource(R.string.selected_count, selectedIds.size),
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.topbarTitle,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    // Row 2: [취소] [전체선택] [삭제] — 메인화면 필터 Row와 동일 스타일, 우측 정렬
+                }
+
+                // 태그 필터 버튼 / 선택 모드 액션 버튼
+                if (isSelectionMode) {
                     val allSelected = selectedIds.size == filteredList.size && filteredList.isNotEmpty()
                     Row(
                         modifier = Modifier
@@ -184,139 +175,122 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        // 전체선택
+                        Text(
+                            text = if (allSelected) stringResource(R.string.deselect_all)
+                                    else stringResource(R.string.select_all),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = colors.chipText,
+                            modifier = Modifier
+                                .border(1.5.dp, colors.cardBorder, RoundedCornerShape(12.dp))
+                                .clickable {
+                                    selectedIds = if (allSelected) emptySet()
+                                                 else filteredList.map { it.id }.toSet()
+                                }
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
                         Spacer(modifier = Modifier.weight(1f))
-                        Row(
+                        // 고정
+                        Text(
+                            text = stringResource(R.string.pin),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (selectedIds.isNotEmpty()) Color(0xFFFFA726) else colors.textSecondary,
+                            modifier = Modifier
+                                .border(1.5.dp, colors.cardBorder, RoundedCornerShape(12.dp))
+                                .clickable(enabled = selectedIds.isNotEmpty()) {
+                                    viewModel.pinMemos(selectedIds, true)
+                                    isSelectionMode = false
+                                    selectedIds = emptySet()
+                                }
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                        // 삭제
+                        Text(
+                            text = if (selectedIds.isNotEmpty())
+                                "${stringResource(R.string.delete_action)} ${selectedIds.size}"
+                            else
+                                stringResource(R.string.delete_action),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (selectedIds.isNotEmpty()) Color(0xFFE24B4A) else colors.textSecondary,
+                            modifier = Modifier
+                                .border(1.5.dp, colors.cardBorder, RoundedCornerShape(12.dp))
+                                .clickable(enabled = selectedIds.isNotEmpty()) {
+                                    showDeleteConfirm = true
+                                }
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                        // 취소
+                        Text(
+                            text = stringResource(R.string.cancel),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = colors.textSecondary,
                             modifier = Modifier
                                 .border(1.5.dp, colors.cardBorder, RoundedCornerShape(12.dp))
                                 .clickable {
                                     isSelectionMode = false
                                     selectedIds = emptySet()
                                 }
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
+                } else {
+                    val currentFilterLabel = when (selectedTagId) {
+                        -1 -> stringResource(R.string.filter_all)
+                        else -> allTags.firstOrNull { it.id == selectedTagId }?.name
+                            ?: stringResource(R.string.filter_all)
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 16.dp, end = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .border(1.5.dp, colors.cardBorder, RoundedCornerShape(12.dp))
+                                .clickable { showFilterMenu = true }
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = currentFilterLabel,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = colors.textSecondary
+                            )
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowDown,
+                                contentDescription = null,
+                                tint = colors.textSecondary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.weight(1f))
+                        Row(
+                            modifier = Modifier
+                                .border(1.5.dp, colors.cardBorder, RoundedCornerShape(12.dp))
+                                .clickable { viewModel.toggleSortOrder() }
                                 .padding(horizontal = 12.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = stringResource(R.string.cancel),
+                                text = if (sortOrder == SortOrder.NEWEST)
+                                    stringResource(R.string.sort_newest)
+                                else
+                                    stringResource(R.string.sort_oldest),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = colors.textSecondary
                             )
                         }
-                        Row(
-                            modifier = Modifier
-                                .border(1.5.dp, colors.cardBorder, RoundedCornerShape(12.dp))
-                                .clickable {
-                                    selectedIds = if (allSelected) emptySet()
-                                               else filteredList.map { it.id }.toSet()
-                                }
-                                .padding(horizontal = 12.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = if (allSelected) stringResource(R.string.deselect_all)
-                                        else stringResource(R.string.select_all),
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = colors.chipText
-                            )
-                        }
-                        Row(
-                            modifier = Modifier
-                                .border(1.5.dp, colors.cardBorder, RoundedCornerShape(12.dp))
-                                .clickable(enabled = selectedIds.isNotEmpty()) {
-                                    showDeleteConfirm = true
-                                }
-                                .padding(horizontal = 12.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = if (selectedIds.isNotEmpty())
-                                    "${stringResource(R.string.delete_action)} ${selectedIds.size}개"
-                                else
-                                    stringResource(R.string.delete_action),
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = if (selectedIds.isNotEmpty()) Color(0xFFE24B4A)
-                                        else colors.textSecondary
-                            )
-                        }
                     }
                 }
-
-                // 태그 필터 버튼 + 정렬 버튼 — 선택 모드에서 숨김
-                if (!isSelectionMode) {
-                val currentFilterLabel = when (selectedTagId) {
-                    -1 -> stringResource(R.string.filter_all)
-                    else -> allTags.firstOrNull { it.id == selectedTagId }?.name
-                        ?: stringResource(R.string.filter_all)
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // 태그 필터 버튼 (AppPopup 트리거)
-                    Row(
-                        modifier = Modifier
-                            .border(1.5.dp, colors.cardBorder, RoundedCornerShape(12.dp))
-                            .clickable { showFilterMenu = true }
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(
-                            text = currentFilterLabel,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = colors.textSecondary
-                        )
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowDown,
-                            contentDescription = null,
-                            tint = colors.textSecondary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    // 정렬 버튼
-                    Row(
-                        modifier = Modifier
-                            .border(1.5.dp, colors.cardBorder, RoundedCornerShape(12.dp))
-                            .clickable { viewModel.toggleSortOrder() }
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = if (sortOrder == SortOrder.NEWEST)
-                                stringResource(R.string.sort_newest)
-                            else
-                                stringResource(R.string.sort_oldest),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = colors.textSecondary
-                        )
-                    }
-
-                    // 선택 버튼
-                    Text(
-                        text = stringResource(R.string.select),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = colors.textSecondary,
-                        modifier = Modifier
-                            .border(1.5.dp, colors.cardBorder, RoundedCornerShape(12.dp))
-                            .clickable {
-                                isSelectionMode = true
-                                swipedOpenId = null
-                            }
-                            .padding(horizontal = 14.dp, vertical = 6.dp)
-                    )
-                }
-                } // if (!isSelectionMode)
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -326,135 +300,64 @@ fun HomeScreen(
                 ) {
                     items(filteredList, key = { it.id }) { memo ->
                         val itemModifier = Modifier.animateItem(
-                            fadeInSpec = tween(300),
-                            fadeOutSpec = tween(300),
-                            placementSpec = tween(300)
+                            fadeInSpec = tween(250),
+                            fadeOutSpec = tween(250),
+                            placementSpec = spring(stiffness = Spring.StiffnessMediumLow)
                         )
 
-                        if (isSelectionMode) {
-                            val isSelected = memo.id in selectedIds
-                            Row(
-                                modifier = itemModifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        selectedIds = if (isSelected) selectedIds - memo.id
-                                                      else selectedIds + memo.id
+                        val isSelected = isSelectionMode && memo.id in selectedIds
+                        val cardInteractionSource = remember { MutableInteractionSource() }
+                        val isPressed by cardInteractionSource.collectIsPressedAsState()
+                        val cardScale by animateFloatAsState(
+                            targetValue = if (isPressed) 0.97f else 1f,
+                            animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium),
+                            label = "cardScale"
+                        )
+
+                        Row(
+                            modifier = itemModifier
+                                .fillMaxWidth()
+                                .graphicsLayer(scaleX = cardScale, scaleY = cardScale)
+                                .combinedClickable(
+                                    interactionSource = cardInteractionSource,
+                                    indication = null,
+                                    onClick = {
+                                        if (isSelectionMode) {
+                                            selectedIds = if (memo.id in selectedIds) selectedIds - memo.id
+                                                          else selectedIds + memo.id
+                                            if (selectedIds.isEmpty()) isSelectionMode = false
+                                        } else {
+                                            onEdit(memo.id)
+                                        }
                                     },
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                // 왼쪽: 체크 점
-                                Box(
-                                    modifier = Modifier.width(40.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = if (isSelected) Icons.Default.CheckCircle
-                                                      else Icons.Outlined.RadioButtonUnchecked,
-                                        contentDescription = null,
-                                        tint = if (isSelected) Color(0xFF2196F3)
-                                               else colors.textSecondary.copy(alpha = 0.4f),
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                }
-                                // 오른쪽: 카드 (살짝 밀린 상태)
-                                Box(modifier = Modifier.weight(1f)) {
-                                    MemoCardItem(memo = memo, tags = memoTags[memo.id] ?: emptyList())
-                                }
+                                    onLongClick = {
+                                        if (!isSelectionMode) {
+                                            isSelectionMode = true
+                                            selectedIds = setOf(memo.id)
+                                        }
+                                    }
+                                ),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (isSelectionMode) {
+                                Icon(
+                                    imageVector = if (isSelected) Icons.Default.CheckCircle
+                                                  else Icons.Outlined.RadioButtonUnchecked,
+                                    contentDescription = null,
+                                    tint = if (isSelected) Color(0xFF2196F3)
+                                           else colors.textSecondary.copy(alpha = 0.4f),
+                                    modifier = Modifier
+                                        .padding(start = 16.dp)
+                                        .size(22.dp)
+                                )
                             }
-                        } else {
-                            val revealWidth = 80f
-                            val revealPx = with(androidx.compose.ui.platform.LocalDensity.current) { revealWidth.dp.toPx() }
-                            val isOpen = swipedOpenId == memo.id
-                            var rawOffset by remember { mutableStateOf(0f) }
-                            val offsetX = if (isOpen) rawOffset else 0f
-                            val animatedOffset by animateFloatAsState(
-                                targetValue = offsetX,
-                                animationSpec = tween(200),
-                                label = "swipeOffset"
-                            )
-
-                            Box(modifier = itemModifier.fillMaxWidth()) {
-                                Row(
-                                    modifier = Modifier
-                                        .matchParentSize()
-                                        .padding(horizontal = 16.dp, vertical = 6.dp)
-                                        .clip(RoundedCornerShape(12.dp)),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .width(revealWidth.dp)
-                                            .fillMaxHeight()
-                                            .background(if (memo.isPinned) colors.textSecondary else Color(0xFFFFA726))
-                                            .clickable {
-                                                swipedOpenId = null
-                                                viewModel.togglePin(memo)
-                                            },
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                            Icon(Icons.Default.Star, null, tint = Color.White, modifier = Modifier.size(22.dp))
-                                            Text(
-                                                text = if (memo.isPinned) stringResource(R.string.unpin) else stringResource(R.string.pin),
-                                                color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Medium
-                                            )
-                                        }
-                                    }
-                                    Box(
-                                        modifier = Modifier
-                                            .width(revealWidth.dp)
-                                            .fillMaxHeight()
-                                            .background(Color(0xFFE24B4A))
-                                            .clickable {
-                                                swipedOpenId = null
-                                                onDelete(memo.id)
-                                            },
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                            Icon(Icons.Default.Delete, null, tint = Color.White, modifier = Modifier.size(22.dp))
-                                            Text(
-                                                text = stringResource(R.string.delete_memo),
-                                                color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Medium
-                                            )
-                                        }
-                                    }
-                                }
-
-                                val dragState = rememberDraggableState { delta ->
-                                    rawOffset = (rawOffset + delta).coerceIn(-revealPx, revealPx)
-                                    swipedOpenId = memo.id
-                                }
-                                Box(
-                                    modifier = Modifier
-                                        .offset { IntOffset(animatedOffset.roundToInt(), 0) }
-                                        .draggable(
-                                            state = dragState,
-                                            orientation = Orientation.Horizontal,
-                                            onDragStopped = {
-                                                val snapped = when {
-                                                    rawOffset > revealPx / 2 -> revealPx
-                                                    rawOffset < -revealPx / 2 -> -revealPx
-                                                    else -> 0f
-                                                }
-                                                rawOffset = snapped
-                                                swipedOpenId = if (snapped != 0f) memo.id else null
-                                            }
-                                        )
-                                        .clickable {
-                                            if (swipedOpenId != null) {
-                                                swipedOpenId = null
-                                            } else {
-                                                onEdit(memo.id)
-                                            }
-                                        }
-                                ) {
-                                    MemoCardItem(
-                                        memo = memo,
-                                        tags = memoTags[memo.id] ?: emptyList(),
-                                        onTagsClick = { tagEditMemoId = memo.id }
-                                    )
-                                }
+                            Box(modifier = Modifier.weight(1f)) {
+                                MemoCardItem(
+                                    memo = memo,
+                                    tags = memoTags[memo.id] ?: emptyList(),
+                                    onTagsClick = if (!isSelectionMode) { { tagEditMemoId = memo.id } } else null,
+                                    isInSelectionMode = isSelectionMode
+                                )
                             }
                         }
                     }

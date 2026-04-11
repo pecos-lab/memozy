@@ -220,18 +220,10 @@ class MainActivity : AppCompatActivity() {
                                 navController = navController,
                                 startDestination = HomeRoute.MAIN,
                                 modifier = Modifier.fillMaxSize(),
-                                enterTransition = {
-                                    slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(300)) + fadeIn(tween(300))
-                                },
-                                exitTransition = {
-                                    slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(300)) + fadeOut(tween(300))
-                                },
-                                popEnterTransition = {
-                                    slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(300)) + fadeIn(tween(300))
-                                },
-                                popExitTransition = {
-                                    slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(300)) + fadeOut(tween(300))
-                                }
+                                enterTransition = { fadeIn(tween(150)) },
+                                exitTransition = { fadeOut(tween(150)) },
+                                popEnterTransition = { fadeIn(tween(150)) },
+                                popExitTransition = { fadeOut(tween(150)) }
                             ) {
                                 composable(HomeRoute.MAIN) {
                                     HomeScreen(
