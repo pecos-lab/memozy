@@ -9,8 +9,6 @@ object HomeRoute {
     const val MAIN = "main"
     const val SETTINGS = "settings"
     const val TRASH = "trash"
-    const val QUIZ = "quiz/{memoId}"
-    fun quizRoute(memoId: Int) = "quiz/$memoId"
 }
 
 interface HomeNavigation {

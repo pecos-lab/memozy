@@ -257,13 +257,6 @@ class MainActivity : AppCompatActivity() {
                                         billingManager = this@MainActivity.billingManager
                                     )
                                 }
-                                composable(HomeRoute.QUIZ) {
-                                    val quizViewModel: me.pecos.memozy.presentation.screen.quiz.QuizViewModel = hiltViewModel()
-                                    me.pecos.memozy.presentation.screen.quiz.QuizScreen(
-                                        viewModel = quizViewModel,
-                                        onBack = { navController.popBackStack() }
-                                    )
-                                }
                                 memoPlainNavigation.registerGraph(
                                     navGraphBuilder = this,
                                     onNavigateToHome = {
@@ -274,9 +267,6 @@ class MainActivity : AppCompatActivity() {
                                     },
                                     onBack = {
                                         navController.popBackStack(HomeRoute.MAIN, inclusive = false)
-                                    },
-                                    onNavigateToQuiz = { memoId ->
-                                        navController.navigate(HomeRoute.quizRoute(memoId))
                                     }
                                 )
                             }

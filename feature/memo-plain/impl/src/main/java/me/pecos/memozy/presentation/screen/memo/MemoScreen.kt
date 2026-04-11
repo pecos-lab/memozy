@@ -114,7 +114,6 @@ import me.pecos.memozy.feature.core.resource.CATEGORY_RES_IDS
 import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.presentation.screen.memo.components.AudioPlayerBar
 import me.pecos.memozy.presentation.screen.memo.components.FormattingToolbar
-import me.pecos.memozy.presentation.screen.memo.components.ReminderPickerDialog
 import me.pecos.memozy.presentation.screen.memo.components.WebLinkBottomSheet
 import me.pecos.memozy.presentation.screen.memo.components.WebSummaryInlineCard
 import me.pecos.memozy.presentation.screen.memo.components.WebUrlDialog
@@ -221,8 +220,6 @@ fun MemoScreen(
     webSummaryResult: String? = null,
     webSummaryError: String? = null,
     webPageTitle: String? = null,
-    onSetReminder: ((memoId: Int, reminderAt: Long?) -> Unit)? = null,
-    onQuiz: ((memoId: Int) -> Unit)? = null,
     existingMemo: MemoUiState = MemoUiState(0, "", 1, "")
 ) {
     val isNewMemo = existingMemo.id <= 0
@@ -823,9 +820,7 @@ fun MemoScreen(
                             },
                             onYoutubeDialogOpen = { showYoutubeDialog = true },
                             onWebSummarize = onWebSummarize,
-                            onWebDialogOpen = { showWebDialog = true },
-                            onSetReminder = onSetReminder,
-                            onQuiz = onQuiz
+                            onWebDialogOpen = { showWebDialog = true }
                         )
                         Spacer(modifier = Modifier.weight(1f))
                         FormattingToolbar(richTextState = richTextState, colors = colors)

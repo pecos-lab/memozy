@@ -13,16 +13,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material.icons.filled.SmartDisplay
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,11 +45,7 @@ fun MemoActionBar(
     onYoutubeDialogOpen: () -> Unit,
     // 웹
     onWebSummarize: ((String, SummaryMode) -> Unit)?,
-    onWebDialogOpen: () -> Unit,
-    // 리마인더
-    onSetReminder: ((Int, Long?) -> Unit)?,
-    // 퀴즈
-    onQuiz: ((Int) -> Unit)?
+    onWebDialogOpen: () -> Unit
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -119,52 +109,6 @@ fun MemoActionBar(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(Icons.Default.Link, contentDescription = null, tint = colors.chipText, modifier = Modifier.size(20.dp))
-            }
-        }
-
-        // ⏰ 리마인더
-        if (onSetReminder != null && !isNewMemo) {
-            var showReminderPicker by remember { mutableStateOf(false) }
-            val reminderAt = existingMemo.reminderAt
-            val hasReminder = reminderAt != null && reminderAt > System.currentTimeMillis()
-            Box(
-                modifier = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp))
-                    .background(if (hasReminder) Color(0xFFFFA726).copy(alpha = 0.15f) else colors.chipBackground.copy(alpha = 0.4f))
-                    .clickable { showReminderPicker = true },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    Icons.Default.Notifications, contentDescription = null,
-                    tint = if (hasReminder) Color(0xFFFFA726) else colors.chipText,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            if (showReminderPicker) {
-                ReminderPickerDialog(
-                    currentReminder = existingMemo.reminderAt,
-                    onDismiss = { showReminderPicker = false },
-                    onConfirm = { reminderAt ->
-                        onSetReminder(existingMemo.id, reminderAt)
-                        showReminderPicker = false
-                    },
-                    onCancel = {
-                        onSetReminder(existingMemo.id, null)
-                        showReminderPicker = false
-                    }
-                )
-            }
-        }
-
-        // 🧠 퀴즈
-        if (onQuiz != null && !isNewMemo && existingMemo.content.length >= 20) {
-            Box(
-                modifier = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp))
-                    .background(colors.chipBackground.copy(alpha = 0.4f))
-                    .clickable { onQuiz(existingMemo.id) },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.Quiz, contentDescription = null, tint = colors.chipText, modifier = Modifier.size(20.dp))
             }
         }
 
