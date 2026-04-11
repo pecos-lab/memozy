@@ -239,6 +239,24 @@ val MIGRATION_14_15 = object : Migration(14, 15) {
     }
 }
 
+val MIGRATION_15_16 = object : Migration(15, 16) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        // youtube_summary 테이블을 복합 PK (videoId, mode, language)로 재생성
+        database.execSQL("DROP TABLE IF EXISTS `youtube_summary`")
+        database.execSQL("""
+            CREATE TABLE IF NOT EXISTS `youtube_summary` (
+                `videoId` TEXT NOT NULL,
+                `mode` TEXT NOT NULL DEFAULT 'SIMPLE',
+                `language` TEXT NOT NULL DEFAULT 'ko',
+                `url` TEXT NOT NULL,
+                `summary` TEXT NOT NULL,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                PRIMARY KEY(`videoId`, `mode`, `language`)
+            )
+        """.trimIndent())
+    }
+}
+
 private val PREPOPULATE_CALLBACK = object : RoomDatabase.Callback() {
     override fun onCreate(db: SupportSQLiteDatabase) {
         super.onCreate(db)
@@ -249,7 +267,7 @@ private val PREPOPULATE_CALLBACK = object : RoomDatabase.Callback() {
 @TypeConverters(MemoFormatConverter::class)
 @Database(
     entities = [Memo::class, Category::class, ChatSession::class, ChatMessage::class, YoutubeSummary::class, AiUsage::class, Tag::class, MemoTag::class],
-    version = 15,
+    version = 16,
     exportSchema = true
 )
 abstract class MemoDatabase : RoomDatabase() {
@@ -272,7 +290,7 @@ abstract class MemoDatabase : RoomDatabase() {
                     MemoDatabase::class.java,
                     "memo_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16)
                     .addCallback(PREPOPULATE_CALLBACK)
                     .build()
                 INSTANCE = instance

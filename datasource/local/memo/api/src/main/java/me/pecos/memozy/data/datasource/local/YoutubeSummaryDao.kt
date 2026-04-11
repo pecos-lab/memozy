@@ -8,8 +8,8 @@ import me.pecos.memozy.data.datasource.local.entity.YoutubeSummary
 
 @Dao
 interface YoutubeSummaryDao {
-    @Query("SELECT * FROM youtube_summary WHERE videoId = :videoId")
-    suspend fun getByVideoId(videoId: String): YoutubeSummary?
+    @Query("SELECT * FROM youtube_summary WHERE videoId = :videoId AND mode = :mode AND language = :language")
+    suspend fun getByKey(videoId: String, mode: String, language: String): YoutubeSummary?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(summary: YoutubeSummary)
