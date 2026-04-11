@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -52,14 +53,8 @@ fun FloatingNavPill(
     Row(
         modifier = modifier
             .height(52.dp)
-            .shadow(
-                elevation = 16.dp,
-                shape = RoundedCornerShape(50),
-                ambientColor = Color.Black.copy(alpha = 0.28f),
-                spotColor = Color.Black.copy(alpha = 0.18f)
-            )
             .clip(RoundedCornerShape(50))
-            .hazeEffect(state = hazeState, style = glassStyle)
+            .background(colors.navBackground.copy(alpha = 0.75f))
             .border(width = 1.dp, color = colors.navBorder, shape = RoundedCornerShape(50))
             .padding(horizontal = 2.dp, vertical = 2.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
