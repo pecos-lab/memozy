@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -24,6 +26,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,12 +36,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.wanted.android.wanted.design.actions.button.WantedButton
 import com.wanted.android.wanted.design.actions.button.config.WantedButtonDefaults
 import com.wanted.android.wanted.design.util.ButtonType
 import com.wanted.android.wanted.design.util.ButtonVariant
+import kotlinx.coroutines.launch
+import me.pecos.memozy.data.datasource.remote.auth.AuthState
 import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.feature.home.impl.BuildConfig
 import me.pecos.memozy.presentation.components.AppPopup
 import me.pecos.memozy.presentation.components.PopupActionArea
 import me.pecos.memozy.presentation.components.PopupNavigation
@@ -58,14 +68,17 @@ fun SettingsScreen(
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
     var showRestoreDialog by remember { mutableStateOf(false) }
+    var showSignOutDialog by remember { mutableStateOf(false) }
 
     val selectedLanguage by settingsViewModel.selectedLanguage.collectAsState()
     val selectedTheme by settingsViewModel.selectedTheme.collectAsState()
     val backupResult by settingsViewModel.backupResult.collectAsState()
     val isDonationEnabled by settingsViewModel.isDonationEnabled.collectAsState()
+    val authState by settingsViewModel.authState.collectAsState()
     val colors = LocalAppColors.current
     val context = LocalContext.current
     val activity = LocalActivity.current
+    val scope = rememberCoroutineScope()
 
     // SAF launchers
     val exportLauncher = rememberLauncherForActivityResult(
@@ -212,6 +225,26 @@ fun SettingsScreen(
         }
     }
 
+    if (showSignOutDialog) {
+        AppPopup(
+            onDismissRequest = { showSignOutDialog = false },
+            title = stringResource(R.string.sign_out),
+            navigation = PopupNavigation.EMPHASIZED,
+            size = PopupSize.MEDIUM,
+            actionArea = PopupActionArea.NEUTRAL,
+            primaryButtonText = stringResource(R.string.sign_out),
+            isPrimaryDestructive = true,
+            onPrimaryClick = {
+                showSignOutDialog = false
+                settingsViewModel.signOut()
+            },
+            secondaryButtonText = stringResource(R.string.cancel),
+            onSecondaryClick = { showSignOutDialog = false }
+        ) {
+            Text(stringResource(R.string.sign_out_confirm), color = colors.textBody)
+        }
+    }
+
     if (showClearDialog) {
         AppPopup(
             onDismissRequest = { showClearDialog = false },
@@ -352,6 +385,105 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
+                HorizontalDivider(
+                    thickness = 0.3.dp,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+
+                Text(
+                    text = stringResource(R.string.section_account),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.topbarTitle,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp, top = 12.dp)
+                )
+
+                when (val state = authState) {
+                    is AuthState.Loading -> {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = colors.textSecondary
+                            )
+                            Text(
+                                text = stringResource(R.string.sign_in_loading),
+                                color = colors.textSecondary,
+                                fontSize = 13.sp,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
+                    }
+                    is AuthState.Unauthenticated -> {
+                        WantedButton(
+                            text = stringResource(R.string.sign_in_google),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            buttonDefault = WantedButtonDefaults.getDefault(
+                                type = ButtonType.ASSISTIVE,
+                                variant = ButtonVariant.OUTLINED
+                            ).copy(contentColor = colors.textTitle),
+                            onClick = {
+                                scope.launch {
+                                    try {
+                                        val credentialManager = CredentialManager.create(context)
+                                        val googleIdOption = GetGoogleIdOption.Builder()
+                                            .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
+                                            .setFilterByAuthorizedAccounts(false)
+                                            .build()
+                                        val request = GetCredentialRequest.Builder()
+                                            .addCredentialOption(googleIdOption)
+                                            .build()
+                                        val result = credentialManager.getCredential(
+                                            context = activity ?: context,
+                                            request = request,
+                                        )
+                                        val googleIdToken = GoogleIdTokenCredential
+                                            .createFrom(result.credential.data)
+                                            .idToken
+                                        settingsViewModel.signInWithGoogle(googleIdToken)
+                                    } catch (e: Exception) {
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(R.string.sign_in_error),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            }
+                        )
+                    }
+                    is AuthState.Authenticated -> {
+                        Text(
+                            text = state.user.email ?: "",
+                            fontSize = 13.sp,
+                            color = colors.textBody,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        WantedButton(
+                            text = stringResource(R.string.sign_out),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            buttonDefault = WantedButtonDefaults.getDefault(
+                                type = ButtonType.ASSISTIVE,
+                                variant = ButtonVariant.OUTLINED
+                            ).copy(contentColor = colors.textTitle),
+                            onClick = { showSignOutDialog = true }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
 
                 HorizontalDivider(
                     thickness = 0.3.dp ,

@@ -25,6 +25,9 @@ kotlinxSerialization = "1.8.1"
 richeditor = "1.0.0-rc11"
 glance = "1.1.1"
 coil = "2.7.0"
+supabase = "3.2.3"
+credentialManager = "1.5.0"
+googleIdIdentity = "1.1.1"
 
 [libraries]
 gradlePlugin-android = { module = "com.android.tools.build:gradle", version.ref = "agp" }
@@ -77,6 +80,12 @@ ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-conte
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-client-logging = { group = "io.ktor", name = "ktor-client-logging", version.ref = "ktor" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+supabase-bom = { group = "io.github.jan-tennert.supabase", name = "bom", version.ref = "supabase" }
+supabase-auth = { group = "io.github.jan-tennert.supabase", name = "auth-kt" }
+supabase-postgrest = { group = "io.github.jan-tennert.supabase", name = "postgrest-kt" }
+credential-manager = { group = "androidx.credentials", name = "credentials", version.ref = "credentialManager" }
+credential-manager-play = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentialManager" }
+google-id-identity = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleIdIdentity" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

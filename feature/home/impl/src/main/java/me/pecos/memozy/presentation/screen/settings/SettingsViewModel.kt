@@ -8,13 +8,17 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.pecos.memozy.data.datasource.local.MemoDao
 import me.pecos.memozy.data.datasource.local.entity.Memo
+import me.pecos.memozy.data.datasource.remote.auth.AuthState
 import me.pecos.memozy.data.repository.MemoRepository
 import me.pecos.memozy.data.repository.model.MemoFormat
+import me.pecos.memozy.data.repository.user.AuthRepository
 import org.json.JSONArray
 import org.json.JSONObject
 import javax.inject.Inject
@@ -38,7 +42,8 @@ sealed class BackupResult {
 class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val repository: MemoRepository,
-    private val memoDao: MemoDao
+    private val memoDao: MemoDao,
+    private val authRepository: AuthRepository,
 ) : ViewModel() {
 
     private val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
@@ -56,6 +61,9 @@ class SettingsViewModel @Inject constructor(
     val selectedTheme: StateFlow<ThemeMode> = _selectedTheme
 
     val isDonationEnabled: StateFlow<Boolean> = MutableStateFlow(false)
+
+    val authState: StateFlow<AuthState> = authRepository.authState
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AuthState.Loading)
 
     private val _backupResult = MutableStateFlow<BackupResult>(BackupResult.Idle)
     val backupResult: StateFlow<BackupResult> = _backupResult
@@ -78,6 +86,18 @@ class SettingsViewModel @Inject constructor(
 
     fun clearBackupResult() {
         _backupResult.value = BackupResult.Idle
+    }
+
+    fun signInWithGoogle(idToken: String) {
+        viewModelScope.launch {
+            authRepository.signInWithGoogle(idToken)
+        }
+    }
+
+    fun signOut() {
+        viewModelScope.launch {
+            authRepository.signOut()
+        }
     }
 
     // ── Backup (Export) ──
