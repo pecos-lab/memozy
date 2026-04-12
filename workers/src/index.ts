@@ -27,39 +27,27 @@ async function verifyJwt(req: Request, env: Env): Promise<{ userId: string } | R
   if (!authHeader?.startsWith("Bearer ")) {
     return Response.json({ error: "Missing Authorization header" }, { status: 401 });
   }
-  const token = authHeader.slice(7);
   try {
-    const [headerB64, payloadB64] = token.split(".");
-    const payload = JSON.parse(atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/")));
-
-    // Verify expiration
-    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
-      return Response.json({ error: "Token expired" }, { status: 401 });
+    // Verify token via Supabase Auth API
+    const url = `${env.SUPABASE_URL}/auth/v1/user`;
+    console.log("Verifying JWT via:", url);
+    const userRes = await fetch(url, {
+      headers: {
+        "Authorization": authHeader,
+        "apikey": env.SUPABASE_SERVICE_KEY,
+      },
+    });
+    if (!userRes.ok) {
+      const err = await userRes.text();
+      console.log("Supabase auth failed:", userRes.status, err);
+      return Response.json({ error: "Auth failed", detail: err }, { status: 401 });
     }
-
-    // Verify signature using HMAC-SHA256 with Supabase JWT secret
-    const encoder = new TextEncoder();
-    const key = await crypto.subtle.importKey(
-      "raw",
-      encoder.encode(env.SUPABASE_JWT_SECRET),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["verify"]
-    );
-    const signatureInput = encoder.encode(`${headerB64}.${payloadB64}`);
-    const signatureB64 = token.split(".")[2];
-    const signature = Uint8Array.from(
-      atob(signatureB64.replace(/-/g, "+").replace(/_/g, "/")),
-      (c) => c.charCodeAt(0)
-    );
-    const valid = await crypto.subtle.verify("HMAC", key, signature, signatureInput);
-    if (!valid) {
-      return Response.json({ error: "Invalid token signature" }, { status: 401 });
-    }
-
-    return { userId: payload.sub };
-  } catch {
-    return Response.json({ error: "Invalid token" }, { status: 401 });
+    const user = await userRes.json<{ id: string }>();
+    console.log("Auth OK, userId:", user.id);
+    return { userId: user.id };
+  } catch (e) {
+    console.log("JWT verify exception:", (e as Error).message);
+    return Response.json({ error: "Token verify failed", detail: (e as Error).message }, { status: 401 });
   }
 }
 
@@ -270,9 +258,14 @@ interface BackupRequest {
 
 async function handleBackupCreate(req: Request, env: Env): Promise<Response> {
   const auth = await verifyJwt(req, env);
-  if (auth instanceof Response) return auth;
+  if (auth instanceof Response) {
+    console.log("JWT auth failed");
+    return auth;
+  }
+  console.log("JWT auth OK, userId:", auth.userId);
 
   const body = await req.json<BackupRequest>();
+  console.log("Request body keys:", Object.keys(body));
 
   if (!body.device_name || !body.app_version || !body.tables) {
     return Response.json({ error: "Missing required fields" }, { status: 400 });
@@ -303,18 +296,22 @@ async function handleBackupCreate(req: Request, env: Env): Promise<Response> {
 
   if (!metaRes.ok) {
     const err = await metaRes.text();
+    console.log("Supabase meta insert failed:", metaRes.status, err);
     return Response.json({ error: "Failed to create backup", detail: err }, { status: 500 });
   }
+  console.log("Supabase meta insert OK");
 
   const [backup] = await metaRes.json<{ id: string; created_at: string }[]>();
 
-  // 2. Insert backup data per table
-  const dataRows = Object.entries(body.tables).map(([tableName, rows]) => ({
-    backup_id: backup.id,
-    table_name: tableName,
-    data: rows,
-    row_count: Array.isArray(rows) ? rows.length : 0,
-  }));
+  // 2. Insert backup data per table (skip null/empty tables)
+  const dataRows = Object.entries(body.tables)
+    .filter(([, rows]) => rows != null)
+    .map(([tableName, rows]) => ({
+      backup_id: backup.id,
+      table_name: tableName,
+      data: rows,
+      row_count: Array.isArray(rows) ? rows.length : 0,
+    }));
 
   const dataRes = await supabaseRest(env, "backup_data", {
     method: "POST",
@@ -325,8 +322,10 @@ async function handleBackupCreate(req: Request, env: Env): Promise<Response> {
     // Rollback: delete the backup metadata
     await supabaseRest(env, `backups?id=eq.${backup.id}`, { method: "DELETE" });
     const err = await dataRes.text();
+    console.log("Backup data insert failed:", dataRes.status, err);
     return Response.json({ error: "Failed to save backup data", detail: err }, { status: 500 });
   }
+  console.log("Backup data insert OK, tables:", dataRows.length);
 
   return Response.json(
     { id: backup.id, created_at: backup.created_at, memo_count: memoCount },

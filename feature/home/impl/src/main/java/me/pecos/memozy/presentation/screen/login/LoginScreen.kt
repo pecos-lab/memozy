@@ -75,6 +75,7 @@ fun LoginScreen(
 
             WantedButton(
                 text = stringResource(R.string.sign_in_google),
+                leadingDrawable = R.drawable.ic_google,
                 modifier = Modifier.fillMaxWidth(),
                 buttonDefault = WantedButtonDefaults.getDefault(
                     type = ButtonType.ASSISTIVE,
@@ -99,7 +100,10 @@ fun LoginScreen(
                                 .createFrom(result.credential.data)
                                 .idToken
                             onSignIn(googleIdToken)
+                        } catch (e: androidx.credentials.exceptions.GetCredentialCancellationException) {
+                            // 사용자가 취소 — 무시
                         } catch (e: Exception) {
+                            android.util.Log.e("LoginScreen", "Sign-in failed", e)
                             Toast.makeText(
                                 context,
                                 context.getString(R.string.sign_in_error),

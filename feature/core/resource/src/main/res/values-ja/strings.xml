@@ -190,7 +190,7 @@
 
     <!-- Auth -->
     <string name="section_account">アカウント</string>
-    <string name="sign_in_google">Googleでログイン</string>
+    <string name="sign_in_google">Googleアカウントでログイン</string>
     <string name="sign_out">ログアウト</string>
     <string name="sign_in_error">ログインに失敗しました</string>
     <string name="sign_out_confirm">ログアウトしますか？</string>

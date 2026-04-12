@@ -61,6 +61,16 @@ data class ChatMessageBackup(
     val metadata: String? = null,
 )
 
+// --- Cloud backup API request ---
+
+@Serializable
+data class BackupUploadRequest(
+    val device_name: String,
+    val app_version: String,
+    val db_version: Int,
+    val tables: BackupTables,
+)
+
 // --- Cloud backup metadata ---
 
 @Serializable

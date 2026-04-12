@@ -190,7 +190,7 @@
 
     <!-- Auth -->
     <string name="section_account">Account</string>
-    <string name="sign_in_google">Sign in with Google</string>
+    <string name="sign_in_google">Sign in with Google Account</string>
     <string name="sign_out">Sign Out</string>
     <string name="sign_in_error">Sign in failed</string>
     <string name="sign_out_confirm">Are you sure you want to sign out?</string>

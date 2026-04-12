@@ -19,6 +19,7 @@ import me.pecos.memozy.data.datasource.local.chat.entity.ChatMessage
 import me.pecos.memozy.data.datasource.local.chat.entity.ChatSession
 import me.pecos.memozy.data.datasource.local.entity.Category
 import me.pecos.memozy.data.datasource.local.entity.Memo
+import me.pecos.memozy.data.backup.di.BackupHttpClient
 import me.pecos.memozy.data.datasource.remote.auth.AuthService
 import me.pecos.memozy.data.repository.model.MemoFormat
 import javax.inject.Inject
@@ -32,7 +33,7 @@ class BackupRepositoryImpl @Inject constructor(
     private val chatSessionDao: ChatSessionDao,
     private val chatMessageDao: ChatMessageDao,
     private val authService: AuthService,
-    private val httpClient: HttpClient,
+    @BackupHttpClient private val httpClient: HttpClient,
 ) : BackupRepository {
 
     override suspend fun createBackupPayload(): BackupPayload {
@@ -85,15 +86,16 @@ class BackupRepositoryImpl @Inject constructor(
 
     override suspend fun uploadBackup(): Result<BackupCreateResponse> = runCatching {
         val payload = createBackupPayload()
+        val request = BackupUploadRequest(
+            device_name = payload.deviceName,
+            app_version = payload.appVersion,
+            db_version = payload.dbVersion,
+            tables = payload.tables,
+        )
         httpClient.post("backup") {
             header("Authorization", authHeader())
             contentType(ContentType.Application.Json)
-            setBody(mapOf(
-                "device_name" to payload.deviceName,
-                "app_version" to payload.appVersion,
-                "db_version" to payload.dbVersion,
-                "tables" to payload.tables,
-            ))
+            setBody(request)
         }.body<BackupCreateResponse>()
     }
 
