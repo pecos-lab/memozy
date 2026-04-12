@@ -33,6 +33,7 @@ import me.pecos.memozy.presentation.screen.home.model.MemoUiState
 import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.presentation.screen.home.util.formatMemoTime
 import me.pecos.memozy.presentation.theme.LocalAppColors
+import me.pecos.memozy.presentation.theme.LocalFontSettings
 
 @Composable
 fun MemoCardItem(
@@ -40,6 +41,7 @@ fun MemoCardItem(
     @Suppress("UNUSED_PARAMETER") isInSelectionMode: Boolean = false
 ) {
     val colors = LocalAppColors.current
+    val fontSettings = LocalFontSettings.current
     val context = LocalContext.current
     val languageCode = remember {
         context.getSharedPreferences("settings", Context.MODE_PRIVATE)
@@ -77,18 +79,20 @@ fun MemoCardItem(
                         text = memo.name,
                         fontWeight = FontWeight.Bold,
                         color = colors.textTitle,
+                        fontFamily = fontSettings.fontFamily,
+                        fontSize = fontSettings.titleSize,
                     )
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         text = formatMemoTime(memo.createdAt, languageCode),
                         color = colors.textSecondary,
-                        fontSize = 12.sp
+                        fontSize = fontSettings.scaled(12)
                     )
                     if (memo.updatedAt > memo.createdAt + 60_000L) {
                         Text(
                             text = "${stringResource(R.string.memo_updated_at)} ${formatMemoTime(memo.updatedAt, languageCode)}",
-                            fontSize = 11.sp,
+                            fontSize = fontSettings.scaled(11),
                             color = colors.textSecondary.copy(alpha = 0.7f)
                         )
                     }
@@ -104,6 +108,8 @@ fun MemoCardItem(
                     .trim()
                     .ifBlank { memo.summaryContent?.take(200) ?: "" },
                 color = colors.textBody,
+                fontFamily = fontSettings.fontFamily,
+                fontSize = fontSettings.bodySize,
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis
             )

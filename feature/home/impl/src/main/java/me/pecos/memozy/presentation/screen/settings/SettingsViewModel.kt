@@ -20,6 +20,8 @@ import me.pecos.memozy.data.datasource.remote.auth.AuthState
 import me.pecos.memozy.data.repository.MemoRepository
 import me.pecos.memozy.data.repository.model.MemoFormat
 import me.pecos.memozy.data.repository.user.AuthRepository
+import me.pecos.memozy.presentation.theme.AppFontFamily
+import me.pecos.memozy.presentation.theme.FontSizeLevel
 import org.json.JSONArray
 import org.json.JSONObject
 import javax.inject.Inject
@@ -87,6 +89,28 @@ class SettingsViewModel @Inject constructor(
     fun selectTheme(mode: ThemeMode) {
         _selectedTheme.value = mode
         prefs.edit().putString("theme_mode", mode.value).apply()
+    }
+
+    private val _selectedFontFamily = MutableStateFlow(
+        AppFontFamily.entries.find { it.value == prefs.getString("font_family", "system") }
+            ?: AppFontFamily.SYSTEM
+    )
+    val selectedFontFamily: StateFlow<AppFontFamily> = _selectedFontFamily
+
+    private val _selectedFontSize = MutableStateFlow(
+        FontSizeLevel.entries.find { it.name == prefs.getString("font_size_level", "NORMAL") }
+            ?: FontSizeLevel.NORMAL
+    )
+    val selectedFontSize: StateFlow<FontSizeLevel> = _selectedFontSize
+
+    fun selectFontFamily(family: AppFontFamily) {
+        _selectedFontFamily.value = family
+        prefs.edit().putString("font_family", family.value).apply()
+    }
+
+    fun selectFontSize(level: FontSizeLevel) {
+        _selectedFontSize.value = level
+        prefs.edit().putString("font_size_level", level.name).apply()
     }
 
     fun clearAllMemos() {

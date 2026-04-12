@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.presentation.screen.memo.SummaryMode
 import me.pecos.memozy.presentation.theme.AppColors
+import me.pecos.memozy.presentation.theme.LocalFontSettings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,14 +50,15 @@ fun YouTubeLinkBottomSheet(
         sheetState = rememberModalBottomSheetState(),
         containerColor = colors.cardBackground
     ) {
+        val fontSettings = LocalFontSettings.current
         Column(
             modifier = Modifier.fillMaxWidth()
                 .padding(horizontal = 24.dp, vertical = 8.dp)
                 .padding(bottom = 24.dp)
         ) {
-            Text("YouTube 링크", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = colors.textTitle)
+            Text("YouTube 링크", fontSize = fontSettings.scaled(18), fontWeight = FontWeight.Bold, color = colors.textTitle)
             Spacer(modifier = Modifier.height(4.dp))
-            Text(url, fontSize = 13.sp, color = colors.textSecondary, maxLines = 1)
+            Text(url, fontSize = fontSettings.scaled(13), color = colors.textSecondary, maxLines = 1)
             Spacer(modifier = Modifier.height(20.dp))
 
             // 📋 링크 복사
@@ -66,8 +68,8 @@ fun YouTubeLinkBottomSheet(
                     .padding(vertical = 14.dp, horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("📋", fontSize = 20.sp); Spacer(modifier = Modifier.width(12.dp))
-                Text(stringResource(R.string.copy_link), fontSize = 16.sp, color = colors.textBody)
+                Text("📋", fontSize = fontSettings.scaled(20)); Spacer(modifier = Modifier.width(12.dp))
+                Text(stringResource(R.string.copy_link), fontSize = fontSettings.scaled(16), color = colors.textBody)
             }
 
             // 🌐 브라우저에서 열기
@@ -81,8 +83,8 @@ fun YouTubeLinkBottomSheet(
                     .padding(vertical = 14.dp, horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("🌐", fontSize = 20.sp); Spacer(modifier = Modifier.width(12.dp))
-                Text(stringResource(R.string.open_in_browser), fontSize = 16.sp, color = colors.textBody)
+                Text("🌐", fontSize = fontSettings.scaled(20)); Spacer(modifier = Modifier.width(12.dp))
+                Text(stringResource(R.string.open_in_browser), fontSize = fontSettings.scaled(16), color = colors.textBody)
             }
 
             // ▶ YouTube에서 열기
@@ -101,8 +103,8 @@ fun YouTubeLinkBottomSheet(
                     .padding(vertical = 14.dp, horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("▶️", fontSize = 20.sp); Spacer(modifier = Modifier.width(12.dp))
-                Text(stringResource(R.string.open_in_youtube), fontSize = 16.sp, color = colors.textBody)
+                Text("▶️", fontSize = fontSettings.scaled(20)); Spacer(modifier = Modifier.width(12.dp))
+                Text(stringResource(R.string.open_in_youtube), fontSize = fontSettings.scaled(16), color = colors.textBody)
             }
 
             // 🤖 AI 요약하기
@@ -113,8 +115,8 @@ fun YouTubeLinkBottomSheet(
                         .padding(vertical = 14.dp, horizontal = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("⚡", fontSize = 20.sp); Spacer(modifier = Modifier.width(12.dp))
-                    Text(stringResource(R.string.summary_mode_simple), fontSize = 16.sp, color = colors.textBody)
+                    Text("⚡", fontSize = fontSettings.scaled(20)); Spacer(modifier = Modifier.width(12.dp))
+                    Text(stringResource(R.string.summary_mode_simple), fontSize = fontSettings.scaled(16), color = colors.textBody)
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
@@ -122,8 +124,8 @@ fun YouTubeLinkBottomSheet(
                         .padding(vertical = 14.dp, horizontal = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("📑", fontSize = 20.sp); Spacer(modifier = Modifier.width(12.dp))
-                    Text(stringResource(R.string.summary_mode_detailed), fontSize = 16.sp, color = colors.textBody)
+                    Text("📑", fontSize = fontSettings.scaled(20)); Spacer(modifier = Modifier.width(12.dp))
+                    Text(stringResource(R.string.summary_mode_detailed), fontSize = fontSettings.scaled(16), color = colors.textBody)
                 }
             }
         }

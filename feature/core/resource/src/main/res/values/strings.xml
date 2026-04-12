@@ -42,6 +42,7 @@
     <string name="yes">예</string>
     <string name="no">아니오</string>
     <string name="save">저장</string>
+    <string name="memo_done">완료</string>
     <string name="add_memo">메모 추가</string>
     <string name="edit_memo">메모 수정</string>
 
@@ -214,4 +215,14 @@
     <string name="cloud_backup_count">저장된 백업 %d개</string>
     <string name="cloud_backup_memo_count">메모 %d개</string>
     <string name="cloud_backup_last_time">마지막 백업: %s</string>
+
+    <!-- Font Settings -->
+    <string name="font_settings">폰트 설정</string>
+    <string name="font_size">글자 크기</string>
+    <string name="font_size_small">작게</string>
+    <string name="font_size_normal">보통</string>
+    <string name="font_size_large">크게</string>
+    <string name="font_preview_title">제목 미리보기</string>
+    <string name="font_preview_body">본문 미리보기 텍스트입니다. 이 글꼴이 메모에 적용됩니다.</string>
+    <string name="font_system">시스템 기본</string>
 </resources>

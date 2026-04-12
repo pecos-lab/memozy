@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.rememberScrollState
@@ -31,7 +32,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -42,10 +42,13 @@ import androidx.credentials.GetCredentialRequest
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
-import com.wanted.android.wanted.design.actions.button.WantedButton
-import com.wanted.android.wanted.design.actions.button.config.WantedButtonDefaults
-import com.wanted.android.wanted.design.util.ButtonType
-import com.wanted.android.wanted.design.util.ButtonVariant
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.res.painterResource
 import kotlinx.coroutines.launch
 import me.pecos.memozy.data.datasource.remote.auth.AuthState
 import me.pecos.memozy.feature.core.resource.R
@@ -54,8 +57,13 @@ import me.pecos.memozy.presentation.components.AppPopup
 import me.pecos.memozy.presentation.components.PopupActionArea
 import me.pecos.memozy.presentation.components.PopupNavigation
 import me.pecos.memozy.presentation.components.PopupSize
+import androidx.compose.material3.Slider
+import kotlin.math.roundToInt
+import me.pecos.memozy.presentation.theme.AppFontFamily
+import me.pecos.memozy.presentation.theme.FontSizeLevel
 import me.pecos.memozy.presentation.theme.LocalActivity
 import me.pecos.memozy.presentation.theme.LocalAppColors
+import me.pecos.memozy.presentation.theme.LocalFontSettings
 
 @Composable
 fun SettingsScreen(
@@ -68,18 +76,22 @@ fun SettingsScreen(
     var showLicenseDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
+    var showFontDialog by remember { mutableStateOf(false) }
     var showRestoreDialog by remember { mutableStateOf(false) }
     var showSignOutDialog by remember { mutableStateOf(false) }
     var showCloudRestoreConfirm by remember { mutableStateOf(false) }
 
     val selectedLanguage by settingsViewModel.selectedLanguage.collectAsState()
     val selectedTheme by settingsViewModel.selectedTheme.collectAsState()
+    val selectedFontFamily by settingsViewModel.selectedFontFamily.collectAsState()
+    val selectedFontSize by settingsViewModel.selectedFontSize.collectAsState()
     val backupResult by settingsViewModel.backupResult.collectAsState()
     val isDonationEnabled by settingsViewModel.isDonationEnabled.collectAsState()
     val authState by settingsViewModel.authState.collectAsState()
     val cloudBackupState by settingsViewModel.cloudBackupState.collectAsState()
     val lastBackupTime by settingsViewModel.lastBackupTime.collectAsState()
     val colors = LocalAppColors.current
+    val fontSettings = LocalFontSettings.current
     val context = LocalContext.current
     val activity = LocalActivity.current
     val scope = rememberCoroutineScope()
@@ -191,10 +203,92 @@ fun SettingsScreen(
                         Text(
                             label,
                             color = colors.textBody,
+                            fontSize = fontSettings.scaled(14),
                             modifier = Modifier.padding(start = 8.dp)
                         )
                     }
                 }
+            }
+        }
+    }
+
+    if (showFontDialog) {
+        AppPopup(
+            onDismissRequest = { showFontDialog = false },
+            title = stringResource(R.string.font_settings),
+            navigation = PopupNavigation.EMPHASIZED,
+            size = PopupSize.XLARGE,
+            actionArea = PopupActionArea.NONE
+        ) {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                AppFontFamily.entries.forEach { family ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { settingsViewModel.selectFontFamily(family) }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = selectedFontFamily == family,
+                            onClick = { settingsViewModel.selectFontFamily(family) }
+                        )
+                        Text(
+                            text = family.displayName,
+                            color = colors.textBody,
+                            fontFamily = family.fontFamily,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 12.dp),
+                    color = colors.cardBorder
+                )
+
+                Text(
+                    text = stringResource(R.string.font_size),
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.textTitle,
+                    fontSize = fontSettings.scaled(14)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(stringResource(R.string.font_size_small), fontSize = fontSettings.scaled(12), color = colors.textSecondary)
+                    Text(stringResource(R.string.font_size_normal), fontSize = fontSettings.scaled(12), color = colors.textSecondary)
+                    Text(stringResource(R.string.font_size_large), fontSize = fontSettings.scaled(12), color = colors.textSecondary)
+                }
+                Slider(
+                    value = selectedFontSize.ordinal.toFloat(),
+                    onValueChange = { settingsViewModel.selectFontSize(FontSizeLevel.entries[it.roundToInt()]) },
+                    valueRange = 0f..2f,
+                    steps = 1
+                )
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 12.dp),
+                    color = colors.cardBorder
+                )
+
+                Text(
+                    text = stringResource(R.string.font_preview_title),
+                    fontFamily = selectedFontFamily.fontFamily,
+                    fontSize = selectedFontSize.titleSp.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.textTitle
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.font_preview_body),
+                    fontFamily = selectedFontFamily.fontFamily,
+                    fontSize = selectedFontSize.bodySp.sp,
+                    color = colors.textBody
+                )
             }
         }
     }
@@ -209,28 +303,25 @@ fun SettingsScreen(
         ) {
             Column {
                 LANGUAGES.forEach { language ->
+                    val onSelectLanguage = {
+                        settingsViewModel.selectLanguage(language)
+                        showLanguageDialog = false
+                        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                            @Suppress("DEPRECATION")
+                            activity?.overridePendingTransition(0, 0)
+                            activity?.recreate()
+                        }, 200)
+                    }
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable {
-                                settingsViewModel.selectLanguage(language)
-                                showLanguageDialog = false
-                                @Suppress("DEPRECATION")
-                                activity?.overridePendingTransition(0, 0)
-                                activity?.recreate()
-                            }
+                            .clickable { onSelectLanguage() }
                             .padding(vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
                             selected = language.code == selectedLanguage.code,
-                            onClick = {
-                                settingsViewModel.selectLanguage(language)
-                                showLanguageDialog = false
-                                @Suppress("DEPRECATION")
-                                activity?.overridePendingTransition(0, 0)
-                                activity?.recreate()
-                            }
+                            onClick = { onSelectLanguage() }
                         )
                         Text(
                             language.name,
@@ -330,7 +421,7 @@ fun SettingsScreen(
 
         @Composable
         fun LicenseItem(text: String) {
-            Text(text = text, color = colors.textBody, fontSize = 11.sp, lineHeight = 17.sp)
+            Text(text = text, color = colors.textBody, fontSize = fontSettings.scaled(11), lineHeight = 17.sp)
         }
 
         AppPopup(
@@ -398,7 +489,7 @@ fun SettingsScreen(
             ) {
                 Text(
                     text = stringResource(R.string.settings),
-                    fontSize = 22.sp,
+                    fontSize = fontSettings.scaled(22),
                     fontWeight = FontWeight.Bold,
                     color = colors.topbarTitle,
                     modifier = Modifier.padding(start = 16.dp, bottom = 12.dp)
@@ -411,10 +502,10 @@ fun SettingsScreen(
 
                 Text(
                     text = stringResource(R.string.section_account),
-                    fontSize = 12.sp,
+                    fontSize = fontSettings.scaled(12),
                     fontWeight = FontWeight.Bold,
                     color = colors.topbarTitle,
-                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp, top = 12.dp)
+                    modifier = Modifier.padding(start = 16.dp, bottom = 6.dp, top = 10.dp)
                 )
 
                 when (val state = authState) {
@@ -433,22 +524,19 @@ fun SettingsScreen(
                             Text(
                                 text = stringResource(R.string.sign_in_loading),
                                 color = colors.textSecondary,
-                                fontSize = 13.sp,
+                                fontSize = fontSettings.scaled(13),
                                 modifier = Modifier.padding(start = 8.dp)
                             )
                         }
                     }
                     is AuthState.Unauthenticated -> {
-                        WantedButton(
-                            text = stringResource(R.string.sign_in_google),
-                            leadingDrawable = R.drawable.ic_google,
+                        OutlinedButton(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp),
-                            buttonDefault = WantedButtonDefaults.getDefault(
-                                type = ButtonType.ASSISTIVE,
-                                variant = ButtonVariant.OUTLINED
-                            ).copy(contentColor = colors.textTitle),
+                            border = BorderStroke(1.dp, colors.cardBorder),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
                             onClick = {
                                 scope.launch {
                                     try {
@@ -480,7 +568,11 @@ fun SettingsScreen(
                                     }
                                 }
                             }
-                        )
+                        ) {
+                            Icon(painter = painterResource(R.drawable.ic_google), contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stringResource(R.string.sign_in_google), fontSize = fontSettings.scaled(14))
+                        }
                     }
                     is AuthState.Authenticated -> {
                         Row(
@@ -492,12 +584,12 @@ fun SettingsScreen(
                         ) {
                             Text(
                                 text = state.user.email ?: "",
-                                fontSize = 13.sp,
+                                fontSize = fontSettings.scaled(13),
                                 color = colors.textBody,
                             )
                             Text(
                                 text = stringResource(R.string.sign_out),
-                                fontSize = 12.sp,
+                                fontSize = fontSettings.scaled(12),
                                 color = colors.textSecondary,
                                 modifier = Modifier
                                     .clickable { showSignOutDialog = true }
@@ -508,7 +600,7 @@ fun SettingsScreen(
                         lastBackupTime?.let { time ->
                             Text(
                                 text = stringResource(R.string.cloud_backup_last_time, time.take(16).replace("T", " ")),
-                                fontSize = 11.sp,
+                                fontSize = fontSettings.scaled(11),
                                 color = colors.textSecondary,
                                 modifier = Modifier.padding(start = 20.dp, bottom = 4.dp)
                             )
@@ -516,7 +608,7 @@ fun SettingsScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 HorizontalDivider(
                     thickness = 0.3.dp,
@@ -525,39 +617,53 @@ fun SettingsScreen(
 
                 Text(
                     text = stringResource(R.string.section_theme),
-                    fontSize = 12.sp,
+                    fontSize = fontSettings.scaled(12),
                     fontWeight = FontWeight.Bold,
                     color = colors.topbarTitle,
-                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp, top = 12.dp)
+                    modifier = Modifier.padding(start = 16.dp, bottom = 6.dp, top = 10.dp)
                 )
 
-                WantedButton(
-                    text = stringResource(R.string.language_settings),
+                OutlinedButton(
+                    onClick = { showLanguageDialog = true },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    buttonDefault = WantedButtonDefaults.getDefault(
-                        type = ButtonType.ASSISTIVE,
-                        variant = ButtonVariant.OUTLINED
-                    ).copy(contentColor = colors.textTitle),
-                    onClick = { showLanguageDialog = true }
-                )
+                    border = BorderStroke(1.dp, colors.cardBorder),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
+                ) {
+                    Text(stringResource(R.string.language_settings), fontSize = fontSettings.scaled(14))
+                }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
-                WantedButton(
-                    text = stringResource(R.string.theme_settings),
+                OutlinedButton(
+                    onClick = { showThemeDialog = true },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    buttonDefault = WantedButtonDefaults.getDefault(
-                        type = ButtonType.ASSISTIVE,
-                        variant = ButtonVariant.OUTLINED
-                    ).copy(contentColor = colors.textTitle),
-                    onClick = { showThemeDialog = true }
-                )
+                    border = BorderStroke(1.dp, colors.cardBorder),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
+                ) {
+                    Text(stringResource(R.string.theme_settings), fontSize = fontSettings.scaled(14))
+                }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(6.dp))
+
+                OutlinedButton(
+                    onClick = { showFontDialog = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    border = BorderStroke(1.dp, colors.cardBorder),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
+                ) {
+                    Text(stringResource(R.string.font_settings), fontSize = fontSettings.scaled(14))
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
 
                 HorizontalDivider(
                     thickness = 0.3.dp ,
@@ -566,54 +672,46 @@ fun SettingsScreen(
 
                 Text(
                     text = stringResource(R.string.section_data),
-                    fontSize = 12.sp,
+                    fontSize = fontSettings.scaled(12),
                     fontWeight = FontWeight.Bold,
                     color = colors.topbarTitle,
-                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp, top = 12.dp)
+                    modifier = Modifier.padding(start = 16.dp, bottom = 6.dp, top = 10.dp)
                 )
 
                 if (authState is AuthState.Authenticated) {
                     // 로그인: 클라우드 백업
-                    WantedButton(
-                        text = if (cloudBackupState is CloudBackupState.Uploading)
+                    OutlinedButton(
+                        onClick = { settingsViewModel.uploadCloudBackup() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        border = BorderStroke(1.dp, colors.cardBorder),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
+                    ) {
+                        Text(if (cloudBackupState is CloudBackupState.Uploading)
                             stringResource(R.string.cloud_backup_uploading)
-                        else stringResource(R.string.cloud_backup_now),
+                        else stringResource(R.string.cloud_backup_now), fontSize = fontSettings.scaled(14))
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    OutlinedButton(
+                        onClick = { showCloudRestoreConfirm = true },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
-                        buttonDefault = WantedButtonDefaults.getDefault(
-                            type = ButtonType.ASSISTIVE,
-                            variant = ButtonVariant.OUTLINED
-                        ).copy(contentColor = colors.textTitle),
-                        onClick = { settingsViewModel.uploadCloudBackup() }
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    WantedButton(
-                        text = if (cloudBackupState is CloudBackupState.Restoring)
+                        border = BorderStroke(1.dp, colors.cardBorder),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
+                    ) {
+                        Text(if (cloudBackupState is CloudBackupState.Restoring)
                             stringResource(R.string.cloud_backup_restoring)
-                        else stringResource(R.string.cloud_backup_restore),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        buttonDefault = WantedButtonDefaults.getDefault(
-                            type = ButtonType.ASSISTIVE,
-                            variant = ButtonVariant.OUTLINED
-                        ).copy(contentColor = colors.textTitle),
-                        onClick = { showCloudRestoreConfirm = true }
-                    )
+                        else stringResource(R.string.cloud_backup_restore), fontSize = fontSettings.scaled(14))
+                    }
                 } else {
                     // 비로그인: 로컬 백업
-                    WantedButton(
-                        text = stringResource(R.string.backup_export),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        buttonDefault = WantedButtonDefaults.getDefault(
-                            type = ButtonType.ASSISTIVE,
-                            variant = ButtonVariant.OUTLINED
-                        ).copy(contentColor = colors.textTitle),
+                    OutlinedButton(
                         onClick = {
                             val fileName = "memozy_backup_${
                                 java.text.SimpleDateFormat(
@@ -622,67 +720,75 @@ fun SettingsScreen(
                                 ).format(java.util.Date())
                             }.json"
                             exportLauncher.launch(fileName)
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    WantedButton(
-                        text = stringResource(R.string.backup_restore),
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
-                        buttonDefault = WantedButtonDefaults.getDefault(
-                            type = ButtonType.ASSISTIVE,
-                            variant = ButtonVariant.OUTLINED
-                        ).copy(contentColor = colors.textTitle),
-                        onClick = { showRestoreDialog = true }
-                    )
+                        border = BorderStroke(1.dp, colors.cardBorder),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
+                    ) {
+                        Text(stringResource(R.string.backup_export), fontSize = fontSettings.scaled(14))
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    OutlinedButton(
+                        onClick = { showRestoreDialog = true },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        border = BorderStroke(1.dp, colors.cardBorder),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
+                    ) {
+                        Text(stringResource(R.string.backup_restore), fontSize = fontSettings.scaled(14))
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
-                WantedButton(
-                    text = stringResource(R.string.trash_title),
+                OutlinedButton(
+                    onClick = { onTrash() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    buttonDefault = WantedButtonDefaults.getDefault(
-                        type = ButtonType.ASSISTIVE,
-                        variant = ButtonVariant.OUTLINED
-                    ).copy(contentColor = colors.textTitle),
-                    onClick = { onTrash() }
-                )
+                    border = BorderStroke(1.dp, colors.cardBorder),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
+                ) {
+                    Text(stringResource(R.string.trash_title), fontSize = fontSettings.scaled(14))
+                }
 
                 if (isDonationEnabled) {
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
 
-                    WantedButton(
-                        text = stringResource(R.string.donation_button),
+                    OutlinedButton(
+                        onClick = { onDonation() },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
-                        buttonDefault = WantedButtonDefaults.getDefault(
-                            type = ButtonType.ASSISTIVE,
-                            variant = ButtonVariant.OUTLINED
-                        ).copy(contentColor = colors.textTitle),
-                        onClick = { onDonation() }
-                    )
+                        border = BorderStroke(1.dp, colors.cardBorder),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
+                    ) {
+                        Text(stringResource(R.string.donation_button), fontSize = fontSettings.scaled(14))
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
-                WantedButton(
-                    text = stringResource(R.string.reset_memos),
+                OutlinedButton(
+                    onClick = { showClearDialog = true },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    buttonDefault = WantedButtonDefaults.getDefault(
-                        type = ButtonType.ASSISTIVE,
-                        variant = ButtonVariant.OUTLINED
-                    ).copy(contentColor = Color(0xFFE24B4A)),
-                    onClick = { showClearDialog = true }
-                )
+                    border = BorderStroke(1.dp, colors.cardBorder),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFE24B4A)),
+                ) {
+                    Text(stringResource(R.string.reset_memos), fontSize = fontSettings.scaled(14))
+                }
 
                 HorizontalDivider(
                     thickness = 0.3.dp ,
@@ -691,27 +797,27 @@ fun SettingsScreen(
 
                 Text(
                     text = stringResource(R.string.section_other),
-                    fontSize = 12.sp,
+                    fontSize = fontSettings.scaled(12),
                     fontWeight = FontWeight.Bold,
                     color = colors.topbarTitle,
-                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp, top = 12.dp)
+                    modifier = Modifier.padding(start = 16.dp, bottom = 6.dp, top = 10.dp)
                 )
 
-                WantedButton(
-                    text = stringResource(R.string.open_source_license),
+                OutlinedButton(
+                    onClick = { showLicenseDialog = true },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    buttonDefault = WantedButtonDefaults.getDefault(
-                        type = ButtonType.ASSISTIVE,
-                        variant = ButtonVariant.OUTLINED
-                    ).copy(contentColor = colors.textTitle),
-                    onClick = { showLicenseDialog = true }
-                )
+                    border = BorderStroke(1.dp, colors.cardBorder),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
+                ) {
+                    Text(stringResource(R.string.open_source_license), fontSize = fontSettings.scaled(14))
+                }
 
                 Text(
                     text = "v$versionName",
-                    fontSize = 12.sp,
+                    fontSize = fontSettings.scaled(12),
                     color = colors.textSecondary,
                     modifier = Modifier
                         .padding(top = 12.dp)

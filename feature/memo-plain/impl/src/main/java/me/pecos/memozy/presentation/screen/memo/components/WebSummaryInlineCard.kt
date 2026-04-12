@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.presentation.screen.memo.SummaryMode
 import me.pecos.memozy.presentation.theme.AppColors
+import me.pecos.memozy.presentation.theme.LocalFontSettings
 
 @Composable
 fun WebSummaryInlineCard(
@@ -56,6 +57,8 @@ fun WebSummaryInlineCard(
     context: Context,
     clipboardManager: ClipboardManager
 ) {
+    val fontSettings = LocalFontSettings.current
+
     // 접힌 상태
     if (!isExpanded) {
         Row(
@@ -63,10 +66,10 @@ fun WebSummaryInlineCard(
                 .background(colors.cardBackground).clickable { onExpandToggle(true) }.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("▶ ${stringResource(R.string.summary_expand)}", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = colors.chipText)
+            Text("▶ ${stringResource(R.string.summary_expand)}", fontSize = fontSettings.scaled(13), fontWeight = FontWeight.SemiBold, color = colors.chipText)
             Spacer(modifier = Modifier.weight(1f))
             Spacer(modifier = Modifier.width(12.dp))
-            Text(pageTitle ?: stringResource(R.string.summary_card_web), fontSize = 12.sp, color = colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(pageTitle ?: stringResource(R.string.summary_card_web), fontSize = fontSettings.scaled(12), color = colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Spacer(modifier = Modifier.height(12.dp))
     }
@@ -77,11 +80,11 @@ fun WebSummaryInlineCard(
             modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
                 .background(colors.cardBackground).padding(16.dp)
         ) {
-            Text("🔗 ${stringResource(R.string.summary_card_web)}", fontSize = 11.sp, color = colors.textSecondary, fontWeight = FontWeight.Medium)
+            Text("🔗 ${stringResource(R.string.summary_card_web)}", fontSize = fontSettings.scaled(11), color = colors.textSecondary, fontWeight = FontWeight.Medium)
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = pageTitle ?: webUrl,
-                fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = colors.textTitle,
+                fontSize = fontSettings.scaled(14), fontWeight = FontWeight.SemiBold, color = colors.textTitle,
                 maxLines = 2, overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.height(2.dp))
@@ -99,7 +102,7 @@ fun WebSummaryInlineCard(
                     modifier = Modifier.size(12.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text(webUrl, fontSize = 10.sp, color = Color(0xFF2196F3), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(webUrl, fontSize = fontSettings.scaled(10), color = Color(0xFF2196F3), maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
 
             // 액션 버튼
@@ -112,8 +115,8 @@ fun WebSummaryInlineCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Text("🔗", fontSize = 10.sp); Spacer(modifier = Modifier.width(3.dp))
-                    Text(stringResource(R.string.summary_card_open), fontSize = 10.sp, color = colors.chipText, fontWeight = FontWeight.Medium)
+                    Text("🔗", fontSize = fontSettings.scaled(10)); Spacer(modifier = Modifier.width(3.dp))
+                    Text(stringResource(R.string.summary_card_open), fontSize = fontSettings.scaled(10), color = colors.chipText, fontWeight = FontWeight.Medium)
                 }
                 Row(
                     modifier = Modifier.weight(1f).clip(RoundedCornerShape(6.dp)).background(colors.chipBackground)
@@ -127,7 +130,7 @@ fun WebSummaryInlineCard(
                 ) {
                     Icon(Icons.Default.ContentCopy, null, tint = colors.chipText, modifier = Modifier.size(12.dp))
                     Spacer(modifier = Modifier.width(3.dp))
-                    Text(stringResource(R.string.memo_copy), fontSize = 10.sp, color = colors.chipText, fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.memo_copy), fontSize = fontSettings.scaled(10), color = colors.chipText, fontWeight = FontWeight.Medium)
                 }
                 if (onSummarize != null && summaryText == null) {
                     Row(
@@ -136,14 +139,14 @@ fun WebSummaryInlineCard(
                             .padding(vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
-                    ) { Text(stringResource(R.string.summary_mode_simple), fontSize = 10.sp, color = Color(0xFF2196F3), fontWeight = FontWeight.Medium) }
+                    ) { Text(stringResource(R.string.summary_mode_simple), fontSize = fontSettings.scaled(10), color = Color(0xFF2196F3), fontWeight = FontWeight.Medium) }
                     Row(
                         modifier = Modifier.weight(1f).clip(RoundedCornerShape(6.dp)).background(Color(0xFFFF9800).copy(alpha = 0.1f))
                             .clickable { onSummarize(webUrl, SummaryMode.DETAILED) }
                             .padding(vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
-                    ) { Text(stringResource(R.string.summary_mode_detailed), fontSize = 10.sp, color = Color(0xFFFF9800), fontWeight = FontWeight.Medium) }
+                    ) { Text(stringResource(R.string.summary_mode_detailed), fontSize = fontSettings.scaled(10), color = Color(0xFFFF9800), fontWeight = FontWeight.Medium) }
                 }
             }
 
@@ -153,7 +156,7 @@ fun WebSummaryInlineCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = colors.textSecondary)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.web_summarizing), fontSize = 13.sp, color = colors.textSecondary, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.web_summarizing), fontSize = fontSettings.scaled(13), color = colors.textSecondary, modifier = Modifier.weight(1f))
                     Icon(Icons.Default.Close, contentDescription = null, tint = colors.textSecondary,
                         modifier = Modifier.size(16.dp).clickable { onCancelSummarize?.invoke() })
                 }
@@ -164,7 +167,7 @@ fun WebSummaryInlineCard(
                 Spacer(modifier = Modifier.height(10.dp))
                 HorizontalDivider(color = colors.cardBorder)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(summaryText, fontSize = 14.sp, lineHeight = 22.sp, color = colors.textBody)
+                Text(summaryText, fontSize = fontSettings.scaled(14), lineHeight = 22.sp, color = colors.textBody)
             }
 
             // 접기 버튼
@@ -175,7 +178,7 @@ fun WebSummaryInlineCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Text("▼ ${stringResource(R.string.summary_collapse)}", fontSize = 12.sp, color = colors.textSecondary)
+                    Text("▼ ${stringResource(R.string.summary_collapse)}", fontSize = fontSettings.scaled(12), color = colors.textSecondary)
                 }
             }
         }

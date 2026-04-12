@@ -43,6 +43,7 @@
     <string name="yes">はい</string>
     <string name="no">いいえ</string>
     <string name="save">保存</string>
+    <string name="memo_done">完了</string>
     <string name="add_memo">メモを追加</string>
     <string name="edit_memo">メモを編集</string>
 
@@ -216,4 +217,14 @@
     <string name="cloud_backup_count">保存済みバックアップ %d件</string>
     <string name="cloud_backup_memo_count">メモ %d件</string>
     <string name="cloud_backup_last_time">最後のバックアップ: %s</string>
+
+    <!-- Font Settings -->
+    <string name="font_settings">フォント設定</string>
+    <string name="font_size">文字サイズ</string>
+    <string name="font_size_small">小</string>
+    <string name="font_size_normal">中</string>
+    <string name="font_size_large">大</string>
+    <string name="font_preview_title">タイトルプレビュー</string>
+    <string name="font_preview_body">本文プレビューテキストです。このフォントがメモに適用されます。</string>
+    <string name="font_system">システムデフォルト</string>
 </resources>
