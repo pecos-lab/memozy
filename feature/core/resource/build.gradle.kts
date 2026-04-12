@@ -8,5 +8,5 @@ plugins {
 setNamespace("feature.core.resource")
 
 dependencies {
-    api(libs.androidx.compose.ui.text.google.fonts)
+    api(libs.google.fonts)
 }
