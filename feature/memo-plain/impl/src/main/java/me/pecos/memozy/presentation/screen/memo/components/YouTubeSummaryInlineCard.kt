@@ -84,13 +84,13 @@ fun YouTubeSummaryInlineCard(
                 coil.compose.AsyncImage(
                     model = "https://img.youtube.com/vi/$videoId/hqdefault.jpg",
                     contentDescription = null,
-                    modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f)
-                        .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
+                    modifier = Modifier.fillMaxWidth().padding(16.dp).aspectRatio(16f / 9f)
+                        .clip(RoundedCornerShape(12.dp)),
                     contentScale = androidx.compose.ui.layout.ContentScale.Crop
                 )
             }
 
-            Column(modifier = Modifier.padding(12.dp)) {
+            Column(modifier = Modifier.padding(16.dp)) {
                 Text("▶ YouTube", fontSize = 11.sp, color = colors.textSecondary, fontWeight = FontWeight.Medium)
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -102,6 +102,7 @@ fun YouTubeSummaryInlineCard(
                     Spacer(modifier = Modifier.height(2.dp))
                     Row(
                         modifier = Modifier
+                            .fillMaxWidth()
                             .clip(RoundedCornerShape(6.dp))
                             .background(colors.chipBackground.copy(alpha = 0.5f))
                             .padding(horizontal = 6.dp, vertical = 3.dp),
@@ -119,52 +120,55 @@ fun YouTubeSummaryInlineCard(
 
                 // 액션 버튼
                 Spacer(modifier = Modifier.height(10.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     // 원본 보기
                     Row(
-                        modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(colors.chipBackground)
+                        modifier = Modifier.weight(1f).clip(RoundedCornerShape(6.dp)).background(colors.chipBackground)
                             .clickable {
                                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(youtubeUrl)).apply { setPackage("com.google.android.youtube") }
                                 try { context.startActivity(intent) } catch (_: Exception) {
                                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(youtubeUrl)))
                                 }
                             }
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .padding(vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
                     ) {
-                        Text("🔗", fontSize = 12.sp); Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(R.string.summary_card_open), fontSize = 11.sp, color = colors.chipText, fontWeight = FontWeight.Medium)
+                        Text("🔗", fontSize = 10.sp); Spacer(modifier = Modifier.width(3.dp))
+                        Text(stringResource(R.string.summary_card_open), fontSize = 10.sp, color = colors.chipText, fontWeight = FontWeight.Medium)
                     }
                     // 복사
                     Row(
-                        modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(colors.chipBackground)
+                        modifier = Modifier.weight(1f).clip(RoundedCornerShape(6.dp)).background(colors.chipBackground)
                             .clickable {
                                 clipboardManager.setText(AnnotatedString(youtubeUrl))
                                 Toast.makeText(context, context.getString(R.string.youtube_url_copied), Toast.LENGTH_SHORT).show()
                             }
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .padding(vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
                     ) {
-                        Icon(Icons.Default.ContentCopy, null, tint = colors.chipText, modifier = Modifier.size(14.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(R.string.memo_copy), fontSize = 11.sp, color = colors.chipText, fontWeight = FontWeight.Medium)
+                        Icon(Icons.Default.ContentCopy, null, tint = colors.chipText, modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Text(stringResource(R.string.memo_copy), fontSize = 10.sp, color = colors.chipText, fontWeight = FontWeight.Medium)
                     }
                     // 요약 버튼 (아직 요약 안 됨)
                     if (onSummarize != null && summaryText == null) {
                         Row(
-                            modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color(0xFF2196F3).copy(alpha = 0.1f))
+                            modifier = Modifier.weight(1f).clip(RoundedCornerShape(6.dp)).background(Color(0xFF2196F3).copy(alpha = 0.1f))
                                 .clickable { onSummarize(youtubeUrl, SummaryMode.SIMPLE) }
-                                .padding(horizontal = 10.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) { Text(stringResource(R.string.summary_mode_simple), fontSize = 11.sp, color = Color(0xFF2196F3), fontWeight = FontWeight.Medium) }
+                                .padding(vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) { Text(stringResource(R.string.summary_mode_simple), fontSize = 10.sp, color = Color(0xFF2196F3), fontWeight = FontWeight.Medium) }
                         Row(
-                            modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color(0xFFFF9800).copy(alpha = 0.1f))
+                            modifier = Modifier.weight(1f).clip(RoundedCornerShape(6.dp)).background(Color(0xFFFF9800).copy(alpha = 0.1f))
                                 .clickable { onSummarize(youtubeUrl, SummaryMode.DETAILED) }
-                                .padding(horizontal = 10.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) { Text(stringResource(R.string.summary_mode_detailed), fontSize = 11.sp, color = Color(0xFFFF9800), fontWeight = FontWeight.Medium) }
+                                .padding(vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) { Text(stringResource(R.string.summary_mode_detailed), fontSize = 10.sp, color = Color(0xFFFF9800), fontWeight = FontWeight.Medium) }
                     }
-                    // 요약 완료 후 요약 버튼 숨김 (원본보기, 복사만 표시)
                 }
 
                 // 로딩

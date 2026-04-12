@@ -13,4 +13,13 @@ interface YoutubeSummaryDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(summary: YoutubeSummary)
+
+    @Query("SELECT * FROM youtube_summary ORDER BY createdAt DESC")
+    suspend fun getAllOnce(): List<YoutubeSummary>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(summaries: List<YoutubeSummary>)
+
+    @Query("DELETE FROM youtube_summary")
+    suspend fun clearAll()
 }

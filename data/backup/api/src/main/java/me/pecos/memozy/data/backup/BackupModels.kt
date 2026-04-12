@@ -1,6 +1,101 @@
 package me.pecos.memozy.data.backup
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+
+// ── Supabase table DTOs (snake_case for PostgREST) ──
+
+@Serializable
+data class SupaMemo(
+    val id: Int,
+    @SerialName("user_id") val userId: String,
+    val name: String,
+    @SerialName("category_id") val categoryId: Int,
+    val content: String,
+    @SerialName("created_at") val createdAt: Long,
+    @SerialName("updated_at") val updatedAt: Long,
+    val format: String = "PLAIN",
+    @SerialName("is_pinned") val isPinned: Boolean = false,
+    @SerialName("audio_path") val audioPath: String? = null,
+    val styles: String? = null,
+    @SerialName("youtube_url") val youtubeUrl: String? = null,
+    @SerialName("deleted_at") val deletedAt: Long? = null,
+    @SerialName("reminder_at") val reminderAt: Long? = null,
+    @SerialName("summary_content") val summaryContent: String? = null,
+)
+
+@Serializable
+data class SupaCategory(
+    val id: Int,
+    @SerialName("user_id") val userId: String,
+    val name: String,
+)
+
+@Serializable
+data class SupaChatSession(
+    val id: Int,
+    @SerialName("user_id") val userId: String,
+    val title: String,
+    @SerialName("created_at") val createdAt: Long,
+    @SerialName("updated_at") val updatedAt: Long,
+    val category: String = "general",
+)
+
+@Serializable
+data class SupaChatMessage(
+    val id: Int,
+    @SerialName("user_id") val userId: String,
+    @SerialName("session_id") val sessionId: Int,
+    val role: String,
+    val content: String,
+    val timestamp: Long,
+    val metadata: String? = null,
+)
+
+@Serializable
+data class SupaYoutubeSummary(
+    @SerialName("user_id") val userId: String,
+    @SerialName("video_id") val videoId: String,
+    val mode: String,
+    val language: String,
+    val url: String,
+    val summary: String,
+    @SerialName("created_at") val createdAt: Long,
+)
+
+@Serializable
+data class SupaAiUsage(
+    val id: Long,
+    @SerialName("user_id") val userId: String,
+    val feature: String,
+    @SerialName("used_at") val usedAt: Long,
+)
+
+@Serializable
+data class SupaBackupMetadataInsert(
+    @SerialName("user_id") val userId: String,
+    @SerialName("device_name") val deviceName: String,
+    @SerialName("app_version") val appVersion: String,
+    @SerialName("db_version") val dbVersion: Int,
+    @SerialName("memo_count") val memoCount: Int = 0,
+    @SerialName("total_rows") val totalRows: Int = 0,
+    @SerialName("size_bytes") val sizeBytes: Long = 0,
+)
+
+@Serializable
+data class SupaBackupMetadata(
+    val id: String,
+    @SerialName("user_id") val userId: String,
+    @SerialName("device_name") val deviceName: String,
+    @SerialName("app_version") val appVersion: String,
+    @SerialName("db_version") val dbVersion: Int,
+    @SerialName("memo_count") val memoCount: Int = 0,
+    @SerialName("total_rows") val totalRows: Int = 0,
+    @SerialName("size_bytes") val sizeBytes: Long = 0,
+    @SerialName("created_at") val createdAt: String = "",
+)
+
+// ── Legacy local backup models (JSON export/import) ──
 
 @Serializable
 data class BackupPayload(
@@ -59,41 +154,4 @@ data class ChatMessageBackup(
     val content: String,
     val timestamp: Long,
     val metadata: String? = null,
-)
-
-// --- Cloud backup API request ---
-
-@Serializable
-data class BackupUploadRequest(
-    val device_name: String,
-    val app_version: String,
-    val db_version: Int,
-    val tables: BackupTables,
-)
-
-// --- Cloud backup metadata ---
-
-@Serializable
-data class BackupMeta(
-    val id: String,
-    val device_name: String,
-    val app_version: String,
-    val db_version: Int,
-    val memo_count: Int,
-    val size_bytes: Long,
-    val created_at: String,
-)
-
-@Serializable
-data class BackupCreateResponse(
-    val id: String,
-    val created_at: String,
-    val memo_count: Int,
-)
-
-@Serializable
-data class BackupDownloadResponse(
-    val id: String,
-    val metadata: BackupMeta,
-    val tables: BackupTables,
 )

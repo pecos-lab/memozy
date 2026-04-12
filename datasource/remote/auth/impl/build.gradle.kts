@@ -19,9 +19,15 @@ android {
         buildConfig = true
     }
 
-    defaultConfig {
-        buildConfigField("String", "SUPABASE_URL", "\"${localProperties.getProperty("supabase.url", "")}\"")
-        buildConfigField("String", "SUPABASE_ANON_KEY", "\"${localProperties.getProperty("supabase.anon.key", "")}\"")
+    buildTypes {
+        debug {
+            buildConfigField("String", "SUPABASE_URL", "\"${localProperties.getProperty("supabase.url", "")}\"")
+            buildConfigField("String", "SUPABASE_ANON_KEY", "\"${localProperties.getProperty("supabase.anon.key", "")}\"")
+        }
+        release {
+            buildConfigField("String", "SUPABASE_URL", "\"${localProperties.getProperty("supabase.prod.url", "")}\"")
+            buildConfigField("String", "SUPABASE_ANON_KEY", "\"${localProperties.getProperty("supabase.prod.anon.key", "")}\"")
+        }
     }
 }
 
@@ -29,4 +35,5 @@ dependencies {
     implementation(projects.datasource.remote.auth.api)
     implementation(platform(libs.supabase.bom))
     implementation(libs.supabase.auth)
+    implementation(libs.supabase.postgrest)
 }

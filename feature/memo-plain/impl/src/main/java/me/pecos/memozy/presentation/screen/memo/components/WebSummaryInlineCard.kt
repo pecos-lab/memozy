@@ -75,7 +75,7 @@ fun WebSummaryInlineCard(
     if (isExpanded) {
         Column(
             modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-                .background(colors.cardBackground).padding(12.dp)
+                .background(colors.cardBackground).padding(16.dp)
         ) {
             Text("🔗 ${stringResource(R.string.summary_card_web)}", fontSize = 11.sp, color = colors.textSecondary, fontWeight = FontWeight.Medium)
             Spacer(modifier = Modifier.height(4.dp))
@@ -87,6 +87,7 @@ fun WebSummaryInlineCard(
             Spacer(modifier = Modifier.height(2.dp))
             Row(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .clip(RoundedCornerShape(6.dp))
                     .background(colors.chipBackground.copy(alpha = 0.5f))
                     .padding(horizontal = 6.dp, vertical = 3.dp),
@@ -103,44 +104,47 @@ fun WebSummaryInlineCard(
 
             // 액션 버튼
             Spacer(modifier = Modifier.height(10.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Row(
-                    modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(colors.chipBackground)
+                    modifier = Modifier.weight(1f).clip(RoundedCornerShape(6.dp)).background(colors.chipBackground)
                         .clickable { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(webUrl))) }
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(vertical = 5.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    Text("🔗", fontSize = 12.sp); Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(R.string.summary_card_open), fontSize = 11.sp, color = colors.chipText, fontWeight = FontWeight.Medium)
+                    Text("🔗", fontSize = 10.sp); Spacer(modifier = Modifier.width(3.dp))
+                    Text(stringResource(R.string.summary_card_open), fontSize = 10.sp, color = colors.chipText, fontWeight = FontWeight.Medium)
                 }
                 Row(
-                    modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(colors.chipBackground)
+                    modifier = Modifier.weight(1f).clip(RoundedCornerShape(6.dp)).background(colors.chipBackground)
                         .clickable {
                             clipboardManager.setText(AnnotatedString(webUrl))
                             Toast.makeText(context, context.getString(R.string.web_url_copied), Toast.LENGTH_SHORT).show()
                         }
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(vertical = 5.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    Icon(Icons.Default.ContentCopy, null, tint = colors.chipText, modifier = Modifier.size(14.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(R.string.memo_copy), fontSize = 11.sp, color = colors.chipText, fontWeight = FontWeight.Medium)
+                    Icon(Icons.Default.ContentCopy, null, tint = colors.chipText, modifier = Modifier.size(12.dp))
+                    Spacer(modifier = Modifier.width(3.dp))
+                    Text(stringResource(R.string.memo_copy), fontSize = 10.sp, color = colors.chipText, fontWeight = FontWeight.Medium)
                 }
                 if (onSummarize != null && summaryText == null) {
                     Row(
-                        modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color(0xFF2196F3).copy(alpha = 0.1f))
+                        modifier = Modifier.weight(1f).clip(RoundedCornerShape(6.dp)).background(Color(0xFF2196F3).copy(alpha = 0.1f))
                             .clickable { onSummarize(webUrl, SummaryMode.SIMPLE) }
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) { Text(stringResource(R.string.summary_mode_simple), fontSize = 11.sp, color = Color(0xFF2196F3), fontWeight = FontWeight.Medium) }
+                            .padding(vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) { Text(stringResource(R.string.summary_mode_simple), fontSize = 10.sp, color = Color(0xFF2196F3), fontWeight = FontWeight.Medium) }
                     Row(
-                        modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(Color(0xFFFF9800).copy(alpha = 0.1f))
+                        modifier = Modifier.weight(1f).clip(RoundedCornerShape(6.dp)).background(Color(0xFFFF9800).copy(alpha = 0.1f))
                             .clickable { onSummarize(webUrl, SummaryMode.DETAILED) }
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) { Text(stringResource(R.string.summary_mode_detailed), fontSize = 11.sp, color = Color(0xFFFF9800), fontWeight = FontWeight.Medium) }
+                            .padding(vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) { Text(stringResource(R.string.summary_mode_detailed), fontSize = 10.sp, color = Color(0xFFFF9800), fontWeight = FontWeight.Medium) }
                 }
-                // 요약 완료 후 요약 버튼 숨김 (원본보기, 복사만 표시)
             }
 
             // 로딩

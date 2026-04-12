@@ -213,4 +213,5 @@
     <string name="cloud_backup_restoring">복원 중…</string>
     <string name="cloud_backup_count">저장된 백업 %d개</string>
     <string name="cloud_backup_memo_count">메모 %d개</string>
+    <string name="cloud_backup_last_time">마지막 백업: %s</string>
 </resources>

@@ -19,9 +19,15 @@ android {
         buildConfig = true
     }
 
-    defaultConfig {
-        buildConfigField("String", "WORKER_URL", "\"${localProperties.getProperty("worker.url", "")}\"")
-        buildConfigField("String", "APP_SECRET_KEY", "\"${localProperties.getProperty("app.secret.key", "")}\"")
+    buildTypes {
+        debug {
+            buildConfigField("String", "WORKER_URL", "\"${localProperties.getProperty("worker.url", "")}\"")
+            buildConfigField("String", "APP_SECRET_KEY", "\"${localProperties.getProperty("app.secret.key", "")}\"")
+        }
+        release {
+            buildConfigField("String", "WORKER_URL", "\"${localProperties.getProperty("worker.prod.url", "")}\"")
+            buildConfigField("String", "APP_SECRET_KEY", "\"${localProperties.getProperty("app.prod.secret.key", "")}\"")
+        }
     }
 }
 

@@ -272,11 +272,8 @@ fun MemoScreen(
     var webChipDismissed by remember { mutableStateOf(false) }
     var savedWebUrl by remember { mutableStateOf<String?>(null) }
     var selectedWebUrl by remember { mutableStateOf<String?>(null) }
-    // 요약 전 원본 URL 보관 (요약 후 본문에서 URL이 대체되어도 유지)
-    var savedYoutubeUrl by remember { mutableStateOf(detectedYoutubeUrl ?: existingMemo.youtubeUrl) }
-    if (detectedYoutubeUrl != null && savedYoutubeUrl == null) {
-        savedYoutubeUrl = detectedYoutubeUrl
-    }
+    // 요약 전 원본 URL 보관 (버튼으로 추가하거나 DB에 저장된 경우만)
+    var savedYoutubeUrl by remember { mutableStateOf(existingMemo.youtubeUrl) }
 
     // 요약 결과 표시 상태
     var showSummary by remember { mutableStateOf(false) }
@@ -391,7 +388,7 @@ fun MemoScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 32.dp)
                     .padding(top = 42.dp, bottom = 12.dp)
             ) {
                 Icon(
@@ -487,7 +484,7 @@ fun MemoScreen(
                     .weight(1f)
                     .hazeSource(hazeState)
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 30.dp, vertical = 16.dp)
+                    .padding(horizontal = 16.dp, vertical = 16.dp)
             ) {
                 // 제목 — 개행 시 내용으로 포커스 이동
                 val bodyFocusRequester = remember { FocusRequester() }
@@ -508,7 +505,7 @@ fun MemoScreen(
                         fontWeight = FontWeight.Bold,
                         color = colors.textTitle
                     ),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                     decorationBox = { innerTextField ->
                         Box {
                             if (nameText.isEmpty()) {
@@ -575,7 +572,7 @@ fun MemoScreen(
                 val ytVideoId = remember(youtubeUrlDisplay) {
                     Regex("""(?:v=|youtu\.be/|shorts/)([a-zA-Z0-9_-]{11})""").find(youtubeUrlDisplay)?.groupValues?.get(1)
                 }
-                val showYoutubeInline = summaryText != null || (youtubeUrlDisplay.isNotBlank() && !youtubeChipDismissed && (detectedYoutubeUrl != null || summaryResult != null || youtubeTitle != null))
+                val showYoutubeInline = summaryText != null || (youtubeUrlDisplay.isNotBlank() && !youtubeChipDismissed && (savedYoutubeUrl != null || summaryResult != null || youtubeTitle != null))
                 if (showYoutubeInline) {
                     YouTubeSummaryInlineCard(
                         youtubeUrl = youtubeUrlDisplay,
@@ -635,6 +632,7 @@ fun MemoScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 150.dp)
+                        .padding(horizontal = 16.dp)
                         .focusRequester(bodyFocusRequester),
                     textStyle = TextStyle(
                         fontSize = 15.sp,
@@ -861,6 +859,7 @@ fun MemoScreen(
             onDismiss = { showYoutubeDialog = false },
             onUrlAdded = { url ->
                 bodyText = if (bodyText.isBlank()) url else "$bodyText\n$url"
+                savedYoutubeUrl = url
                 showYoutubeDialog = false
             }
         )
