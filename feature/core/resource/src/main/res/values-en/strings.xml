@@ -43,6 +43,7 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="save">Save</string>
+    <string name="memo_done">Done</string>
     <string name="add_memo">Add Memo</string>
     <string name="edit_memo">Edit Memo</string>
 
@@ -216,4 +217,14 @@
     <string name="cloud_backup_count">%d backups saved</string>
     <string name="cloud_backup_memo_count">%d memos</string>
     <string name="cloud_backup_last_time">Last backup: %s</string>
+
+    <!-- Font Settings -->
+    <string name="font_settings">Font</string>
+    <string name="font_size">Font Size</string>
+    <string name="font_size_small">Small</string>
+    <string name="font_size_normal">Normal</string>
+    <string name="font_size_large">Large</string>
+    <string name="font_preview_title">Title Preview</string>
+    <string name="font_preview_body">This is a body text preview. This font will be applied to your memos.</string>
+    <string name="font_system">System Default</string>
 </resources>

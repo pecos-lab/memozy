@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import me.pecos.memozy.presentation.theme.LocalAppColors
+import me.pecos.memozy.presentation.theme.LocalFontSettings
 
 enum class PopupSize { MEDIUM, LARGE, XLARGE }
 enum class PopupNavigation { NORMAL, EMPHASIZED, FLOATING }
@@ -77,6 +78,7 @@ fun AppPopup(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val colors = LocalAppColors.current
+    val fontSettings = LocalFontSettings.current
 
     val innerPadding = when (size) {
         PopupSize.MEDIUM -> 20.dp
@@ -110,7 +112,7 @@ fun AppPopup(
                             Text(
                                 text = title,
                                 fontWeight = FontWeight.SemiBold,
-                                fontSize = 17.sp,
+                                fontSize = fontSettings.scaled(17),
                                 color = colors.textTitle,
                                 modifier = Modifier
                                     .align(Alignment.Center)
@@ -143,7 +145,7 @@ fun AppPopup(
                             Text(
                                 text = title,
                                 fontWeight = FontWeight.SemiBold,
-                                fontSize = 17.sp,
+                                fontSize = fontSettings.scaled(17),
                                 color = colors.textTitle,
                                 modifier = Modifier.weight(1f)
                             )
@@ -220,12 +222,11 @@ fun AppPopup(
                     PopupActionArea.NEUTRAL -> {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.End
                         ) {
                             if (secondaryButtonText != null) {
                                 OutlinedButton(
                                     onClick = onSecondaryClick ?: onDismissRequest,
-                                    modifier = Modifier.weight(1f),
                                     border = BorderStroke(1.dp, colors.cardBorder),
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.outlinedButtonColors(
@@ -234,11 +235,11 @@ fun AppPopup(
                                 ) {
                                     Text(secondaryButtonText)
                                 }
+                                Spacer(modifier = Modifier.width(8.dp))
                             }
                             if (primaryButtonText != null && onPrimaryClick != null) {
                                 Button(
                                     onClick = onPrimaryClick,
-                                    modifier = Modifier.weight(1f),
                                     colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
                                     shape = RoundedCornerShape(12.dp)
                                 ) {

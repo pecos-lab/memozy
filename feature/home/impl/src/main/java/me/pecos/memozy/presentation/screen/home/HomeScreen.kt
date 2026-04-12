@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -71,10 +73,11 @@ import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.presentation.screen.home.model.HomeUiState
 import me.pecos.memozy.presentation.screen.home.model.SortOrder
 import me.pecos.memozy.presentation.theme.LocalAppColors
+import me.pecos.memozy.presentation.theme.LocalFontSettings
 
 // ── 홈 화면 ────────────────────────────────────────────────────────────────────
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun HomeScreen(
     onDelete: (Int) -> Unit,
@@ -82,6 +85,7 @@ fun HomeScreen(
     viewModel: MainViewModel
 ) {
     val colors = LocalAppColors.current
+    val fontSettings = LocalFontSettings.current
     val homeUiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val sortOrder by viewModel.sortOrder.collectAsState()
@@ -120,7 +124,7 @@ fun HomeScreen(
                 ) {
                     Text(
                         text = if (isSelectionMode) stringResource(R.string.selected_count, selectedIds.size) else "Memozy",
-                        fontSize = 22.sp,
+                        fontSize = fontSettings.scaled(22),
                         fontWeight = FontWeight.Bold,
                         color = colors.topbarTitle,
                         modifier = Modifier.weight(1f)
@@ -128,7 +132,7 @@ fun HomeScreen(
                     if (!isSelectionMode) {
                         Text(
                             text = stringResource(R.string.memo_count, filteredList.size),
-                            fontSize = 12.sp,
+                            fontSize = fontSettings.scaled(12),
                             color = colors.textSecondary
                         )
                     }
@@ -137,19 +141,18 @@ fun HomeScreen(
                 // 태그 필터 버튼 / 선택 모드 액션 버튼
                 if (isSelectionMode) {
                     val allSelected = selectedIds.size == filteredList.size && filteredList.isNotEmpty()
-                    Row(
+                    FlowRow(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(start = 16.dp, end = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
-                        Spacer(modifier = Modifier.weight(1f))
                         // 전체선택
                         Text(
                             text = if (allSelected) stringResource(R.string.deselect_all)
                                     else stringResource(R.string.select_all),
-                            fontSize = 13.sp,
+                            fontSize = fontSettings.scaled(13),
                             fontWeight = FontWeight.Medium,
                             color = colors.chipText,
                             modifier = Modifier
@@ -163,7 +166,7 @@ fun HomeScreen(
                         // 고정
                         Text(
                             text = stringResource(R.string.pin),
-                            fontSize = 13.sp,
+                            fontSize = fontSettings.scaled(13),
                             fontWeight = FontWeight.Medium,
                             color = if (selectedIds.isNotEmpty()) Color(0xFFFFA726) else colors.textSecondary,
                             modifier = Modifier
@@ -182,7 +185,7 @@ fun HomeScreen(
                                 "${stringResource(R.string.delete_action)} ${selectedIds.size}"
                             else
                                 stringResource(R.string.delete_action),
-                            fontSize = 13.sp,
+                            fontSize = fontSettings.scaled(13),
                             fontWeight = FontWeight.Medium,
                             color = if (selectedIds.isNotEmpty()) Color(0xFFE24B4A) else colors.textSecondary,
                             modifier = Modifier
@@ -195,7 +198,7 @@ fun HomeScreen(
                         // 취소
                         Text(
                             text = stringResource(R.string.cancel),
-                            fontSize = 13.sp,
+                            fontSize = fontSettings.scaled(13),
                             fontWeight = FontWeight.Medium,
                             color = colors.textSecondary,
                             modifier = Modifier
@@ -227,7 +230,7 @@ fun HomeScreen(
                                     stringResource(R.string.sort_newest)
                                 else
                                     stringResource(R.string.sort_oldest),
-                                fontSize = 13.sp,
+                                fontSize = fontSettings.scaled(13),
                                 fontWeight = FontWeight.Medium,
                                 color = colors.textSecondary
                             )
@@ -324,7 +327,7 @@ fun HomeScreen(
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
                             text = stringResource(R.string.empty_memo_hint),
-                            fontSize = 14.sp,
+                            fontSize = fontSettings.scaled(14),
                             color = colors.textSecondary.copy(alpha = if (isSystemInDarkTheme()) 0.75f else 0.5f),
                             textAlign = TextAlign.Center
                         )

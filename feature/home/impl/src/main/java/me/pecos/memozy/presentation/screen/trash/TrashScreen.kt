@@ -47,6 +47,7 @@ import me.pecos.memozy.presentation.components.PopupNavigation
 import me.pecos.memozy.presentation.components.PopupSize
 import me.pecos.memozy.presentation.screen.home.model.MemoUiState
 import me.pecos.memozy.presentation.theme.LocalAppColors
+import me.pecos.memozy.presentation.theme.LocalFontSettings
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -59,6 +60,7 @@ fun TrashScreen(
 ) {
     val deletedMemos by viewModel.deletedMemos.collectAsState()
     val colors = LocalAppColors.current
+    val fontSettings = LocalFontSettings.current
     var showEmptyDialog by remember { mutableStateOf(false) }
 
     if (showEmptyDialog) {
@@ -105,7 +107,7 @@ fun TrashScreen(
                 }
                 Text(
                     text = stringResource(R.string.trash_title),
-                    fontSize = 22.sp,
+                    fontSize = fontSettings.scaled(22),
                     fontWeight = FontWeight.Bold,
                     color = colors.topbarTitle,
                     modifier = Modifier.weight(1f)
@@ -115,7 +117,7 @@ fun TrashScreen(
                         Text(
                             stringResource(R.string.trash_empty_action),
                             color = colors.actionDeleteTint,
-                            fontSize = 14.sp
+                            fontSize = fontSettings.scaled(14)
                         )
                     }
                 }
@@ -125,7 +127,7 @@ fun TrashScreen(
 
             Text(
                 text = stringResource(R.string.trash_auto_delete_hint),
-                fontSize = 12.sp,
+                fontSize = fontSettings.scaled(12),
                 color = colors.textSecondary,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
@@ -142,7 +144,7 @@ fun TrashScreen(
                     Text(
                         text = stringResource(R.string.trash_empty),
                         color = colors.textSecondary,
-                        fontSize = 14.sp
+                        fontSize = fontSettings.scaled(14)
                     )
                 }
             } else {
@@ -170,6 +172,7 @@ private fun TrashMemoItem(
     onDelete: () -> Unit
 ) {
     val colors = LocalAppColors.current
+    val fontSettings = LocalFontSettings.current
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     if (showDeleteDialog) {
@@ -204,7 +207,7 @@ private fun TrashMemoItem(
     ) {
         Text(
             text = memo.name.ifBlank { stringResource(R.string.memo_title_placeholder) },
-            fontSize = 16.sp,
+            fontSize = fontSettings.scaled(16),
             fontWeight = FontWeight.Medium,
             color = colors.textTitle,
             maxLines = 1,
@@ -221,7 +224,7 @@ private fun TrashMemoItem(
                     .replace("&amp;", "&")
                     .trim()
                     .take(100),
-                fontSize = 13.sp,
+                fontSize = fontSettings.scaled(13),
                 color = colors.textBody,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
@@ -237,14 +240,14 @@ private fun TrashMemoItem(
         ) {
             Text(
                 text = formatDeletedTime(memo.deletedAt),
-                fontSize = 11.sp,
+                fontSize = fontSettings.scaled(11),
                 color = colors.textSecondary
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
                     text = stringResource(R.string.trash_restore),
-                    fontSize = 12.sp,
+                    fontSize = fontSettings.scaled(12),
                     fontWeight = FontWeight.Medium,
                     color = colors.actionEditTint,
                     modifier = Modifier
@@ -254,7 +257,7 @@ private fun TrashMemoItem(
                 )
                 Text(
                     text = stringResource(R.string.trash_permanent_delete_action),
-                    fontSize = 12.sp,
+                    fontSize = fontSettings.scaled(12),
                     fontWeight = FontWeight.Medium,
                     color = colors.actionDeleteTint,
                     modifier = Modifier

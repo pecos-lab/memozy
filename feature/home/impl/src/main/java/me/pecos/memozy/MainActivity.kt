@@ -70,7 +70,12 @@ import me.pecos.memozy.presentation.screen.settings.SettingsScreen
 import me.pecos.memozy.presentation.screen.settings.SettingsViewModel
 import me.pecos.memozy.presentation.screen.settings.ThemeMode
 import me.pecos.memozy.presentation.theme.LocalActivity
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
+import me.pecos.memozy.presentation.theme.FontSettings
 import me.pecos.memozy.presentation.theme.LocalAppColors
+import me.pecos.memozy.presentation.theme.LocalFontSettings
+import androidx.compose.ui.unit.sp
 import me.pecos.memozy.presentation.theme.OverrideNightMode
 import me.pecos.memozy.presentation.theme.darkAppColors
 import me.pecos.memozy.presentation.theme.lightAppColors
@@ -140,12 +145,47 @@ class MainActivity : AppCompatActivity() {
             }
             val appColors = if (isDarkTheme) darkAppColors else lightAppColors
 
+            val selectedFontFamily by settingsViewModel.selectedFontFamily.collectAsState()
+            val selectedFontSize by settingsViewModel.selectedFontSize.collectAsState()
+            val fontSettings = FontSettings(
+                fontFamily = selectedFontFamily.fontFamily,
+                titleSize = selectedFontSize.titleSp.sp,
+                bodySize = selectedFontSize.bodySp.sp,
+                fontSizeLevel = selectedFontSize,
+                appFontFamily = selectedFontFamily
+            )
+
             CompositionLocalProvider(
                 LocalActivity provides this@MainActivity
             ) {
             OverrideNightMode(isDarkTheme = isDarkTheme) {
-                CompositionLocalProvider(LocalAppColors provides appColors) {
+                CompositionLocalProvider(
+                    LocalAppColors provides appColors,
+                    LocalFontSettings provides fontSettings
+                ) {
                     DesignSystemTheme(isDarkTheme = isDarkTheme) {
+                    val currentTypography = MaterialTheme.typography
+                    val ff = fontSettings.fontFamily
+                    val customTypography = currentTypography.copy(
+                        displayLarge = currentTypography.displayLarge.copy(fontFamily = ff),
+                        displayMedium = currentTypography.displayMedium.copy(fontFamily = ff),
+                        displaySmall = currentTypography.displaySmall.copy(fontFamily = ff),
+                        headlineLarge = currentTypography.headlineLarge.copy(fontFamily = ff),
+                        headlineMedium = currentTypography.headlineMedium.copy(fontFamily = ff),
+                        headlineSmall = currentTypography.headlineSmall.copy(fontFamily = ff),
+                        titleLarge = currentTypography.titleLarge.copy(fontFamily = ff),
+                        titleMedium = currentTypography.titleMedium.copy(fontFamily = ff),
+                        titleSmall = currentTypography.titleSmall.copy(fontFamily = ff),
+                        bodyLarge = currentTypography.bodyLarge.copy(fontFamily = ff),
+                        bodyMedium = currentTypography.bodyMedium.copy(fontFamily = ff),
+                        bodySmall = currentTypography.bodySmall.copy(fontFamily = ff),
+                        labelLarge = currentTypography.labelLarge.copy(fontFamily = ff),
+                        labelMedium = currentTypography.labelMedium.copy(fontFamily = ff),
+                        labelSmall = currentTypography.labelSmall.copy(fontFamily = ff),
+                    )
+                    MaterialTheme(typography = customTypography) {
+                    val defaultTextStyle = LocalTextStyle.current.copy(fontFamily = ff)
+                    CompositionLocalProvider(LocalTextStyle provides defaultTextStyle) {
 
                         val viewModel: MainViewModel = viewModel()
                         val navController = rememberNavController()
@@ -353,8 +393,10 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }
-            } // OverrideNightMode
-            } // LocalContext + LocalActivity
+            } // CompositionLocalProvider(LocalTextStyle)
+            } // MaterialTheme(customTypography)
+            } // DesignSystemTheme + CompositionLocalProvider(LocalAppColors, LocalFontSettings)
+            } // OverrideNightMode + CompositionLocalProvider(LocalActivity)
         }
     }
 }

@@ -38,12 +38,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mohamedrejeb.richeditor.model.RichTextState
 import me.pecos.memozy.presentation.theme.AppColors
+import me.pecos.memozy.presentation.theme.LocalFontSettings
 
 @Composable
 fun FormattingToolbar(
     richTextState: RichTextState,
     colors: AppColors
 ) {
+    val fontSettings = LocalFontSettings.current
     var showColorPicker by remember { mutableStateOf(false) }
     var savedColorSelection by remember { mutableStateOf(TextRange.Zero) }
 
@@ -86,7 +88,7 @@ fun FormattingToolbar(
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("A", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = activeTint)
+                Text("A", fontSize = fontSettings.scaled(16), fontWeight = FontWeight.Bold, color = activeTint)
                 Box(modifier = Modifier.width(16.dp).height(3.dp).background(Color(0xFFFF0000), RoundedCornerShape(1.dp)))
             }
         }

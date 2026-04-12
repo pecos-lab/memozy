@@ -43,6 +43,7 @@ import coil.compose.AsyncImage
 import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.presentation.screen.memo.SummaryMode
 import me.pecos.memozy.presentation.theme.LocalAppColors
+import me.pecos.memozy.presentation.theme.LocalFontSettings
 
 enum class SummarySourceType { YOUTUBE, WEB, TWITTER }
 
@@ -60,6 +61,7 @@ fun SummaryCard(
 ) {
     val colors = LocalAppColors.current
     val context = LocalContext.current
+    val fontSettings = LocalFontSettings.current
 
     Box {
         Column(
@@ -95,7 +97,7 @@ fun SummaryCard(
                 }
                 Text(
                     text = "$sourceEmoji $sourceLabel",
-                    fontSize = 11.sp,
+                    fontSize = fontSettings.scaled(11),
                     color = colors.textSecondary,
                     fontWeight = FontWeight.Medium
                 )
@@ -105,7 +107,7 @@ fun SummaryCard(
                 // 제목
                 Text(
                     text = title ?: url,
-                    fontSize = 14.sp,
+                    fontSize = fontSettings.scaled(14),
                     fontWeight = FontWeight.SemiBold,
                     color = colors.textTitle,
                     maxLines = 2,
@@ -115,7 +117,7 @@ fun SummaryCard(
                 if (title != null) {
                     Text(
                         text = url,
-                        fontSize = 11.sp,
+                        fontSize = fontSettings.scaled(11),
                         color = Color(0xFF2196F3),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -154,7 +156,7 @@ fun SummaryCard(
                     ) {
                         Icon(Icons.Default.OpenInBrowser, null, tint = colors.chipText, modifier = Modifier.size(14.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(R.string.summary_card_open), fontSize = 11.sp, color = colors.chipText, fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.summary_card_open), fontSize = fontSettings.scaled(11), color = colors.chipText, fontWeight = FontWeight.Medium)
                     }
 
                     // URL 복사
@@ -177,7 +179,7 @@ fun SummaryCard(
                     ) {
                         Icon(Icons.Default.ContentCopy, null, tint = colors.chipText, modifier = Modifier.size(14.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(R.string.memo_copy), fontSize = 11.sp, color = colors.chipText, fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.memo_copy), fontSize = fontSettings.scaled(11), color = colors.chipText, fontWeight = FontWeight.Medium)
                     }
 
                     if (!hasSummary && onSummarize != null) {
@@ -192,7 +194,7 @@ fun SummaryCard(
                         ) {
                             Icon(Icons.Default.Summarize, null, tint = Color(0xFF2196F3), modifier = Modifier.size(14.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(stringResource(R.string.summary_mode_simple), fontSize = 11.sp, color = Color(0xFF2196F3), fontWeight = FontWeight.Medium)
+                            Text(stringResource(R.string.summary_mode_simple), fontSize = fontSettings.scaled(11), color = Color(0xFF2196F3), fontWeight = FontWeight.Medium)
                         }
                         Row(
                             modifier = Modifier
@@ -204,7 +206,7 @@ fun SummaryCard(
                         ) {
                             Icon(Icons.Default.Summarize, null, tint = Color(0xFFFF9800), modifier = Modifier.size(14.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(stringResource(R.string.summary_mode_detailed), fontSize = 11.sp, color = Color(0xFFFF9800), fontWeight = FontWeight.Medium)
+                            Text(stringResource(R.string.summary_mode_detailed), fontSize = fontSettings.scaled(11), color = Color(0xFFFF9800), fontWeight = FontWeight.Medium)
                         }
                     }
                 }

@@ -105,9 +105,6 @@ import androidx.compose.ui.unit.sp
 import com.wanted.android.wanted.design.theme.DesignSystemTheme
 import com.wanted.android.wanted.design.input.textinput.textfield.WantedTextField
 import com.wanted.android.wanted.design.input.textinput.textarea.WantedTextArea
-import com.wanted.android.wanted.design.actions.button.WantedButton
-import com.wanted.android.wanted.design.util.ButtonType
-import com.wanted.android.wanted.design.util.ButtonVariant
 import me.pecos.memozy.presentation.screen.home.model.MemoUiState
 import me.pecos.memozy.feature.core.resource.CATEGORY_EMOJIS
 import me.pecos.memozy.feature.core.resource.CATEGORY_RES_IDS
@@ -122,6 +119,7 @@ import me.pecos.memozy.presentation.screen.memo.components.YouTubeLinkBottomShee
 import me.pecos.memozy.presentation.screen.memo.components.YouTubeUrlDialog
 import me.pecos.memozy.presentation.screen.memo.components.MemoActionBar
 import me.pecos.memozy.presentation.theme.LocalAppColors
+import me.pecos.memozy.presentation.theme.LocalFontSettings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -357,6 +355,7 @@ fun MemoScreen(
 
     val enabled = nameText.isNotBlank() && bodyText.isNotBlank()
     val colors = LocalAppColors.current  // ← CompositionLocal에서 현재 테마 색상 가져옴
+    val fontSettings = LocalFontSettings.current
 
     // containerColor 명시 → MaterialTheme.colorScheme.surface 무시
     Scaffold(
@@ -442,8 +441,8 @@ fun MemoScreen(
 
                 // 완료 버튼 (새 메모 + 기존 메모 모두 표시)
                 Text(
-                    text = "완료",
-                    fontSize = 16.sp,
+                    text = stringResource(R.string.memo_done),
+                    fontSize = fontSettings.scaled(16),
                     fontWeight = FontWeight.SemiBold,
                     color = colors.chipText,
                     modifier = Modifier
@@ -477,9 +476,10 @@ fun MemoScreen(
                         }
                     },
                     textStyle = TextStyle(
-                        fontSize = 22.sp,
+                        fontSize = fontSettings.titleSize,
                         fontWeight = FontWeight.Bold,
-                        color = colors.textTitle
+                        color = colors.textTitle,
+                        fontFamily = fontSettings.fontFamily
                     ),
                     modifier = Modifier.fillMaxWidth(),
                     decorationBox = { innerTextField ->
@@ -487,8 +487,9 @@ fun MemoScreen(
                             if (nameText.isEmpty()) {
                                 Text(
                                     text = stringResource(R.string.memo_title_placeholder),
-                                    fontSize = 22.sp,
+                                    fontSize = fontSettings.titleSize,
                                     fontWeight = FontWeight.Bold,
+                                    fontFamily = fontSettings.fontFamily,
                                     color = colors.textSecondary.copy(alpha = 0.4f)
                                 )
                             }
@@ -610,9 +611,10 @@ fun MemoScreen(
                         .heightIn(min = 150.dp)
                         .focusRequester(bodyFocusRequester),
                     textStyle = TextStyle(
-                        fontSize = 15.sp,
-                        lineHeight = 24.sp,
+                        fontSize = fontSettings.bodySize,
+                        lineHeight = (fontSettings.bodySize.value * 1.6f).sp,
                         color = colors.textBody,
+                        fontFamily = fontSettings.fontFamily,
                         lineHeightStyle = LineHeightStyle(
                             alignment = LineHeightStyle.Alignment.Center,
                             trim = LineHeightStyle.Trim.None
@@ -623,7 +625,8 @@ fun MemoScreen(
                             if (richTextState.annotatedString.text.isEmpty()) {
                                 Text(
                                     text = stringResource(R.string.memo_content_placeholder),
-                                    fontSize = 15.sp,
+                                    fontSize = fontSettings.bodySize,
+                                    fontFamily = fontSettings.fontFamily,
                                     color = colors.textSecondary.copy(alpha = 0.4f)
                                 )
                             }
@@ -680,7 +683,7 @@ fun MemoScreen(
                             Icon(Icons.Default.Stop, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
                         }
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text("🔴 " + stringResource(R.string.recording_tap_to_stop), fontSize = 13.sp, color = Color(0xFFE24B4A), fontWeight = FontWeight.SemiBold)
+                        Text("🔴 " + stringResource(R.string.recording_tap_to_stop), fontSize = fontSettings.scaled(13), color = Color(0xFFE24B4A), fontWeight = FontWeight.SemiBold)
                     }
                 }
                 // 음성 변환 중
@@ -689,7 +692,7 @@ fun MemoScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         androidx.compose.material3.CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = colors.textSecondary)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.transcribing), fontSize = 13.sp, color = colors.textSecondary, modifier = Modifier.weight(1f))
+                        Text(stringResource(R.string.transcribing), fontSize = fontSettings.scaled(13), color = colors.textSecondary, modifier = Modifier.weight(1f))
                         Icon(Icons.Default.Close, contentDescription = null, tint = colors.textSecondary,
                             modifier = Modifier.size(16.dp).clickable { onCancelSummarize?.invoke() })
                     }
@@ -699,8 +702,8 @@ fun MemoScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Box {
                         Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(Color(0xFFFFF3E0)).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text("⚠️", fontSize = 16.sp); Spacer(modifier = Modifier.width(8.dp))
-                            Text(transcriptionError, fontSize = 13.sp, color = Color(0xFFE65100), lineHeight = 18.sp, modifier = Modifier.weight(1f))
+                            Text("⚠️", fontSize = fontSettings.scaled(16)); Spacer(modifier = Modifier.width(8.dp))
+                            Text(transcriptionError, fontSize = fontSettings.scaled(13), color = Color(0xFFE65100), lineHeight = 18.sp, modifier = Modifier.weight(1f))
                         }
                         Icon(Icons.Default.Close, contentDescription = null, tint = Color(0xFFE65100),
                             modifier = Modifier.size(16.dp).align(Alignment.TopEnd).clickable { transcriptionErrorDismissed = true })
@@ -712,8 +715,8 @@ fun MemoScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Box {
                         Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(Color(0xFFFFF3E0)).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text("⚠️", fontSize = 16.sp); Spacer(modifier = Modifier.width(8.dp))
-                            Text(webSummaryError, fontSize = 13.sp, color = Color(0xFFE65100), lineHeight = 18.sp, modifier = Modifier.weight(1f))
+                            Text("⚠️", fontSize = fontSettings.scaled(16)); Spacer(modifier = Modifier.width(8.dp))
+                            Text(webSummaryError, fontSize = fontSettings.scaled(13), color = Color(0xFFE65100), lineHeight = 18.sp, modifier = Modifier.weight(1f))
                         }
                         Icon(Icons.Default.Close, contentDescription = null, tint = Color(0xFFE65100),
                             modifier = Modifier.size(16.dp).align(Alignment.TopEnd).clickable { webErrorDismissed = true })
@@ -727,8 +730,8 @@ fun MemoScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Box {
                         Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(Color(0xFFFFF3E0)).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text("⚠️", fontSize = 16.sp); Spacer(modifier = Modifier.width(8.dp))
-                            Text(summaryError, fontSize = 13.sp, color = Color(0xFFE65100), lineHeight = 18.sp, modifier = Modifier.weight(1f))
+                            Text("⚠️", fontSize = fontSettings.scaled(16)); Spacer(modifier = Modifier.width(8.dp))
+                            Text(summaryError, fontSize = fontSettings.scaled(13), color = Color(0xFFE65100), lineHeight = 18.sp, modifier = Modifier.weight(1f))
                         }
                         Icon(Icons.Default.Close, contentDescription = null, tint = Color(0xFFE65100),
                             modifier = Modifier.size(16.dp).align(Alignment.TopEnd).clickable { ytErrorDismissed = true })

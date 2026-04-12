@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.presentation.theme.AppColors
+import me.pecos.memozy.presentation.theme.LocalFontSettings
 
 @Composable
 fun AudioPlayerBar(
@@ -49,6 +50,7 @@ fun AudioPlayerBar(
     context: Context,
     onDismiss: () -> Unit
 ) {
+    val fontSettings = LocalFontSettings.current
     var isPlaying by remember { mutableStateOf(false) }
     val mediaPlayer = remember {
         MediaPlayer().apply {
@@ -73,7 +75,7 @@ fun AudioPlayerBar(
                 contentAlignment = Alignment.Center
             ) { Icon(if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp)) }
             Spacer(modifier = Modifier.width(10.dp))
-            Text("🎙️ ${memoTitle.ifBlank { stringResource(R.string.recording_file) }}", fontSize = 14.sp, color = colors.textBody, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), maxLines = 1)
+            Text("🎙️ ${memoTitle.ifBlank { stringResource(R.string.recording_file) }}", fontSize = fontSettings.scaled(14), color = colors.textBody, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), maxLines = 1)
             Icon(Icons.Default.Download, contentDescription = null, tint = colors.textSecondary,
                 modifier = Modifier.size(20.dp).clickable {
                     val source = java.io.File(audioPath)

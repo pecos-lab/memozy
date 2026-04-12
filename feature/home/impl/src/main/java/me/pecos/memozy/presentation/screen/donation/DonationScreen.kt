@@ -43,6 +43,7 @@ import me.pecos.memozy.presentation.components.PopupNavigation
 import me.pecos.memozy.presentation.components.PopupSize
 import me.pecos.memozy.presentation.theme.LocalActivity
 import me.pecos.memozy.presentation.theme.LocalAppColors
+import me.pecos.memozy.presentation.theme.LocalFontSettings
 
 private data class DonationTier(
     val productId: String,
@@ -68,6 +69,7 @@ fun DonationScreen(
     val purchaseState by billingManager.purchaseState.collectAsState()
     val isConnected by billingManager.isConnected.collectAsState()
     val colors = LocalAppColors.current
+    val fontSettings = LocalFontSettings.current
     val activity = LocalActivity.current
 
     LaunchedEffect(Unit) {
@@ -127,7 +129,7 @@ fun DonationScreen(
                 }
                 Text(
                     text = stringResource(R.string.donation_title),
-                    fontSize = 22.sp,
+                    fontSize = fontSettings.scaled(22),
                     fontWeight = FontWeight.Bold,
                     color = colors.topbarTitle
                 )
@@ -137,7 +139,7 @@ fun DonationScreen(
 
             Text(
                 text = stringResource(R.string.donation_subtitle),
-                fontSize = 14.sp,
+                fontSize = fontSettings.scaled(14),
                 color = colors.textSecondary,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
@@ -171,6 +173,7 @@ private fun DonationCard(
     onClick: () -> Unit
 ) {
     val colors = LocalAppColors.current
+    val fontSettings = LocalFontSettings.current
 
     Box(
         modifier = Modifier
@@ -193,7 +196,7 @@ private fun DonationCard(
             ) {
                 Text(
                     text = tier.emoji,
-                    fontSize = 32.sp
+                    fontSize = fontSettings.scaled(32)
                 )
 
                 Column(
@@ -201,13 +204,13 @@ private fun DonationCard(
                 ) {
                     Text(
                         text = stringResource(tier.nameResId),
-                        fontSize = 16.sp,
+                        fontSize = fontSettings.scaled(16),
                         fontWeight = FontWeight.SemiBold,
                         color = colors.textTitle
                     )
                     Text(
                         text = stringResource(tier.descResId),
-                        fontSize = 12.sp,
+                        fontSize = fontSettings.scaled(12),
                         color = colors.textSecondary
                     )
                 }
@@ -216,7 +219,7 @@ private fun DonationCard(
             Text(
                 text = product?.formattedPrice
                     ?: if (isConnected) "-" else stringResource(R.string.donation_loading),
-                fontSize = 14.sp,
+                fontSize = fontSettings.scaled(14),
                 fontWeight = FontWeight.Bold,
                 color = colors.textTitle,
                 textAlign = TextAlign.End

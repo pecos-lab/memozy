@@ -44,6 +44,7 @@ import me.pecos.memozy.presentation.components.PopupActionArea
 import me.pecos.memozy.presentation.components.PopupNavigation
 import me.pecos.memozy.presentation.components.PopupSize
 import me.pecos.memozy.presentation.theme.AppColors
+import me.pecos.memozy.presentation.theme.LocalFontSettings
 
 private val YOUTUBE_URL_REGEX = Regex(
     """(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)[\w\-]+(?:[&?][\w\-=]*)*"""
@@ -56,6 +57,7 @@ fun YouTubeUrlDialog(
     onDismiss: () -> Unit,
     onUrlAdded: (String) -> Unit
 ) {
+    val fontSettings = LocalFontSettings.current
     var urlInput by remember { mutableStateOf("") }
     val clipText = clipboardManager.getText()?.text ?: ""
     val isValid = YOUTUBE_URL_REGEX.containsMatchIn(urlInput)
@@ -73,11 +75,11 @@ fun YouTubeUrlDialog(
         secondaryButtonText = stringResource(R.string.cancel),
         onSecondaryClick = onDismiss
     ) {
-        Text(stringResource(R.string.youtube_summary_desc), fontSize = 14.sp, color = colors.textSecondary)
+        Text(stringResource(R.string.youtube_summary_desc), fontSize = fontSettings.scaled(14), color = colors.textSecondary)
         Spacer(modifier = Modifier.height(12.dp))
         OutlinedTextField(
             value = urlInput, onValueChange = { urlInput = it },
-            placeholder = { Text("https://youtu.be/...", fontSize = 14.sp) },
+            placeholder = { Text("https://youtu.be/...", fontSize = fontSettings.scaled(14)) },
             singleLine = true, modifier = Modifier.fillMaxWidth()
         )
         if (clipText.isNotBlank() && urlInput.isBlank()) {
@@ -96,7 +98,7 @@ fun YouTubeUrlDialog(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = clipText, fontSize = 12.sp,
+                    text = clipText, fontSize = fontSettings.scaled(12),
                     color = Color(0xFF2196F3), fontWeight = FontWeight.Medium,
                     maxLines = 1, overflow = TextOverflow.Ellipsis
                 )
@@ -111,6 +113,7 @@ fun WebUrlDialog(
     onDismiss: () -> Unit,
     onUrlConfirmed: (String) -> Unit
 ) {
+    val fontSettings = LocalFontSettings.current
     var webUrlInput by remember { mutableStateOf("") }
     val clipText = clipboardManager.getText()?.text ?: ""
     val colors = me.pecos.memozy.presentation.theme.LocalAppColors.current
@@ -129,11 +132,11 @@ fun WebUrlDialog(
         secondaryButtonText = stringResource(R.string.cancel),
         onSecondaryClick = onDismiss
     ) {
-        Text(stringResource(R.string.web_summary_desc), fontSize = 14.sp, color = colors.textSecondary)
+        Text(stringResource(R.string.web_summary_desc), fontSize = fontSettings.scaled(14), color = colors.textSecondary)
         Spacer(modifier = Modifier.height(12.dp))
         OutlinedTextField(
             value = webUrlInput, onValueChange = { webUrlInput = it },
-            placeholder = { Text("https://...", fontSize = 14.sp) },
+            placeholder = { Text("https://...", fontSize = fontSettings.scaled(14)) },
             singleLine = true, modifier = Modifier.fillMaxWidth()
         )
         if (clipText.isNotBlank() && webUrlInput.isBlank()) {
@@ -152,7 +155,7 @@ fun WebUrlDialog(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = clipText, fontSize = 12.sp,
+                    text = clipText, fontSize = fontSettings.scaled(12),
                     color = Color(0xFF2196F3), fontWeight = FontWeight.Medium,
                     maxLines = 1, overflow = TextOverflow.Ellipsis
                 )
@@ -170,6 +173,7 @@ fun WebLinkBottomSheet(
     onDismiss: () -> Unit
 ) {
     val colors = me.pecos.memozy.presentation.theme.LocalAppColors.current
+    val fontSettings = LocalFontSettings.current
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(),
@@ -178,9 +182,9 @@ fun WebLinkBottomSheet(
         Column(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp).padding(bottom = 24.dp)
         ) {
-            Text(stringResource(R.string.web_link), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = colors.textTitle)
+            Text(stringResource(R.string.web_link), fontSize = fontSettings.scaled(18), fontWeight = FontWeight.Bold, color = colors.textTitle)
             Spacer(modifier = Modifier.height(4.dp))
-            Text(url, fontSize = 13.sp, color = colors.textSecondary, maxLines = 2)
+            Text(url, fontSize = fontSettings.scaled(13), color = colors.textSecondary, maxLines = 2)
             Spacer(modifier = Modifier.height(20.dp))
 
             Row(
@@ -189,8 +193,8 @@ fun WebLinkBottomSheet(
                     .padding(vertical = 14.dp, horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("📋", fontSize = 20.sp); Spacer(modifier = Modifier.width(12.dp))
-                Text(stringResource(R.string.copy_link), fontSize = 16.sp, color = colors.textBody)
+                Text("📋", fontSize = fontSettings.scaled(20)); Spacer(modifier = Modifier.width(12.dp))
+                Text(stringResource(R.string.copy_link), fontSize = fontSettings.scaled(16), color = colors.textBody)
             }
 
             Row(
@@ -203,8 +207,8 @@ fun WebLinkBottomSheet(
                     .padding(vertical = 14.dp, horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("🌐", fontSize = 20.sp); Spacer(modifier = Modifier.width(12.dp))
-                Text(stringResource(R.string.open_in_browser), fontSize = 16.sp, color = colors.textBody)
+                Text("🌐", fontSize = fontSettings.scaled(20)); Spacer(modifier = Modifier.width(12.dp))
+                Text(stringResource(R.string.open_in_browser), fontSize = fontSettings.scaled(16), color = colors.textBody)
             }
         }
     }
