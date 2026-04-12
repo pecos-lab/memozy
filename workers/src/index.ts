@@ -217,7 +217,32 @@ async function handleWebScrape(req: Request): Promise<Response> {
     return Response.json({ error: `Failed to fetch: ${pageRes.status}` }, { status: 502 });
   }
 
-  const html = await pageRes.text();
+  // EUC-KR 등 비-UTF-8 인코딩 처리
+  const buffer = await pageRes.arrayBuffer();
+  let charset = "utf-8";
+
+  // 1. Content-Type 헤더에서 charset 확인
+  const contentType = pageRes.headers.get("content-type") || "";
+  const charsetMatch = contentType.match(/charset=([^\s;]+)/i);
+  if (charsetMatch) {
+    charset = charsetMatch[1].toLowerCase().replace(/['"]/g, "");
+  }
+
+  // 2. 헤더에 없으면 HTML meta 태그에서 확인
+  if (charset === "utf-8") {
+    const preview = new TextDecoder("utf-8", { fatal: false }).decode(buffer.slice(0, 2048));
+    const metaCharset = preview.match(/<meta[^>]+charset=["']?([^"'\s;>]+)/i)
+      || preview.match(/<meta[^>]+content=["'][^"']*charset=([^"'\s;>]+)/i);
+    if (metaCharset) {
+      charset = metaCharset[1].toLowerCase();
+    }
+  }
+
+  // euc-kr, euckr 등을 통일
+  if (charset === "euckr" || charset === "euc_kr") charset = "euc-kr";
+
+  const decoder = new TextDecoder(charset, { fatal: false });
+  const html = decoder.decode(buffer);
 
   const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
   const ogTitleMatch = html.match(/<meta\s+property="og:title"\s+content="([^"]*)"/i);

@@ -29,16 +29,5 @@ class MemozyApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
-
-        // 로그인 상태 변경 시 자동 백업 스케줄링
-        appScope.launch {
-            authService.authState.collectLatest { state ->
-                when (state) {
-                    is AuthState.Authenticated -> BackupScheduler.schedule(this@MemozyApplication)
-                    is AuthState.Unauthenticated -> BackupScheduler.cancel(this@MemozyApplication)
-                    else -> {}
-                }
-            }
-        }
     }
 }

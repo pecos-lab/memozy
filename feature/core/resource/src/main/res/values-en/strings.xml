@@ -215,4 +215,5 @@
     <string name="cloud_backup_restoring">Restoring…</string>
     <string name="cloud_backup_count">%d backups saved</string>
     <string name="cloud_backup_memo_count">%d memos</string>
+    <string name="cloud_backup_last_time">Last backup: %s</string>
 </resources>

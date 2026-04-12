@@ -113,7 +113,13 @@ class MemoPlainNavigationImpl @Inject constructor(
                     |#키워드1 #키워드2 #키워드3
                     |
                     |📖 핵심 내용
-                    |- 가장 중요한 내용 3~5개를 각 1줄로 정리
+                    |- 첫 번째 핵심 내용
+                    |
+                    |- 두 번째 핵심 내용
+                    |
+                    |- 세 번째 핵심 내용
+                    |
+                    |(가장 중요한 내용 3~5개를 각 1줄로 정리. 첫 항목은 📖 핵심 내용 바로 다음 줄에, 이후 항목들 사이에는 빈 줄 1개를 넣어줘)
                 """.trimMargin()
                 SummaryMode.DETAILED -> """
                     |이 유튜브 영상을 ${l} 상세하게 요약해줘. 인사말이나 부가 설명 없이 아래 형식만 정확히 출력해:
@@ -125,8 +131,6 @@ class MemoPlainNavigationImpl @Inject constructor(
                     |#키워드1 #키워드2 #키워드3 #키워드4 #키워드5
                     |
                     |⏰ 타임라인별 상세 요약
-                    |각 주제/구간별로 나눠서 아래처럼 정리해줘:
-                    |
                     |[00:00] 섹션 제목
                     |- 상세 설명 (2~3문장)
                     |- 중요한 내용이나 인사이트
@@ -770,8 +774,6 @@ class MemoPlainNavigationImpl @Inject constructor(
         }
         val captions = videoInfo?.captions?.take(15000)
         if (captions != null) {
-            // 자막 추출 후 잠시 대기 (Gemini RPM 제한 방지)
-            kotlinx.coroutines.delay(1000)
             // 자막 기반 요약 (텍스트만, 빠르고 저렴)
             return retryOn503 {
                 aiApiService.generateContent(

@@ -70,9 +70,7 @@ fun SettingsScreen(
     var showThemeDialog by remember { mutableStateOf(false) }
     var showRestoreDialog by remember { mutableStateOf(false) }
     var showSignOutDialog by remember { mutableStateOf(false) }
-    var showBackupListDialog by remember { mutableStateOf(false) }
-    var showCloudRestoreConfirm by remember { mutableStateOf<String?>(null) }
-    var showCloudDeleteConfirm by remember { mutableStateOf<String?>(null) }
+    var showCloudRestoreConfirm by remember { mutableStateOf(false) }
 
     val selectedLanguage by settingsViewModel.selectedLanguage.collectAsState()
     val selectedTheme by settingsViewModel.selectedTheme.collectAsState()
@@ -80,11 +78,18 @@ fun SettingsScreen(
     val isDonationEnabled by settingsViewModel.isDonationEnabled.collectAsState()
     val authState by settingsViewModel.authState.collectAsState()
     val cloudBackupState by settingsViewModel.cloudBackupState.collectAsState()
-    val backupList by settingsViewModel.backupList.collectAsState()
+    val lastBackupTime by settingsViewModel.lastBackupTime.collectAsState()
     val colors = LocalAppColors.current
     val context = LocalContext.current
     val activity = LocalActivity.current
     val scope = rememberCoroutineScope()
+
+    // 로그인 상태 변경 시 마지막 백업 시간 로드
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Authenticated) {
+            settingsViewModel.loadLastBackupTime()
+        }
+    }
 
     // SAF launchers
     val exportLauncher = rememberLauncherForActivityResult(
@@ -259,9 +264,9 @@ fun SettingsScreen(
     }
 
     // 클라우드 복원 확인
-    showCloudRestoreConfirm?.let { backupId ->
+    if (showCloudRestoreConfirm) {
         AppPopup(
-            onDismissRequest = { showCloudRestoreConfirm = null },
+            onDismissRequest = { showCloudRestoreConfirm = false },
             title = stringResource(R.string.cloud_backup_restore),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.MEDIUM,
@@ -269,101 +274,13 @@ fun SettingsScreen(
             primaryButtonText = stringResource(R.string.backup_restore_action),
             isPrimaryDestructive = true,
             onPrimaryClick = {
-                showCloudRestoreConfirm = null
-                showBackupListDialog = false
-                settingsViewModel.restoreFromCloud(backupId)
+                showCloudRestoreConfirm = false
+                settingsViewModel.restoreFromCloud()
             },
             secondaryButtonText = stringResource(R.string.cancel),
-            onSecondaryClick = { showCloudRestoreConfirm = null }
+            onSecondaryClick = { showCloudRestoreConfirm = false }
         ) {
             Text(stringResource(R.string.cloud_backup_restore_confirm), color = colors.textBody)
-        }
-    }
-
-    // 클라우드 백업 삭제 확인
-    showCloudDeleteConfirm?.let { backupId ->
-        AppPopup(
-            onDismissRequest = { showCloudDeleteConfirm = null },
-            title = stringResource(R.string.delete_action),
-            navigation = PopupNavigation.EMPHASIZED,
-            size = PopupSize.MEDIUM,
-            actionArea = PopupActionArea.NEUTRAL,
-            primaryButtonText = stringResource(R.string.delete_action),
-            isPrimaryDestructive = true,
-            onPrimaryClick = {
-                showCloudDeleteConfirm = null
-                showBackupListDialog = false
-                settingsViewModel.deleteCloudBackup(backupId)
-            },
-            secondaryButtonText = stringResource(R.string.cancel),
-            onSecondaryClick = { showCloudDeleteConfirm = null }
-        ) {
-            Text(stringResource(R.string.cloud_backup_delete_confirm), color = colors.textBody)
-        }
-    }
-
-    // 백업 목록 다이얼로그
-    if (showBackupListDialog) {
-        AppPopup(
-            onDismissRequest = { showBackupListDialog = false },
-            title = stringResource(R.string.cloud_backup_manage),
-            navigation = PopupNavigation.EMPHASIZED,
-            size = PopupSize.LARGE,
-            actionArea = PopupActionArea.NONE
-        ) {
-            if (backupList.isEmpty()) {
-                Text(
-                    stringResource(R.string.cloud_backup_empty),
-                    color = colors.textSecondary,
-                    fontSize = 13.sp,
-                    modifier = Modifier.padding(vertical = 16.dp)
-                )
-            } else {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    backupList.forEach { backup ->
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp)
-                        ) {
-                            Text(
-                                text = "${backup.device_name} · v${backup.app_version}",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = colors.textTitle
-                            )
-                            Text(
-                                text = "${backup.created_at.take(10)} · ${stringResource(R.string.cloud_backup_memo_count, backup.memo_count)}",
-                                fontSize = 12.sp,
-                                color = colors.textSecondary,
-                                modifier = Modifier.padding(top = 2.dp)
-                            )
-                            Row(modifier = Modifier.padding(top = 4.dp)) {
-                                Text(
-                                    text = stringResource(R.string.trash_restore),
-                                    fontSize = 12.sp,
-                                    color = colors.textBody,
-                                    fontWeight = FontWeight.Medium,
-                                    modifier = Modifier
-                                        .padding(end = 8.dp)
-                                        .clickable { showCloudRestoreConfirm = backup.id }
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                                Text(
-                                    text = stringResource(R.string.delete_action),
-                                    fontSize = 12.sp,
-                                    color = Color(0xFFE24B4A),
-                                    fontWeight = FontWeight.Medium,
-                                    modifier = Modifier
-                                        .clickable { showCloudDeleteConfirm = backup.id }
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                            }
-                        }
-                        HorizontalDivider(thickness = 0.3.dp, color = colors.cardBorder)
-                    }
-                }
-            }
         }
     }
 
@@ -649,7 +566,7 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 if (authState is AuthState.Authenticated) {
-                    // 로그인: 클라우드 백업 위주
+                    // 로그인: 클라우드 백업
                     WantedButton(
                         text = if (cloudBackupState is CloudBackupState.Uploading)
                             stringResource(R.string.cloud_backup_uploading)
@@ -664,10 +581,22 @@ fun SettingsScreen(
                         onClick = { settingsViewModel.uploadCloudBackup() }
                     )
 
+                    // 마지막 백업 시간 표시
+                    lastBackupTime?.let { time ->
+                        Text(
+                            text = stringResource(R.string.cloud_backup_last_time, time.take(16).replace("T", " ")),
+                            fontSize = 11.sp,
+                            color = colors.textSecondary,
+                            modifier = Modifier.padding(start = 20.dp, top = 4.dp)
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(12.dp))
 
                     WantedButton(
-                        text = stringResource(R.string.cloud_backup_manage),
+                        text = if (cloudBackupState is CloudBackupState.Restoring)
+                            stringResource(R.string.cloud_backup_restoring)
+                        else stringResource(R.string.cloud_backup_restore),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
@@ -675,13 +604,10 @@ fun SettingsScreen(
                             type = ButtonType.ASSISTIVE,
                             variant = ButtonVariant.OUTLINED
                         ).copy(contentColor = colors.textTitle),
-                        onClick = {
-                            settingsViewModel.loadBackupList()
-                            showBackupListDialog = true
-                        }
+                        onClick = { showCloudRestoreConfirm = true }
                     )
                 } else {
-                    // 비로그인: 로컬 백업 위주
+                    // 비로그인: 로컬 백업
                     WantedButton(
                         text = stringResource(R.string.backup_export),
                         modifier = Modifier

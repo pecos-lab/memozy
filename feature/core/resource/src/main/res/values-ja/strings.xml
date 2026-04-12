@@ -215,4 +215,5 @@
     <string name="cloud_backup_restoring">復元中…</string>
     <string name="cloud_backup_count">保存済みバックアップ %d件</string>
     <string name="cloud_backup_memo_count">メモ %d件</string>
+    <string name="cloud_backup_last_time">最後のバックアップ: %s</string>
 </resources>

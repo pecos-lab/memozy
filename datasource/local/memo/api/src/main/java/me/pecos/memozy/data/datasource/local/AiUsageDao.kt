@@ -13,4 +13,13 @@ interface AiUsageDao {
 
     @Query("SELECT COUNT(*) FROM ai_usage WHERE feature = :feature AND usedAt >= :startOfDay")
     suspend fun getCountSince(feature: String, startOfDay: Long): Int
+
+    @Query("SELECT * FROM ai_usage ORDER BY usedAt DESC")
+    suspend fun getAllOnce(): List<AiUsage>
+
+    @Insert
+    suspend fun insertAll(usages: List<AiUsage>)
+
+    @Query("DELETE FROM ai_usage")
+    suspend fun clearAll()
 }

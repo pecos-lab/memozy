@@ -15,7 +15,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.pecos.memozy.data.datasource.local.MemoDao
 import me.pecos.memozy.data.datasource.local.entity.Memo
-import me.pecos.memozy.data.backup.BackupMeta
 import me.pecos.memozy.data.backup.BackupRepository
 import me.pecos.memozy.data.datasource.remote.auth.AuthState
 import me.pecos.memozy.data.repository.MemoRepository
@@ -117,39 +116,37 @@ class SettingsViewModel @Inject constructor(
     private val _cloudBackupState = MutableStateFlow<CloudBackupState>(CloudBackupState.Idle)
     val cloudBackupState: StateFlow<CloudBackupState> = _cloudBackupState
 
-    private val _backupList = MutableStateFlow<List<BackupMeta>>(emptyList())
-    val backupList: StateFlow<List<BackupMeta>> = _backupList
+    private val _lastBackupTime = MutableStateFlow<String?>(null)
+    val lastBackupTime: StateFlow<String?> = _lastBackupTime
 
     fun uploadCloudBackup() {
         viewModelScope.launch {
             _cloudBackupState.value = CloudBackupState.Uploading
             backupRepository.uploadBackup()
-                .onSuccess { _cloudBackupState.value = CloudBackupState.UploadSuccess(it.memo_count) }
-                .onFailure { _cloudBackupState.value = CloudBackupState.Error(it.message ?: "Unknown error") }
+                .onSuccess {
+                    _cloudBackupState.value = CloudBackupState.UploadSuccess(it)
+                    loadLastBackupTime()
+                }
+                .onFailure {
+                    _cloudBackupState.value = CloudBackupState.Error(it.message ?: "Unknown error")
+                }
         }
     }
 
-    fun loadBackupList() {
-        viewModelScope.launch {
-            backupRepository.listBackups()
-                .onSuccess { _backupList.value = it }
-                .onFailure { _backupList.value = emptyList() }
-        }
-    }
-
-    fun restoreFromCloud(backupId: String) {
+    fun restoreFromCloud() {
         viewModelScope.launch {
             _cloudBackupState.value = CloudBackupState.Restoring
-            backupRepository.restoreFromCloud(backupId)
+            backupRepository.restoreFromCloud()
                 .onSuccess { _cloudBackupState.value = CloudBackupState.RestoreSuccess(it) }
                 .onFailure { _cloudBackupState.value = CloudBackupState.Error(it.message ?: "Unknown error") }
         }
     }
 
-    fun deleteCloudBackup(backupId: String) {
+    fun loadLastBackupTime() {
         viewModelScope.launch {
-            backupRepository.deleteBackup(backupId)
-                .onSuccess { loadBackupList() }
+            backupRepository.getLastBackupTime()
+                .onSuccess { _lastBackupTime.value = it }
+                .onFailure { _lastBackupTime.value = null }
         }
     }
 
@@ -234,13 +231,11 @@ class SettingsViewModel @Inject constructor(
     private suspend fun restoreFromJson(json: JSONObject) {
         memoDao.clearAllMemos()
 
-        // 메모 복원
         val memosArray = json.getJSONArray("memos")
         val memos = (0 until memosArray.length()).map { i ->
             val m = memosArray.getJSONObject(i)
             var content = m.getString("content")
             var summaryContent = m.optString("summaryContent").takeIf { it != "null" && it.isNotEmpty() }
-            // 레거시 백업 호환: summaryContent 없고 content에 📋 포함 시 분리
             if (summaryContent == null && content.contains("📋")) {
                 val idx = content.indexOf("📋")
                 summaryContent = content.substring(idx)

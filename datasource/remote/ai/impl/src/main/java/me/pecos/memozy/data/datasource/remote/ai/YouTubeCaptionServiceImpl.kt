@@ -4,6 +4,8 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.statement.bodyAsText
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -23,17 +25,19 @@ class YouTubeCaptionServiceImpl @Inject constructor(
 
     override suspend fun extractVideoInfo(videoId: String): YouTubeVideoInfo? {
         return try {
-            // 1. YouTube 페이지에서 제목 추출
-            val title = fetchTitle(videoId)
+            coroutineScope {
+                // 제목과 자막을 병렬로 가져오기
+                val titleDeferred = async { fetchTitle(videoId) }
+                val captionsDeferred = async {
+                    fetchCaptionsFromSupadata(videoId, "ko")
+                        ?: fetchCaptionsFromSupadata(videoId, "en")
+                }
 
-            // 2. Supadata API로 자막 추출 (ko → en fallback)
-            val captions = fetchCaptionsFromSupadata(videoId, "ko")
-                ?: fetchCaptionsFromSupadata(videoId, "en")
-
-            YouTubeVideoInfo(
-                title = title ?: "YouTube 영상",
-                captions = captions
-            )
+                YouTubeVideoInfo(
+                    title = titleDeferred.await() ?: "YouTube 영상",
+                    captions = captionsDeferred.await()
+                )
+            }
         } catch (e: Exception) {
             null
         }
