@@ -20,5 +20,6 @@ data class Memo(
     val youtubeUrl: String? = null,
     val deletedAt: Long? = null,
     val reminderAt: Long? = null,
-    val summaryContent: String? = null
+    val summaryContent: String? = null,
+    val isSummaryExpanded: Boolean = true
 )

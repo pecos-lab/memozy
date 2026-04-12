@@ -106,7 +106,8 @@ fun MemoUiState.toMemo(): Memo = Memo(
     youtubeUrl = this.youtubeUrl,
     deletedAt = this.deletedAt,
     reminderAt = this.reminderAt,
-    summaryContent = this.summaryContent
+    summaryContent = this.summaryContent,
+    isSummaryExpanded = this.isSummaryExpanded
 )
 
 fun Memo.toUiState(): MemoUiState = MemoUiState(
@@ -126,5 +127,6 @@ fun Memo.toUiState(): MemoUiState = MemoUiState(
     youtubeUrl = this.youtubeUrl,
     deletedAt = this.deletedAt,
     reminderAt = this.reminderAt,
-    summaryContent = this.summaryContent
+    summaryContent = this.summaryContent,
+    isSummaryExpanded = this.isSummaryExpanded
 )
