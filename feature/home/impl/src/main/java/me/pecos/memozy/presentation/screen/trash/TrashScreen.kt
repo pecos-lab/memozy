@@ -1,6 +1,7 @@
 package me.pecos.memozy.presentation.screen.trash
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -113,7 +114,7 @@ fun TrashScreen(
                     TextButton(onClick = { showEmptyDialog = true }) {
                         Text(
                             stringResource(R.string.trash_empty_action),
-                            color = Color(0xFFE24B4A),
+                            color = colors.actionDeleteTint,
                             fontSize = 14.sp
                         )
                     }
@@ -213,7 +214,13 @@ private fun TrashMemoItem(
         if (memo.content.isNotBlank()) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = memo.content.take(100),
+                text = memo.content
+                    .replace(Regex("<br\\s*/?>"), "\n")
+                    .replace(Regex("<[^>]+>"), "")
+                    .replace("&nbsp;", " ")
+                    .replace("&amp;", "&")
+                    .trim()
+                    .take(100),
                 fontSize = 13.sp,
                 color = colors.textBody,
                 maxLines = 2,
@@ -234,30 +241,27 @@ private fun TrashMemoItem(
                 color = colors.textSecondary
             )
 
-            Row {
-                IconButton(
-                    onClick = onRestore,
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        Icons.Default.RestoreFromTrash,
-                        contentDescription = stringResource(R.string.trash_restore),
-                        tint = Color(0xFF4A9EE8),
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(4.dp))
-                IconButton(
-                    onClick = { showDeleteDialog = true },
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        Icons.Default.DeleteForever,
-                        contentDescription = stringResource(R.string.trash_permanent_delete_action),
-                        tint = Color(0xFFE24B4A),
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = stringResource(R.string.trash_restore),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = colors.actionEditTint,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .clickable(onClick = onRestore)
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+                Text(
+                    text = stringResource(R.string.trash_permanent_delete_action),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = colors.actionDeleteTint,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .clickable(onClick = { showDeleteDialog = true })
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                )
             }
         }
     }

@@ -128,6 +128,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.isImeVisible
 import dev.chrisbanes.haze.HazeStyle
@@ -389,8 +390,9 @@ fun MemoScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .statusBarsPadding()
                     .padding(horizontal = 32.dp)
-                    .padding(top = 42.dp, bottom = 12.dp)
+                    .padding(top = 24.dp, bottom = 12.dp)
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -413,53 +415,26 @@ fun MemoScreen(
                         modifier = Modifier
                             .size(22.dp)
                             .clickable {
+                                val plainContent = safeContent()
+                                    .replace(Regex("<br\\s*/?>"), "\n")
+                                    .replace(Regex("<[^>]+>"), "")
+                                    .replace("&nbsp;", " ")
+                                    .replace("&amp;", "&")
+                                    .replace("&lt;", "<")
+                                    .replace("&gt;", ">")
+                                    .trim()
                                 val shareText = buildString {
                                     if (nameText.isNotBlank()) {
                                         appendLine(nameText)
                                         appendLine()
                                     }
-                                    append(safeContent())
+                                    append(plainContent)
                                 }
                                 val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                     type = "text/plain"
-                                    putExtra(Intent.EXTRA_SUBJECT, nameText)
                                     putExtra(Intent.EXTRA_TEXT, shareText)
                                 }
                                 context.startActivity(Intent.createChooser(shareIntent, null))
-                            }
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    // 마크다운 내보내기
-                    Icon(
-                        imageVector = Icons.Default.Download,
-                        contentDescription = stringResource(R.string.memo_export_md),
-                        tint = colors.textSecondary,
-                        modifier = Modifier
-                            .size(22.dp)
-                            .clickable {
-                                val mdContent = buildString {
-                                    if (nameText.isNotBlank()) {
-                                        appendLine("# $nameText")
-                                        appendLine()
-                                    }
-                                    append(safeContent())
-                                }
-                                val fileName = (nameText.ifBlank { "memo" })
-                                    .replace(Regex("[^a-zA-Z0-9가-힣ぁ-ヶ一-龠\\s_-]"), "")
-                                    .take(50)
-                                    .trim()
-                                val file = java.io.File(context.cacheDir, "${fileName}.md")
-                                file.writeText(mdContent)
-                                val uri = androidx.core.content.FileProvider.getUriForFile(
-                                    context, "${context.packageName}.fileprovider", file
-                                )
-                                val exportIntent = Intent(Intent.ACTION_SEND).apply {
-                                    type = "text/markdown"
-                                    putExtra(Intent.EXTRA_STREAM, uri)
-                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                }
-                                context.startActivity(Intent.createChooser(exportIntent, null))
                             }
                     )
                     Spacer(modifier = Modifier.width(16.dp))
@@ -506,7 +481,7 @@ fun MemoScreen(
                         fontWeight = FontWeight.Bold,
                         color = colors.textTitle
                     ),
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     decorationBox = { innerTextField ->
                         Box {
                             if (nameText.isEmpty()) {
@@ -633,7 +608,6 @@ fun MemoScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 150.dp)
-                        .padding(horizontal = 16.dp)
                         .focusRequester(bodyFocusRequester),
                     textStyle = TextStyle(
                         fontSize = 15.sp,

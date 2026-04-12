@@ -572,8 +572,6 @@ fun SettingsScreen(
                     modifier = Modifier.padding(start = 16.dp, bottom = 8.dp, top = 12.dp)
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
-
                 if (authState is AuthState.Authenticated) {
                     // 로그인: 클라우드 백업
                     WantedButton(

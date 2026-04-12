@@ -43,6 +43,7 @@ import androidx.compose.material.icons.outlined.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -67,6 +68,7 @@ import me.pecos.memozy.presentation.components.PopupActionArea
 import me.pecos.memozy.presentation.components.PopupNavigation
 import me.pecos.memozy.presentation.components.PopupSize
 import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.presentation.screen.home.model.HomeUiState
 import me.pecos.memozy.presentation.screen.home.model.SortOrder
 import me.pecos.memozy.presentation.theme.LocalAppColors
 
@@ -80,6 +82,7 @@ fun HomeScreen(
     viewModel: MainViewModel
 ) {
     val colors = LocalAppColors.current
+    val homeUiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val sortOrder by viewModel.sortOrder.collectAsState()
     val filteredList by viewModel.filteredList.collectAsState()
@@ -166,7 +169,8 @@ fun HomeScreen(
                             modifier = Modifier
                                 .border(1.5.dp, colors.cardBorder, RoundedCornerShape(12.dp))
                                 .clickable(enabled = selectedIds.isNotEmpty()) {
-                                    viewModel.pinMemos(selectedIds, true)
+                                    val allPinned = filteredList.filter { it.id in selectedIds }.all { it.isPinned }
+                                    viewModel.pinMemos(selectedIds, !allPinned)
                                     isSelectionMode = false
                                     selectedIds = emptySet()
                                 }
@@ -301,28 +305,30 @@ fun HomeScreen(
                     }
                 }
             }
-            if (filteredList.isEmpty()) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.align(Alignment.Center)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.logo_full),
-                        contentDescription = null,
-                        modifier = Modifier.size(160.dp),
-                        alpha = if (isSystemInDarkTheme()) 0.7f else 0.15f
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = if (searchQuery.isNotBlank())
-                            stringResource(R.string.empty_search_hint)
-                        else
-                            stringResource(R.string.empty_memo_hint),
-                        fontSize = 14.sp,
-                        color = colors.textSecondary.copy(alpha = 0.5f),
-                        textAlign = TextAlign.Center
-                    )
+            when {
+                homeUiState is HomeUiState.Loading -> {
+                    // 빈 배경만 표시 — Room 로딩이 빨라서 깜빡임 방지
+                }
+                homeUiState is HomeUiState.Empty -> {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.align(Alignment.Center)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.logo_full),
+                            contentDescription = null,
+                            modifier = Modifier.size(160.dp),
+                            alpha = if (isSystemInDarkTheme()) 0.7f else 0.15f
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(R.string.empty_memo_hint),
+                            fontSize = 14.sp,
+                            color = colors.textSecondary.copy(alpha = if (isSystemInDarkTheme()) 0.75f else 0.5f),
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
         }

@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import me.pecos.memozy.data.repository.model.MemoFormat
+import me.pecos.memozy.presentation.screen.home.model.HomeUiState
 import me.pecos.memozy.presentation.screen.home.model.MemoFormatUi
 import me.pecos.memozy.presentation.screen.home.model.MemoUiState
 import me.pecos.memozy.presentation.screen.home.model.SortOrder
@@ -25,9 +26,19 @@ class MainViewModel @Inject constructor(
     private val repository: MemoRepository
 ) : ViewModel() {
 
-    val uiState = repository.getMemos()
+    private val memoList = repository.getMemos()
         .map { list -> list.map { it.toUiState() } }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val uiState: StateFlow<HomeUiState> = memoList
+        .map { list ->
+            when {
+                list == null -> HomeUiState.Loading
+                list.isEmpty() -> HomeUiState.Empty
+                else -> HomeUiState.Success(list)
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState.Loading)
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
@@ -44,9 +55,9 @@ class MainViewModel @Inject constructor(
     }
 
     val filteredList: StateFlow<List<MemoUiState>> = combine(
-        uiState, _searchQuery, _sortOrder
+        memoList, _searchQuery, _sortOrder
     ) { list, query, sort ->
-        list
+        (list ?: emptyList())
             .filter { memo ->
                 if (query.isBlank()) true
                 else memo.name.contains(query, ignoreCase = true) ||
