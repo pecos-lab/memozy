@@ -1,6 +1,7 @@
 package me.pecos.memozy.presentation.screen.home
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -310,7 +311,7 @@ fun HomeScreen(
                         painter = painterResource(id = R.drawable.logo_full),
                         contentDescription = null,
                         modifier = Modifier.size(160.dp),
-                        alpha = 0.15f
+                        alpha = if (isSystemInDarkTheme()) 0.7f else 0.15f
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
