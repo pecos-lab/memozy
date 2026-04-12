@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -69,12 +70,17 @@ fun SettingsScreen(
     var showThemeDialog by remember { mutableStateOf(false) }
     var showRestoreDialog by remember { mutableStateOf(false) }
     var showSignOutDialog by remember { mutableStateOf(false) }
+    var showBackupListDialog by remember { mutableStateOf(false) }
+    var showCloudRestoreConfirm by remember { mutableStateOf<String?>(null) }
+    var showCloudDeleteConfirm by remember { mutableStateOf<String?>(null) }
 
     val selectedLanguage by settingsViewModel.selectedLanguage.collectAsState()
     val selectedTheme by settingsViewModel.selectedTheme.collectAsState()
     val backupResult by settingsViewModel.backupResult.collectAsState()
     val isDonationEnabled by settingsViewModel.isDonationEnabled.collectAsState()
     val authState by settingsViewModel.authState.collectAsState()
+    val cloudBackupState by settingsViewModel.cloudBackupState.collectAsState()
+    val backupList by settingsViewModel.backupList.collectAsState()
     val colors = LocalAppColors.current
     val context = LocalContext.current
     val activity = LocalActivity.current
@@ -110,6 +116,33 @@ fun SettingsScreen(
                 settingsViewModel.clearBackupResult()
             }
 
+            else -> {}
+        }
+    }
+
+    // 클라우드 백업 결과 토스트
+    LaunchedEffect(cloudBackupState) {
+        when (val state = cloudBackupState) {
+            is CloudBackupState.UploadSuccess -> {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.cloud_backup_success, state.memoCount),
+                    Toast.LENGTH_SHORT
+                ).show()
+                settingsViewModel.clearCloudBackupState()
+            }
+            is CloudBackupState.RestoreSuccess -> {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.cloud_backup_restore_success, state.memoCount),
+                    Toast.LENGTH_SHORT
+                ).show()
+                settingsViewModel.clearCloudBackupState()
+            }
+            is CloudBackupState.Error -> {
+                Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
+                settingsViewModel.clearCloudBackupState()
+            }
             else -> {}
         }
     }
@@ -225,6 +258,115 @@ fun SettingsScreen(
         }
     }
 
+    // 클라우드 복원 확인
+    showCloudRestoreConfirm?.let { backupId ->
+        AppPopup(
+            onDismissRequest = { showCloudRestoreConfirm = null },
+            title = stringResource(R.string.cloud_backup_restore),
+            navigation = PopupNavigation.EMPHASIZED,
+            size = PopupSize.MEDIUM,
+            actionArea = PopupActionArea.NEUTRAL,
+            primaryButtonText = stringResource(R.string.backup_restore_action),
+            isPrimaryDestructive = true,
+            onPrimaryClick = {
+                showCloudRestoreConfirm = null
+                showBackupListDialog = false
+                settingsViewModel.restoreFromCloud(backupId)
+            },
+            secondaryButtonText = stringResource(R.string.cancel),
+            onSecondaryClick = { showCloudRestoreConfirm = null }
+        ) {
+            Text(stringResource(R.string.cloud_backup_restore_confirm), color = colors.textBody)
+        }
+    }
+
+    // 클라우드 백업 삭제 확인
+    showCloudDeleteConfirm?.let { backupId ->
+        AppPopup(
+            onDismissRequest = { showCloudDeleteConfirm = null },
+            title = stringResource(R.string.delete_action),
+            navigation = PopupNavigation.EMPHASIZED,
+            size = PopupSize.MEDIUM,
+            actionArea = PopupActionArea.NEUTRAL,
+            primaryButtonText = stringResource(R.string.delete_action),
+            isPrimaryDestructive = true,
+            onPrimaryClick = {
+                showCloudDeleteConfirm = null
+                showBackupListDialog = false
+                settingsViewModel.deleteCloudBackup(backupId)
+            },
+            secondaryButtonText = stringResource(R.string.cancel),
+            onSecondaryClick = { showCloudDeleteConfirm = null }
+        ) {
+            Text(stringResource(R.string.cloud_backup_delete_confirm), color = colors.textBody)
+        }
+    }
+
+    // 백업 목록 다이얼로그
+    if (showBackupListDialog) {
+        AppPopup(
+            onDismissRequest = { showBackupListDialog = false },
+            title = stringResource(R.string.cloud_backup_manage),
+            navigation = PopupNavigation.EMPHASIZED,
+            size = PopupSize.LARGE,
+            actionArea = PopupActionArea.NONE
+        ) {
+            if (backupList.isEmpty()) {
+                Text(
+                    stringResource(R.string.cloud_backup_empty),
+                    color = colors.textSecondary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(vertical = 16.dp)
+                )
+            } else {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    backupList.forEach { backup ->
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = "${backup.device_name} · v${backup.app_version}",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = colors.textTitle
+                            )
+                            Text(
+                                text = "${backup.created_at.take(10)} · ${stringResource(R.string.cloud_backup_memo_count, backup.memo_count)}",
+                                fontSize = 12.sp,
+                                color = colors.textSecondary,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                            Row(modifier = Modifier.padding(top = 4.dp)) {
+                                Text(
+                                    text = stringResource(R.string.trash_restore),
+                                    fontSize = 12.sp,
+                                    color = colors.textBody,
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier
+                                        .padding(end = 8.dp)
+                                        .clickable { showCloudRestoreConfirm = backup.id }
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                                Text(
+                                    text = stringResource(R.string.delete_action),
+                                    fontSize = 12.sp,
+                                    color = Color(0xFFE24B4A),
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier
+                                        .clickable { showCloudDeleteConfirm = backup.id }
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+                        HorizontalDivider(thickness = 0.3.dp, color = colors.cardBorder)
+                    }
+                }
+            }
+        }
+    }
+
     if (showSignOutDialog) {
         AppPopup(
             onDismissRequest = { showSignOutDialog = false },
@@ -334,6 +476,7 @@ fun SettingsScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp, vertical = 24.dp)
             ) {
                 Text(
@@ -346,6 +489,111 @@ fun SettingsScreen(
 
                 HorizontalDivider(
                     thickness = 0.3.dp ,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+
+                Text(
+                    text = stringResource(R.string.section_account),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.topbarTitle,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp, top = 12.dp)
+                )
+
+                when (val state = authState) {
+                    is AuthState.Loading -> {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = colors.textSecondary
+                            )
+                            Text(
+                                text = stringResource(R.string.sign_in_loading),
+                                color = colors.textSecondary,
+                                fontSize = 13.sp,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
+                    }
+                    is AuthState.Unauthenticated -> {
+                        WantedButton(
+                            text = stringResource(R.string.sign_in_google),
+                            leadingDrawable = R.drawable.ic_google,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            buttonDefault = WantedButtonDefaults.getDefault(
+                                type = ButtonType.ASSISTIVE,
+                                variant = ButtonVariant.OUTLINED
+                            ).copy(contentColor = colors.textTitle),
+                            onClick = {
+                                scope.launch {
+                                    try {
+                                        val credentialManager = CredentialManager.create(context)
+                                        val googleIdOption = GetGoogleIdOption.Builder()
+                                            .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
+                                            .setFilterByAuthorizedAccounts(false)
+                                            .build()
+                                        val request = GetCredentialRequest.Builder()
+                                            .addCredentialOption(googleIdOption)
+                                            .build()
+                                        val result = credentialManager.getCredential(
+                                            context = activity ?: context,
+                                            request = request,
+                                        )
+                                        val googleIdToken = GoogleIdTokenCredential
+                                            .createFrom(result.credential.data)
+                                            .idToken
+                                        settingsViewModel.signInWithGoogle(googleIdToken)
+                                    } catch (e: androidx.credentials.exceptions.GetCredentialCancellationException) {
+                                        // 사용자가 취소 — 무시
+                                    } catch (e: Exception) {
+                                        android.util.Log.e("SettingsAuth", "Sign-in failed", e)
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(R.string.sign_in_error),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            }
+                        )
+                    }
+                    is AuthState.Authenticated -> {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = state.user.email ?: "",
+                                fontSize = 13.sp,
+                                color = colors.textBody,
+                            )
+                            Text(
+                                text = stringResource(R.string.sign_out),
+                                fontSize = 12.sp,
+                                color = colors.textSecondary,
+                                modifier = Modifier
+                                    .clickable { showSignOutDialog = true }
+                                    .padding(8.dp)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                HorizontalDivider(
+                    thickness = 0.3.dp,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
 
@@ -386,106 +634,6 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 HorizontalDivider(
-                    thickness = 0.3.dp,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-
-                Text(
-                    text = stringResource(R.string.section_account),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.topbarTitle,
-                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp, top = 12.dp)
-                )
-
-                when (val state = authState) {
-                    is AuthState.Loading -> {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp,
-                                color = colors.textSecondary
-                            )
-                            Text(
-                                text = stringResource(R.string.sign_in_loading),
-                                color = colors.textSecondary,
-                                fontSize = 13.sp,
-                                modifier = Modifier.padding(start = 8.dp)
-                            )
-                        }
-                    }
-                    is AuthState.Unauthenticated -> {
-                        WantedButton(
-                            text = stringResource(R.string.sign_in_google),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            buttonDefault = WantedButtonDefaults.getDefault(
-                                type = ButtonType.ASSISTIVE,
-                                variant = ButtonVariant.OUTLINED
-                            ).copy(contentColor = colors.textTitle),
-                            onClick = {
-                                scope.launch {
-                                    try {
-                                        val credentialManager = CredentialManager.create(context)
-                                        val googleIdOption = GetGoogleIdOption.Builder()
-                                            .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
-                                            .setFilterByAuthorizedAccounts(false)
-                                            .build()
-                                        val request = GetCredentialRequest.Builder()
-                                            .addCredentialOption(googleIdOption)
-                                            .build()
-                                        val result = credentialManager.getCredential(
-                                            context = activity ?: context,
-                                            request = request,
-                                        )
-                                        val googleIdToken = GoogleIdTokenCredential
-                                            .createFrom(result.credential.data)
-                                            .idToken
-                                        settingsViewModel.signInWithGoogle(googleIdToken)
-                                    } catch (e: Exception) {
-                                        Toast.makeText(
-                                            context,
-                                            context.getString(R.string.sign_in_error),
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                }
-                            }
-                        )
-                    }
-                    is AuthState.Authenticated -> {
-                        Text(
-                            text = state.user.email ?: "",
-                            fontSize = 13.sp,
-                            color = colors.textBody,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        WantedButton(
-                            text = stringResource(R.string.sign_out),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            buttonDefault = WantedButtonDefaults.getDefault(
-                                type = ButtonType.ASSISTIVE,
-                                variant = ButtonVariant.OUTLINED
-                            ).copy(contentColor = colors.textTitle),
-                            onClick = { showSignOutDialog = true }
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                HorizontalDivider(
                     thickness = 0.3.dp ,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
@@ -500,6 +648,77 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
+                if (authState is AuthState.Authenticated) {
+                    // 로그인: 클라우드 백업 위주
+                    WantedButton(
+                        text = if (cloudBackupState is CloudBackupState.Uploading)
+                            stringResource(R.string.cloud_backup_uploading)
+                        else stringResource(R.string.cloud_backup_now),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        buttonDefault = WantedButtonDefaults.getDefault(
+                            type = ButtonType.ASSISTIVE,
+                            variant = ButtonVariant.OUTLINED
+                        ).copy(contentColor = colors.textTitle),
+                        onClick = { settingsViewModel.uploadCloudBackup() }
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    WantedButton(
+                        text = stringResource(R.string.cloud_backup_manage),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        buttonDefault = WantedButtonDefaults.getDefault(
+                            type = ButtonType.ASSISTIVE,
+                            variant = ButtonVariant.OUTLINED
+                        ).copy(contentColor = colors.textTitle),
+                        onClick = {
+                            settingsViewModel.loadBackupList()
+                            showBackupListDialog = true
+                        }
+                    )
+                } else {
+                    // 비로그인: 로컬 백업 위주
+                    WantedButton(
+                        text = stringResource(R.string.backup_export),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        buttonDefault = WantedButtonDefaults.getDefault(
+                            type = ButtonType.ASSISTIVE,
+                            variant = ButtonVariant.OUTLINED
+                        ).copy(contentColor = colors.textTitle),
+                        onClick = {
+                            val fileName = "memozy_backup_${
+                                java.text.SimpleDateFormat(
+                                    "yyyyMMdd_HHmm",
+                                    java.util.Locale.getDefault()
+                                ).format(java.util.Date())
+                            }.json"
+                            exportLauncher.launch(fileName)
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    WantedButton(
+                        text = stringResource(R.string.backup_restore),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        buttonDefault = WantedButtonDefaults.getDefault(
+                            type = ButtonType.ASSISTIVE,
+                            variant = ButtonVariant.OUTLINED
+                        ).copy(contentColor = colors.textTitle),
+                        onClick = { showRestoreDialog = true }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 WantedButton(
                     text = stringResource(R.string.trash_title),
                     modifier = Modifier
@@ -510,42 +729,6 @@ fun SettingsScreen(
                         variant = ButtonVariant.OUTLINED
                     ).copy(contentColor = colors.textTitle),
                     onClick = { onTrash() }
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                WantedButton(
-                    text = stringResource(R.string.backup_export),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    buttonDefault = WantedButtonDefaults.getDefault(
-                        type = ButtonType.ASSISTIVE,
-                        variant = ButtonVariant.OUTLINED
-                    ).copy(contentColor = colors.textTitle),
-                    onClick = {
-                        val fileName = "memozy_backup_${
-                            java.text.SimpleDateFormat(
-                                "yyyyMMdd_HHmm",
-                                java.util.Locale.getDefault()
-                            ).format(java.util.Date())
-                        }.json"
-                        exportLauncher.launch(fileName)
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                WantedButton(
-                    text = stringResource(R.string.backup_restore),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    buttonDefault = WantedButtonDefaults.getDefault(
-                        type = ButtonType.ASSISTIVE,
-                        variant = ButtonVariant.OUTLINED
-                    ).copy(contentColor = colors.textTitle),
-                    onClick = { showRestoreDialog = true }
                 )
 
                 if (isDonationEnabled) {
@@ -611,6 +794,9 @@ fun SettingsScreen(
                         .padding(top = 12.dp)
                         .align(alignment = Alignment.CenterHorizontally)
                 )
+
+                // 하단 여유 공간 (네비게이션 바에 가리지 않도록)
+                Spacer(modifier = Modifier.height(80.dp))
             }
         }
     }

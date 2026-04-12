@@ -34,6 +34,7 @@ import javax.inject.Singleton
 @Retention(AnnotationRetention.BINARY)
 annotation class YouTubeHttpClient
 
+
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class AINetworkModule {

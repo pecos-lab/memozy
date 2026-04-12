@@ -65,6 +65,7 @@ import me.pecos.memozy.presentation.components.FloatingNavPill
 import me.pecos.memozy.presentation.screen.donation.DonationScreen
 import me.pecos.memozy.presentation.screen.home.HomeScreen
 import me.pecos.memozy.presentation.screen.home.MainViewModel
+import me.pecos.memozy.presentation.screen.login.LoginScreen
 import me.pecos.memozy.presentation.screen.settings.SettingsScreen
 import me.pecos.memozy.presentation.screen.settings.SettingsViewModel
 import me.pecos.memozy.presentation.screen.settings.ThemeMode
@@ -152,7 +153,7 @@ class MainActivity : AppCompatActivity() {
                         val showBottomNav = remember(currentRoute) {
                             currentRoute?.destination?.route in listOf(
                                 HomeRoute.MAIN, HomeRoute.SETTINGS
-                            )
+                            ) && currentRoute?.destination?.route != HomeRoute.LOGIN
                         }
 
                         // ACTION_SEND 공유 수신 처리 (onNewIntent 대응)
@@ -203,6 +204,12 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
 
+                        val prefs = remember {
+                            applicationContext.getSharedPreferences("settings", Context.MODE_PRIVATE)
+                        }
+                        val onboardingDone = remember { prefs.getBoolean("onboarding_done", false) }
+                        val startDest = if (onboardingDone) HomeRoute.MAIN else HomeRoute.LOGIN
+
                         val hazeState = rememberHazeState()
                         val navBg = appColors.navBackground
                         val glassStyle = remember(navBg) {
@@ -220,13 +227,30 @@ class MainActivity : AppCompatActivity() {
                         ) {
                             NavHost(
                                 navController = navController,
-                                startDestination = HomeRoute.MAIN,
+                                startDestination = startDest,
                                 modifier = Modifier.fillMaxSize().hazeSource(state = hazeState),
                                 enterTransition = { fadeIn(tween(150)) },
                                 exitTransition = { fadeOut(tween(150)) },
                                 popEnterTransition = { fadeIn(tween(150)) },
                                 popExitTransition = { fadeOut(tween(150)) }
                             ) {
+                                composable(HomeRoute.LOGIN) {
+                                    LoginScreen(
+                                        onSignIn = { idToken ->
+                                            settingsViewModel.signInWithGoogle(idToken)
+                                            prefs.edit().putBoolean("onboarding_done", true).apply()
+                                            navController.navigate(HomeRoute.MAIN) {
+                                                popUpTo(HomeRoute.LOGIN) { inclusive = true }
+                                            }
+                                        },
+                                        onSkip = {
+                                            prefs.edit().putBoolean("onboarding_done", true).apply()
+                                            navController.navigate(HomeRoute.MAIN) {
+                                                popUpTo(HomeRoute.LOGIN) { inclusive = true }
+                                            }
+                                        }
+                                    )
+                                }
                                 composable(HomeRoute.MAIN) {
                                     HomeScreen(
                                         onDelete = { id -> viewModel.deleteMemo(id) },

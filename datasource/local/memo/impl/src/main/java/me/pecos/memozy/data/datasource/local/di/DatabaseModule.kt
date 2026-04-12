@@ -26,6 +26,7 @@ import me.pecos.memozy.data.datasource.local.MIGRATION_14_15
 import me.pecos.memozy.data.datasource.local.MIGRATION_15_16
 import me.pecos.memozy.data.datasource.local.MIGRATION_16_17
 import me.pecos.memozy.data.datasource.local.AiUsageDao
+import me.pecos.memozy.data.datasource.local.CategoryDao
 import me.pecos.memozy.data.datasource.local.MemoDao
 import me.pecos.memozy.data.datasource.local.MemoDatabase
 import me.pecos.memozy.data.datasource.local.YoutubeSummaryDao
@@ -58,6 +59,11 @@ object DatabaseModule {
     @Provides
     fun provideMemoDao(database: MemoDatabase): MemoDao {
         return database.memoDao()
+    }
+
+    @Provides
+    fun provideCategoryDao(database: MemoDatabase): CategoryDao {
+        return database.categoryDao()
     }
 
     @Provides

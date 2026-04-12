@@ -190,9 +190,29 @@
 
     <!-- Auth -->
     <string name="section_account">Account</string>
-    <string name="sign_in_google">Sign in with Google</string>
+    <string name="sign_in_google">Sign in with Google Account</string>
     <string name="sign_out">Sign Out</string>
     <string name="sign_in_error">Sign in failed</string>
     <string name="sign_out_confirm">Are you sure you want to sign out?</string>
     <string name="sign_in_loading">Signing in…</string>
+    <string name="login_subtitle">Keep your memos safe with cloud backup</string>
+    <string name="login_skip">Start without account</string>
+
+    <!-- Cloud Backup -->
+    <string name="section_cloud_backup">Cloud Backup</string>
+    <string name="cloud_backup_now">Backup to Cloud</string>
+    <string name="cloud_backup_restore">Restore from Cloud</string>
+    <string name="cloud_backup_manage">Manage Backups</string>
+    <string name="cloud_backup_uploading">Uploading backup…</string>
+    <string name="cloud_backup_success">Backup completed (%d memos)</string>
+    <string name="cloud_backup_error">Backup failed</string>
+    <string name="cloud_backup_restore_confirm">Restoring this backup will replace all current data.\nThis action cannot be undone.</string>
+    <string name="cloud_backup_restore_success">Restored successfully (%d memos)</string>
+    <string name="cloud_backup_restore_error">Restore failed</string>
+    <string name="cloud_backup_delete_confirm">Delete this backup?</string>
+    <string name="cloud_backup_empty">No backups saved</string>
+    <string name="cloud_backup_login_required">Sign in to use cloud backup</string>
+    <string name="cloud_backup_restoring">Restoring…</string>
+    <string name="cloud_backup_count">%d backups saved</string>
+    <string name="cloud_backup_memo_count">%d memos</string>
 </resources>

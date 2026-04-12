@@ -34,7 +34,9 @@ dependencies {
     implementation(projects.datasource.local.memo.api) // 위젯에서 Memo 엔티티 참조
     implementation(projects.datasource.local.chat.impl)
     implementation(projects.datasource.remote.ai.impl)
+    implementation(projects.datasource.remote.auth.api)
     implementation(projects.datasource.remote.auth.impl)
+    implementation(projects.data.backup.api)
     implementation(projects.data.repository.memo.impl)
     implementation(projects.data.repository.memo.api) // 위젯에서 MemoRepository 참조
     implementation(projects.data.repository.chat.impl)
@@ -50,6 +52,11 @@ dependencies {
 
     // MemozyApplication
     implementation(libs.android.joda)
+
+    // work manager
+    implementation(libs.work.runtime)
+    implementation(libs.work.hilt)
+    ksp(libs.work.hilt.compiler)
 
     // glance widget
     implementation(libs.glance.appwidget)

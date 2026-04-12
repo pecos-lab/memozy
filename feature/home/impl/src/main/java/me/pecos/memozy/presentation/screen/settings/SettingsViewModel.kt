@@ -15,6 +15,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.pecos.memozy.data.datasource.local.MemoDao
 import me.pecos.memozy.data.datasource.local.entity.Memo
+import me.pecos.memozy.data.backup.BackupMeta
+import me.pecos.memozy.data.backup.BackupRepository
 import me.pecos.memozy.data.datasource.remote.auth.AuthState
 import me.pecos.memozy.data.repository.MemoRepository
 import me.pecos.memozy.data.repository.model.MemoFormat
@@ -31,6 +33,15 @@ val LANGUAGES = listOf(
     Language("日本語", "ja"),
 )
 
+sealed class CloudBackupState {
+    data object Idle : CloudBackupState()
+    data object Uploading : CloudBackupState()
+    data object Restoring : CloudBackupState()
+    data class UploadSuccess(val memoCount: Int) : CloudBackupState()
+    data class RestoreSuccess(val memoCount: Int) : CloudBackupState()
+    data class Error(val message: String) : CloudBackupState()
+}
+
 sealed class BackupResult {
     data object Idle : BackupResult()
     data object Loading : BackupResult()
@@ -44,6 +55,7 @@ class SettingsViewModel @Inject constructor(
     private val repository: MemoRepository,
     private val memoDao: MemoDao,
     private val authRepository: AuthRepository,
+    private val backupRepository: BackupRepository,
 ) : ViewModel() {
 
     private val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
@@ -98,6 +110,51 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             authRepository.signOut()
         }
+    }
+
+    // --- Cloud Backup ---
+
+    private val _cloudBackupState = MutableStateFlow<CloudBackupState>(CloudBackupState.Idle)
+    val cloudBackupState: StateFlow<CloudBackupState> = _cloudBackupState
+
+    private val _backupList = MutableStateFlow<List<BackupMeta>>(emptyList())
+    val backupList: StateFlow<List<BackupMeta>> = _backupList
+
+    fun uploadCloudBackup() {
+        viewModelScope.launch {
+            _cloudBackupState.value = CloudBackupState.Uploading
+            backupRepository.uploadBackup()
+                .onSuccess { _cloudBackupState.value = CloudBackupState.UploadSuccess(it.memo_count) }
+                .onFailure { _cloudBackupState.value = CloudBackupState.Error(it.message ?: "Unknown error") }
+        }
+    }
+
+    fun loadBackupList() {
+        viewModelScope.launch {
+            backupRepository.listBackups()
+                .onSuccess { _backupList.value = it }
+                .onFailure { _backupList.value = emptyList() }
+        }
+    }
+
+    fun restoreFromCloud(backupId: String) {
+        viewModelScope.launch {
+            _cloudBackupState.value = CloudBackupState.Restoring
+            backupRepository.restoreFromCloud(backupId)
+                .onSuccess { _cloudBackupState.value = CloudBackupState.RestoreSuccess(it) }
+                .onFailure { _cloudBackupState.value = CloudBackupState.Error(it.message ?: "Unknown error") }
+        }
+    }
+
+    fun deleteCloudBackup(backupId: String) {
+        viewModelScope.launch {
+            backupRepository.deleteBackup(backupId)
+                .onSuccess { loadBackupList() }
+        }
+    }
+
+    fun clearCloudBackupState() {
+        _cloudBackupState.value = CloudBackupState.Idle
     }
 
     // ── Backup (Export) ──
