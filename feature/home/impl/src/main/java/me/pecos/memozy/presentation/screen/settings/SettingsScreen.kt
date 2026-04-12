@@ -489,47 +489,6 @@ fun SettingsScreen(
                 )
 
                 Text(
-                    text = stringResource(R.string.section_theme),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.topbarTitle,
-                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp, top = 12.dp)
-                )
-
-                WantedButton(
-                    text = stringResource(R.string.language_settings),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    buttonDefault = WantedButtonDefaults.getDefault(
-                        type = ButtonType.ASSISTIVE,
-                        variant = ButtonVariant.OUTLINED
-                    ).copy(contentColor = colors.textTitle),
-                    onClick = { showLanguageDialog = true }
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                WantedButton(
-                    text = stringResource(R.string.theme_settings),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    buttonDefault = WantedButtonDefaults.getDefault(
-                        type = ButtonType.ASSISTIVE,
-                        variant = ButtonVariant.OUTLINED
-                    ).copy(contentColor = colors.textTitle),
-                    onClick = { showThemeDialog = true }
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                HorizontalDivider(
-                    thickness = 0.3.dp,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-
-                Text(
                     text = stringResource(R.string.section_account),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
@@ -621,6 +580,47 @@ fun SettingsScreen(
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                HorizontalDivider(
+                    thickness = 0.3.dp,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+
+                Text(
+                    text = stringResource(R.string.section_theme),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.topbarTitle,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp, top = 12.dp)
+                )
+
+                WantedButton(
+                    text = stringResource(R.string.language_settings),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    buttonDefault = WantedButtonDefaults.getDefault(
+                        type = ButtonType.ASSISTIVE,
+                        variant = ButtonVariant.OUTLINED
+                    ).copy(contentColor = colors.textTitle),
+                    onClick = { showLanguageDialog = true }
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                WantedButton(
+                    text = stringResource(R.string.theme_settings),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    buttonDefault = WantedButtonDefaults.getDefault(
+                        type = ButtonType.ASSISTIVE,
+                        variant = ButtonVariant.OUTLINED
+                    ).copy(contentColor = colors.textTitle),
+                    onClick = { showThemeDialog = true }
+                )
 
                 Spacer(modifier = Modifier.height(12.dp))
 

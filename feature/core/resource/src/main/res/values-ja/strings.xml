@@ -195,6 +195,8 @@
     <string name="sign_in_error">ログインに失敗しました</string>
     <string name="sign_out_confirm">ログアウトしますか？</string>
     <string name="sign_in_loading">ログイン中…</string>
+    <string name="login_subtitle">クラウドバックアップでメモを安全に保管</string>
+    <string name="login_skip">アカウントなしで始める</string>
 
     <!-- Cloud Backup -->
     <string name="section_cloud_backup">クラウドバックアップ</string>
