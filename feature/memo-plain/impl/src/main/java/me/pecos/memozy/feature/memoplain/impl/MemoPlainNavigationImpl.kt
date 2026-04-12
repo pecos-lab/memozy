@@ -728,7 +728,8 @@ class MemoPlainNavigationImpl @Inject constructor(
         audioPath = audioPath,
         styles = styles,
         youtubeUrl = youtubeUrl,
-        summaryContent = summaryContent
+        summaryContent = summaryContent,
+        isSummaryExpanded = isSummaryExpanded
     )
 
     // 503 에러 시 최대 3회 재시도 (exponential backoff)

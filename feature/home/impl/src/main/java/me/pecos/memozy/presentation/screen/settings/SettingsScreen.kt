@@ -504,6 +504,15 @@ fun SettingsScreen(
                                     .padding(8.dp)
                             )
                         }
+                        // 마지막 백업 시간 표시 (이메일 아래)
+                        lastBackupTime?.let { time ->
+                            Text(
+                                text = stringResource(R.string.cloud_backup_last_time, time.take(16).replace("T", " ")),
+                                fontSize = 11.sp,
+                                color = colors.textSecondary,
+                                modifier = Modifier.padding(start = 20.dp, bottom = 4.dp)
+                            )
+                        }
                     }
                 }
 
@@ -580,16 +589,6 @@ fun SettingsScreen(
                         ).copy(contentColor = colors.textTitle),
                         onClick = { settingsViewModel.uploadCloudBackup() }
                     )
-
-                    // 마지막 백업 시간 표시
-                    lastBackupTime?.let { time ->
-                        Text(
-                            text = stringResource(R.string.cloud_backup_last_time, time.take(16).replace("T", " ")),
-                            fontSize = 11.sp,
-                            color = colors.textSecondary,
-                            modifier = Modifier.padding(start = 20.dp, top = 4.dp)
-                        )
-                    }
 
                     Spacer(modifier = Modifier.height(12.dp))
 

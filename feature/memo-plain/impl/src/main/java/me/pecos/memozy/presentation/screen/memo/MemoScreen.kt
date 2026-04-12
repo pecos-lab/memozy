@@ -281,7 +281,7 @@ fun MemoScreen(
     // 요약 콘텐츠 접기/펼치기 상태 (summaryContent 별도 컬럼에서 로드)
     val initialSummary = remember(existingMemo.id) { existingMemo.summaryContent }
     var summaryText by remember { mutableStateOf(initialSummary) }
-    var isSummaryExpanded by remember { mutableStateOf(initialSummary == null) }
+    var isSummaryExpanded by remember { mutableStateOf(if (initialSummary == null) true else existingMemo.isSummaryExpanded) }
     var webSummaryText by remember { mutableStateOf<String?>(null) }
     var isWebSummaryExpanded by remember { mutableStateOf(initialSummary == null) }
 
@@ -344,7 +344,8 @@ fun MemoScreen(
                         content = newContent,
                         styles = safeStyles(),
                         youtubeUrl = savedYoutubeUrl,
-                        summaryContent = safeSummaryContent()
+                        summaryContent = safeSummaryContent(),
+                        isSummaryExpanded = isSummaryExpanded
                     ))
                 }
             }
@@ -472,7 +473,7 @@ fun MemoScreen(
                     color = colors.chipText,
                     modifier = Modifier
                         .clickable {
-                            onSave(MemoUiState(id = existingMemo.id, name = nameText, categoryId = categoryIndex + 1, content = safeContent(), styles = safeStyles(), youtubeUrl = savedYoutubeUrl, summaryContent = safeSummaryContent()))
+                            onSave(MemoUiState(id = existingMemo.id, name = nameText, categoryId = categoryIndex + 1, content = safeContent(), styles = safeStyles(), youtubeUrl = savedYoutubeUrl, summaryContent = safeSummaryContent(), isSummaryExpanded = isSummaryExpanded))
                         }
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 )
@@ -484,7 +485,7 @@ fun MemoScreen(
                     .weight(1f)
                     .hazeSource(hazeState)
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 16.dp)
+                    .padding(horizontal = 32.dp, vertical = 16.dp)
             ) {
                 // 제목 — 개행 시 내용으로 포커스 이동
                 val bodyFocusRequester = remember { FocusRequester() }
