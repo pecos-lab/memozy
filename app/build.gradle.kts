@@ -39,6 +39,7 @@ dependencies {
     implementation(projects.data.repository.memo.api) // 위젯에서 MemoRepository 참조
     implementation(projects.data.repository.chat.impl)
     implementation(projects.data.repository.user.impl)
+    implementation(projects.data.backup.impl)
     implementation(projects.feature.core.resource)
     implementation(projects.feature.home.impl)
     implementation(projects.feature.memoPlain.impl)
