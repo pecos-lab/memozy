@@ -69,12 +69,17 @@ fun SettingsScreen(
     var showThemeDialog by remember { mutableStateOf(false) }
     var showRestoreDialog by remember { mutableStateOf(false) }
     var showSignOutDialog by remember { mutableStateOf(false) }
+    var showBackupListDialog by remember { mutableStateOf(false) }
+    var showCloudRestoreConfirm by remember { mutableStateOf<String?>(null) }
+    var showCloudDeleteConfirm by remember { mutableStateOf<String?>(null) }
 
     val selectedLanguage by settingsViewModel.selectedLanguage.collectAsState()
     val selectedTheme by settingsViewModel.selectedTheme.collectAsState()
     val backupResult by settingsViewModel.backupResult.collectAsState()
     val isDonationEnabled by settingsViewModel.isDonationEnabled.collectAsState()
     val authState by settingsViewModel.authState.collectAsState()
+    val cloudBackupState by settingsViewModel.cloudBackupState.collectAsState()
+    val backupList by settingsViewModel.backupList.collectAsState()
     val colors = LocalAppColors.current
     val context = LocalContext.current
     val activity = LocalActivity.current
@@ -110,6 +115,33 @@ fun SettingsScreen(
                 settingsViewModel.clearBackupResult()
             }
 
+            else -> {}
+        }
+    }
+
+    // 클라우드 백업 결과 토스트
+    LaunchedEffect(cloudBackupState) {
+        when (val state = cloudBackupState) {
+            is CloudBackupState.UploadSuccess -> {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.cloud_backup_success, state.memoCount),
+                    Toast.LENGTH_SHORT
+                ).show()
+                settingsViewModel.clearCloudBackupState()
+            }
+            is CloudBackupState.RestoreSuccess -> {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.cloud_backup_restore_success, state.memoCount),
+                    Toast.LENGTH_SHORT
+                ).show()
+                settingsViewModel.clearCloudBackupState()
+            }
+            is CloudBackupState.Error -> {
+                Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
+                settingsViewModel.clearCloudBackupState()
+            }
             else -> {}
         }
     }
@@ -222,6 +254,113 @@ fun SettingsScreen(
             onSecondaryClick = { showRestoreDialog = false }
         ) {
             Text(stringResource(R.string.backup_restore_confirm), color = colors.textBody)
+        }
+    }
+
+    // 클라우드 복원 확인
+    showCloudRestoreConfirm?.let { backupId ->
+        AppPopup(
+            onDismissRequest = { showCloudRestoreConfirm = null },
+            title = stringResource(R.string.cloud_backup_restore),
+            navigation = PopupNavigation.EMPHASIZED,
+            size = PopupSize.MEDIUM,
+            actionArea = PopupActionArea.NEUTRAL,
+            primaryButtonText = stringResource(R.string.backup_restore_action),
+            isPrimaryDestructive = true,
+            onPrimaryClick = {
+                showCloudRestoreConfirm = null
+                showBackupListDialog = false
+                settingsViewModel.restoreFromCloud(backupId)
+            },
+            secondaryButtonText = stringResource(R.string.cancel),
+            onSecondaryClick = { showCloudRestoreConfirm = null }
+        ) {
+            Text(stringResource(R.string.cloud_backup_restore_confirm), color = colors.textBody)
+        }
+    }
+
+    // 클라우드 백업 삭제 확인
+    showCloudDeleteConfirm?.let { backupId ->
+        AppPopup(
+            onDismissRequest = { showCloudDeleteConfirm = null },
+            title = stringResource(R.string.delete_action),
+            navigation = PopupNavigation.EMPHASIZED,
+            size = PopupSize.MEDIUM,
+            actionArea = PopupActionArea.NEUTRAL,
+            primaryButtonText = stringResource(R.string.delete_action),
+            isPrimaryDestructive = true,
+            onPrimaryClick = {
+                showCloudDeleteConfirm = null
+                settingsViewModel.deleteCloudBackup(backupId)
+            },
+            secondaryButtonText = stringResource(R.string.cancel),
+            onSecondaryClick = { showCloudDeleteConfirm = null }
+        ) {
+            Text(stringResource(R.string.cloud_backup_delete_confirm), color = colors.textBody)
+        }
+    }
+
+    // 백업 목록 다이얼로그
+    if (showBackupListDialog) {
+        AppPopup(
+            onDismissRequest = { showBackupListDialog = false },
+            title = stringResource(R.string.cloud_backup_manage),
+            navigation = PopupNavigation.EMPHASIZED,
+            size = PopupSize.LARGE,
+            actionArea = PopupActionArea.NONE
+        ) {
+            if (backupList.isEmpty()) {
+                Text(
+                    stringResource(R.string.cloud_backup_empty),
+                    color = colors.textSecondary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(vertical = 16.dp)
+                )
+            } else {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    backupList.forEach { backup ->
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = "${backup.device_name} · v${backup.app_version}",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = colors.textTitle
+                            )
+                            Text(
+                                text = "${backup.created_at.take(10)} · ${stringResource(R.string.cloud_backup_memo_count, backup.memo_count)}",
+                                fontSize = 12.sp,
+                                color = colors.textSecondary,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                            Row(modifier = Modifier.padding(top = 4.dp)) {
+                                Text(
+                                    text = stringResource(R.string.trash_restore),
+                                    fontSize = 12.sp,
+                                    color = colors.textTitle,
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier
+                                        .clickable { showCloudRestoreConfirm = backup.id }
+                                        .padding(end = 16.dp, top = 4.dp, bottom = 4.dp)
+                                )
+                                Text(
+                                    text = stringResource(R.string.delete_action),
+                                    fontSize = 12.sp,
+                                    color = Color(0xFFE24B4A),
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier
+                                        .clickable { showCloudDeleteConfirm = backup.id }
+                                        .padding(top = 4.dp, bottom = 4.dp)
+                                )
+                            }
+                        }
+                        HorizontalDivider(thickness = 0.3.dp, color = colors.cardBorder)
+                    }
+                }
+            }
         }
     }
 
@@ -547,6 +686,57 @@ fun SettingsScreen(
                     ).copy(contentColor = colors.textTitle),
                     onClick = { showRestoreDialog = true }
                 )
+
+                // 클라우드 백업 섹션 (로그인 시에만 표시)
+                if (authState is AuthState.Authenticated) {
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    HorizontalDivider(
+                        thickness = 0.3.dp,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+
+                    Text(
+                        text = stringResource(R.string.section_cloud_backup),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.topbarTitle,
+                        modifier = Modifier.padding(start = 16.dp, bottom = 8.dp, top = 12.dp)
+                    )
+
+                    WantedButton(
+                        text = if (cloudBackupState is CloudBackupState.Uploading)
+                            stringResource(R.string.cloud_backup_uploading)
+                        else stringResource(R.string.cloud_backup_now),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        buttonDefault = WantedButtonDefaults.getDefault(
+                            type = ButtonType.ASSISTIVE,
+                            variant = ButtonVariant.OUTLINED
+                        ).copy(contentColor = colors.textTitle),
+
+                        onClick = { settingsViewModel.uploadCloudBackup() }
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    WantedButton(
+                        text = stringResource(R.string.cloud_backup_manage),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        buttonDefault = WantedButtonDefaults.getDefault(
+                            type = ButtonType.ASSISTIVE,
+                            variant = ButtonVariant.OUTLINED
+                        ).copy(contentColor = colors.textTitle),
+
+                        onClick = {
+                            settingsViewModel.loadBackupList()
+                            showBackupListDialog = true
+                        }
+                    )
+                }
 
                 if (isDonationEnabled) {
                     Spacer(modifier = Modifier.height(12.dp))

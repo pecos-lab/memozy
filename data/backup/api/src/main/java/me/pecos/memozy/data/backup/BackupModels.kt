@@ -60,3 +60,30 @@ data class ChatMessageBackup(
     val timestamp: Long,
     val metadata: String? = null,
 )
+
+// --- Cloud backup metadata ---
+
+@Serializable
+data class BackupMeta(
+    val id: String,
+    val device_name: String,
+    val app_version: String,
+    val db_version: Int,
+    val memo_count: Int,
+    val size_bytes: Long,
+    val created_at: String,
+)
+
+@Serializable
+data class BackupCreateResponse(
+    val id: String,
+    val created_at: String,
+    val memo_count: Int,
+)
+
+@Serializable
+data class BackupDownloadResponse(
+    val id: String,
+    val metadata: BackupMeta,
+    val tables: BackupTables,
+)

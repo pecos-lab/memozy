@@ -33,6 +33,7 @@ dependencies {
     implementation(projects.data.repository.user.api)
     implementation(projects.datasource.remote.auth.api)
     implementation(projects.datasource.remote.ai.api)
+    implementation(projects.data.backup.api)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)

@@ -195,4 +195,22 @@
     <string name="sign_in_error">ログインに失敗しました</string>
     <string name="sign_out_confirm">ログアウトしますか？</string>
     <string name="sign_in_loading">ログイン中…</string>
+
+    <!-- Cloud Backup -->
+    <string name="section_cloud_backup">クラウドバックアップ</string>
+    <string name="cloud_backup_now">クラウドにバックアップ</string>
+    <string name="cloud_backup_restore">クラウドから復元</string>
+    <string name="cloud_backup_manage">バックアップ管理</string>
+    <string name="cloud_backup_uploading">バックアップ中…</string>
+    <string name="cloud_backup_success">バックアップ完了 (メモ %d件)</string>
+    <string name="cloud_backup_error">バックアップに失敗しました</string>
+    <string name="cloud_backup_restore_confirm">このバックアップで復元すると、現在のデータが置き換えられます。\nこの操作は元に戻せません。</string>
+    <string name="cloud_backup_restore_success">復元が完了しました (メモ %d件)</string>
+    <string name="cloud_backup_restore_error">復元に失敗しました</string>
+    <string name="cloud_backup_delete_confirm">このバックアップを削除しますか？</string>
+    <string name="cloud_backup_empty">保存されたバックアップはありません</string>
+    <string name="cloud_backup_login_required">ログインしてからご利用ください</string>
+    <string name="cloud_backup_restoring">復元中…</string>
+    <string name="cloud_backup_count">保存済みバックアップ %d件</string>
+    <string name="cloud_backup_memo_count">メモ %d件</string>
 </resources>

@@ -2,14 +2,24 @@ package me.pecos.memozy.data.backup
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.delete
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import me.pecos.memozy.data.datasource.local.CategoryDao
 import me.pecos.memozy.data.datasource.local.MemoDao
 import me.pecos.memozy.data.datasource.local.chat.ChatMessageDao
 import me.pecos.memozy.data.datasource.local.chat.ChatSessionDao
+import me.pecos.memozy.data.datasource.local.chat.entity.ChatMessage
+import me.pecos.memozy.data.datasource.local.chat.entity.ChatSession
 import me.pecos.memozy.data.datasource.local.entity.Category
 import me.pecos.memozy.data.datasource.local.entity.Memo
-import me.pecos.memozy.data.datasource.local.chat.entity.ChatSession
-import me.pecos.memozy.data.datasource.local.chat.entity.ChatMessage
+import me.pecos.memozy.data.datasource.remote.auth.AuthService
 import me.pecos.memozy.data.repository.model.MemoFormat
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -21,6 +31,8 @@ class BackupRepositoryImpl @Inject constructor(
     private val categoryDao: CategoryDao,
     private val chatSessionDao: ChatSessionDao,
     private val chatMessageDao: ChatMessageDao,
+    private val authService: AuthService,
+    private val httpClient: HttpClient,
 ) : BackupRepository {
 
     override suspend fun createBackupPayload(): BackupPayload {
@@ -45,32 +57,78 @@ class BackupRepositoryImpl @Inject constructor(
     }
 
     override suspend fun restoreFromPayload(payload: BackupPayload) {
-        // 복원 순서: FK 의존성 고려
-        // 1. 기존 데이터 삭제 (역순)
         chatMessageDao.clearAllMessages()
         chatSessionDao.clearAllSessions()
         memoDao.clearAllMemos()
         categoryDao.clearAllCategories()
 
-        // 2. 카테고리 먼저
         val categories = payload.tables.categories.map { it.toEntity() }
         if (categories.isNotEmpty()) categoryDao.insertCategories(categories)
 
-        // 3. 메모
         val memos = payload.tables.memos.map { it.toEntity() }
         if (memos.isNotEmpty()) memoDao.insertMemos(memos)
 
-        // 4. 채팅 세션
         val sessions = payload.tables.chatSessions?.map { it.toEntity() }
         if (!sessions.isNullOrEmpty()) chatSessionDao.insertSessions(sessions)
 
-        // 5. 채팅 메시지
         val messages = payload.tables.chatMessages?.map { it.toEntity() }
         if (!messages.isNullOrEmpty()) chatMessageDao.insertMessages(messages)
     }
+
+    // --- Cloud operations ---
+
+    private fun authHeader(): String {
+        val token = authService.getAccessToken()
+            ?: throw IllegalStateException("Not authenticated")
+        return "Bearer $token"
+    }
+
+    override suspend fun uploadBackup(): Result<BackupCreateResponse> = runCatching {
+        val payload = createBackupPayload()
+        httpClient.post("backup") {
+            header("Authorization", authHeader())
+            contentType(ContentType.Application.Json)
+            setBody(mapOf(
+                "device_name" to payload.deviceName,
+                "app_version" to payload.appVersion,
+                "db_version" to payload.dbVersion,
+                "tables" to payload.tables,
+            ))
+        }.body<BackupCreateResponse>()
+    }
+
+    override suspend fun listBackups(): Result<List<BackupMeta>> = runCatching {
+        httpClient.get("backups") {
+            header("Authorization", authHeader())
+        }.body<List<BackupMeta>>()
+    }
+
+    override suspend fun downloadBackup(backupId: String): Result<BackupDownloadResponse> = runCatching {
+        httpClient.get("backup/$backupId") {
+            header("Authorization", authHeader())
+        }.body<BackupDownloadResponse>()
+    }
+
+    override suspend fun deleteBackup(backupId: String): Result<Unit> = runCatching {
+        httpClient.delete("backup/$backupId") {
+            header("Authorization", authHeader())
+        }
+        Unit
+    }
+
+    override suspend fun restoreFromCloud(backupId: String): Result<Int> = runCatching {
+        val response = downloadBackup(backupId).getOrThrow()
+        restoreFromPayload(BackupPayload(
+            deviceName = response.metadata.device_name,
+            appVersion = response.metadata.app_version,
+            dbVersion = response.metadata.db_version,
+            tables = response.tables,
+        ))
+        response.metadata.memo_count
+    }
 }
 
-// --- Entity → Backup 변환 ---
+// --- Entity → Backup ---
 
 private fun Memo.toBackup() = MemoBackup(
     id = id, name = name, categoryId = categoryId, content = content,
@@ -91,7 +149,7 @@ private fun ChatMessage.toBackup() = ChatMessageBackup(
     timestamp = timestamp, metadata = metadata,
 )
 
-// --- Backup → Entity 변환 ---
+// --- Backup → Entity ---
 
 private fun MemoBackup.toEntity() = Memo(
     id = id, name = name, categoryId = categoryId, content = content,
