@@ -45,7 +45,9 @@ class BackupRepositoryImpl @Inject constructor(
         val chatMessages = chatMessageDao.getAllMessagesOnce().map { it.toBackup() }
 
         return BackupPayload(
-            deviceName = android.os.Build.MODEL,
+            deviceName = android.provider.Settings.Global.getString(
+                context.contentResolver, "device_name"
+            ) ?: android.os.Build.MODEL,
             appVersion = packageInfo.versionName ?: "unknown",
             dbVersion = 17,
             tables = BackupTables(
