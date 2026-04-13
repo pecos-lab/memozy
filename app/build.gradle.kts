@@ -1,4 +1,5 @@
 import me.pecos.memozy.convention.extension.setNamespace
+import java.util.Properties
 
 plugins {
     id("memozy.android.application")
@@ -15,6 +16,17 @@ android {
         applicationId = "me.pecos.memozy"
         versionCode = 3
         versionName = "1.2603.0"
+
+        val admobAppId = rootProject.file("local.properties").let { file ->
+            if (file.exists()) {
+                val props = Properties()
+                props.load(file.inputStream())
+                props.getProperty("admob.app.id", "ca-app-pub-3940256099942544~3347511713")
+            } else {
+                "ca-app-pub-3940256099942544~3347511713"
+            }
+        }
+        manifestPlaceholders["admobAppId"] = admobAppId
     }
     buildTypes {
         release {

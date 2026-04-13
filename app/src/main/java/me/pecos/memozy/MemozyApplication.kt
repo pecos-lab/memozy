@@ -30,6 +30,8 @@ class MemozyApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
-        MobileAds.initialize(this)
+        CoroutineScope(Dispatchers.IO).launch {
+            MobileAds.initialize(this@MemozyApplication)
+        }
     }
 }
