@@ -42,12 +42,17 @@ import androidx.credentials.GetCredentialRequest
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RippleConfiguration
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.res.painterResource
 import kotlinx.coroutines.launch
 import me.pecos.memozy.data.datasource.remote.auth.AuthState
@@ -57,7 +62,15 @@ import me.pecos.memozy.presentation.components.AppPopup
 import me.pecos.memozy.presentation.components.PopupActionArea
 import me.pecos.memozy.presentation.components.PopupNavigation
 import me.pecos.memozy.presentation.components.PopupSize
-import androidx.compose.material3.Slider
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import kotlin.math.roundToInt
 import me.pecos.memozy.presentation.theme.AppFontFamily
 import me.pecos.memozy.presentation.theme.FontSizeLevel
@@ -65,6 +78,7 @@ import me.pecos.memozy.presentation.theme.LocalActivity
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit = {},
@@ -234,7 +248,7 @@ fun SettingsScreen(
                             onClick = { settingsViewModel.selectFontFamily(family) }
                         )
                         Text(
-                            text = family.displayName,
+                            text = if (family == AppFontFamily.SYSTEM) stringResource(R.string.font_system) else family.displayName,
                             color = colors.textBody,
                             fontFamily = family.fontFamily,
                             modifier = Modifier.padding(start = 8.dp)
@@ -263,12 +277,70 @@ fun SettingsScreen(
                     Text(stringResource(R.string.font_size_normal), fontSize = fontSettings.scaled(12), color = colors.textSecondary)
                     Text(stringResource(R.string.font_size_large), fontSize = fontSettings.scaled(12), color = colors.textSecondary)
                 }
-                Slider(
-                    value = selectedFontSize.ordinal.toFloat(),
-                    onValueChange = { settingsViewModel.selectFontSize(FontSizeLevel.entries[it.roundToInt()]) },
-                    valueRange = 0f..2f,
-                    steps = 1
-                )
+                // 커스텀 3단 슬라이더 (원티드 디자인 스타일)
+                val trackHeight = 6.dp
+                val thumbSize = 14.dp
+                val stepCount = 3
+                val currentStep = selectedFontSize.ordinal
+                val density = LocalDensity.current
+                val thumbSizePx = with(density) { thumbSize.toPx() }
+
+                BoxWithConstraints(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(thumbSize)
+                        .pointerInput(Unit) {
+                            detectTapGestures { offset ->
+                                val stepWidth = size.width.toFloat() / stepCount
+                                val tappedStep = (offset.x / stepWidth).toInt().coerceIn(0, stepCount - 1)
+                                settingsViewModel.selectFontSize(FontSizeLevel.entries[tappedStep])
+                            }
+                        }
+                        .pointerInput(Unit) {
+                            detectHorizontalDragGestures { change, _ ->
+                                change.consume()
+                                val stepWidth = size.width.toFloat() / stepCount
+                                val draggedStep = (change.position.x / stepWidth).toInt().coerceIn(0, stepCount - 1)
+                                settingsViewModel.selectFontSize(FontSizeLevel.entries[draggedStep])
+                            }
+                        },
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    val totalWidthPx = constraints.maxWidth.toFloat()
+                    val thumbCenterPx = when (currentStep) {
+                        0 -> thumbSizePx / 2f
+                        stepCount - 1 -> totalWidthPx - thumbSizePx / 2f
+                        else -> totalWidthPx / 2f
+                    }
+                    val thumbLeftPx = thumbCenterPx - thumbSizePx / 2f
+                    val thumbLeftDp = with(density) { thumbLeftPx.toDp() }
+                    val activeFraction = (thumbCenterPx / totalWidthPx).coerceIn(0f, 1f)
+
+                    // 트랙 배경 (전체)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(trackHeight)
+                            .clip(RoundedCornerShape(trackHeight / 2))
+                            .background(colors.chipText.copy(alpha = 0.15f))
+                    )
+                    // 트랙 활성 영역
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(activeFraction)
+                            .height(trackHeight)
+                            .clip(RoundedCornerShape(trackHeight / 2))
+                            .background(colors.chipText)
+                    )
+                    // 구슬 (thumb)
+                    Box(
+                        modifier = Modifier
+                            .offset(x = thumbLeftDp)
+                            .size(thumbSize)
+                            .clip(CircleShape)
+                            .background(colors.chipText)
+                    )
+                }
 
                 HorizontalDivider(
                     modifier = Modifier.padding(vertical = 12.dp),
@@ -468,6 +540,13 @@ fun SettingsScreen(
                 )
 
                 LicenseItem("[6] Firebase (Crashlytics & Analytics)\n출처: https://firebase.google.com\n라이선스: Apache License 2.0\nCopyright (c) Google LLC\n\n$apacheLicense")
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 12.dp),
+                    color = colors.cardBorder
+                )
+
+                LicenseItem("[7] Shadcn Compose\n출처: https://shadcn-compose.site\n라이선스: MIT License\nCopyright (c) Shadcn Compose Contributors\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.")
             }
         }
     }
@@ -476,6 +555,9 @@ fun SettingsScreen(
     Scaffold(
         containerColor = colors.screenBackground
     ) { innerPadding ->
+        CompositionLocalProvider(
+            LocalRippleConfiguration provides RippleConfiguration(color = colors.textTitle)
+        ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -827,6 +909,7 @@ fun SettingsScreen(
                 // 하단 여유 공간 (네비게이션 바에 가리지 않도록)
                 Spacer(modifier = Modifier.height(80.dp))
             }
+        }
         }
     }
 }

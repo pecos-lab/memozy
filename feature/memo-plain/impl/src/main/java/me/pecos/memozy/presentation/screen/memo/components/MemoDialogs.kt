@@ -82,7 +82,7 @@ fun YouTubeUrlDialog(
             placeholder = { Text("https://youtu.be/...", fontSize = fontSettings.scaled(14)) },
             singleLine = true, modifier = Modifier.fillMaxWidth()
         )
-        if (clipText.isNotBlank() && urlInput.isBlank()) {
+        if (clipText.isNotBlank() && urlInput.isBlank() && YOUTUBE_URL_REGEX.containsMatchIn(clipText)) {
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier
@@ -139,7 +139,7 @@ fun WebUrlDialog(
             placeholder = { Text("https://...", fontSize = fontSettings.scaled(14)) },
             singleLine = true, modifier = Modifier.fillMaxWidth()
         )
-        if (clipText.isNotBlank() && webUrlInput.isBlank()) {
+        if (clipText.isNotBlank() && webUrlInput.isBlank() && clipText.trimStart().startsWith("http")) {
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier
