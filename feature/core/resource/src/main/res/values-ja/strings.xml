@@ -227,4 +227,27 @@
     <string name="font_preview_title">タイトルプレビュー</string>
     <string name="font_preview_body">本文プレビューテキストです。このフォントがメモに適用されます。</string>
     <string name="font_system">システムデフォルト</string>
+
+    <!-- AI Limit -->
+    <string name="ai_limit_title">本日のAI使用回数に達しました</string>
+    <string name="ai_limit_free_message">無料ユーザーは1日%d回までAI機能を使用できます。</string>
+    <string name="ai_limit_pro_message">Proユーザーは1日%d回までAI機能を使用できます。\n明日また使用できます。</string>
+    <string name="ai_limit_upgrade">Proにアップグレード</string>
+    <string name="ai_limit_upgrade_desc">より多くのAI要約 + すべてのプレミアム機能</string>
+    <string name="ai_limit_close">閉じる</string>
+
+    <!-- Subscription -->
+    <string name="subscription_title">Memozy Pro</string>
+    <string name="subscription_desc">AI機能をもっと使いましょう</string>
+    <string name="subscription_monthly">月額</string>
+    <string name="subscription_yearly">年額</string>
+    <string name="subscription_yearly_discount">30%%オフ</string>
+    <string name="subscription_feature_youtube">YouTube要約</string>
+    <string name="subscription_feature_web">Webページ要約</string>
+    <string name="subscription_feature_ocr">写真要約</string>
+    <string name="subscription_feature_more">より多くの要約が可能</string>
+    <string name="subscription_feature_no_ads">広告なし</string>
+    <string name="subscription_current_plan">現在のプラン</string>
+    <string name="subscription_manage">サブスクリプション管理</string>
+    <string name="subscription_restore">購入を復元</string>
 </resources>

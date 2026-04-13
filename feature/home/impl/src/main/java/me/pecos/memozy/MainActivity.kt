@@ -58,11 +58,13 @@ import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import me.pecos.memozy.data.billing.BillingManager
+import me.pecos.memozy.presentation.theme.LocalSubscriptionTier
 import me.pecos.memozy.feature.home.api.HomeRoute
 import me.pecos.memozy.feature.memoplain.api.MemoPlainNavigation
 import me.pecos.memozy.feature.memoplain.api.MemoPlainRoute
 import me.pecos.memozy.presentation.components.FloatingNavPill
 import me.pecos.memozy.presentation.screen.donation.DonationScreen
+import me.pecos.memozy.presentation.screen.subscription.SubscriptionScreen
 import me.pecos.memozy.presentation.screen.home.HomeScreen
 import me.pecos.memozy.presentation.screen.home.MainViewModel
 import me.pecos.memozy.presentation.screen.login.LoginScreen
@@ -132,6 +134,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        billingManager.connect()
 
         setContent {
             val settingsViewModel: SettingsViewModel = viewModel()
@@ -155,8 +158,11 @@ class MainActivity : AppCompatActivity() {
                 appFontFamily = selectedFontFamily
             )
 
+            val currentTier by billingManager.subscriptionTier.collectAsState()
+
             CompositionLocalProvider(
-                LocalActivity provides this@MainActivity
+                LocalActivity provides this@MainActivity,
+                LocalSubscriptionTier provides currentTier
             ) {
             OverrideNightMode(isDarkTheme = isDarkTheme) {
                 CompositionLocalProvider(
@@ -306,6 +312,7 @@ class MainActivity : AppCompatActivity() {
                                     SettingsScreen(
                                         onBack = { navController.popBackStack() },
                                         onDonation = { navController.navigate("donation") },
+                                        onSubscription = { navController.navigate("subscription") },
                                         onTrash = { navController.navigate(HomeRoute.TRASH) },
                                         settingsViewModel = settingsViewModel
                                     )
@@ -319,6 +326,12 @@ class MainActivity : AppCompatActivity() {
                                 }
                                 composable("donation") {
                                     DonationScreen(
+                                        onBack = { navController.popBackStack() },
+                                        billingManager = this@MainActivity.billingManager
+                                    )
+                                }
+                                composable("subscription") {
+                                    SubscriptionScreen(
                                         onBack = { navController.popBackStack() },
                                         billingManager = this@MainActivity.billingManager
                                     )

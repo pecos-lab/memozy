@@ -55,7 +55,9 @@ import me.pecos.memozy.feature.memoplain.api.MemoPlainRoute
 import me.pecos.memozy.presentation.screen.home.model.MemoFormatUi
 import me.pecos.memozy.presentation.screen.home.model.MemoUiState
 import me.pecos.memozy.presentation.screen.memo.MemoScreen
+import me.pecos.memozy.presentation.screen.memo.components.AiLimitBottomSheet
 import me.pecos.memozy.presentation.theme.LocalAppColors
+import me.pecos.memozy.presentation.theme.LocalSubscriptionTier
 import javax.inject.Inject
 
 class MemoPlainNavigationImpl @Inject constructor(
@@ -72,7 +74,6 @@ class MemoPlainNavigationImpl @Inject constructor(
         private const val FEATURE_WEB_SUMMARY = "web_summary"
         private const val FEATURE_TRANSCRIPTION = "transcription"
         private const val FEATURE_IMAGE_OCR = "image_ocr"
-        private const val DAILY_FREE_LIMIT = 100
 
         private fun startOfToday(): Long {
             return Calendar.getInstance().apply {
@@ -284,12 +285,26 @@ class MemoPlainNavigationImpl @Inject constructor(
                 }
             }
 
+            // AI 사용량 체크 (티어별 일일 한도)
+            val subscriptionTier = LocalSubscriptionTier.current
+            var dailyUsageCount by remember { mutableStateOf(0) }
+            LaunchedEffect(Unit) {
+                dailyUsageCount = aiUsageDao.getTotalCountSince(startOfToday())
+            }
+            val dailyLimit = subscriptionTier.dailyAiLimit
+            val canUseAi = dailyUsageCount < dailyLimit
+            var showLimitBottomSheet by remember { mutableStateOf(false) }
+
             // 이미지 OCR 처리
             var imageOcrState by remember { mutableStateOf<SummaryState>(SummaryState.Idle) }
             val imageContext = LocalContext.current
 
             LaunchedEffect(sharedFileUri, isSharedImage) {
                 if (isSharedImage && sharedFileUri != null && imageOcrState is SummaryState.Idle) {
+                    if (!canUseAi) {
+                        imageOcrState = SummaryState.Error("오늘 AI 사용 한도를 모두 사용했어요.")
+                        return@LaunchedEffect
+                    }
                     imageOcrState = SummaryState.Loading
                     try {
                         val bytes = imageContext.contentResolver.openInputStream(sharedFileUri)?.use { it.readBytes() }
@@ -377,13 +392,6 @@ class MemoPlainNavigationImpl @Inject constructor(
                 }
 
             val context = LocalContext.current
-
-            // AI 사용량 체크 (일일 5회 제한)
-            var dailyUsageCount by remember { mutableStateOf(0) }
-            LaunchedEffect(Unit) {
-                dailyUsageCount = aiUsageDao.getCountSince(FEATURE_YOUTUBE_SUMMARY, startOfToday())
-            }
-            val canSummarize = dailyUsageCount < DAILY_FREE_LIMIT
 
             // 요약 상태 통합 (ACTION_SEND + 메모 내 링크 감지)
             var inlineSummaryState by remember { mutableStateOf<SummaryState>(SummaryState.Idle) }
@@ -570,7 +578,13 @@ class MemoPlainNavigationImpl @Inject constructor(
                 summaryResult = (inlineSummaryState as? SummaryState.Success)?.text,
                 summaryError = (inlineSummaryState as? SummaryState.Error)?.message,
                 youtubeTitle = youtubeTitle,
-                onStartRecording = { startRecording() },
+                onStartRecording = {
+                    if (!canUseAi) {
+                        showLimitBottomSheet = true
+                    } else {
+                        startRecording()
+                    }
+                },
                 onStopRecording = { stopRecordingAndTranscribe() },
                 isRecording = isRecording,
                 isTranscribing = isTranscribing,
@@ -585,6 +599,10 @@ class MemoPlainNavigationImpl @Inject constructor(
                     isTranscribing = false
                 },
                 onWebSummarize = { url, mode ->
+                    if (!canUseAi) {
+                        showLimitBottomSheet = true
+                        return@MemoScreen
+                    }
                     currentSummarizeJob = scope.launch {
                         isWebSummarizing = true
                         webSummaryError = null
@@ -630,8 +648,8 @@ class MemoPlainNavigationImpl @Inject constructor(
                 },
                 onYoutubeSummarize = { url, mode ->
                     currentSummarizeJob = scope.launch {
-                        if (!canSummarize) {
-                            inlineSummaryState = SummaryState.Error("오늘 무료 요약 횟수를 모두 사용했어요.")
+                        if (!canUseAi) {
+                            showLimitBottomSheet = true
                             return@launch
                         }
                         val videoId = extractVideoId(url)
@@ -717,6 +735,13 @@ class MemoPlainNavigationImpl @Inject constructor(
                     }
                 } else null
             )
+
+            if (showLimitBottomSheet) {
+                AiLimitBottomSheet(
+                    subscriptionTier = subscriptionTier,
+                    onDismiss = { showLimitBottomSheet = false }
+                )
+            }
         }
     }
 

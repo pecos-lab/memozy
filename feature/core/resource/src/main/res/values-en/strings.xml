@@ -227,4 +227,27 @@
     <string name="font_preview_title">Title Preview</string>
     <string name="font_preview_body">This is a body text preview. This font will be applied to your memos.</string>
     <string name="font_system">System Default</string>
+
+    <!-- AI Limit -->
+    <string name="ai_limit_title">Daily AI limit reached</string>
+    <string name="ai_limit_free_message">Free users can use AI features up to %d times per day.</string>
+    <string name="ai_limit_pro_message">Pro users can use AI features up to %d times per day.\nYou can use it again tomorrow.</string>
+    <string name="ai_limit_upgrade">Upgrade to Pro</string>
+    <string name="ai_limit_upgrade_desc">More AI summaries + all premium features</string>
+    <string name="ai_limit_close">Close</string>
+
+    <!-- Subscription -->
+    <string name="subscription_title">Memozy Pro</string>
+    <string name="subscription_desc">Use AI features more generously</string>
+    <string name="subscription_monthly">Monthly</string>
+    <string name="subscription_yearly">Yearly</string>
+    <string name="subscription_yearly_discount">30%% off</string>
+    <string name="subscription_feature_youtube">YouTube summary</string>
+    <string name="subscription_feature_web">Web page summary</string>
+    <string name="subscription_feature_ocr">Photo summary</string>
+    <string name="subscription_feature_more">More summaries available</string>
+    <string name="subscription_feature_no_ads">No ads</string>
+    <string name="subscription_current_plan">Current plan</string>
+    <string name="subscription_manage">Manage subscription</string>
+    <string name="subscription_restore">Restore purchases</string>
 </resources>
