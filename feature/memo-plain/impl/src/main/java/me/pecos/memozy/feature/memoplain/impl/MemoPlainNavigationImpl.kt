@@ -273,7 +273,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                         val errorMsg = when {
                             e.message?.contains("token count exceeds") == true ||
                             e.message?.contains("INVALID_ARGUMENT") == true ->
-                                "영상이 너무 길어 요약할 수 없어요. 약 30분 이하 영상을 시도해주세요."
+                                "영상이 너무 길어 요약할 수 없어요."
                             e.message?.contains("Rate limit") == true ->
                                 "요청이 너무 많아요. 잠시 후 다시 시도해주세요."
                             e.message?.contains("503") == true || e.message?.contains("UNAVAILABLE") == true ||
@@ -702,7 +702,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                             val errorMsg = when {
                                 e.message?.contains("token count exceeds") == true ||
                                 e.message?.contains("INVALID_ARGUMENT") == true ->
-                                    "영상이 너무 길어 요약할 수 없어요. 약 30분 이하 영상을 시도해주세요."
+                                    "영상이 너무 길어 요약할 수 없어요."
                                 e.message?.contains("Rate limit") == true ->
                                     "요청이 너무 많아요. 잠시 후 다시 시도해주세요."
                                 e.message?.contains("503") == true || e.message?.contains("UNAVAILABLE") == true ||
