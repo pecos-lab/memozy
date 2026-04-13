@@ -277,10 +277,10 @@ fun SettingsScreen(
                     Text(stringResource(R.string.font_size_normal), fontSize = fontSettings.scaled(12), color = colors.textSecondary)
                     Text(stringResource(R.string.font_size_large), fontSize = fontSettings.scaled(12), color = colors.textSecondary)
                 }
-                // 커스텀 3단 슬라이더 (원티드 디자인 스타일)
+                // 커스텀 슬라이더 (원티드 디자인 스타일)
                 val trackHeight = 6.dp
                 val thumbSize = 14.dp
-                val stepCount = 3
+                val stepCount = FontSizeLevel.entries.size
                 val currentStep = selectedFontSize.ordinal
                 val density = LocalDensity.current
                 val thumbSizePx = with(density) { thumbSize.toPx() }
@@ -289,14 +289,14 @@ fun SettingsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(thumbSize)
-                        .pointerInput(Unit) {
+                        .pointerInput(stepCount) {
                             detectTapGestures { offset ->
                                 val stepWidth = size.width.toFloat() / stepCount
                                 val tappedStep = (offset.x / stepWidth).toInt().coerceIn(0, stepCount - 1)
                                 settingsViewModel.selectFontSize(FontSizeLevel.entries[tappedStep])
                             }
                         }
-                        .pointerInput(Unit) {
+                        .pointerInput(stepCount) {
                             detectHorizontalDragGestures { change, _ ->
                                 change.consume()
                                 val stepWidth = size.width.toFloat() / stepCount
