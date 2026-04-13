@@ -154,7 +154,26 @@ async function handleGeminiStream(req: Request, env: Env): Promise<Response> {
   });
 }
 
-async function handleYoutubeCaptions(req: Request, env: Env): Promise<Response> {
+// --- YouTube InnerTube (ANDROID client) ---
+
+const YOUTUBE_CLIENT_VERSION = "20.10.38";
+const INNERTUBE_API_URL = "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"; // YouTube 공개 키
+const INNERTUBE_CONTEXT = {
+  client: {
+    clientName: "ANDROID",
+    clientVersion: YOUTUBE_CLIENT_VERSION,
+    androidSdkVersion: 30,
+  },
+};
+const ANDROID_USER_AGENT = `com.google.android.youtube/${YOUTUBE_CLIENT_VERSION} (Linux; U; Android 11) gzip`;
+
+interface CaptionTrack {
+  baseUrl: string;
+  languageCode: string;
+  kind?: string;
+}
+
+async function handleYoutubeCaptions(req: Request, _env: Env): Promise<Response> {
   const reqUrl = new URL(req.url);
   const videoUrl = reqUrl.searchParams.get("url");
   const lang = reqUrl.searchParams.get("lang") ?? "ko";
@@ -163,18 +182,93 @@ async function handleYoutubeCaptions(req: Request, env: Env): Promise<Response> 
     return Response.json({ error: "Missing 'url' parameter" }, { status: 400 });
   }
 
-  const supadataUrl = new URL("https://api.supadata.ai/v1/youtube/transcript");
-  supadataUrl.searchParams.set("url", videoUrl);
-  supadataUrl.searchParams.set("lang", lang);
+  const videoIdMatch = videoUrl.match(/(?:v=|youtu\.be\/|shorts\/)([\w-]+)/);
+  const videoId = videoIdMatch?.[1];
+  if (!videoId) {
+    return Response.json({ error: "Invalid YouTube URL" }, { status: 400 });
+  }
 
-  const supadataRes = await fetch(supadataUrl.toString(), {
-    headers: { "x-api-key": env.SUPADATA_API_KEY },
+  // 1. InnerTube Player API (ANDROID client)
+  const playerRes = await fetch(INNERTUBE_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent": ANDROID_USER_AGENT,
+    },
+    body: JSON.stringify({
+      context: INNERTUBE_CONTEXT,
+      videoId,
+    }),
   });
 
-  const data = await supadataRes.text();
-  return new Response(data, {
-    status: supadataRes.status,
-    headers: { "Content-Type": "application/json" },
+  if (!playerRes.ok) {
+    return Response.json({ error: `InnerTube error: ${playerRes.status}` }, { status: 502 });
+  }
+
+  const playerData = await playerRes.json<{
+    playabilityStatus?: { status?: string };
+    captions?: {
+      playerCaptionsTracklistRenderer?: {
+        captionTracks?: CaptionTrack[];
+      };
+    };
+  }>();
+
+  if (playerData.playabilityStatus?.status !== "OK") {
+    return Response.json({ error: "video_unavailable" }, { status: 404 });
+  }
+
+  const tracks = playerData.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+  if (!tracks || tracks.length === 0) {
+    return Response.json({ error: "no_captions" }, { status: 404 });
+  }
+
+  // 2. 자막 트랙 선택 (수동 우선, ASR fallback)
+  const findTrack = (targetLang: string): CaptionTrack | undefined => {
+    const manual = tracks.find(t => t.languageCode === targetLang && t.kind !== "asr");
+    if (manual) return manual;
+    return tracks.find(t => t.languageCode === targetLang);
+  };
+
+  let track = findTrack(lang);
+  if (!track && lang !== "en") track = findTrack("en");
+  if (!track) track = tracks[0];
+
+  // 3. 자막 XML fetch (baseUrl에서 fmt=srv3 제거)
+  const captionUrlObj = new URL(track.baseUrl);
+  captionUrlObj.searchParams.delete("fmt");
+  const captionUrl = captionUrlObj.toString();
+  const captionRes = await fetch(captionUrl);
+
+  if (!captionRes.ok) {
+    return Response.json({ error: `Caption fetch error: ${captionRes.status}` }, { status: 502 });
+  }
+
+  const xml = await captionRes.text();
+
+  // 4. XML → 텍스트 추출
+  const textParts: string[] = [];
+  const regex = /<text[^>]*>([\s\S]*?)<\/text>/g;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(xml)) !== null) {
+    const text = match[1]
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\n/g, " ")
+      .trim();
+    if (text) textParts.push(text);
+  }
+
+  if (textParts.length === 0) {
+    return Response.json({ error: "no_captions" }, { status: 404 });
+  }
+
+  return Response.json({
+    lang: track.languageCode,
+    content: textParts.join(" "),
   });
 }
 
