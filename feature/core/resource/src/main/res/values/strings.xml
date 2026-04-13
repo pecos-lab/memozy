@@ -232,6 +232,10 @@
     <string name="ai_limit_pro_message">Pro 사용자는 하루 %d회까지 AI 기능을 사용할 수 있어요.\n내일 다시 사용할 수 있어요.</string>
     <string name="ai_limit_upgrade">Pro로 업그레이드</string>
     <string name="ai_limit_upgrade_desc">더 많은 AI 요약 + 모든 프리미엄 기능</string>
+    <string name="ai_limit_watch_ad">광고 보고 1회 추가</string>
+    <string name="ai_limit_ad_remaining">오늘 %d회 더 시청 가능</string>
+    <string name="ai_limit_ad_exhausted">오늘 광고 시청 횟수를 모두 사용했어요</string>
+    <string name="ai_limit_ad_loading">광고 준비 중…</string>
     <string name="ai_limit_close">닫기</string>
 
     <!-- Subscription -->

@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import com.google.android.gms.ads.MobileAds
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -29,5 +30,8 @@ class MemozyApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        CoroutineScope(Dispatchers.IO).launch {
+            MobileAds.initialize(this@MemozyApplication)
+        }
     }
 }

@@ -57,6 +57,7 @@ import me.pecos.memozy.presentation.screen.home.model.MemoUiState
 import me.pecos.memozy.presentation.screen.memo.MemoScreen
 import me.pecos.memozy.presentation.screen.memo.components.AiLimitBottomSheet
 import me.pecos.memozy.presentation.theme.LocalAppColors
+import me.pecos.memozy.presentation.theme.LocalRewardAdProvider
 import me.pecos.memozy.presentation.theme.LocalSubscriptionTier
 import javax.inject.Inject
 
@@ -74,6 +75,8 @@ class MemoPlainNavigationImpl @Inject constructor(
         private const val FEATURE_WEB_SUMMARY = "web_summary"
         private const val FEATURE_TRANSCRIPTION = "transcription"
         private const val FEATURE_IMAGE_OCR = "image_ocr"
+        private const val FEATURE_REWARD_AD = "reward_ad"
+        private const val MAX_DAILY_AD_VIEWS = 3
 
         private fun startOfToday(): Long {
             return Calendar.getInstance().apply {
@@ -287,12 +290,18 @@ class MemoPlainNavigationImpl @Inject constructor(
 
             // AI 사용량 체크 (티어별 일일 한도)
             val subscriptionTier = LocalSubscriptionTier.current
+            val rewardAdProvider = LocalRewardAdProvider.current
             var dailyUsageCount by remember { mutableStateOf(0) }
+            var dailyAdViewCount by remember { mutableStateOf(0) }
+            var adBonusCount by remember { mutableStateOf(0) }
             LaunchedEffect(Unit) {
                 dailyUsageCount = aiUsageDao.getTotalCountSince(startOfToday())
+                dailyAdViewCount = aiUsageDao.getCountSince(FEATURE_REWARD_AD, startOfToday())
             }
-            val dailyLimit = subscriptionTier.dailyAiLimit
+            val dailyLimit = subscriptionTier.dailyAiLimit + adBonusCount
             val canUseAi = dailyUsageCount < dailyLimit
+            val canWatchAd = !subscriptionTier.isPro && dailyAdViewCount < MAX_DAILY_AD_VIEWS
+            val remainingAdViews = MAX_DAILY_AD_VIEWS - dailyAdViewCount
             var showLimitBottomSheet by remember { mutableStateOf(false) }
 
             // 이미지 OCR 처리
@@ -739,6 +748,20 @@ class MemoPlainNavigationImpl @Inject constructor(
             if (showLimitBottomSheet) {
                 AiLimitBottomSheet(
                     subscriptionTier = subscriptionTier,
+                    canWatchAd = canWatchAd,
+                    remainingAdViews = remainingAdViews,
+                    isAdLoading = rewardAdProvider?.isAdLoading == true,
+                    onWatchAd = {
+                        rewardAdProvider?.showAd {
+                            scope.launch {
+                                aiUsageDao.insert(AiUsage(feature = FEATURE_REWARD_AD))
+                                dailyAdViewCount++
+                                adBonusCount++
+                                showLimitBottomSheet = false
+                            }
+                        }
+                    },
+                    onUpgrade = { showLimitBottomSheet = false },
                     onDismiss = { showLimitBottomSheet = false }
                 )
             }
