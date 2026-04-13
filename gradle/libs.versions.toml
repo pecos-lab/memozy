@@ -10,6 +10,7 @@ kotlin = "2.3.20"
 composeBom = "2025.05.00"
 ksp = "2.3.6"
 billingKtx = "7.1.1"
+playServicesAds = "24.4.0"
 androidJoda = "2.12.7"
 haze = "1.7.2"
 montageAndroid = "3.3.0"
@@ -40,6 +41,7 @@ gradlePlugin-kotlinSerialization = { module = "org.jetbrains.kotlin:kotlin-seria
 android-joda = { module = "net.danlew:android.joda", version.ref = "androidJoda" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "billingKtx" }
+play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
 haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }

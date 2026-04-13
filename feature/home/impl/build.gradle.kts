@@ -42,6 +42,7 @@ dependencies {
     implementation(libs.android.joda)
     implementation(libs.montage.android)
     implementation(libs.billing.ktx)
+    implementation(libs.play.services.ads)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.hilt.navigation.compose)

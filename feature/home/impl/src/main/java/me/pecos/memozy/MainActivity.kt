@@ -58,6 +58,7 @@ import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import me.pecos.memozy.data.billing.BillingManager
+import me.pecos.memozy.presentation.theme.LocalRewardAdProvider
 import me.pecos.memozy.presentation.theme.LocalSubscriptionTier
 import me.pecos.memozy.feature.home.api.HomeRoute
 import me.pecos.memozy.feature.memoplain.api.MemoPlainNavigation
@@ -91,6 +92,7 @@ class MainActivity : AppCompatActivity() {
     @Inject lateinit var memoPlainNavigation: MemoPlainNavigation
 
     private val billingManager by lazy { BillingManager(this) }
+    private val rewardAdManager by lazy { me.pecos.memozy.data.ads.RewardAdManager(this, this) }
 
     // 공유 Intent 상태 — singleTask에서 onNewIntent 처리
     private val _currentIntent = androidx.compose.runtime.mutableStateOf<Intent?>(null)
@@ -135,6 +137,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         billingManager.connect()
+        rewardAdManager.loadAd()
 
         setContent {
             val settingsViewModel: SettingsViewModel = viewModel()
@@ -162,7 +165,8 @@ class MainActivity : AppCompatActivity() {
 
             CompositionLocalProvider(
                 LocalActivity provides this@MainActivity,
-                LocalSubscriptionTier provides currentTier
+                LocalSubscriptionTier provides currentTier,
+                LocalRewardAdProvider provides rewardAdManager
             ) {
             OverrideNightMode(isDarkTheme = isDarkTheme) {
                 CompositionLocalProvider(
