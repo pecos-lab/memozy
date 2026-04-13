@@ -156,15 +156,16 @@ async function handleGeminiStream(req: Request, env: Env): Promise<Response> {
 
 // --- YouTube InnerTube (ANDROID client) ---
 
-const INNERTUBE_API_URL = "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8";
+const YOUTUBE_CLIENT_VERSION = "20.10.38";
+const INNERTUBE_API_URL = "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8"; // YouTube 공개 키
 const INNERTUBE_CONTEXT = {
   client: {
     clientName: "ANDROID",
-    clientVersion: "20.10.38",
+    clientVersion: YOUTUBE_CLIENT_VERSION,
     androidSdkVersion: 30,
   },
 };
-const ANDROID_USER_AGENT = "com.google.android.youtube/20.10.38 (Linux; U; Android 11) gzip";
+const ANDROID_USER_AGENT = `com.google.android.youtube/${YOUTUBE_CLIENT_VERSION} (Linux; U; Android 11) gzip`;
 
 interface CaptionTrack {
   baseUrl: string;
@@ -234,7 +235,9 @@ async function handleYoutubeCaptions(req: Request, _env: Env): Promise<Response>
   if (!track) track = tracks[0];
 
   // 3. 자막 XML fetch (baseUrl에서 fmt=srv3 제거)
-  const captionUrl = track.baseUrl.replace("&fmt=srv3", "");
+  const captionUrlObj = new URL(track.baseUrl);
+  captionUrlObj.searchParams.delete("fmt");
+  const captionUrl = captionUrlObj.toString();
   const captionRes = await fetch(captionUrl);
 
   if (!captionRes.ok) {
