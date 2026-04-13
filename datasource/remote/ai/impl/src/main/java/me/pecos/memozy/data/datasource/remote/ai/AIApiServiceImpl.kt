@@ -12,14 +12,12 @@ import io.ktor.utils.io.readUTF8Line
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
-import me.pecos.memozy.data.datasource.remote.ai.model.GenerationConfig
 import me.pecos.memozy.data.datasource.remote.ai.model.GeminiContent
 import me.pecos.memozy.data.datasource.remote.ai.model.GeminiFileData
 import me.pecos.memozy.data.datasource.remote.ai.model.GeminiInlineData
 import me.pecos.memozy.data.datasource.remote.ai.model.GeminiPart
 import me.pecos.memozy.data.datasource.remote.ai.model.GeminiRequest
 import me.pecos.memozy.data.datasource.remote.ai.model.GeminiResponse
-import me.pecos.memozy.data.datasource.remote.ai.model.ThinkingConfig
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -36,9 +34,6 @@ class AIApiServiceImpl @Inject constructor(
                 GeminiContent(
                     parts = listOf(GeminiPart(text = prompt))
                 )
-            ),
-            generationConfig = GenerationConfig(
-                thinkingConfig = ThinkingConfig(thinkingBudget = 0)
             )
         )
 
@@ -59,9 +54,6 @@ class AIApiServiceImpl @Inject constructor(
                         GeminiPart(text = prompt),
                     )
                 )
-            ),
-            generationConfig = GenerationConfig(
-                thinkingConfig = ThinkingConfig(thinkingBudget = 0)
             )
         )
 
@@ -74,9 +66,6 @@ class AIApiServiceImpl @Inject constructor(
                 GeminiContent(
                     parts = listOf(GeminiPart(text = prompt))
                 )
-            ),
-            generationConfig = GenerationConfig(
-                thinkingConfig = ThinkingConfig(thinkingBudget = 0)
             )
         )
 
@@ -130,9 +119,6 @@ class AIApiServiceImpl @Inject constructor(
                         GeminiPart(text = prompt),
                     )
                 )
-            ),
-            generationConfig = GenerationConfig(
-                thinkingConfig = ThinkingConfig(thinkingBudget = 0)
             )
         )
 
@@ -155,9 +141,6 @@ class AIApiServiceImpl @Inject constructor(
                         GeminiPart(text = prompt),
                     )
                 )
-            ),
-            generationConfig = GenerationConfig(
-                thinkingConfig = ThinkingConfig(thinkingBudget = 0)
             )
         )
 

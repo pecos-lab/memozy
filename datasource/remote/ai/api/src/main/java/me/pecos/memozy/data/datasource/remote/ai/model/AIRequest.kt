@@ -5,17 +5,23 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class GeminiRequest(
     val contents: List<GeminiContent>,
-    val generationConfig: GenerationConfig? = null,
+    val generationConfig: GenerationConfig = GenerationConfig.THINKING_DISABLED,
 )
 
 @Serializable
 data class GenerationConfig(
     val thinkingConfig: ThinkingConfig? = null,
-)
+) {
+    companion object {
+        val THINKING_DISABLED = GenerationConfig(
+            thinkingConfig = ThinkingConfig(thinkingBudget = 0)
+        )
+    }
+}
 
 @Serializable
 data class ThinkingConfig(
-    val thinkingBudget: Int = 0,  // 0 = thinking 끔
+    val thinkingBudget: Int,
 )
 
 @Serializable
