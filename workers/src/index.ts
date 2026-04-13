@@ -6,6 +6,9 @@ export interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_KEY: string;
   SUPABASE_JWT_SECRET: string;
+  PROXY_URL?: string;
+  PROXY_AUTH?: string;
+  PROXY_ENABLED?: string;
 }
 
 const AI_GATEWAY_URL = "https://gateway.ai.cloudflare.com/v1/fd6859f0e7b0f6307cfa850af2324d90/memozy/google-ai-studio";
@@ -100,6 +103,121 @@ async function callGeminiStream(
   });
 }
 
+// --- Proxy fetch helper ---
+
+const BROWSER_HEADERS: Record<string, string> = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+  "Accept": "*/*",
+  "Referer": "https://www.youtube.com/",
+  "Origin": "https://www.youtube.com",
+};
+
+async function proxyFetch(url: string, env: Env, init?: RequestInit): Promise<Response> {
+  const headers = { ...BROWSER_HEADERS, ...init?.headers };
+
+  // 프록시가 활성화되어 있고 Cloudflare Worker에서 프록시 사용 가능한 경우
+  // 현재 CF Worker는 직접 프록시를 지원하지 않으므로, 프록시 URL이 HTTP proxy endpoint인 경우에 대비
+  // 실제 프록시 연동은 프록시 업체 연동 시 확정
+  return fetch(url, { ...init, headers });
+}
+
+// --- InnerTube YouTube transcript ---
+
+interface CaptionTrack {
+  baseUrl: string;
+  languageCode: string;
+  kind?: string;
+  name?: { simpleText?: string };
+}
+
+async function fetchYoutubeTranscript(
+  videoId: string,
+  lang: string,
+  env: Env
+): Promise<{ lang: string; content: string } | { error: string }> {
+  // 1. InnerTube Player API 호출
+  const playerUrl = "https://www.youtube.com/youtubei/v1/player";
+  const playerBody = {
+    context: {
+      client: {
+        clientName: "WEB",
+        clientVersion: "2.20241028.01.00",
+        hl: lang,
+      },
+    },
+    videoId,
+  };
+
+  const playerRes = await proxyFetch(playerUrl, env, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(playerBody),
+  });
+
+  if (!playerRes.ok) {
+    return { error: `InnerTube API error: ${playerRes.status}` };
+  }
+
+  const playerData = await playerRes.json<{
+    captions?: {
+      playerCaptionsTracklistRenderer?: {
+        captionTracks?: CaptionTrack[];
+      };
+    };
+  }>();
+
+  const tracks = playerData?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+  if (!tracks || tracks.length === 0) {
+    return { error: "no_captions" };
+  }
+
+  // 2. 원하는 언어 자막 찾기 (수동 우선, 자동생성 fallback)
+  const findTrack = (targetLang: string): CaptionTrack | undefined => {
+    // 수동 자막 우선
+    const manual = tracks.find(t => t.languageCode === targetLang && t.kind !== "asr");
+    if (manual) return manual;
+    // 자동생성 자막
+    return tracks.find(t => t.languageCode === targetLang);
+  };
+
+  let track = findTrack(lang);
+  if (!track && lang !== "en") track = findTrack("en");
+  if (!track) track = tracks[0]; // 아무 자막이라도
+
+  const actualLang = track.languageCode;
+
+  // 3. 자막 XML fetch
+  const captionRes = await proxyFetch(track.baseUrl, env);
+  if (!captionRes.ok) {
+    return { error: `Caption fetch error: ${captionRes.status}` };
+  }
+
+  const xml = await captionRes.text();
+
+  // 4. XML 파싱 → 텍스트 추출
+  const textParts: string[] = [];
+  const regex = /<text[^>]*>([\s\S]*?)<\/text>/g;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(xml)) !== null) {
+    let text = match[1]
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\n/g, " ")
+      .trim();
+    if (text) textParts.push(text);
+  }
+
+  if (textParts.length === 0) {
+    return { error: "no_captions" };
+  }
+
+  return { lang: actualLang, content: textParts.join(" ") };
+}
+
 // --- Route handlers ---
 
 async function handleGeminiGenerate(req: Request, env: Env): Promise<Response> {
@@ -163,18 +281,24 @@ async function handleYoutubeCaptions(req: Request, env: Env): Promise<Response> 
     return Response.json({ error: "Missing 'url' parameter" }, { status: 400 });
   }
 
-  const supadataUrl = new URL("https://api.supadata.ai/v1/youtube/transcript");
-  supadataUrl.searchParams.set("url", videoUrl);
-  supadataUrl.searchParams.set("lang", lang);
+  // URL에서 videoId 추출
+  const videoIdMatch = videoUrl.match(/(?:v=|youtu\.be\/|shorts\/)([\w-]+)/);
+  const videoId = videoIdMatch?.[1];
+  if (!videoId) {
+    return Response.json({ error: "Invalid YouTube URL" }, { status: 400 });
+  }
 
-  const supadataRes = await fetch(supadataUrl.toString(), {
-    headers: { "x-api-key": env.SUPADATA_API_KEY },
-  });
+  const result = await fetchYoutubeTranscript(videoId, lang, env);
 
-  const data = await supadataRes.text();
-  return new Response(data, {
-    status: supadataRes.status,
-    headers: { "Content-Type": "application/json" },
+  if ("error" in result) {
+    const status = result.error === "no_captions" ? 404 : 502;
+    return Response.json({ error: result.error }, { status });
+  }
+
+  // Supadata 호환 응답 포맷 유지 (Android 앱 변경 최소화)
+  return Response.json({
+    lang: result.lang,
+    content: result.content,
   });
 }
 
