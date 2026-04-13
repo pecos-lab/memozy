@@ -235,6 +235,21 @@ fun HomeScreen(
                                 color = colors.textSecondary
                             )
                         }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Row(
+                            modifier = Modifier
+                                .border(1.5.dp, colors.cardBorder, RoundedCornerShape(12.dp))
+                                .clickable { isSelectionMode = true }
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = stringResource(R.string.edit_mode),
+                                fontSize = fontSettings.scaled(13),
+                                fontWeight = FontWeight.Medium,
+                                color = colors.textSecondary
+                            )
+                        }
                     }
                 }
 

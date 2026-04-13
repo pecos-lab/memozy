@@ -207,6 +207,7 @@ async function handleYoutubeCaptions(req: Request, _env: Env): Promise<Response>
 
   const playerData = await playerRes.json<{
     playabilityStatus?: { status?: string };
+    videoDetails?: { lengthSeconds?: string; title?: string };
     captions?: {
       playerCaptionsTracklistRenderer?: {
         captionTracks?: CaptionTrack[];
@@ -266,9 +267,14 @@ async function handleYoutubeCaptions(req: Request, _env: Env): Promise<Response>
     return Response.json({ error: "no_captions" }, { status: 404 });
   }
 
+  const durationSeconds = parseInt(playerData.videoDetails?.lengthSeconds ?? "0") || 0;
+  const videoTitle = playerData.videoDetails?.title ?? null;
+
   return Response.json({
     lang: track.languageCode,
     content: textParts.join(" "),
+    durationSeconds,
+    title: videoTitle,
   });
 }
 

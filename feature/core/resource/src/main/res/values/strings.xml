@@ -51,6 +51,7 @@
     <string name="search_placeholder">제목 또는 내용으로 검색</string>
     <string name="sort_newest">최신순</string>
     <string name="sort_oldest">오래된순</string>
+    <string name="edit_mode">편집</string>
     <string name="memo_count">총 %d개</string>
     <string name="memo_updated_at">수정:</string>
     <string name="memo_copy">복사</string>
@@ -163,6 +164,8 @@
     <string name="summary_mode_simple">간단 요약</string>
     <string name="summary_mode_detailed">상세 요약</string>
     <string name="youtube_url_copied">유튜브 URL이 복사되었습니다</string>
+    <string name="youtube_open_to_copy">YouTube에서 URL 복사하기 →</string>
+    <string name="summary_style_select">요약 하기</string>
     <string name="web_url_copied">웹 URL이 복사되었습니다</string>
 
     <!-- Trash Extra -->

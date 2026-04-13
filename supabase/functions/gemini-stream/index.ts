@@ -3,7 +3,7 @@ import { verifyAppAuth } from "../_shared/auth.ts";
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY")!;
 const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-2.5-flash";
-const FALLBACK_MODELS = ["gemini-2.5-flash-lite", "gemini-1.5-flash"];
+const FALLBACK_MODELS = ["gemini-2.5-flash-lite", "gemini-2.0-flash"];
 const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 
 async function callGeminiStream(model: string, body: unknown): Promise<Response> {
@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     let geminiRes = await callGeminiStream(GEMINI_MODEL, body);
 
     // 503 또는 429면 fallback 모델 순차 시도
-    if (geminiRes.status === 503 || geminiRes.status === 429) {
+    if (geminiRes.status === 503 || geminiRes.status === 429 || geminiRes.status === 404) {
       for (const fallback of FALLBACK_MODELS) {
         geminiRes = await callGeminiStream(fallback, body);
         if (geminiRes.status !== 503 && geminiRes.status !== 429 && geminiRes.status !== 404) {

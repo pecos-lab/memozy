@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.SmartDisplay
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
@@ -54,6 +55,7 @@ private val YOUTUBE_URL_REGEX = Regex(
 fun YouTubeUrlDialog(
     colors: AppColors,
     clipboardManager: ClipboardManager,
+    context: Context,
     onDismiss: () -> Unit,
     onUrlAdded: (String) -> Unit
 ) {
@@ -103,6 +105,32 @@ fun YouTubeUrlDialog(
                     maxLines = 1, overflow = TextOverflow.Ellipsis
                 )
             }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com")).apply {
+                        setPackage("com.google.android.youtube")
+                    }
+                    try { context.startActivity(intent) } catch (_: Exception) {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com")))
+                    }
+                }
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Default.SmartDisplay, contentDescription = null,
+                tint = Color(0xFFFF0000), modifier = Modifier.size(14.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = stringResource(R.string.youtube_open_to_copy),
+                fontSize = fontSettings.scaled(12),
+                color = Color(0xFFFF0000), fontWeight = FontWeight.Medium
+            )
         }
     }
 }
