@@ -58,7 +58,8 @@ fun YouTubeSummaryInlineCard(
     onResummarize: (SummaryMode) -> Unit,
     colors: AppColors,
     context: Context,
-    clipboardManager: ClipboardManager
+    clipboardManager: ClipboardManager,
+    onStyleSelect: (() -> Unit)? = null
 ) {
     val fontSettings = LocalFontSettings.current
 
@@ -121,10 +122,9 @@ fun YouTubeSummaryInlineCard(
                     }
                 }
 
-                // 액션 버튼
+                // 액션 버튼 — 원본 보기 + 복사 + 요약 양식
                 Spacer(modifier = Modifier.height(10.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    // 원본 보기
                     Row(
                         modifier = Modifier.weight(1f).clip(RoundedCornerShape(6.dp)).background(colors.chipBackground)
                             .clickable {
@@ -140,7 +140,6 @@ fun YouTubeSummaryInlineCard(
                         Text("🔗", fontSize = fontSettings.scaled(10)); Spacer(modifier = Modifier.width(3.dp))
                         Text(stringResource(R.string.summary_card_open), fontSize = fontSettings.scaled(10), color = colors.chipText, fontWeight = FontWeight.Medium)
                     }
-                    // 복사
                     Row(
                         modifier = Modifier.weight(1f).clip(RoundedCornerShape(6.dp)).background(colors.chipBackground)
                             .clickable {
@@ -155,22 +154,16 @@ fun YouTubeSummaryInlineCard(
                         Spacer(modifier = Modifier.width(3.dp))
                         Text(stringResource(R.string.memo_copy), fontSize = fontSettings.scaled(10), color = colors.chipText, fontWeight = FontWeight.Medium)
                     }
-                    // 요약 버튼 (아직 요약 안 됨)
-                    if (onSummarize != null && summaryText == null) {
+                    if (onSummarize != null && summaryText == null && onStyleSelect != null) {
                         Row(
                             modifier = Modifier.weight(1f).clip(RoundedCornerShape(6.dp)).background(Color(0xFF2196F3).copy(alpha = 0.1f))
-                                .clickable { onSummarize(youtubeUrl, SummaryMode.SIMPLE) }
+                                .clickable { onStyleSelect() }
                                 .padding(vertical = 5.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center
-                        ) { Text(stringResource(R.string.summary_mode_simple), fontSize = fontSettings.scaled(10), color = Color(0xFF2196F3), fontWeight = FontWeight.Medium) }
-                        Row(
-                            modifier = Modifier.weight(1f).clip(RoundedCornerShape(6.dp)).background(Color(0xFFFF9800).copy(alpha = 0.1f))
-                                .clickable { onSummarize(youtubeUrl, SummaryMode.DETAILED) }
-                                .padding(vertical = 5.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) { Text(stringResource(R.string.summary_mode_detailed), fontSize = fontSettings.scaled(10), color = Color(0xFFFF9800), fontWeight = FontWeight.Medium) }
+                        ) {
+                            Text(stringResource(R.string.summary_style_select), fontSize = fontSettings.scaled(10), color = Color(0xFF2196F3), fontWeight = FontWeight.Medium)
+                        }
                     }
                 }
 

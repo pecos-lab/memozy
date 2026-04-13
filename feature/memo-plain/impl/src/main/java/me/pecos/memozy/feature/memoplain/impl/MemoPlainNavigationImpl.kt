@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import me.pecos.memozy.presentation.screen.memo.SummaryMode
+import me.pecos.memozy.presentation.screen.memo.SummaryStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Column
@@ -104,10 +105,10 @@ class MemoPlainNavigationImpl @Inject constructor(
             else -> "한국어로"
         }
 
-        private fun buildYoutubePrompt(mode: SummaryMode, lang: String): String {
+        private fun buildYoutubePrompt(style: SummaryStyle, lang: String): String {
             val l = langInstruction(lang)
-            return when (mode) {
-                SummaryMode.SIMPLE -> """
+            return when (style) {
+                SummaryStyle.SIMPLE -> """
                     |이 유튜브 영상을 ${l} 간결하게 요약해줘. 인사말이나 부가 설명 없이 아래 형식만 정확히 출력해:
                     |
                     |📋 한줄 요약
@@ -125,7 +126,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                     |
                     |(가장 중요한 내용 3~5개를 각 1줄로 정리. 첫 항목은 📖 핵심 내용 바로 다음 줄에, 이후 항목들 사이에는 빈 줄 1개를 넣어줘)
                 """.trimMargin()
-                SummaryMode.DETAILED -> """
+                SummaryStyle.DETAILED -> """
                     |이 유튜브 영상을 ${l} 상세하게 요약해줘. 인사말이나 부가 설명 없이 아래 형식만 정확히 출력해:
                     |
                     |📋 한줄 요약
@@ -148,7 +149,62 @@ class MemoPlainNavigationImpl @Inject constructor(
                     |💡 핵심 인사이트
                     |- 영상에서 얻을 수 있는 주요 인사이트를 정리
                 """.trimMargin()
+                SummaryStyle.NOTE -> """
+                    |다음 유튜브 영상 내용을 ${l} 학습 노트 형태로 정리해줘. 인사말이나 부가 설명 없이 바로 시작해:
+                    |
+                    |주제별로 묶어서 개조식(- 기호)으로 간결하게 작성해.
+                    |굵게(**) 표시는 꼭 필요한 핵심 용어에만 최소한으로 사용해.
+                    |한 항목당 1줄, 복습할 때 빠르게 훑을 수 있는 형태로.
+                """.trimMargin()
+                SummaryStyle.LANGUAGE -> {
+                    val userLang = when (lang) {
+                        "en" -> "English"
+                        "ja" -> "日本語"
+                        else -> "한국어"
+                    }
+                    """
+                    |다음 유튜브 영상 자막을 언어 학습용으로 정리해줘.
+                    |사용자의 모국어는 ${userLang}이고, 영상에 나오는 외국어를 학습하려는 목적이야.
+                    |절대 #, ##, **, *** 같은 마크다운 서식을 사용하지 마. 이모지와 일반 텍스트만 써.
+                    |인사말이나 부가 설명 없이 바로 아래 형식대로만 출력해:
+                    |
+                    |📋 핵심 표현 (10~15개)
+                    |
+                    |영상에서 나온 외국어 표현을 원문 그대로 적고, 바로 다음 줄에 ${userLang} 뜻을 적어.
+                    |표현과 표현 사이에는 빈 줄을 넣어.
+                    |
+                    |외국어 원문
+                    |${userLang} 뜻
+                    |
+                    |외국어 원문
+                    |${userLang} 뜻
+                    |
+                    |📖 주요 문장 (5~10개)
+                    |
+                    |영상에서 나온 핵심 문장을 원문 그대로 적고, 다음 줄에 ${userLang} 해석을 적어.
+                    |각 문장 앞에 * 를 붙여. 문장과 문장 사이에는 빈 줄을 넣어.
+                    |
+                    |* 외국어 원문 문장
+                    |${userLang} 해석
+                    |
+                    |* 외국어 원문 문장
+                    |${userLang} 해석
+                    |
+                    |💡 학습 포인트
+                    |
+                    |문법, 뉘앙스, 발음, 사용법 등 학습에 도움되는 내용을 ${userLang}로 2~4줄 정리.
+                """.trimMargin()
+                }
             }
+        }
+
+        /** 기존 SummaryMode 호환 — 레거시 호출용 */
+        private fun buildYoutubePrompt(mode: SummaryMode, lang: String): String {
+            val style = when (mode) {
+                SummaryMode.SIMPLE -> SummaryStyle.SIMPLE
+                SummaryMode.DETAILED -> SummaryStyle.DETAILED
+            }
+            return buildYoutubePrompt(style, lang)
         }
 
         private fun buildWebPrompt(mode: SummaryMode, lang: String): String {
@@ -242,45 +298,13 @@ class MemoPlainNavigationImpl @Inject constructor(
 
             val scope = rememberCoroutineScope()
 
-            // YouTube URL이면 자동 요약 시작 (캐시 우선 조회)
+            // YouTube URL 공유 시 타이틀만 미리 조회 (자동 요약 안 함 — 인라인 카드로 표시)
             LaunchedEffect(youtubeUrl) {
-                if (youtubeUrl != null && summaryState is SummaryState.Idle) {
+                if (youtubeUrl != null) {
                     val videoId = extractVideoId(youtubeUrl)
-                    // 캐시 조회
-                    val cached = videoId?.let { youtubeSummaryDao.getByKey(it, SummaryMode.SIMPLE.name, languageCode) }
-                    if (cached != null) {
-                        summaryState = SummaryState.Success(cached.summary)
-                        return@LaunchedEffect
-                    }
-                    summaryState = SummaryState.Loading
-                    try {
-                        val summary = summarizeVideo(
-                            videoId!!, youtubeUrl,
-                            mode = SummaryMode.SIMPLE,
-                            lang = languageCode,
-                            onTitleFound = { title -> youtubeTitle = title }
-                        )
-                        // 캐시 저장
-                        youtubeSummaryDao.insert(YoutubeSummary(
-                            videoId = videoId,
-                            mode = SummaryMode.SIMPLE.name,
-                            language = languageCode,
-                            url = youtubeUrl,
-                            summary = summary
-                        ))
-                        summaryState = SummaryState.Success(summary)
-                    } catch (e: Exception) {
-                        val errorMsg = when {
-                            e.message?.contains("Rate limit") == true ->
-                                "요청이 너무 많아요. 잠시 후 다시 시도해주세요."
-                            e.message?.contains("503") == true || e.message?.contains("UNAVAILABLE") == true ||
-                            e.message?.contains("high demand") == true ->
-                                "AI 서버가 일시적으로 바빠요. 잠시 후 다시 시도해주세요."
-                            e.message?.contains("timeout") == true || e.message?.contains("Timeout") == true ->
-                                "응답 시간이 초과됐어요. 더 짧은 영상을 시도해주세요."
-                            else -> "DEBUG: ${e::class.simpleName}: ${e.message}"
-                        }
-                        summaryState = SummaryState.Error(errorMsg)
+                    if (videoId != null) {
+                        val title = captionService.fetchTitle(videoId)
+                        if (title != null) youtubeTitle = title
                     }
                 }
             }
@@ -327,15 +351,11 @@ class MemoPlainNavigationImpl @Inject constructor(
             }
 
             // 일반 공유 텍스트 프리필
-            val sharedMemo = remember(summaryState, imageOcrState) {
+            val sharedMemo = remember(youtubeTitle, imageOcrState) {
                 when {
-                    youtubeUrl != null -> when (val state = summaryState) {
-                        is SummaryState.Success -> {
-                            val lines = state.text.split("\n", limit = 2)
-                            val title = lines.firstOrNull()?.replace(Regex("^#+\\s*"), "")?.take(50) ?: "유튜브 요약"
-                            MemoUiState(0, title, 1, "원본: $youtubeUrl", summaryContent = state.text)
-                        }
-                        else -> null
+                    youtubeUrl != null -> {
+                        // 본문 비우고, youtubeUrl 필드로 인라인 카드 표시
+                        MemoUiState(0, youtubeTitle ?: "", 1, "", youtubeUrl = youtubeUrl)
                     }
                     isSharedImage -> when (val state = imageOcrState) {
                         is SummaryState.Success -> {
@@ -557,6 +577,9 @@ class MemoPlainNavigationImpl @Inject constructor(
             var webSummaryError by remember { mutableStateOf<String?>(null) }
             var webPageTitle by remember { mutableStateOf<String?>(null) }
 
+            // 양식 선택 상태
+            var activeSummaryStyle by remember { mutableStateOf(SummaryStyle.SIMPLE) }
+
             // 현재 진행 중인 요약 Job (취소용)
             var currentSummarizeJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
 
@@ -644,6 +667,53 @@ class MemoPlainNavigationImpl @Inject constructor(
                 webSummaryResult = webSummaryResult,
                 webSummaryError = webSummaryError,
                 webPageTitle = webPageTitle,
+                onSummaryStyleSelected = { style, url ->
+                    activeSummaryStyle = style
+                    // 바텀시트에서 양식 선택 시 즉시 요약 실행
+                    currentSummarizeJob?.cancel()
+                    currentSummarizeJob = scope.launch {
+                        if (!canUseAi) {
+                            showLimitBottomSheet = true
+                            return@launch
+                        }
+                        val videoId = extractVideoId(url)
+                        val cached = videoId?.let { youtubeSummaryDao.getByKey(it, style.name, languageCode) }
+                        if (cached != null) {
+                            inlineSummaryState = SummaryState.Success(cached.summary)
+                            return@launch
+                        }
+                        inlineSummaryState = SummaryState.Loading
+                        try {
+                            val summary = if (videoId != null) {
+                                summarizeVideo(
+                                    videoId, url,
+                                    style = style,
+                                    lang = languageCode,
+                                    onTitleFound = { title -> youtubeTitle = title }
+                                )
+                            } else {
+                                aiApiService.generateContentWithVideo(
+                                    prompt = buildYoutubePrompt(style, languageCode),
+                                    videoUrl = url,
+                                )
+                            }
+                            if (videoId != null) {
+                                youtubeSummaryDao.insert(YoutubeSummary(
+                                    videoId = videoId,
+                                    mode = style.name,
+                                    language = languageCode,
+                                    url = url,
+                                    summary = summary
+                                ))
+                            }
+                            inlineSummaryState = SummaryState.Success(summary)
+                            aiUsageDao.insert(AiUsage(feature = FEATURE_YOUTUBE_SUMMARY))
+                            dailyUsageCount++
+                        } catch (e: Exception) {
+                            inlineSummaryState = SummaryState.Error(e.message ?: "요약 실패")
+                        }
+                    }
+                },
                 onYoutubeDetected = { videoId ->
                     scope.launch {
                         val title = captionService.fetchTitle(videoId)
@@ -659,19 +729,19 @@ class MemoPlainNavigationImpl @Inject constructor(
                             return@launch
                         }
                         val videoId = extractVideoId(url)
-                        // 캐시 조회 (mode + language 기반)
-                        val cached = videoId?.let { youtubeSummaryDao.getByKey(it, mode.name, languageCode) }
+                        // 캐시 조회 (style + language 기반)
+                        val cached = videoId?.let { youtubeSummaryDao.getByKey(it, activeSummaryStyle.name, languageCode) }
                         if (cached != null) {
                             inlineSummaryState = SummaryState.Success(cached.summary)
                             return@launch
                         }
                         inlineSummaryState = SummaryState.Loading
-                        val ytPrompt = buildYoutubePrompt(mode, languageCode)
+                        val ytPrompt = buildYoutubePrompt(activeSummaryStyle, languageCode)
                         try {
                             val summary = if (videoId != null) {
                                 summarizeVideo(
                                     videoId, url,
-                                    mode = mode,
+                                    style = activeSummaryStyle,
                                     lang = languageCode,
                                     onTitleFound = { title -> youtubeTitle = title }
                                 )
@@ -685,7 +755,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                             if (videoId != null) {
                                 youtubeSummaryDao.insert(YoutubeSummary(
                                     videoId = videoId,
-                                    mode = mode.name,
+                                    mode = activeSummaryStyle.name,
                                     language = languageCode,
                                     url = url,
                                     summary = summary
@@ -808,11 +878,11 @@ class MemoPlainNavigationImpl @Inject constructor(
     private suspend fun summarizeVideo(
         videoId: String,
         videoUrl: String,
-        mode: SummaryMode = SummaryMode.SIMPLE,
+        style: SummaryStyle = SummaryStyle.SIMPLE,
         lang: String = "ko",
         onTitleFound: ((String) -> Unit)? = null
     ): String {
-        val prompt = buildYoutubePrompt(mode, lang)
+        val prompt = buildYoutubePrompt(style, lang)
         // 1. 자막 + 제목 추출 시도
         val videoInfo = captionService.extractVideoInfo(videoId)
         if (videoInfo != null) {

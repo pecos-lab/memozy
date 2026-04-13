@@ -52,6 +52,7 @@
     <string name="search_placeholder">タイトルまたは内容で検索</string>
     <string name="sort_newest">新しい順</string>
     <string name="sort_oldest">古い順</string>
+    <string name="edit_mode">編集</string>
     <string name="memo_count">計 %d件</string>
     <string name="memo_updated_at">編集:</string>
     <string name="memo_copy">コピー</string>
@@ -165,6 +166,8 @@
     <string name="summary_mode_simple">簡単要約</string>
     <string name="summary_mode_detailed">詳細要約</string>
     <string name="youtube_url_copied">YouTube URLがコピーされました</string>
+    <string name="youtube_open_to_copy">YouTubeからURLをコピー →</string>
+    <string name="summary_style_select">要約する</string>
     <string name="web_url_copied">Web URLがコピーされました</string>
 
     <!-- Trash Extra -->

@@ -114,6 +114,7 @@ import me.pecos.memozy.presentation.screen.memo.components.FormattingToolbar
 import me.pecos.memozy.presentation.screen.memo.components.WebLinkBottomSheet
 import me.pecos.memozy.presentation.screen.memo.components.WebSummaryInlineCard
 import me.pecos.memozy.presentation.screen.memo.components.WebUrlDialog
+import me.pecos.memozy.presentation.screen.memo.components.SummaryStyleBottomSheet
 import me.pecos.memozy.presentation.screen.memo.components.YouTubeSummaryInlineCard
 import me.pecos.memozy.presentation.screen.memo.components.YouTubeLinkBottomSheet
 import me.pecos.memozy.presentation.screen.memo.components.YouTubeUrlDialog
@@ -219,6 +220,7 @@ fun MemoScreen(
     webSummaryResult: String? = null,
     webSummaryError: String? = null,
     webPageTitle: String? = null,
+    onSummaryStyleSelected: ((SummaryStyle, String) -> Unit)? = null,
     existingMemo: MemoUiState = MemoUiState(0, "", 1, "")
 ) {
     val isNewMemo = existingMemo.id <= 0
@@ -276,6 +278,8 @@ fun MemoScreen(
 
     // 요약 결과 표시 상태
     var showSummary by remember { mutableStateOf(false) }
+    var showSummaryStyleSheet by remember { mutableStateOf(false) }
+    var selectedSummaryStyle by remember { mutableStateOf(SummaryStyle.SIMPLE) }
 
     // 요약 콘텐츠 접기/펼치기 상태 (summaryContent 별도 컬럼에서 로드)
     val initialSummary = remember(existingMemo.id) { existingMemo.summaryContent }
@@ -588,7 +592,21 @@ fun MemoScreen(
                         },
                         colors = colors,
                         context = context,
-                        clipboardManager = clipboardManager
+                        clipboardManager = clipboardManager,
+                        onStyleSelect = { showSummaryStyleSheet = true }
+                    )
+                }
+
+                // 양식 선택 바텀시트
+                if (showSummaryStyleSheet) {
+                    SummaryStyleBottomSheet(
+                        onSelect = { style ->
+                            val url = detectedYoutubeUrl ?: savedYoutubeUrl ?: return@SummaryStyleBottomSheet
+                            selectedSummaryStyle = style
+                            currentSummaryMode = style.summaryMode
+                            onSummaryStyleSelected?.invoke(style, url)
+                        },
+                        onDismiss = { showSummaryStyleSheet = false }
                     )
                 }
 
@@ -851,6 +869,7 @@ fun MemoScreen(
         YouTubeUrlDialog(
             colors = colors,
             clipboardManager = clipboardManager,
+            context = context,
             onDismiss = { showYoutubeDialog = false },
             onUrlAdded = { url ->
                 bodyText = if (bodyText.isBlank()) url else "$bodyText\n$url"

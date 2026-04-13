@@ -52,6 +52,7 @@
     <string name="search_placeholder">Search by title or content</string>
     <string name="sort_newest">Newest</string>
     <string name="sort_oldest">Oldest</string>
+    <string name="edit_mode">Edit</string>
     <string name="memo_count">%d memos</string>
     <string name="memo_updated_at">Edited:</string>
     <string name="memo_copy">Copy</string>
@@ -165,6 +166,8 @@
     <string name="summary_mode_simple">Quick Summary</string>
     <string name="summary_mode_detailed">Detailed Summary</string>
     <string name="youtube_url_copied">YouTube URL copied</string>
+    <string name="youtube_open_to_copy">Copy URL from YouTube →</string>
+    <string name="summary_style_select">Summarize</string>
     <string name="web_url_copied">Web URL copied</string>
 
     <!-- Trash Extra -->
