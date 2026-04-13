@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,6 +49,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.OutlinedButton
@@ -76,6 +80,7 @@ import me.pecos.memozy.presentation.theme.AppFontFamily
 import me.pecos.memozy.presentation.theme.FontSizeLevel
 import me.pecos.memozy.presentation.theme.LocalActivity
 import me.pecos.memozy.presentation.theme.LocalAppColors
+import me.pecos.memozy.presentation.theme.LocalSubscriptionTier
 import me.pecos.memozy.presentation.theme.LocalFontSettings
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,6 +88,7 @@ import me.pecos.memozy.presentation.theme.LocalFontSettings
 fun SettingsScreen(
     onBack: () -> Unit = {},
     onDonation: () -> Unit = {},
+    onSubscription: () -> Unit = {},
     onTrash: () -> Unit = {},
     settingsViewModel: SettingsViewModel = viewModel()
 ) {
@@ -690,7 +696,134 @@ fun SettingsScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // ── Memozy Pro 카드 ──
+                val currentTier = LocalSubscriptionTier.current
+                val isSystemDark = colors.screenBackground == Color(0xFF1C1C1E)
+                val proGradient = if (isSystemDark) {
+                    Brush.linearGradient(listOf(Color(0xFF1A3A5C), Color(0xFF2A1A4E)))
+                } else {
+                    Brush.linearGradient(listOf(Color(0xFF4A90D9), Color(0xFF7B5EA7)))
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(proGradient)
+                        .clickable { onSubscription() }
+                        .padding(20.dp)
+                ) {
+                    Column {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Memozy Pro",
+                                fontSize = fontSettings.scaled(18),
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                            if (currentTier.isPro) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = stringResource(R.string.subscription_current_plan),
+                                    fontSize = fontSettings.scaled(11),
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White.copy(alpha = 0.9f),
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(Color.White.copy(alpha = 0.2f))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = stringResource(R.string.subscription_desc),
+                            fontSize = fontSettings.scaled(13),
+                            color = Color.White.copy(alpha = 0.8f)
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        val proFeatures = listOf(
+                            stringResource(R.string.subscription_feature_youtube),
+                            stringResource(R.string.subscription_feature_web),
+                            stringResource(R.string.subscription_feature_ocr),
+                            stringResource(R.string.subscription_feature_no_ads)
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                proFeatures.take(2).forEach { feature ->
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            Icons.Default.Check,
+                                            contentDescription = null,
+                                            tint = Color.White.copy(alpha = 0.9f),
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(feature, fontSize = fontSettings.scaled(12), color = Color.White.copy(alpha = 0.9f))
+                                    }
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                }
+                            }
+                            Column {
+                                proFeatures.drop(2).forEach { feature ->
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            Icons.Default.Check,
+                                            contentDescription = null,
+                                            tint = Color.White.copy(alpha = 0.9f),
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(feature, fontSize = fontSettings.scaled(12), color = Color.White.copy(alpha = 0.9f))
+                                    }
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                }
+                            }
+                        }
+
+                        if (!currentTier.isPro) {
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color.White.copy(alpha = 0.2f))
+                                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.ai_limit_upgrade),
+                                    fontSize = fontSettings.scaled(14),
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowForward,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
 
                 HorizontalDivider(
                     thickness = 0.3.dp,
