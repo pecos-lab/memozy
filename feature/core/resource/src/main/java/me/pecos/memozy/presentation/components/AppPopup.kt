@@ -88,7 +88,7 @@ fun AppPopup(
     val contentMaxHeight = when (size) {
         PopupSize.MEDIUM -> 300.dp
         PopupSize.LARGE -> 380.dp
-        PopupSize.XLARGE -> 460.dp
+        PopupSize.XLARGE -> 520.dp
     }
     val primaryColor = if (isPrimaryDestructive) Color(0xFFE24B4A) else colors.chipText
 

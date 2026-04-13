@@ -479,7 +479,12 @@ fun MemoScreen(
                         fontSize = fontSettings.titleSize,
                         fontWeight = FontWeight.Bold,
                         color = colors.textTitle,
-                        fontFamily = fontSettings.fontFamily
+                        fontFamily = fontSettings.fontFamily,
+                        lineHeight = (fontSettings.titleSize.value * 1.45f).sp,
+                        lineHeightStyle = LineHeightStyle(
+                            alignment = LineHeightStyle.Alignment.Bottom,
+                            trim = LineHeightStyle.Trim.None
+                        )
                     ),
                     modifier = Modifier.fillMaxWidth(),
                     decorationBox = { innerTextField ->
@@ -490,7 +495,8 @@ fun MemoScreen(
                                     fontSize = fontSettings.titleSize,
                                     fontWeight = FontWeight.Bold,
                                     fontFamily = fontSettings.fontFamily,
-                                    color = colors.textSecondary.copy(alpha = 0.4f)
+                                    color = colors.textSecondary.copy(alpha = 0.4f),
+                                    lineHeight = (fontSettings.titleSize.value * 1.45f).sp
                                 )
                             }
                             innerTextField()
@@ -612,7 +618,7 @@ fun MemoScreen(
                         .focusRequester(bodyFocusRequester),
                     textStyle = TextStyle(
                         fontSize = fontSettings.bodySize,
-                        lineHeight = (fontSettings.bodySize.value * 1.6f).sp,
+                        lineHeight = (fontSettings.bodySize.value * 1.8f).sp,
                         color = colors.textBody,
                         fontFamily = fontSettings.fontFamily,
                         lineHeightStyle = LineHeightStyle(
