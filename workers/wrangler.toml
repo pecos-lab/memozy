@@ -8,11 +8,8 @@ mode = "smart"
 
 # secrets (set via `wrangler secret put`):
 #   GEMINI_API_KEY
-#   SUPADATA_API_KEY  (legacy — InnerTube 전환 후 제거 예정)
+#   SUPADATA_API_KEY
 #   APP_SECRET_KEY
 #   SUPABASE_URL
 #   SUPABASE_SERVICE_KEY
 #   SUPABASE_JWT_SECRET
-#   PROXY_URL         (optional — 레지덴셜 프록시 URL)
-#   PROXY_AUTH        (optional — 프록시 인증 user:pass)
-#   PROXY_ENABLED     (optional — "true"로 설정 시 프록시 경유)
