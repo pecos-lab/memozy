@@ -405,8 +405,9 @@ fun MemoScreen(
                 )
                 Spacer(modifier = Modifier.weight(1f))
 
-                // 공유 버튼 (기존 메모만 표시)
-                if (!isNewMemo) {
+                // 공유 버튼 (기존 메모 또는 요약이 있을 때)
+                val hasSharableContent = !isNewMemo || summaryText != null || webSummaryText != null
+                if (hasSharableContent) {
                     Icon(
                         imageVector = Icons.Default.Share,
                         contentDescription = stringResource(R.string.memo_share),
@@ -414,20 +415,30 @@ fun MemoScreen(
                         modifier = Modifier
                             .size(22.dp)
                             .clickable {
-                                val plainContent = safeContent()
-                                    .replace(Regex("<br\\s*/?>"), "\n")
-                                    .replace(Regex("<[^>]+>"), "")
-                                    .replace("&nbsp;", " ")
-                                    .replace("&amp;", "&")
-                                    .replace("&lt;", "<")
-                                    .replace("&gt;", ">")
-                                    .trim()
                                 val shareText = buildString {
-                                    if (nameText.isNotBlank()) {
-                                        appendLine(nameText)
+                                    val ytUrl = savedYoutubeUrl ?: detectedYoutubeUrl
+                                    if (ytUrl != null) {
+                                        appendLine(ytUrl)
                                         appendLine()
                                     }
-                                    append(plainContent)
+                                    val summary = summaryText ?: webSummaryText
+                                    if (summary != null) {
+                                        append(summary)
+                                    } else {
+                                        if (nameText.isNotBlank()) {
+                                            appendLine(nameText)
+                                            appendLine()
+                                        }
+                                        val plainContent = safeContent()
+                                            .replace(Regex("<br\\s*/?>"), "\n")
+                                            .replace(Regex("<[^>]+>"), "")
+                                            .replace("&nbsp;", " ")
+                                            .replace("&amp;", "&")
+                                            .replace("&lt;", "<")
+                                            .replace("&gt;", ">")
+                                            .trim()
+                                        append(plainContent)
+                                    }
                                 }
                                 val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                     type = "text/plain"
