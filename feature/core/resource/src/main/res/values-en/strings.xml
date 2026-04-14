@@ -169,6 +169,8 @@
     <string name="youtube_open_to_copy">Copy URL from YouTube →</string>
     <string name="summary_style_select">Summarize</string>
     <string name="web_url_copied">Web URL copied</string>
+    <string name="summary_copy">Copy summary</string>
+    <string name="memo_copy_done">Copied</string>
 
     <!-- Trash Extra -->
     <string name="trash_days_left">Permanently deleted in %d days</string>

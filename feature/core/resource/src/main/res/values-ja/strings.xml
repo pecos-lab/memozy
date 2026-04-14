@@ -169,6 +169,8 @@
     <string name="youtube_open_to_copy">YouTubeからURLをコピー →</string>
     <string name="summary_style_select">要約する</string>
     <string name="web_url_copied">Web URLがコピーされました</string>
+    <string name="summary_copy">要約をコピー</string>
+    <string name="memo_copy_done">コピーしました</string>
 
     <!-- Trash Extra -->
     <string name="trash_days_left">%d日後に完全削除</string>
