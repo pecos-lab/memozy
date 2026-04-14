@@ -185,6 +185,24 @@ fun YouTubeSummaryInlineCard(
                     HorizontalDivider(color = colors.cardBorder)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(summaryText, fontSize = fontSettings.scaled(14), lineHeight = 22.sp, color = colors.textBody)
+
+                    // 요약 내용 복사 버튼
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(colors.chipBackground)
+                            .clickable {
+                                clipboardManager.setText(AnnotatedString(summaryText))
+                                Toast.makeText(context, context.getString(R.string.memo_copy_done), Toast.LENGTH_SHORT).show()
+                            }
+                            .padding(horizontal = 10.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.ContentCopy, null, tint = colors.chipText, modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(stringResource(R.string.summary_copy), fontSize = fontSettings.scaled(10), color = colors.chipText, fontWeight = FontWeight.Medium)
+                    }
                 }
 
                 // 접기 버튼

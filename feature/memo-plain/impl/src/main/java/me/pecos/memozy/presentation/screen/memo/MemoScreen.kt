@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.material.icons.Icons
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -118,6 +119,8 @@ import me.pecos.memozy.presentation.screen.memo.components.SummaryStyleBottomShe
 import me.pecos.memozy.presentation.screen.memo.components.YouTubeSummaryInlineCard
 import me.pecos.memozy.presentation.screen.memo.components.YouTubeLinkBottomSheet
 import me.pecos.memozy.presentation.screen.memo.components.YouTubeUrlDialog
+import me.pecos.memozy.presentation.screen.memo.components.AiActionMenu
+import me.pecos.memozy.presentation.screen.memo.components.AiPresetAction
 import me.pecos.memozy.presentation.screen.memo.components.MemoActionBar
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
@@ -221,6 +224,14 @@ fun MemoScreen(
     webSummaryError: String? = null,
     webPageTitle: String? = null,
     onSummaryStyleSelected: ((SummaryStyle, String) -> Unit)? = null,
+    // AI 어시스트
+    onAiPresetAction: ((String) -> Unit)? = null,
+    onAiAssistSend: ((String) -> Unit)? = null,
+    showAiAssistInput: Boolean = false,
+    aiAssistStreamingText: String? = null,
+    isAiAssistLoading: Boolean = false,
+    onAiAssistClick: (() -> Unit)? = null,
+    onAiAssistClose: (() -> Unit)? = null,
     existingMemo: MemoUiState = MemoUiState(0, "", 1, "")
 ) {
     val isNewMemo = existingMemo.id <= 0
@@ -321,6 +332,24 @@ fun MemoScreen(
         }
     }
 
+    // AI 어시스트 스트리밍 → 본문 끝에 실시간 반영
+    var aiInsertAnchor by remember { mutableStateOf("") }
+    var prevStreamingText by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(aiAssistStreamingText) {
+        val streaming = aiAssistStreamingText
+        if (streaming != null) {
+            if (prevStreamingText == null) {
+                aiInsertAnchor = bodyText
+            }
+            val separator = if (aiInsertAnchor.isBlank()) "" else "\n\n"
+            val newBody = aiInsertAnchor + separator + streaming
+            bodyText = newBody
+            richTextState.setHtml(newBody.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>"))
+        } else if (prevStreamingText != null) {
+            aiInsertAnchor = ""
+        }
+        prevStreamingText = streaming
+    }
 
     fun safeContent(): String {
         val editorHtml = richTextState.toHtml().trim()
@@ -367,6 +396,7 @@ fun MemoScreen(
         contentWindowInsets = WindowInsets(0)
     ) { innerPadding ->
         val isKeyboardVisible = WindowInsets.isImeVisible
+        var showAiActionMenu by remember { mutableStateOf(false) }
         val hazeState = rememberHazeState()
         val isSystemDark = colors.screenBackground == Color(0xFF1C1C1E)
         val glassStyle = remember(isSystemDark) {
@@ -804,37 +834,67 @@ fun MemoScreen(
                         .hazeEffect(state = hazeState, style = glassStyle)
                 ) {
                     HorizontalDivider(color = keyboardBarBorder, thickness = 0.5.dp)
-                    // 액션 버튼 (왼쪽) + 서식 툴바 (오른쪽) — 한 줄 배치
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        MemoActionBar(
-                            colors = colors,
-                            isNewMemo = isNewMemo,
-                            existingMemo = existingMemo,
-                            onStartRecording = onStartRecording,
-                            onStopRecording = onStopRecording,
-                            isRecording = isRecording,
-                            isTranscribing = isTranscribing,
-                            onYoutubeSummarize = onYoutubeSummarize,
-                            isSummarizing = isSummarizing,
-                            isWebSummarizing = isWebSummarizing,
-                            detectedYoutubeUrl = detectedYoutubeUrl,
-                            onYoutubeChipClick = {
-                                youtubeChipDismissed = false
-                                currentSummaryMode = SummaryMode.SIMPLE
-                                detectedYoutubeUrl?.let { onYoutubeSummarize?.invoke(it, SummaryMode.SIMPLE) }
-                            },
-                            onYoutubeDialogOpen = { showYoutubeDialog = true },
-                            onWebSummarize = onWebSummarize,
-                            onWebDialogOpen = { showWebDialog = true }
+
+                    // AI 인라인 입력바 (직접 입력 모드)
+                    if (showAiAssistInput && onAiAssistSend != null) {
+                        AiAssistInlineBar(
+                            isLoading = isAiAssistLoading,
+                            onSend = onAiAssistSend,
+                            onClose = onAiAssistClose ?: {}
                         )
-                        Spacer(modifier = Modifier.weight(1f))
-                        FormattingToolbar(richTextState = richTextState, colors = colors)
+                    } else {
+                        // 액션 버튼 (왼쪽) + 서식 툴바 (오른쪽) — 한 줄 배치
+                        Box {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                MemoActionBar(
+                                    colors = colors,
+                                    isNewMemo = isNewMemo,
+                                    existingMemo = existingMemo,
+                                    onStartRecording = onStartRecording,
+                                    onStopRecording = onStopRecording,
+                                    isRecording = isRecording,
+                                    isTranscribing = isTranscribing,
+                                    onYoutubeSummarize = onYoutubeSummarize,
+                                    isSummarizing = isSummarizing,
+                                    isWebSummarizing = isWebSummarizing,
+                                    detectedYoutubeUrl = detectedYoutubeUrl,
+                                    onYoutubeChipClick = {
+                                        youtubeChipDismissed = false
+                                        currentSummaryMode = SummaryMode.SIMPLE
+                                        detectedYoutubeUrl?.let { onYoutubeSummarize?.invoke(it, SummaryMode.SIMPLE) }
+                                    },
+                                    onYoutubeDialogOpen = { showYoutubeDialog = true },
+                                    onWebSummarize = onWebSummarize,
+                                    onWebDialogOpen = { showWebDialog = true },
+                                    onAiAssistClick = onAiAssistClick?.let { click ->
+                                        { showAiActionMenu = true }
+                                    }
+                                )
+                                Spacer(modifier = Modifier.weight(1f))
+                                FormattingToolbar(richTextState = richTextState, colors = colors)
+                            }
+
+                            // AI 액션 메뉴 팝업
+                            if (showAiActionMenu && onAiPresetAction != null) {
+                                AiActionMenu(
+                                    onPresetSelected = { action ->
+                                        showAiActionMenu = false
+                                        if (action == AiPresetAction.CUSTOM) {
+                                            onAiAssistClick?.invoke()
+                                        } else {
+                                            onAiPresetAction(action.name)
+                                        }
+                                    },
+                                    onDismiss = { showAiActionMenu = false }
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -880,7 +940,75 @@ fun MemoScreen(
     }
 }
 
-// ReminderPickerDialog → components/ReminderPickerDialog.kt로 분리됨
+// AI 인라인 입력바 (직접 입력 모드)
+@Composable
+private fun AiAssistInlineBar(
+    isLoading: Boolean,
+    onSend: (String) -> Unit,
+    onClose: () -> Unit
+) {
+    val colors = LocalAppColors.current
+    val fontSettings = LocalFontSettings.current
+    var inputText by remember { mutableStateOf("") }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            Icons.Default.Close,
+            contentDescription = null,
+            tint = colors.textBody.copy(alpha = 0.5f),
+            modifier = Modifier
+                .size(20.dp)
+                .clickable { onClose() }
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        BasicTextField(
+            value = inputText,
+            onValueChange = { inputText = it },
+            modifier = Modifier.weight(1f),
+            textStyle = TextStyle(
+                color = colors.textBody,
+                fontSize = fontSettings.scaled(13)
+            ),
+            cursorBrush = androidx.compose.ui.graphics.SolidColor(colors.textTitle),
+            singleLine = true,
+            decorationBox = { innerTextField ->
+                Box {
+                    if (inputText.isEmpty()) {
+                        Text(
+                            text = if (isLoading) "AI 응답 중..." else "AI에게 부탁하기",
+                            color = colors.textBody.copy(alpha = 0.4f),
+                            fontSize = fontSettings.scaled(13)
+                        )
+                    }
+                    innerTextField()
+                }
+            }
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        val canSend = inputText.isNotBlank() && !isLoading
+        Icon(
+            Icons.AutoMirrored.Filled.Send,
+            contentDescription = null,
+            tint = if (canSend) Color(0xFF7C4DFF) else colors.textBody.copy(alpha = 0.2f),
+            modifier = Modifier
+                .size(20.dp)
+                .clickable(enabled = canSend) {
+                    val text = inputText.trim()
+                    inputText = ""
+                    onSend(text)
+                }
+        )
+    }
+}
 
 @Preview(showBackground = true)
 @Composable

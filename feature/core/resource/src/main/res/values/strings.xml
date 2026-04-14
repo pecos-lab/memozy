@@ -167,6 +167,8 @@
     <string name="youtube_open_to_copy">YouTube에서 URL 복사하기 →</string>
     <string name="summary_style_select">요약 하기</string>
     <string name="web_url_copied">웹 URL이 복사되었습니다</string>
+    <string name="summary_copy">요약 복사</string>
+    <string name="memo_copy_done">복사되었습니다</string>
 
     <!-- Trash Extra -->
     <string name="trash_days_left">%d일 후 영구 삭제</string>

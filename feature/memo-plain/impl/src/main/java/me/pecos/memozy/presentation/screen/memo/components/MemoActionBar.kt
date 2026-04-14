@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoFixHigh
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.SmartDisplay
@@ -45,7 +46,9 @@ fun MemoActionBar(
     onYoutubeDialogOpen: () -> Unit,
     // 웹
     onWebSummarize: ((String, SummaryMode) -> Unit)?,
-    onWebDialogOpen: () -> Unit
+    onWebDialogOpen: () -> Unit,
+    // AI 어시스트
+    onAiAssistClick: (() -> Unit)? = null
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -109,6 +112,18 @@ fun MemoActionBar(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(Icons.Default.Link, contentDescription = null, tint = colors.chipText, modifier = Modifier.size(20.dp))
+            }
+        }
+
+        // 🪄 AI 어시스트
+        if (onAiAssistClick != null && !isSummarizing && !isWebSummarizing) {
+            Box(
+                modifier = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp))
+                    .background(colors.chipBackground.copy(alpha = 0.4f))
+                    .clickable(enabled = !isSummarizing && !isWebSummarizing) { onAiAssistClick() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.AutoFixHigh, contentDescription = null, tint = Color(0xFF7C4DFF), modifier = Modifier.size(20.dp))
             }
         }
 
