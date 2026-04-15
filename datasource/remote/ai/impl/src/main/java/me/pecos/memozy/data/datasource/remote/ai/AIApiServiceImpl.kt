@@ -61,11 +61,12 @@ class AIApiServiceImpl @Inject constructor(
         return executeRequest(request)
     }
 
-    override fun generateContentStream(prompt: String): Flow<String> =
-        generateContentStreamInternal(prompt, GenerationConfig.THINKING_DISABLED)
-
-    override fun generateContentStreamLong(prompt: String): Flow<String> =
-        generateContentStreamInternal(prompt, GenerationConfig.THINKING_DISABLED_LONG_OUTPUT)
+    override fun generateContentStream(prompt: String, longOutput: Boolean): Flow<String> =
+        generateContentStreamInternal(
+            prompt,
+            if (longOutput) GenerationConfig.THINKING_DISABLED_LONG_OUTPUT
+            else GenerationConfig.THINKING_DISABLED
+        )
 
     private fun generateContentStreamInternal(prompt: String, config: GenerationConfig): Flow<String> = flow {
         val request = GeminiRequest(

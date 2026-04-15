@@ -1061,7 +1061,7 @@ class MemoPlainNavigationImpl @Inject constructor(
             val fullPrompt = "$prompt\n\n아래는 영상의 자막입니다:\n\n$captions"
             var result = ""
             val sb = StringBuilder()
-            aiApiService.generateContentStreamLong(fullPrompt).collect { delta ->
+            aiApiService.generateContentStream(fullPrompt, longOutput = true).collect { delta ->
                 sb.append(delta)
                 result = stripMarkdown(sb.toString())
                 onStreamUpdate?.invoke(result)
