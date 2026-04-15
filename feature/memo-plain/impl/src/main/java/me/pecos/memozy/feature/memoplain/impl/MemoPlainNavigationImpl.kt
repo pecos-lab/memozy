@@ -431,7 +431,8 @@ class MemoPlainNavigationImpl @Inject constructor(
             }
 
             // AI 어시스트 상태
-            var showAiAssist by remember { mutableStateOf(false) }
+            var showAiAssistSheet by remember { mutableStateOf(false) }
+            var aiAssistMessages by remember { mutableStateOf(listOf<me.pecos.memozy.presentation.screen.memo.components.AiAssistMessage>()) }
             var aiAssistStreamingText by remember { mutableStateOf<String?>(null) }
             var isAiAssistLoading by remember { mutableStateOf(false) }
             var aiAssistJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
@@ -819,23 +820,16 @@ class MemoPlainNavigationImpl @Inject constructor(
                     }
                 } else null,
                 // AI 어시스트
-                showAiAssistInput = showAiAssist,
                 aiAssistStreamingText = aiAssistStreamingText,
                 isAiAssistLoading = isAiAssistLoading,
                 onAiAssistClick = {
                     if (!canUseAi) {
                         showLimitBottomSheet = true
                     } else {
-                        showAiAssist = !showAiAssist
+                        showAiAssistSheet = true
                     }
                 },
-                onAiAssistClose = {
-                    aiAssistJob?.cancel()
-                    showAiAssist = false
-                    aiAssistStreamingText = null
-                    isAiAssistLoading = false
-                },
-                onAiPresetAction = { actionName ->
+                onAiPresetAction = { actionName, currentTitle, currentBody ->
                     if (!canUseAi) {
                         showLimitBottomSheet = true
                         return@MemoScreen
@@ -845,36 +839,41 @@ class MemoPlainNavigationImpl @Inject constructor(
                         isAiAssistLoading = true
                         aiAssistStreamingText = ""
                         try {
-                            val content = finalMemo.content
-                            val memoBody = if (content.length > MAX_MEMO_CONTEXT_CHARS) {
-                                content.take(2000) + "\n...(중략)...\n" + content.takeLast(1000)
-                            } else content
+                            val plainBody = currentBody.replace(Regex("<[^>]*>"), "").trim()
+                            val memoBody = if (plainBody.length > MAX_MEMO_CONTEXT_CHARS) {
+                                plainBody.take(2000) + "\n...(중략)...\n" + plainBody.takeLast(1000)
+                            } else plainBody
+                            if (memoBody.isBlank()) {
+                                aiAssistStreamingText = null
+                                return@launch
+                            }
+                            val noMarkdownRule = "마크다운 문법(**, ##, - 등)을 절대 사용하지 마. 순수 텍스트로만 답해."
                             val prompt = when (actionName) {
                                 "EXPLAIN" -> buildString {
                                     appendLine("너는 메모 편집 AI 어시스턴트야.")
                                     appendLine("아래 메모 내용을 이해하기 쉽게 풀어서 설명해줘. 어려운 용어가 있으면 쉬운 말로 바꿔줘.")
-                                    appendLine("설명문만 출력해.")
+                                    appendLine("설명문만 출력해. $noMarkdownRule")
                                     appendLine()
                                     appendLine("=== 메모 ===")
-                                    appendLine("제목: ${finalMemo.name}")
+                                    appendLine("제목: $currentTitle")
                                     appendLine(memoBody)
                                 }
                                 "ORGANIZE" -> buildString {
                                     appendLine("너는 메모 편집 AI 어시스턴트야.")
                                     appendLine("아래 메모 내용을 깔끔하게 정리해줘. 구조화하고 가독성을 높여줘.")
-                                    appendLine("정리된 텍스트만 출력해.")
+                                    appendLine("정리된 텍스트만 출력해. $noMarkdownRule")
                                     appendLine()
                                     appendLine("=== 메모 ===")
-                                    appendLine("제목: ${finalMemo.name}")
+                                    appendLine("제목: $currentTitle")
                                     appendLine(memoBody)
                                 }
                                 "SUMMARIZE" -> buildString {
                                     appendLine("너는 메모 편집 AI 어시스턴트야.")
                                     appendLine("아래 메모 내용의 핵심만 간결하게 요약해줘. 원문의 1/3 이하로 줄여줘.")
-                                    appendLine("요약문만 출력해.")
+                                    appendLine("요약문만 출력해. $noMarkdownRule")
                                     appendLine()
                                     appendLine("=== 메모 ===")
-                                    appendLine("제목: ${finalMemo.name}")
+                                    appendLine("제목: $currentTitle")
                                     appendLine(memoBody)
                                 }
                                 else -> return@launch
@@ -893,48 +892,75 @@ class MemoPlainNavigationImpl @Inject constructor(
                         }
                     }
                 },
-                onAiAssistSend = { userMessage ->
-                    if (!canUseAi) {
-                        showLimitBottomSheet = true
-                        return@MemoScreen
-                    }
-                    aiAssistJob?.cancel()
-                    aiAssistJob = scope.launch {
-                        isAiAssistLoading = true
-                        aiAssistStreamingText = ""
-                        try {
-                            val content = finalMemo.content
-                            val memoBody = if (content.length > MAX_MEMO_CONTEXT_CHARS) {
-                                content.take(2000) + "\n...(중략)...\n" + content.takeLast(1000)
-                            } else content
-                            val prompt = buildString {
-                                appendLine("너는 만능 AI 어시스턴트야. 어떤 질문이든 친절하게 답해줘.")
-                                appendLine("사용자가 현재 메모를 작성 중이니, 메모 내용이 있으면 참고해서 답해줘.")
-                                appendLine("메모와 관련 없는 질문이어도 자유롭게 답변해. 답변은 간결하게.")
-                                appendLine("응답은 메모 본문에 바로 삽입되니, 자연스러운 텍스트로 답해줘.")
-                                appendLine()
-                                appendLine("=== 현재 메모 ===")
-                                appendLine("제목: ${finalMemo.name}")
-                                appendLine(memoBody)
-                                appendLine("=== 메모 끝 ===")
-                                appendLine()
-                                appendLine("사용자: $userMessage")
-                            }
-                            aiApiService.generateContentStream(prompt).collect { accumulated ->
-                                aiAssistStreamingText = accumulated
-                            }
-                            aiAssistStreamingText = null
-                            aiUsageDao.insert(AiUsage(feature = FEATURE_AI_ASSIST))
-                            dailyUsageCount++
-                        } catch (e: Exception) {
-                            aiAssistStreamingText = null
-                            if (e is kotlinx.coroutines.CancellationException) return@launch
-                        } finally {
-                            isAiAssistLoading = false
-                        }
-                    }
-                }
             )
+
+            // AI 직접 입력 바텀시트
+            if (showAiAssistSheet) {
+                me.pecos.memozy.presentation.screen.memo.components.AiAssistBottomSheet(
+                    messages = aiAssistMessages,
+                    streamingText = aiAssistStreamingText,
+                    isLoading = isAiAssistLoading,
+                    onSendMessage = { userMessage ->
+                        aiAssistMessages = aiAssistMessages + me.pecos.memozy.presentation.screen.memo.components.AiAssistMessage("user", userMessage)
+                        aiAssistJob?.cancel()
+                        aiAssistJob = scope.launch {
+                            isAiAssistLoading = true
+                            aiAssistStreamingText = ""
+                            try {
+                                val memoContent = finalMemo.content.replace(Regex("<[^>]*>"), "").trim()
+                                val memoBody = if (memoContent.length > MAX_MEMO_CONTEXT_CHARS) {
+                                    memoContent.take(2000) + "\n...(중략)...\n" + memoContent.takeLast(1000)
+                                } else memoContent
+                                val noMarkdownRule = "마크다운 문법(**, ##, - 등)을 절대 사용하지 마. 순수 텍스트로만 답해."
+                                val prompt = buildString {
+                                    appendLine("너는 만능 AI 어시스턴트야. 어떤 질문이든 친절하게 답해줘.")
+                                    appendLine("사용자가 현재 메모를 작성 중이니, 메모 내용이 있으면 참고해서 답해줘.")
+                                    appendLine("메모와 관련 없는 질문이어도 자유롭게 답변해. 답변은 간결하게. $noMarkdownRule")
+                                    appendLine()
+                                    if (memoBody.isNotBlank()) {
+                                        appendLine("=== 현재 메모 ===")
+                                        appendLine("제목: ${finalMemo.name}")
+                                        appendLine(memoBody)
+                                        appendLine("=== 메모 끝 ===")
+                                        appendLine()
+                                    }
+                                    appendLine("사용자: $userMessage")
+                                }
+                                aiApiService.generateContentStream(prompt).collect { accumulated ->
+                                    aiAssistStreamingText = accumulated
+                                }
+                                val finalText = aiAssistStreamingText ?: ""
+                                aiAssistStreamingText = null
+                                if (finalText.isNotBlank()) {
+                                    aiAssistMessages = aiAssistMessages + me.pecos.memozy.presentation.screen.memo.components.AiAssistMessage("assistant", finalText)
+                                }
+                                aiUsageDao.insert(AiUsage(feature = FEATURE_AI_ASSIST))
+                                dailyUsageCount++
+                            } catch (e: Exception) {
+                                aiAssistStreamingText = null
+                                if (e is kotlinx.coroutines.CancellationException) return@launch
+                            } finally {
+                                isAiAssistLoading = false
+                            }
+                        }
+                    },
+                    onInsertToMemo = { text ->
+                        // 본문에 삽입 — MemoScreen의 aiAssistStreamingText를 통해 전달
+                        aiAssistStreamingText = text
+                        // 짧은 딜레이 후 null로 → LaunchedEffect가 본문에 삽입 완료
+                        scope.launch {
+                            kotlinx.coroutines.delay(100)
+                            aiAssistStreamingText = null
+                        }
+                    },
+                    onDismiss = {
+                        aiAssistJob?.cancel()
+                        showAiAssistSheet = false
+                        aiAssistStreamingText = null
+                        isAiAssistLoading = false
+                    }
+                )
+            }
 
             if (showLimitBottomSheet) {
                 AiLimitBottomSheet(

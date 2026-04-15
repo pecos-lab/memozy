@@ -224,14 +224,11 @@ fun MemoScreen(
     webSummaryError: String? = null,
     webPageTitle: String? = null,
     onSummaryStyleSelected: ((SummaryStyle, String) -> Unit)? = null,
-    // AI 어시스트
-    onAiPresetAction: ((String) -> Unit)? = null,
-    onAiAssistSend: ((String) -> Unit)? = null,
-    showAiAssistInput: Boolean = false,
+    // AI 어시스트 — (actionName, currentTitle, currentBody)
+    onAiPresetAction: ((String, String, String) -> Unit)? = null,
     aiAssistStreamingText: String? = null,
     isAiAssistLoading: Boolean = false,
     onAiAssistClick: (() -> Unit)? = null,
-    onAiAssistClose: (() -> Unit)? = null,
     existingMemo: MemoUiState = MemoUiState(0, "", 1, "")
 ) {
     val isNewMemo = existingMemo.id <= 0
@@ -298,6 +295,9 @@ fun MemoScreen(
     var isSummaryExpanded by remember { mutableStateOf(if (initialSummary == null) true else existingMemo.isSummaryExpanded) }
     var webSummaryText by remember { mutableStateOf<String?>(null) }
     var isWebSummaryExpanded by remember { mutableStateOf(initialSummary == null) }
+
+    // 요약 삭제 확인 다이얼로그
+    var showSummaryDeleteDialog by remember { mutableStateOf<String?>(null) } // "youtube" or "web"
 
     // 요약 완료 시 별도 상태로 분리 (본문에 삽입하지 않음)
     var summaryApplied by remember { mutableStateOf(false) }
@@ -390,13 +390,14 @@ fun MemoScreen(
     val colors = LocalAppColors.current  // ← CompositionLocal에서 현재 테마 색상 가져옴
     val fontSettings = LocalFontSettings.current
 
+    var showAiActionMenu by remember { mutableStateOf(false) }
+
     // containerColor 명시 → MaterialTheme.colorScheme.surface 무시
     Scaffold(
         containerColor = colors.screenBackground,
         contentWindowInsets = WindowInsets(0)
     ) { innerPadding ->
         val isKeyboardVisible = WindowInsets.isImeVisible
-        var showAiActionMenu by remember { mutableStateOf(false) }
         val hazeState = rememberHazeState()
         val isSystemDark = colors.screenBackground == Color(0xFF1C1C1E)
         val glassStyle = remember(isSystemDark) {
@@ -587,8 +588,10 @@ fun MemoScreen(
                 }
 
                 // richTextState → bodyText 단순 동기화 (URL 감지/빈 체크용)
+                // AI 스트리밍 중에는 동기화 스킵 (bodyText 오염 방지)
                 LaunchedEffect(richTextState.annotatedString) {
                     if (!contentInitialized) return@LaunchedEffect
+                    if (aiAssistStreamingText != null) return@LaunchedEffect
                     val plainText = richTextState.annotatedString.text
                     if (plainText != bodyText) {
                         bodyText = plainText
@@ -620,6 +623,7 @@ fun MemoScreen(
                             currentSummaryMode = altMode
                             detectedYoutubeUrl?.let { onYoutubeSummarize?.invoke(it, altMode) }
                         },
+                        onDeleteSummary = { showSummaryDeleteDialog = "youtube" },
                         colors = colors,
                         context = context,
                         clipboardManager = clipboardManager,
@@ -659,6 +663,7 @@ fun MemoScreen(
                             currentSummaryMode = altMode
                             savedWebUrl?.let { onWebSummarize?.invoke(it, altMode) }
                         },
+                        onDeleteSummary = { showSummaryDeleteDialog = "web" },
                         colors = colors,
                         context = context,
                         clipboardManager = clipboardManager
@@ -835,16 +840,8 @@ fun MemoScreen(
                 ) {
                     HorizontalDivider(color = keyboardBarBorder, thickness = 0.5.dp)
 
-                    // AI 인라인 입력바 (직접 입력 모드)
-                    if (showAiAssistInput && onAiAssistSend != null) {
-                        AiAssistInlineBar(
-                            isLoading = isAiAssistLoading,
-                            onSend = onAiAssistSend,
-                            onClose = onAiAssistClose ?: {}
-                        )
-                    } else {
-                        // 액션 버튼 (왼쪽) + 서식 툴바 (오른쪽) — 한 줄 배치
-                        Box {
+                    // 액션 버튼 (왼쪽) + 서식 툴바 (오른쪽) — 한 줄 배치
+                    Box {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -879,26 +876,25 @@ fun MemoScreen(
                                 Spacer(modifier = Modifier.weight(1f))
                                 FormattingToolbar(richTextState = richTextState, colors = colors)
                             }
-
-                            // AI 액션 메뉴 팝업
-                            if (showAiActionMenu && onAiPresetAction != null) {
-                                AiActionMenu(
-                                    onPresetSelected = { action ->
-                                        showAiActionMenu = false
-                                        if (action == AiPresetAction.CUSTOM) {
-                                            onAiAssistClick?.invoke()
-                                        } else {
-                                            onAiPresetAction(action.name)
-                                        }
-                                    },
-                                    onDismiss = { showAiActionMenu = false }
-                                )
-                            }
                         }
                     }
                 }
             }
         } // outer Column
+
+    // AI 액션 메뉴 팝업 — AnimatedVisibility 바깥에 배치 (���보드 내려가도 유지)
+    if (showAiActionMenu && onAiPresetAction != null) {
+        AiActionMenu(
+            onPresetSelected = { action ->
+                showAiActionMenu = false
+                if (action == AiPresetAction.CUSTOM) {
+                    onAiAssistClick?.invoke()
+                } else {
+                    onAiPresetAction(action.name, nameText, bodyText)
+                }
+            },
+            onDismiss = { showAiActionMenu = false }
+        )
     }
 
     // 웹 URL 입력 다이얼로그
@@ -938,74 +934,35 @@ fun MemoScreen(
             }
         )
     }
-}
 
-// AI 인라인 입력바 (직접 입력 모드)
-@Composable
-private fun AiAssistInlineBar(
-    isLoading: Boolean,
-    onSend: (String) -> Unit,
-    onClose: () -> Unit
-) {
-    val colors = LocalAppColors.current
-    val fontSettings = LocalFontSettings.current
-    var inputText by remember { mutableStateOf("") }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            Icons.Default.Close,
-            contentDescription = null,
-            tint = colors.textBody.copy(alpha = 0.5f),
-            modifier = Modifier
-                .size(20.dp)
-                .clickable { onClose() }
-        )
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        BasicTextField(
-            value = inputText,
-            onValueChange = { inputText = it },
-            modifier = Modifier.weight(1f),
-            textStyle = TextStyle(
-                color = colors.textBody,
-                fontSize = fontSettings.scaled(13)
-            ),
-            cursorBrush = androidx.compose.ui.graphics.SolidColor(colors.textTitle),
-            singleLine = true,
-            decorationBox = { innerTextField ->
-                Box {
-                    if (inputText.isEmpty()) {
-                        Text(
-                            text = if (isLoading) "AI 응답 중..." else "AI에게 부탁하기",
-                            color = colors.textBody.copy(alpha = 0.4f),
-                            fontSize = fontSettings.scaled(13)
-                        )
+    // 요약 삭제 확인 다이얼로그
+    if (showSummaryDeleteDialog != null) {
+        AlertDialog(
+            onDismissRequest = { showSummaryDeleteDialog = null },
+            title = { Text(stringResource(R.string.summary_delete_title)) },
+            text = { Text(stringResource(R.string.summary_delete_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    when (showSummaryDeleteDialog) {
+                        "youtube" -> {
+                            summaryText = null
+                            summaryApplied = false
+                        }
+                        "web" -> {
+                            webSummaryText = null
+                            webSummaryApplied = false
+                        }
                     }
-                    innerTextField()
+                    showSummaryDeleteDialog = null
+                }) {
+                    Text(stringResource(R.string.summary_delete_action), color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSummaryDeleteDialog = null }) {
+                    Text(stringResource(R.string.cancel))
                 }
             }
-        )
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        val canSend = inputText.isNotBlank() && !isLoading
-        Icon(
-            Icons.AutoMirrored.Filled.Send,
-            contentDescription = null,
-            tint = if (canSend) Color(0xFF7C4DFF) else colors.textBody.copy(alpha = 0.2f),
-            modifier = Modifier
-                .size(20.dp)
-                .clickable(enabled = canSend) {
-                    val text = inputText.trim()
-                    inputText = ""
-                    onSend(text)
-                }
         )
     }
 }

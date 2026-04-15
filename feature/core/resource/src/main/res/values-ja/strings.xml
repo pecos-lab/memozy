@@ -170,6 +170,9 @@
     <string name="summary_style_select">要約する</string>
     <string name="web_url_copied">Web URLがコピーされました</string>
     <string name="summary_copy">要約をコピー</string>
+    <string name="summary_delete_title">要約を削除</string>
+    <string name="summary_delete_message">要約を削除しますか？\n削除すると元に戻せません。</string>
+    <string name="summary_delete_action">削除</string>
     <string name="memo_copy_done">コピーしました</string>
 
     <!-- Trash Extra -->

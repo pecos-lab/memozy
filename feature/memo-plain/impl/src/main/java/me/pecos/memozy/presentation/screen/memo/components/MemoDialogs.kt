@@ -1,5 +1,6 @@
 package me.pecos.memozy.presentation.screen.memo.components
 
+import android.content.ClipboardManager as AndroidClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.SmartDisplay
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -51,6 +54,15 @@ private val YOUTUBE_URL_REGEX = Regex(
     """(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)[\w\-]+(?:[&?][\w\-=]*)*"""
 )
 
+private val WEB_URL_REGEX = Regex(
+    """https?://\S+"""
+)
+
+private fun getSystemClipboardText(context: Context): String {
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? AndroidClipboardManager
+    return clipboard?.primaryClip?.getItemAt(0)?.text?.toString() ?: ""
+}
+
 @Composable
 fun YouTubeUrlDialog(
     colors: AppColors,
@@ -61,7 +73,7 @@ fun YouTubeUrlDialog(
 ) {
     val fontSettings = LocalFontSettings.current
     var urlInput by remember { mutableStateOf("") }
-    val clipText = clipboardManager.getText()?.text ?: ""
+    val clipText = remember { getSystemClipboardText(context) }
     val isValid = YOUTUBE_URL_REGEX.containsMatchIn(urlInput)
 
     AppPopup(
@@ -88,19 +100,21 @@ fun YouTubeUrlDialog(
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
-                    .background(colors.chipBackground.copy(alpha = 0.6f))
-                    .clickable { urlInput = clipText }
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                    .background(Color(0xFF2196F3).copy(alpha = 0.08f))
+                    .clickable { urlInput = YOUTUBE_URL_REGEX.find(clipText)?.value ?: clipText }
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    Icons.Default.Link, contentDescription = null,
-                    tint = Color(0xFF2196F3), modifier = Modifier.size(14.dp)
+                    Icons.Default.ContentPaste, contentDescription = null,
+                    tint = Color(0xFF2196F3), modifier = Modifier.size(16.dp)
                 )
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = clipText, fontSize = fontSettings.scaled(12),
+                    text = YOUTUBE_URL_REGEX.find(clipText)?.value ?: clipText,
+                    fontSize = fontSettings.scaled(12),
                     color = Color(0xFF2196F3), fontWeight = FontWeight.Medium,
                     maxLines = 1, overflow = TextOverflow.Ellipsis
                 )
@@ -141,9 +155,10 @@ fun WebUrlDialog(
     onDismiss: () -> Unit,
     onUrlConfirmed: (String) -> Unit
 ) {
+    val context = LocalContext.current
     val fontSettings = LocalFontSettings.current
     var webUrlInput by remember { mutableStateOf("") }
-    val clipText = clipboardManager.getText()?.text ?: ""
+    val clipText = remember { getSystemClipboardText(context) }
     val colors = me.pecos.memozy.presentation.theme.LocalAppColors.current
     val isValid = webUrlInput.startsWith("http")
 
@@ -167,23 +182,26 @@ fun WebUrlDialog(
             placeholder = { Text("https://...", fontSize = fontSettings.scaled(14)) },
             singleLine = true, modifier = Modifier.fillMaxWidth()
         )
-        if (clipText.isNotBlank() && webUrlInput.isBlank() && clipText.trimStart().startsWith("http")) {
+        val webClipUrl = remember(clipText) { WEB_URL_REGEX.find(clipText)?.value }
+        val isWebUrl = webClipUrl != null && !YOUTUBE_URL_REGEX.containsMatchIn(webClipUrl)
+        if (webUrlInput.isBlank() && isWebUrl) {
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
-                    .background(colors.chipBackground.copy(alpha = 0.6f))
-                    .clickable { webUrlInput = clipText }
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                    .background(Color(0xFF2196F3).copy(alpha = 0.08f))
+                    .clickable { webUrlInput = webClipUrl }
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    Icons.Default.Link, contentDescription = null,
-                    tint = Color(0xFF2196F3), modifier = Modifier.size(14.dp)
+                    Icons.Default.ContentPaste, contentDescription = null,
+                    tint = Color(0xFF2196F3), modifier = Modifier.size(16.dp)
                 )
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = clipText, fontSize = fontSettings.scaled(12),
+                    text = webClipUrl, fontSize = fontSettings.scaled(12),
                     color = Color(0xFF2196F3), fontWeight = FontWeight.Medium,
                     maxLines = 1, overflow = TextOverflow.Ellipsis
                 )
