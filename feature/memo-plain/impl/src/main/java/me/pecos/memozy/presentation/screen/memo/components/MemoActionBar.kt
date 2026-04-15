@@ -84,7 +84,7 @@ fun MemoActionBar(
                 modifier = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp))
                     .background(
                         if (isSummarizing || isWebSummarizing) colors.chipBackground.copy(alpha = 0.3f)
-                        else if (hasYoutubeUrl) Color(0xFF2196F3).copy(alpha = 0.1f)
+                        else if (hasYoutubeUrl) colors.chipText.copy(alpha = 0.1f)
                         else colors.chipBackground.copy(alpha = 0.4f)
                     )
                     .clickable(enabled = !isSummarizing && !isWebSummarizing) {
@@ -94,7 +94,7 @@ fun MemoActionBar(
             ) {
                 Icon(
                     Icons.Default.SmartDisplay, contentDescription = null,
-                    tint = if (hasYoutubeUrl) Color(0xFF2196F3) else colors.chipText,
+                    tint = colors.chipText,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -123,7 +123,7 @@ fun MemoActionBar(
                     .clickable(enabled = !isSummarizing && !isWebSummarizing) { onAiAssistClick() },
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.AutoFixHigh, contentDescription = null, tint = Color(0xFF7C4DFF), modifier = Modifier.size(20.dp))
+                Icon(Icons.Default.AutoFixHigh, contentDescription = null, tint = colors.chipText, modifier = Modifier.size(20.dp))
             }
         }
 

@@ -80,7 +80,7 @@ class MemoPlainNavigationImpl @Inject constructor(
         private const val FEATURE_AI_ASSIST = "ai_assist"
         private const val MAX_DAILY_AD_VIEWS = 3
         private const val MAX_MEMO_CONTEXT_CHARS = 3000
-        private const val MEMOZY_AI_SYSTEM_ROLE = "너는 Memozy AI야. 메모지 앱의 AI 어시스턴트로, 사용자의 메모 작성을 돕는 게 너의 역할이야. 너의 이름은 'Memozy AI'이고, 다른 AI 서비스의 이름으로 자신을 소개하면 안 돼. 사용자가 '너 누구야?' 등 정체를 물어볼 때만 'Memozy AI입니다! 메모 작성을 도와드릴게요' 라고 답해. 그 외에는 자기소개 없이 바로 답변해."
+        private const val MEMOZY_AI_SYSTEM_ROLE = "너는 Memozy AI야. 메모지 앱의 AI 어시스턴트로, 사용자의 메모 작성을 돕는 게 너의 역할이야. 너의 이름은 'Memozy AI'이고, 다른 AI 서비스의 이름으로 자신을 소개하면 안 돼. 사용자가 '너 누구야?' 등 정체를 물어볼 때만 'Memozy AI입니다! 메모 작성을 도와드릴게요' 라고 답해. 그 외에는 자기소개 없이 바로 답변해. 인사말, 도입부('도와드릴게요', '해결책을 찾아볼게요', '물론이죠', '네!' 등) 없이 핵심 내용부터 바로 시작해."
         private const val NO_MARKDOWN_RULE = "마크다운 문법(**, ##, - 등)을 절대 사용하지 마. 순수 텍스트로만 답해."
 
         private fun stripMarkdown(text: String): String = text
@@ -622,8 +622,12 @@ class MemoPlainNavigationImpl @Inject constructor(
                         }
                     }
                 },
-                isSummarizing = inlineSummaryState is SummaryState.Loading,
-                summaryResult = (inlineSummaryState as? SummaryState.Success)?.text,
+                isSummarizing = inlineSummaryState is SummaryState.Loading || inlineSummaryState is SummaryState.Streaming,
+                summaryResult = when (inlineSummaryState) {
+                    is SummaryState.Streaming -> (inlineSummaryState as SummaryState.Streaming).text
+                    is SummaryState.Success -> (inlineSummaryState as SummaryState.Success).text
+                    else -> null
+                },
                 summaryError = (inlineSummaryState as? SummaryState.Error)?.message,
                 youtubeTitle = youtubeTitle,
                 onStartRecording = {
@@ -704,11 +708,14 @@ class MemoPlainNavigationImpl @Inject constructor(
                         inlineSummaryState = SummaryState.Loading
                         try {
                             val summary = if (videoId != null) {
-                                summarizeVideo(
+                                summarizeVideoStream(
                                     videoId, url,
                                     style = style,
                                     lang = languageCode,
-                                    onTitleFound = { title -> youtubeTitle = title }
+                                    onTitleFound = { title -> youtubeTitle = title },
+                                    onStreamUpdate = { partial ->
+                                        inlineSummaryState = SummaryState.Streaming(partial)
+                                    }
                                 )
                             } else {
                                 aiApiService.generateContentWithVideo(
@@ -742,6 +749,12 @@ class MemoPlainNavigationImpl @Inject constructor(
                     }
                 },
                 onYoutubeSummarize = { url, mode ->
+                    // mode → activeSummaryStyle 동기화
+                    val style = when (mode) {
+                        SummaryMode.SIMPLE -> SummaryStyle.SIMPLE
+                        SummaryMode.DETAILED -> SummaryStyle.DETAILED
+                    }
+                    activeSummaryStyle = style
                     currentSummarizeJob = scope.launch {
                         if (!canUseAi) {
                             showLimitBottomSheet = true
@@ -749,7 +762,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                         }
                         val videoId = extractVideoId(url)
                         // 캐시 조회 (style + language 기반)
-                        val cached = videoId?.let { youtubeSummaryDao.getByKey(it, activeSummaryStyle.name, languageCode) }
+                        val cached = videoId?.let { youtubeSummaryDao.getByKey(it, style.name, languageCode) }
                         if (cached != null) {
                             inlineSummaryState = SummaryState.Success(cached.summary)
                             return@launch
@@ -758,11 +771,14 @@ class MemoPlainNavigationImpl @Inject constructor(
                         val ytPrompt = buildYoutubePrompt(activeSummaryStyle, languageCode)
                         try {
                             val summary = if (videoId != null) {
-                                summarizeVideo(
+                                summarizeVideoStream(
                                     videoId, url,
                                     style = activeSummaryStyle,
                                     lang = languageCode,
-                                    onTitleFound = { title -> youtubeTitle = title }
+                                    onTitleFound = { title -> youtubeTitle = title },
+                                    onStreamUpdate = { partial ->
+                                        inlineSummaryState = SummaryState.Streaming(partial)
+                                    }
                                 )
                             } else {
                                 aiApiService.generateContentWithVideo(
@@ -858,7 +874,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                             val noMarkdownRule = NO_MARKDOWN_RULE
                             val prompt = buildString {
                                 appendLine(systemRole)
-                                appendLine("어떤 질문이든 친절하게 답해줘.")
+                                appendLine("답변은 간결하고 핵심적으로.")
                                 appendLine("사용자가 현재 메모를 작성 중이니, 메모 내용이 있으면 참고해서 답해줘.")
                                 appendLine("메모와 관련 없는 질문이어도 자유롭게 답변해. 답변은 간결하게. $noMarkdownRule")
                                 appendLine()
@@ -871,9 +887,14 @@ class MemoPlainNavigationImpl @Inject constructor(
                                 }
                                 appendLine("사용자: $userMessage")
                             }
-                            aiApiService.generateContentStream(prompt).collect { accumulated ->
-                                aiAssistStreamingText = stripMarkdown(accumulated)
+                            val sb = StringBuilder()
+                            aiApiService.generateContentStream(prompt).collect { delta ->
+                                sb.append(delta)
+                                aiAssistStreamingText = stripMarkdown(sb.toString())
                             }
+                            // UI가 마지막 스트리밍 텍스트를 반영할 시간 확보
+                            kotlinx.coroutines.yield()
+                            kotlinx.coroutines.delay(50)
                             aiAssistStreamingText = null
                             aiUsageDao.insert(AiUsage(feature = FEATURE_AI_ASSIST))
                             dailyUsageCount++
@@ -936,9 +957,14 @@ class MemoPlainNavigationImpl @Inject constructor(
                                 }
                                 else -> return@launch
                             }
-                            aiApiService.generateContentStream(prompt).collect { accumulated ->
-                                aiAssistStreamingText = stripMarkdown(accumulated)
+                            val sb = StringBuilder()
+                            aiApiService.generateContentStream(prompt).collect { delta ->
+                                sb.append(delta)
+                                aiAssistStreamingText = stripMarkdown(sb.toString())
                             }
+                            // UI가 마지막 스트리밍 텍스트를 반영할 시간 확보
+                            kotlinx.coroutines.yield()
+                            kotlinx.coroutines.delay(50)
                             aiAssistStreamingText = null
                             aiUsageDao.insert(AiUsage(feature = FEATURE_AI_ASSIST))
                             dailyUsageCount++
@@ -1015,12 +1041,13 @@ class MemoPlainNavigationImpl @Inject constructor(
         throw lastException!!
     }
 
-    private suspend fun summarizeVideo(
+    private suspend fun summarizeVideoStream(
         videoId: String,
         videoUrl: String,
         style: SummaryStyle = SummaryStyle.SIMPLE,
         lang: String = "ko",
-        onTitleFound: ((String) -> Unit)? = null
+        onTitleFound: ((String) -> Unit)? = null,
+        onStreamUpdate: ((String) -> Unit)? = null
     ): String {
         val prompt = buildYoutubePrompt(style, lang)
         // 1. 자막 + 제목 추출 시도
@@ -1028,16 +1055,21 @@ class MemoPlainNavigationImpl @Inject constructor(
         if (videoInfo != null) {
             onTitleFound?.invoke(videoInfo.title)
         }
-        val captions = videoInfo?.captions?.take(15000)
+        val captions = videoInfo?.captions
         if (captions != null) {
-            // 자막 기반 요약 (텍스트만, 빠르고 저렴)
-            return retryOn503 {
-                aiApiService.generateContent(
-                    "$prompt\n\n아래는 영상의 자막입니다:\n\n$captions"
-                )
+            // 자막 기반 요약 — 스트리밍
+            val fullPrompt = "$prompt\n\n아래는 영상의 자막입니다:\n\n$captions"
+            var result = ""
+            val sb = StringBuilder()
+            aiApiService.generateContentStreamLong(fullPrompt).collect { delta ->
+                sb.append(delta)
+                result = stripMarkdown(sb.toString())
+                onStreamUpdate?.invoke(result)
             }
+            if (result.isBlank()) throw me.pecos.memozy.data.datasource.remote.ai.AIException.UnknownException("Empty streaming response")
+            return result
         }
-        // 2. 자막 없으면 fallback — 영상 직접 분석
+        // 2. 자막 없으면 fallback — 비스트리밍 (영상 직접 분석은 스트리밍 미지원)
         return retryOn503 {
             aiApiService.generateContentWithVideo(
                 prompt = prompt,
@@ -1050,6 +1082,7 @@ class MemoPlainNavigationImpl @Inject constructor(
 private sealed class SummaryState {
     data object Idle : SummaryState()
     data object Loading : SummaryState()
+    data class Streaming(val text: String) : SummaryState()
     data class Success(val text: String) : SummaryState()
     data class Error(val message: String) : SummaryState()
 }

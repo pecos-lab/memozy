@@ -73,7 +73,8 @@ fun YouTubeUrlDialog(
 ) {
     val fontSettings = LocalFontSettings.current
     var urlInput by remember { mutableStateOf("") }
-    val clipText = remember { getSystemClipboardText(context) }
+    // 다이얼로그가 열릴 때마다 최신 클립보드를 읽도록 key 없이 매번 실행
+    val clipText = getSystemClipboardText(context)
     val isValid = YOUTUBE_URL_REGEX.containsMatchIn(urlInput)
 
     AppPopup(
@@ -158,7 +159,7 @@ fun WebUrlDialog(
     val context = LocalContext.current
     val fontSettings = LocalFontSettings.current
     var webUrlInput by remember { mutableStateOf("") }
-    val clipText = remember { getSystemClipboardText(context) }
+    val clipText = getSystemClipboardText(context)
     val colors = me.pecos.memozy.presentation.theme.LocalAppColors.current
     val isValid = webUrlInput.startsWith("http")
 

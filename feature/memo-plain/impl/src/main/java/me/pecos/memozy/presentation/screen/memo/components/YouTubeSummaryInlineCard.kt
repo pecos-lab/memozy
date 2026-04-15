@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.SmartDisplay
 import androidx.compose.material.icons.filled.AutoFixHigh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -142,7 +143,7 @@ fun YouTubeSummaryInlineCard(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        Text("🔗", fontSize = fontSettings.scaled(10)); Spacer(modifier = Modifier.width(3.dp))
+                        Icon(Icons.Default.SmartDisplay, null, tint = colors.chipText, modifier = Modifier.size(12.dp)); Spacer(modifier = Modifier.width(3.dp))
                         Text(stringResource(R.string.summary_card_open), fontSize = fontSettings.scaled(10), color = colors.chipText, fontWeight = FontWeight.Medium)
                     }
                     Row(
@@ -218,15 +219,15 @@ fun YouTubeSummaryInlineCard(
                                 modifier = Modifier
                                     .weight(1f)
                                     .clip(RoundedCornerShape(6.dp))
-                                    .background(Color(0xFF7C4DFF).copy(alpha = 0.1f))
+                                    .background(colors.chipBackground)
                                     .clickable { onAskAi() }
                                     .padding(vertical = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.Center
                             ) {
-                                Icon(Icons.Default.AutoFixHigh, null, tint = Color(0xFF7C4DFF), modifier = Modifier.size(12.dp))
+                                Icon(Icons.Default.AutoFixHigh, null, tint = colors.chipText, modifier = Modifier.size(12.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text(stringResource(R.string.memozy_ai), fontSize = fontSettings.scaled(10), color = Color(0xFF7C4DFF), fontWeight = FontWeight.Medium)
+                                Text(stringResource(R.string.memozy_ai), fontSize = fontSettings.scaled(10), color = colors.chipText, fontWeight = FontWeight.Medium)
                             }
                         }
                     }

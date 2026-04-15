@@ -16,6 +16,7 @@ import me.pecos.memozy.data.datasource.remote.ai.model.GeminiContent
 import me.pecos.memozy.data.datasource.remote.ai.model.GeminiFileData
 import me.pecos.memozy.data.datasource.remote.ai.model.GeminiInlineData
 import me.pecos.memozy.data.datasource.remote.ai.model.GeminiPart
+import me.pecos.memozy.data.datasource.remote.ai.model.GenerationConfig
 import me.pecos.memozy.data.datasource.remote.ai.model.GeminiRequest
 import me.pecos.memozy.data.datasource.remote.ai.model.GeminiResponse
 
@@ -60,16 +61,23 @@ class AIApiServiceImpl @Inject constructor(
         return executeRequest(request)
     }
 
-    override fun generateContentStream(prompt: String): Flow<String> = flow {
+    override fun generateContentStream(prompt: String): Flow<String> =
+        generateContentStreamInternal(prompt, GenerationConfig.THINKING_DISABLED)
+
+    override fun generateContentStreamLong(prompt: String): Flow<String> =
+        generateContentStreamInternal(prompt, GenerationConfig.THINKING_DISABLED_LONG_OUTPUT)
+
+    private fun generateContentStreamInternal(prompt: String, config: GenerationConfig): Flow<String> = flow {
         val request = GeminiRequest(
             contents = listOf(
                 GeminiContent(
                     parts = listOf(GeminiPart(text = prompt))
                 )
-            )
+            ),
+            generationConfig = config
         )
 
-        val accumulated = StringBuilder()
+        var hasContent = false
         httpClient.preparePost("gemini-stream") {
             contentType(ContentType.Application.Json)
             setBody(request)
@@ -89,8 +97,8 @@ class AIApiServiceImpl @Inject constructor(
                                 ?.firstOrNull()
                                 ?.text
                             if (text != null) {
-                                accumulated.append(text)
-                                emit(accumulated.toString())
+                                hasContent = true
+                                emit(text) // 델타만 emit (O(n) 최적화)
                             }
                         } catch (_: Exception) { }
                     }
@@ -98,7 +106,7 @@ class AIApiServiceImpl @Inject constructor(
             }
         }
 
-        if (accumulated.isEmpty()) {
+        if (!hasContent) {
             throw AIException.UnknownException("Empty streaming response from Gemini")
         }
     }

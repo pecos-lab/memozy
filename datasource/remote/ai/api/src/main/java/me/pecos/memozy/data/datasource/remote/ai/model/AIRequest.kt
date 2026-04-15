@@ -11,10 +11,15 @@ data class GeminiRequest(
 @Serializable
 data class GenerationConfig(
     val thinkingConfig: ThinkingConfig? = null,
+    val maxOutputTokens: Int? = null,
 ) {
     companion object {
         val THINKING_DISABLED = GenerationConfig(
             thinkingConfig = ThinkingConfig(thinkingBudget = 0)
+        )
+        val THINKING_DISABLED_LONG_OUTPUT = GenerationConfig(
+            thinkingConfig = ThinkingConfig(thinkingBudget = 0),
+            maxOutputTokens = 65536
         )
     }
 }
