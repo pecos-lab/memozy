@@ -80,6 +80,8 @@ class MemoPlainNavigationImpl @Inject constructor(
         private const val FEATURE_AI_ASSIST = "ai_assist"
         private const val MAX_DAILY_AD_VIEWS = 3
         private const val MAX_MEMO_CONTEXT_CHARS = 3000
+        private const val MEMOZY_AI_SYSTEM_ROLE = "너는 Memozy AI야. 메모지 앱의 AI 어시스턴트로, 사용자의 메모 작성을 돕는 게 너의 역할이야. 너의 이름은 'Memozy AI'이고, 다른 AI 서비스의 이름으로 자신을 소개하면 안 돼. 사용자가 '너 누구야?' 등 정체를 물어볼 때만 'Memozy AI입니다! 메모 작성을 도와드릴게요' 라고 답해. 그 외에는 자기소개 없이 바로 답변해."
+        private const val NO_MARKDOWN_RULE = "마크다운 문법(**, ##, - 등)을 절대 사용하지 마. 순수 텍스트로만 답해."
 
         private fun stripMarkdown(text: String): String = text
             .replace(Regex("""^\s*#{1,6}\s+""", RegexOption.MULTILINE), "")  // ### 제목
@@ -442,6 +444,7 @@ class MemoPlainNavigationImpl @Inject constructor(
             // Memozy AI 상태
             var aiAssistStreamingText by remember { mutableStateOf<String?>(null) }
             var isAiAssistLoading by remember { mutableStateOf(false) }
+            var isAiCancelled by remember { mutableStateOf(false) }
             var aiAssistJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
 
             // 녹음/STT 상태
@@ -829,6 +832,13 @@ class MemoPlainNavigationImpl @Inject constructor(
                 // Memozy AI
                 aiAssistStreamingText = aiAssistStreamingText,
                 isAiAssistLoading = isAiAssistLoading,
+                isAiCancelled = isAiCancelled,
+                onAiCancel = {
+                    aiAssistJob?.cancel()
+                    isAiCancelled = true
+                    aiAssistStreamingText = null
+                    isAiAssistLoading = false
+                },
                 onAiCustomSend = { userMessage, currentTitle, currentBody ->
                     if (!canUseAi) {
                         showLimitBottomSheet = true
@@ -837,14 +847,15 @@ class MemoPlainNavigationImpl @Inject constructor(
                     aiAssistJob?.cancel()
                     aiAssistJob = scope.launch {
                         isAiAssistLoading = true
+                        isAiCancelled = false
                         aiAssistStreamingText = ""
                         try {
                             val plainBody = currentBody.replace(Regex("<[^>]*>"), "").trim()
                             val memoBody = if (plainBody.length > MAX_MEMO_CONTEXT_CHARS) {
                                 plainBody.take(2000) + "\n...(중략)...\n" + plainBody.takeLast(1000)
                             } else plainBody
-                            val systemRole = "너는 Memozy AI야. 메모지 앱의 AI 어시스턴트로, 사용자의 메모 작성을 돕는 게 너의 역할이야. 너의 이름은 'Memozy AI'이고, 다른 AI 서비스의 이름으로 자신을 소개하면 안 돼. 사용자가 '너 누구야?' 등 정체를 물어볼 때만 'Memozy AI입니다! 메모 작성을 도와드릴게요' 라고 답해. 그 외에는 자기소개 없이 바로 답변해."
-                            val noMarkdownRule = "마크다운 문법(**, ##, - 등)을 절대 사용하지 마. 순수 텍스트로만 답해."
+                            val systemRole = MEMOZY_AI_SYSTEM_ROLE
+                            val noMarkdownRule = NO_MARKDOWN_RULE
                             val prompt = buildString {
                                 appendLine(systemRole)
                                 appendLine("어떤 질문이든 친절하게 답해줘.")
@@ -882,6 +893,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                     aiAssistJob?.cancel()
                     aiAssistJob = scope.launch {
                         isAiAssistLoading = true
+                        isAiCancelled = false
                         aiAssistStreamingText = ""
                         try {
                             val plainBody = currentBody.replace(Regex("<[^>]*>"), "").trim()
@@ -892,8 +904,8 @@ class MemoPlainNavigationImpl @Inject constructor(
                                 aiAssistStreamingText = null
                                 return@launch
                             }
-                            val systemRole = "너는 Memozy AI야. 메모지 앱의 AI 어시스턴트로, 사용자의 메모 작성을 돕는 게 너의 역할이야. 너의 이름은 'Memozy AI'이고, 다른 AI 서비스의 이름으로 자신을 소개하면 안 돼. 사용자가 '너 누구야?' 등 정체를 물어볼 때만 'Memozy AI입니다! 메모 작성을 도와드릴게요' 라고 답해. 그 외에는 자기소개 없이 바로 답변해."
-                            val noMarkdownRule = "마크다운 문법(**, ##, - 등)을 절대 사용하지 마. 순수 텍스트로만 답해."
+                            val systemRole = MEMOZY_AI_SYSTEM_ROLE
+                            val noMarkdownRule = NO_MARKDOWN_RULE
                             val prompt = when (actionName) {
                                 "EXPLAIN" -> buildString {
                                     appendLine(systemRole)

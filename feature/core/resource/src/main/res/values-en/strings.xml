@@ -262,4 +262,14 @@
     <string name="subscription_current_plan">Current plan</string>
     <string name="subscription_manage">Manage subscription</string>
     <string name="subscription_restore">Restore purchases</string>
+
+    <!-- Memozy AI -->
+    <string name="memozy_ai">Memozy AI</string>
+    <string name="ai_action_explain">Explain in simple terms</string>
+    <string name="ai_action_organize">Organize neatly</string>
+    <string name="ai_action_summarize">Summarize key points</string>
+    <string name="ai_action_custom">Custom input</string>
+    <string name="ai_input_placeholder">Ask Memozy AI anything</string>
+    <string name="ai_insert_to_memo">Add to memo</string>
+    <string name="ai_loading">AI is responding…</string>
 </resources>

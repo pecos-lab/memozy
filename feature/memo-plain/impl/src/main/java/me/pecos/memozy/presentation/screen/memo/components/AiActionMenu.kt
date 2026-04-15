@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import me.pecos.memozy.presentation.theme.LocalAppColors
@@ -24,12 +25,12 @@ import me.pecos.memozy.presentation.theme.LocalFontSettings
 
 enum class AiPresetAction(
     val emoji: String,
-    val label: String
+    val labelResId: Int
 ) {
-    EXPLAIN("\uD83E\uDD14", "이해하기 쉽게 설명해줘"),
-    ORGANIZE("\uD83D\uDCDD", "깔끔하게 정리해줘"),
-    SUMMARIZE("✂\uFE0F", "핵심만 요약해줘"),
-    CUSTOM("✏\uFE0F", "직접 입력");
+    EXPLAIN("\uD83E\uDD14", me.pecos.memozy.feature.core.resource.R.string.ai_action_explain),
+    ORGANIZE("\uD83D\uDCDD", me.pecos.memozy.feature.core.resource.R.string.ai_action_organize),
+    SUMMARIZE("✂\uFE0F", me.pecos.memozy.feature.core.resource.R.string.ai_action_summarize),
+    CUSTOM("✏\uFE0F", me.pecos.memozy.feature.core.resource.R.string.ai_action_custom);
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,7 +54,7 @@ fun AiActionMenu(
                 .padding(bottom = 24.dp)
         ) {
             Text(
-                text = "Memozy AI",
+                text = stringResource(me.pecos.memozy.feature.core.resource.R.string.memozy_ai),
                 fontSize = fontSettings.scaled(16),
                 fontWeight = FontWeight.Bold,
                 color = colors.textTitle,
@@ -78,7 +79,7 @@ fun AiActionMenu(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = action.label,
+                        text = stringResource(action.labelResId),
                         fontSize = fontSettings.scaled(15),
                         color = colors.textBody
                     )
