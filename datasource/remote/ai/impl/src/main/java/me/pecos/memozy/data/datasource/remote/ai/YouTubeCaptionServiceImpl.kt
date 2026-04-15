@@ -4,8 +4,6 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.statement.bodyAsText
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -24,25 +22,31 @@ class YouTubeCaptionServiceImpl @Inject constructor(
 
     override suspend fun extractVideoInfo(videoId: String): YouTubeVideoInfo? {
         return try {
-            coroutineScope {
-                // 제목과 자막을 병렬로 가져오기
-                val titleDeferred = async { fetchTitle(videoId) }
-                val captionsDeferred = async {
-                    fetchCaptionsFromWorker(videoId, "ko")
-                        ?: fetchCaptionsFromWorker(videoId, "en")
-                }
+            // 1번의 API 호출로 자막 + 제목 동시 획득
+            // Worker가 내부에서 ko→en 폴백 처리 + 응답에 title 포함
+            val responseText = httpClient.get("youtube-captions") {
+                parameter("url", "https://www.youtube.com/watch?v=$videoId")
+                parameter("lang", "ko")
+            }.bodyAsText()
 
-                YouTubeVideoInfo(
-                    title = titleDeferred.await() ?: "YouTube 영상",
-                    captions = captionsDeferred.await()
-                )
-            }
+            val root = json.parseToJsonElement(responseText).jsonObject
+            if (root.containsKey("error")) return null
+
+            val captions = root["content"]?.jsonPrimitive?.content?.takeIf { it.isNotBlank() }
+            val title = root["title"]?.jsonPrimitive?.content?.takeIf { it != "null" && it.isNotBlank() }
+                ?: "YouTube 영상"
+
+            YouTubeVideoInfo(
+                title = title,
+                captions = captions
+            )
         } catch (e: Exception) {
             null
         }
     }
 
     override suspend fun fetchTitle(videoId: String): String? {
+        // oembed API로 제목만 빠르게 가져오기 (자막 추출 없이)
         return try {
             val responseText = httpClient.get("youtube-title") {
                 parameter("videoId", videoId)
@@ -51,21 +55,6 @@ class YouTubeCaptionServiceImpl @Inject constructor(
             val root = json.parseToJsonElement(responseText).jsonObject
             val title = root["title"]?.jsonPrimitive?.content
             title?.takeIf { it != "null" }
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    private suspend fun fetchCaptionsFromWorker(videoId: String, lang: String = "ko"): String? {
-        return try {
-            val responseText = httpClient.get("youtube-captions") {
-                parameter("url", "https://www.youtube.com/watch?v=$videoId")
-                parameter("lang", lang)
-            }.bodyAsText()
-
-            val root = json.parseToJsonElement(responseText).jsonObject
-            if (root.containsKey("error")) return null
-            root["content"]?.jsonPrimitive?.content?.takeIf { it.isNotBlank() }
         } catch (e: Exception) {
             null
         }

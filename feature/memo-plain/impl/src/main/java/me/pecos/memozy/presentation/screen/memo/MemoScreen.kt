@@ -27,7 +27,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.material.icons.Icons
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -338,34 +338,33 @@ fun MemoScreen(
     // Memozy AI 스트리밍 → 본문 끝에 실시간 반영
     var aiInsertAnchorHtml by remember { mutableStateOf("") }
     var aiInsertAnchorPlain by remember { mutableStateOf("") }
-    var prevStreamingText by remember { mutableStateOf<String?>(null) }
+    var lastStreamedText by remember { mutableStateOf("") }
+
+    // aiAssistStreamingText 변경될 때마다 직접 반응
     LaunchedEffect(aiAssistStreamingText) {
         val streaming = aiAssistStreamingText
         if (streaming != null) {
-            if (prevStreamingText == null) {
-                // 스트리밍 시작 — 현재 본문을 앵커로 저장
+            if (aiInsertAnchorHtml.isEmpty()) {
+                // 스트리밍 시작 — 앵커 저장 (1회)
                 aiInsertAnchorHtml = richTextState.toHtml()
                 aiInsertAnchorPlain = richTextState.annotatedString.text
+                lastStreamedText = ""
             }
-            // 스트리밍 중에는 bodyText만 업데이트 (에디터는 건드리지 않음)
-            val separator = if (aiInsertAnchorPlain.isBlank()) "" else "\n\n"
-            bodyText = aiInsertAnchorPlain + separator + streaming
-        } else if (prevStreamingText != null) {
+            // 스트리밍 중 — bodyText 업데이트
+            if (streaming.isNotBlank()) {
+                lastStreamedText = streaming
+                val separator = if (aiInsertAnchorPlain.isBlank()) "" else "\n\n"
+                bodyText = aiInsertAnchorPlain + separator + streaming
+            }
+        } else if (aiInsertAnchorHtml.isNotEmpty()) {
+            // 스트리밍 완료 또는 취소
             if (isAiCancelled) {
                 // 취소 — 본문 원복
-                if (aiInsertAnchorHtml.isNotBlank()) {
-                    richTextState.setHtml(aiInsertAnchorHtml)
-                    bodyText = richTextState.annotatedString.text
-                }
-                aiInsertAnchorHtml = ""
-                aiInsertAnchorPlain = ""
-                prevStreamingText = streaming
-                return@LaunchedEffect
-            }
-            // 스트리밍 완료 — richTextState에 최종 결과 한 번만 반영
-            val aiText = prevStreamingText ?: ""
-            if (aiText.isNotBlank()) {
-                val escapedAi = aiText.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
+                richTextState.setHtml(aiInsertAnchorHtml)
+                bodyText = richTextState.annotatedString.text
+            } else if (lastStreamedText.isNotBlank()) {
+                // 완료 — richTextState에 최종 결과 반영
+                val escapedAi = lastStreamedText.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
                 val anchorHtml = aiInsertAnchorHtml.trimEnd()
                 val finalHtml = if (anchorHtml.isBlank() || anchorHtml == "<p><br></p>") {
                     "<p>$escapedAi</p>"
@@ -377,8 +376,8 @@ fun MemoScreen(
             }
             aiInsertAnchorHtml = ""
             aiInsertAnchorPlain = ""
+            lastStreamedText = ""
         }
-        prevStreamingText = streaming
     }
 
     fun safeContent(): String {
@@ -644,7 +643,7 @@ fun MemoScreen(
                         memoTitle = nameText,
                         isExpanded = isSummaryExpanded,
                         onExpandToggle = { isSummaryExpanded = it },
-                        summaryText = summaryText,
+                        summaryText = if (isSummarizing && summaryResult != null) summaryResult else summaryText,
                         isSummarizing = isSummarizing,
                         currentSummaryMode = currentSummaryMode,
                         onSummarize = onYoutubeSummarize,
@@ -656,7 +655,9 @@ fun MemoScreen(
                             detectedYoutubeUrl?.let { onYoutubeSummarize?.invoke(it, altMode) }
                         },
                         onDeleteSummary = { showSummaryDeleteDialog = "youtube" },
-                        onAskAi = if (onAiCustomSend != null) { { showAiCustomInput = true } } else null,
+                        onAskAi = if (onAiCustomSend != null) { {
+                            showAiCustomInput = true
+                        } } else null,
                         colors = colors,
                         context = context,
                         clipboardManager = clipboardManager,
@@ -697,7 +698,9 @@ fun MemoScreen(
                             savedWebUrl?.let { onWebSummarize?.invoke(it, altMode) }
                         },
                         onDeleteSummary = { showSummaryDeleteDialog = "web" },
-                        onAskAi = if (onAiCustomSend != null) { { showAiCustomInput = true } } else null,
+                        onAskAi = if (onAiCustomSend != null) { {
+                            showAiCustomInput = true
+                        } } else null,
                         colors = colors,
                         context = context,
                         clipboardManager = clipboardManager
@@ -739,105 +742,28 @@ fun MemoScreen(
                     }
                 )
 
-                // Memozy AI 직접 입력바 (본문 내 인라인)
-                LaunchedEffect(showAiCustomInput) {
-                    if (showAiCustomInput) {
-                        kotlinx.coroutines.delay(150) // 입력바 렌더링 대기
-                        scrollState.animateScrollTo(scrollState.maxValue)
-                    }
-                }
-                if (showAiCustomInput && onAiCustomSend != null) {
-                    var aiInputText by remember { mutableStateOf("") }
+                // Memozy AI 응답 중 표시 (본문 내 인라인, X 없음)
+                if (isAiAssistLoading) {
                     Spacer(modifier = Modifier.height(12.dp))
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(colors.chipBackground.copy(alpha = 0.4f))
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        BasicTextField(
-                            value = aiInputText,
-                            onValueChange = { aiInputText = it },
-                            modifier = Modifier.weight(1f),
-                            textStyle = TextStyle(
-                                color = colors.textBody,
-                                fontSize = fontSettings.scaled(14)
-                            ),
-                            cursorBrush = androidx.compose.ui.graphics.SolidColor(colors.textTitle),
-                            singleLine = true,
-                            decorationBox = { innerTextField ->
-                                Box(contentAlignment = Alignment.CenterStart) {
-                                    if (aiInputText.isEmpty()) {
-                                        Text(
-                                            stringResource(R.string.ai_input_placeholder),
-                                            color = colors.textBody.copy(alpha = 0.4f),
-                                            fontSize = fontSettings.scaled(14)
-                                        )
-                                    }
-                                    innerTextField()
-                                }
-                            }
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        val canSend = aiInputText.isNotBlank() && !isAiAssistLoading
-                        Icon(
-                            Icons.AutoMirrored.Filled.Send,
-                            contentDescription = null,
-                            tint = if (canSend) Color(0xFF7C4DFF) else colors.textBody.copy(alpha = 0.2f),
-                            modifier = Modifier
-                                .size(20.dp)
-                                .clickable(enabled = canSend) {
-                                    val text = aiInputText.trim()
-                                    aiInputText = ""
-                                    onAiCustomSend(text, nameText, bodyText)
-                                }
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            Icons.Default.Close,
-                            contentDescription = null,
-                            tint = colors.textBody.copy(alpha = 0.5f),
-                            modifier = Modifier
-                                .size(18.dp)
-                                .clickable { showAiCustomInput = false }
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-
-                // Memozy AI 응답 중 표시 + 취소 버튼
-                if (isAiAssistLoading && onAiCancel != null) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFF7C4DFF).copy(alpha = 0.08f))
+                            .background(colors.chipBackground)
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(14.dp),
                             strokeWidth = 2.dp,
-                            color = Color(0xFF7C4DFF)
+                            color = colors.chipText
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             stringResource(R.string.ai_loading),
                             fontSize = fontSettings.scaled(13),
-                            color = Color(0xFF7C4DFF),
+                            color = colors.chipText,
                             modifier = Modifier.weight(1f)
-                        )
-                        Icon(
-                            Icons.Default.Close,
-                            contentDescription = null,
-                            tint = Color(0xFF7C4DFF),
-                            modifier = Modifier
-                                .size(18.dp)
-                                .clickable {
-                                    onAiCancel()
-                                }
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
@@ -964,9 +890,9 @@ fun MemoScreen(
                 Spacer(modifier = Modifier.height(20.dp))
             }
 
-            // 서식 툴바 — 키보드가 올라올 때만 표시 (키보드 위 고정 바)
+            // 서식 툴바 — 키보드 또는 AI 입력바 활성 시 표시
             AnimatedVisibility(
-                visible = isKeyboardVisible,
+                visible = isKeyboardVisible || showAiCustomInput || isAiAssistLoading,
                 enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                 exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
             ) {
@@ -977,6 +903,78 @@ fun MemoScreen(
                         .hazeEffect(state = hazeState, style = glassStyle)
                 ) {
                     HorizontalDivider(color = keyboardBarBorder, thickness = 0.5.dp)
+
+                    // Memozy AI 직접 입력바 (툴바 위 고정)
+                    if (showAiCustomInput && onAiCustomSend != null) {
+                        var aiInputText by remember { mutableStateOf("") }
+                        val aiInputFocusRequester = remember { FocusRequester() }
+                        LaunchedEffect(Unit) {
+                            kotlinx.coroutines.delay(100)
+                            aiInputFocusRequester.requestFocus()
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            BasicTextField(
+                                value = aiInputText,
+                                onValueChange = { aiInputText = it },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .focusRequester(aiInputFocusRequester)
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(colors.chipBackground.copy(alpha = 0.4f))
+                                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                                textStyle = TextStyle(
+                                    color = colors.textBody,
+                                    fontSize = fontSettings.scaled(14)
+                                ),
+                                cursorBrush = androidx.compose.ui.graphics.SolidColor(colors.textTitle),
+                                singleLine = true,
+                                decorationBox = { innerTextField ->
+                                    Box(contentAlignment = Alignment.CenterStart) {
+                                        if (aiInputText.isEmpty()) {
+                                            Text(
+                                                stringResource(R.string.ai_input_placeholder),
+                                                color = colors.textBody.copy(alpha = 0.4f),
+                                                fontSize = fontSettings.scaled(14)
+                                            )
+                                        }
+                                        innerTextField()
+                                    }
+                                }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            val canSend = aiInputText.isNotBlank() && !isAiAssistLoading
+                            Icon(
+                                Icons.Default.ArrowUpward,
+                                contentDescription = null,
+                                tint = if (canSend) colors.chipText else colors.textBody.copy(alpha = 0.2f),
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(if (canSend) colors.chipBackground else Color.Transparent)
+                                    .clickable(enabled = canSend) {
+                                        val text = aiInputText.trim()
+                                        aiInputText = ""
+                                        showAiCustomInput = false
+                                        onAiCustomSend(text, nameText, bodyText)
+                                    }
+                                    .padding(4.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = null,
+                                tint = colors.textBody.copy(alpha = 0.5f),
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .clickable { showAiCustomInput = false }
+                            )
+                        }
+                    }
 
                     // 액션 버튼 (왼쪽) + 서식 툴바 (오른쪽) — 한 줄 배치
                     Box {
@@ -1069,6 +1067,10 @@ fun MemoScreen(
                 bodyText = if (bodyText.isBlank()) url else "$bodyText\n$url"
                 savedYoutubeUrl = url
                 showYoutubeDialog = false
+                // 제목 가져오기 — 다이얼로그에서 URL 추가 시에도 즉시 호출
+                val videoIdRegex = Regex("""(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)([\w-]+)""")
+                val vid = videoIdRegex.find(url)?.groupValues?.get(1)
+                if (vid != null) onYoutubeDetected?.invoke(vid)
             }
         )
     }
