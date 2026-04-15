@@ -168,6 +168,9 @@
     <string name="summary_style_select">요약 하기</string>
     <string name="web_url_copied">웹 URL이 복사되었습니다</string>
     <string name="summary_copy">요약 복사</string>
+    <string name="summary_delete_title">요약 삭제</string>
+    <string name="summary_delete_message">요약 내용을 삭제하시겠습니까?\n삭제 시 복구할 수 없습니다.</string>
+    <string name="summary_delete_action">삭제</string>
     <string name="memo_copy_done">복사되었습니다</string>
 
     <!-- Trash Extra -->

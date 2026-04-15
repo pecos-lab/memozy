@@ -170,6 +170,9 @@
     <string name="summary_style_select">Summarize</string>
     <string name="web_url_copied">Web URL copied</string>
     <string name="summary_copy">Copy summary</string>
+    <string name="summary_delete_title">Delete Summary</string>
+    <string name="summary_delete_message">Are you sure you want to delete the summary?\nThis cannot be undone.</string>
+    <string name="summary_delete_action">Delete</string>
     <string name="memo_copy_done">Copied</string>
 
     <!-- Trash Extra -->

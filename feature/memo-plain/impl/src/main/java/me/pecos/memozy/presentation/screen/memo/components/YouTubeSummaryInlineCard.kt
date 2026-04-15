@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -56,6 +57,7 @@ fun YouTubeSummaryInlineCard(
     onSummarize: ((String, SummaryMode) -> Unit)?,
     onCancelSummarize: (() -> Unit)?,
     onResummarize: (SummaryMode) -> Unit,
+    onDeleteSummary: (() -> Unit)? = null,
     colors: AppColors,
     context: Context,
     clipboardManager: ClipboardManager,
@@ -80,6 +82,7 @@ fun YouTubeSummaryInlineCard(
 
     // 펼친 상태
     if (isExpanded) {
+        Box(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(colors.cardBackground)
         ) {
@@ -217,6 +220,20 @@ fun YouTubeSummaryInlineCard(
                     }
                 }
             }
+        }
+        // X 삭제 버튼 (요약 있을 때만)
+        if (summaryText != null && onDeleteSummary != null) {
+            Icon(
+                Icons.Default.Close,
+                contentDescription = null,
+                tint = colors.textSecondary,
+                modifier = Modifier
+                    .size(28.dp)
+                    .align(Alignment.TopEnd)
+                    .padding(6.dp)
+                    .clickable { onDeleteSummary() }
+            )
+        }
         }
         Spacer(modifier = Modifier.height(12.dp))
     }
