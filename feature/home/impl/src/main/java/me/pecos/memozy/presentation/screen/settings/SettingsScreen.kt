@@ -4,7 +4,6 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -698,128 +697,37 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // ── Memozy Pro 카드 ──
+                // ── Memozy Pro ──
                 val currentTier = LocalSubscriptionTier.current
-                val isSystemDark = colors.screenBackground == Color(0xFF1C1C1E)
-                val proGradient = if (isSystemDark) {
-                    Brush.linearGradient(listOf(Color(0xFF1A3A5C), Color(0xFF2A1A4E)))
-                } else {
-                    Brush.linearGradient(listOf(Color(0xFF4A90D9), Color(0xFF7B5EA7)))
-                }
-
-                Box(
+                OutlinedButton(
+                    onClick = { onSubscription() },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(proGradient)
-                        .clickable { onSubscription() }
-                        .padding(20.dp)
+                        .padding(horizontal = 16.dp),
+                    border = BorderStroke(1.dp, colors.cardBorder),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
                 ) {
-                    Column {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Memozy Pro",
-                                fontSize = fontSettings.scaled(18),
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                            if (currentTier.isPro) {
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = stringResource(R.string.subscription_current_plan),
-                                    fontSize = fontSettings.scaled(11),
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White.copy(alpha = 0.9f),
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(Color.White.copy(alpha = 0.2f))
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
+                    Text("Memozy Pro", fontSize = fontSettings.scaled(14), fontWeight = FontWeight.SemiBold)
+                    if (currentTier.isPro) {
+                        Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = stringResource(R.string.subscription_desc),
-                            fontSize = fontSettings.scaled(13),
-                            color = Color.White.copy(alpha = 0.8f)
+                            text = stringResource(R.string.subscription_current_plan),
+                            fontSize = fontSettings.scaled(10),
+                            color = colors.textSecondary,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(colors.chipBackground)
+                                .padding(horizontal = 5.dp, vertical = 1.dp)
                         )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        val proFeatures = listOf(
-                            stringResource(R.string.subscription_feature_youtube),
-                            stringResource(R.string.subscription_feature_web),
-                            stringResource(R.string.subscription_feature_ocr),
-                            stringResource(R.string.subscription_feature_no_ads)
+                    } else {
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            tint = colors.textSecondary,
+                            modifier = Modifier.size(14.dp)
                         )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column {
-                                proFeatures.take(2).forEach { feature ->
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            Icons.Default.Check,
-                                            contentDescription = null,
-                                            tint = Color.White.copy(alpha = 0.9f),
-                                            modifier = Modifier.size(14.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(feature, fontSize = fontSettings.scaled(12), color = Color.White.copy(alpha = 0.9f))
-                                    }
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                }
-                            }
-                            Column {
-                                proFeatures.drop(2).forEach { feature ->
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            Icons.Default.Check,
-                                            contentDescription = null,
-                                            tint = Color.White.copy(alpha = 0.9f),
-                                            modifier = Modifier.size(14.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(feature, fontSize = fontSettings.scaled(12), color = Color.White.copy(alpha = 0.9f))
-                                    }
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                }
-                            }
-                        }
-
-                        if (!currentTier.isPro) {
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(Color.White.copy(alpha = 0.2f))
-                                    .padding(horizontal = 16.dp, vertical = 10.dp),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.ai_limit_upgrade),
-                                    fontSize = fontSettings.scaled(14),
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Icon(
-                                    Icons.AutoMirrored.Filled.ArrowForward,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
                     }
                 }
 
