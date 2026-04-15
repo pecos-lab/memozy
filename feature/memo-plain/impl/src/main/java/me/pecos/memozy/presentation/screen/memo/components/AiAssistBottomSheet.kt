@@ -94,7 +94,7 @@ fun AiAssistBottomSheet(
         ) {
             // 헤더
             Text(
-                text = "AI 어시스트",
+                text = "Memozy AI",
                 fontSize = fontSettings.scaled(16),
                 fontWeight = FontWeight.Bold,
                 color = colors.textTitle,
@@ -140,7 +140,7 @@ fun AiAssistBottomSheet(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(24.dp))
                     .background(colors.chipBackground.copy(alpha = 0.3f))
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 BasicTextField(
@@ -155,10 +155,12 @@ fun AiAssistBottomSheet(
                     singleLine = false,
                     maxLines = 3,
                     decorationBox = { innerTextField ->
-                        Box {
+                        Box(
+                            contentAlignment = Alignment.CenterStart
+                        ) {
                             if (inputText.isEmpty()) {
                                 Text(
-                                    text = "무엇이든 물어보세요",
+                                    text = "Memozy AI에게 물어보세요",
                                     color = colors.textBody.copy(alpha = 0.4f),
                                     fontSize = fontSettings.scaled(14)
                                 )

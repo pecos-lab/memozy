@@ -224,11 +224,11 @@ fun MemoScreen(
     webSummaryError: String? = null,
     webPageTitle: String? = null,
     onSummaryStyleSelected: ((SummaryStyle, String) -> Unit)? = null,
-    // AI 어시스트 — (actionName, currentTitle, currentBody)
+    // Memozy AI — (actionName, currentTitle, currentBody)
     onAiPresetAction: ((String, String, String) -> Unit)? = null,
+    onAiCustomSend: ((String, String, String) -> Unit)? = null,
     aiAssistStreamingText: String? = null,
     isAiAssistLoading: Boolean = false,
-    onAiAssistClick: (() -> Unit)? = null,
     existingMemo: MemoUiState = MemoUiState(0, "", 1, "")
 ) {
     val isNewMemo = existingMemo.id <= 0
@@ -332,21 +332,37 @@ fun MemoScreen(
         }
     }
 
-    // AI 어시스트 스트리밍 → 본문 끝에 실시간 반영
-    var aiInsertAnchor by remember { mutableStateOf("") }
+    // Memozy AI 스트리밍 → 본문 끝에 실시간 반영
+    var aiInsertAnchorHtml by remember { mutableStateOf("") }
+    var aiInsertAnchorPlain by remember { mutableStateOf("") }
     var prevStreamingText by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(aiAssistStreamingText) {
         val streaming = aiAssistStreamingText
         if (streaming != null) {
             if (prevStreamingText == null) {
-                aiInsertAnchor = bodyText
+                // 스트리밍 시작 — 현재 본문을 앵커로 저장
+                aiInsertAnchorHtml = richTextState.toHtml()
+                aiInsertAnchorPlain = richTextState.annotatedString.text
             }
-            val separator = if (aiInsertAnchor.isBlank()) "" else "\n\n"
-            val newBody = aiInsertAnchor + separator + streaming
-            bodyText = newBody
-            richTextState.setHtml(newBody.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>"))
+            // 스트리밍 중에는 bodyText만 업데이트 (에디터는 건드리지 않음)
+            val separator = if (aiInsertAnchorPlain.isBlank()) "" else "\n\n"
+            bodyText = aiInsertAnchorPlain + separator + streaming
         } else if (prevStreamingText != null) {
-            aiInsertAnchor = ""
+            // 스트리밍 완료 — richTextState에 최종 결과 한 번만 반영
+            val aiText = prevStreamingText ?: ""
+            if (aiText.isNotBlank()) {
+                val escapedAi = aiText.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
+                val anchorHtml = aiInsertAnchorHtml.trimEnd()
+                val finalHtml = if (anchorHtml.isBlank() || anchorHtml == "<p><br></p>") {
+                    "<p>$escapedAi</p>"
+                } else {
+                    "$anchorHtml<p><br></p><p>$escapedAi</p>"
+                }
+                richTextState.setHtml(finalHtml)
+                bodyText = richTextState.annotatedString.text
+            }
+            aiInsertAnchorHtml = ""
+            aiInsertAnchorPlain = ""
         }
         prevStreamingText = streaming
     }
@@ -391,6 +407,7 @@ fun MemoScreen(
     val fontSettings = LocalFontSettings.current
 
     var showAiActionMenu by remember { mutableStateOf(false) }
+    var showAiCustomInput by remember { mutableStateOf(false) }
 
     // containerColor 명시 → MaterialTheme.colorScheme.surface 무시
     Scaffold(
@@ -500,11 +517,12 @@ fun MemoScreen(
             }
 
             // 본문 영역 — 탭하면 바로 편집 가능
+            val scrollState = rememberScrollState()
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .hazeSource(hazeState)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 32.dp, vertical = 16.dp)
             ) {
                 // 제목 — 개행 시 내용으로 포커스 이동
@@ -624,6 +642,7 @@ fun MemoScreen(
                             detectedYoutubeUrl?.let { onYoutubeSummarize?.invoke(it, altMode) }
                         },
                         onDeleteSummary = { showSummaryDeleteDialog = "youtube" },
+                        onAskAi = if (onAiCustomSend != null) { { showAiCustomInput = true } } else null,
                         colors = colors,
                         context = context,
                         clipboardManager = clipboardManager,
@@ -664,6 +683,7 @@ fun MemoScreen(
                             savedWebUrl?.let { onWebSummarize?.invoke(it, altMode) }
                         },
                         onDeleteSummary = { showSummaryDeleteDialog = "web" },
+                        onAskAi = if (onAiCustomSend != null) { { showAiCustomInput = true } } else null,
                         colors = colors,
                         context = context,
                         clipboardManager = clipboardManager
@@ -704,6 +724,74 @@ fun MemoScreen(
                         }
                     }
                 )
+
+                // Memozy AI 직접 입력바 (본문 내 인라인)
+                LaunchedEffect(showAiCustomInput) {
+                    if (showAiCustomInput) {
+                        kotlinx.coroutines.delay(150) // 입력바 렌더링 대기
+                        scrollState.animateScrollTo(scrollState.maxValue)
+                    }
+                }
+                if (showAiCustomInput && onAiCustomSend != null) {
+                    var aiInputText by remember { mutableStateOf("") }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(colors.chipBackground.copy(alpha = 0.4f))
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        BasicTextField(
+                            value = aiInputText,
+                            onValueChange = { aiInputText = it },
+                            modifier = Modifier.weight(1f),
+                            textStyle = TextStyle(
+                                color = colors.textBody,
+                                fontSize = fontSettings.scaled(14)
+                            ),
+                            cursorBrush = androidx.compose.ui.graphics.SolidColor(colors.textTitle),
+                            singleLine = true,
+                            decorationBox = { innerTextField ->
+                                Box(contentAlignment = Alignment.CenterStart) {
+                                    if (aiInputText.isEmpty()) {
+                                        Text(
+                                            "Memozy AI에게 물어보세요",
+                                            color = colors.textBody.copy(alpha = 0.4f),
+                                            fontSize = fontSettings.scaled(14)
+                                        )
+                                    }
+                                    innerTextField()
+                                }
+                            }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        val canSend = aiInputText.isNotBlank() && !isAiAssistLoading
+                        Icon(
+                            Icons.AutoMirrored.Filled.Send,
+                            contentDescription = null,
+                            tint = if (canSend) Color(0xFF7C4DFF) else colors.textBody.copy(alpha = 0.2f),
+                            modifier = Modifier
+                                .size(20.dp)
+                                .clickable(enabled = canSend) {
+                                    val text = aiInputText.trim()
+                                    aiInputText = ""
+                                    onAiCustomSend(text, nameText, bodyText)
+                                }
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = null,
+                            tint = colors.textBody.copy(alpha = 0.5f),
+                            modifier = Modifier
+                                .size(18.dp)
+                                .clickable { showAiCustomInput = false }
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
 
                 // URL 감지 시 제목 가져오기
                 LaunchedEffect(detectedYoutubeUrl) {
@@ -869,9 +957,9 @@ fun MemoScreen(
                                     onYoutubeDialogOpen = { showYoutubeDialog = true },
                                     onWebSummarize = onWebSummarize,
                                     onWebDialogOpen = { showWebDialog = true },
-                                    onAiAssistClick = onAiAssistClick?.let { click ->
+                                    onAiAssistClick = if (onAiPresetAction != null) {
                                         { showAiActionMenu = true }
-                                    }
+                                    } else null
                                 )
                                 Spacer(modifier = Modifier.weight(1f))
                                 FormattingToolbar(richTextState = richTextState, colors = colors)
@@ -888,7 +976,7 @@ fun MemoScreen(
             onPresetSelected = { action ->
                 showAiActionMenu = false
                 if (action == AiPresetAction.CUSTOM) {
-                    onAiAssistClick?.invoke()
+                    showAiCustomInput = true
                 } else {
                     onAiPresetAction(action.name, nameText, bodyText)
                 }

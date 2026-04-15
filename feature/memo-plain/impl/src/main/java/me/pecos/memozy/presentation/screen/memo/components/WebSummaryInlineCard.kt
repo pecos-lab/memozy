@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.AutoFixHigh
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.CircularProgressIndicator
@@ -55,6 +56,7 @@ fun WebSummaryInlineCard(
     onCancelSummarize: (() -> Unit)?,
     onResummarize: (SummaryMode) -> Unit,
     onDeleteSummary: (() -> Unit)? = null,
+    onAskAi: (() -> Unit)? = null,
     colors: AppColors,
     context: Context,
     clipboardManager: ClipboardManager
@@ -172,22 +174,44 @@ fun WebSummaryInlineCard(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(summaryText, fontSize = fontSettings.scaled(14), lineHeight = 22.sp, color = colors.textBody)
 
-                // 요약 내용 복사 버튼
+                // 요약 내용 복사 + AI 물어보기 버튼
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(colors.chipBackground)
-                        .clickable {
-                            clipboardManager.setText(AnnotatedString(summaryText))
-                            Toast.makeText(context, context.getString(R.string.memo_copy_done), Toast.LENGTH_SHORT).show()
-                        }
-                        .padding(horizontal = 10.dp, vertical = 5.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Icon(Icons.Default.ContentCopy, null, tint = colors.chipText, modifier = Modifier.size(12.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(R.string.summary_copy), fontSize = fontSettings.scaled(10), color = colors.chipText, fontWeight = FontWeight.Medium)
+                    Row(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(colors.chipBackground)
+                            .clickable {
+                                clipboardManager.setText(AnnotatedString(summaryText))
+                                Toast.makeText(context, context.getString(R.string.memo_copy_done), Toast.LENGTH_SHORT).show()
+                            }
+                            .padding(vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(Icons.Default.ContentCopy, null, tint = colors.chipText, modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(stringResource(R.string.summary_copy), fontSize = fontSettings.scaled(10), color = colors.chipText, fontWeight = FontWeight.Medium)
+                    }
+                    if (onAskAi != null) {
+                        Row(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0xFF7C4DFF).copy(alpha = 0.1f))
+                                .clickable { onAskAi() }
+                                .padding(vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(Icons.Default.AutoFixHigh, null, tint = Color(0xFF7C4DFF), modifier = Modifier.size(12.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Memozy AI", fontSize = fontSettings.scaled(10), color = Color(0xFF7C4DFF), fontWeight = FontWeight.Medium)
+                        }
+                    }
                 }
             }
 

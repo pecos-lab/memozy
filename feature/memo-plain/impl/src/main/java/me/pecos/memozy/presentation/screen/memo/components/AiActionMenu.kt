@@ -53,7 +53,7 @@ fun AiActionMenu(
                 .padding(bottom = 24.dp)
         ) {
             Text(
-                text = "AI 어시스트",
+                text = "Memozy AI",
                 fontSize = fontSettings.scaled(16),
                 fontWeight = FontWeight.Bold,
                 color = colors.textTitle,
