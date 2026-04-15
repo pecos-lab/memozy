@@ -262,4 +262,14 @@
     <string name="subscription_current_plan">現在のプラン</string>
     <string name="subscription_manage">サブスクリプション管理</string>
     <string name="subscription_restore">購入を復元</string>
+
+    <!-- Memozy AI -->
+    <string name="memozy_ai">Memozy AI</string>
+    <string name="ai_action_explain">分かりやすく説明して</string>
+    <string name="ai_action_organize">きれいに整理して</string>
+    <string name="ai_action_summarize">要点だけまとめて</string>
+    <string name="ai_action_custom">直接入力</string>
+    <string name="ai_input_placeholder">Memozy AIに何でも聞いてください</string>
+    <string name="ai_insert_to_memo">メモに追加</string>
+    <string name="ai_loading">AI応答中…</string>
 </resources>

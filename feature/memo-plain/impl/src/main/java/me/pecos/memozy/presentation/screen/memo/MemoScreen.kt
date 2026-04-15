@@ -44,6 +44,7 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.SmartDisplay
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -227,6 +228,8 @@ fun MemoScreen(
     // Memozy AI — (actionName, currentTitle, currentBody)
     onAiPresetAction: ((String, String, String) -> Unit)? = null,
     onAiCustomSend: ((String, String, String) -> Unit)? = null,
+    onAiCancel: (() -> Unit)? = null,
+    isAiCancelled: Boolean = false,
     aiAssistStreamingText: String? = null,
     isAiAssistLoading: Boolean = false,
     existingMemo: MemoUiState = MemoUiState(0, "", 1, "")
@@ -348,6 +351,17 @@ fun MemoScreen(
             val separator = if (aiInsertAnchorPlain.isBlank()) "" else "\n\n"
             bodyText = aiInsertAnchorPlain + separator + streaming
         } else if (prevStreamingText != null) {
+            if (isAiCancelled) {
+                // 취소 — 본문 원복
+                if (aiInsertAnchorHtml.isNotBlank()) {
+                    richTextState.setHtml(aiInsertAnchorHtml)
+                    bodyText = richTextState.annotatedString.text
+                }
+                aiInsertAnchorHtml = ""
+                aiInsertAnchorPlain = ""
+                prevStreamingText = streaming
+                return@LaunchedEffect
+            }
             // 스트리밍 완료 — richTextState에 최종 결과 한 번만 반영
             val aiText = prevStreamingText ?: ""
             if (aiText.isNotBlank()) {
@@ -757,7 +771,7 @@ fun MemoScreen(
                                 Box(contentAlignment = Alignment.CenterStart) {
                                     if (aiInputText.isEmpty()) {
                                         Text(
-                                            "Memozy AI에게 물어보세요",
+                                            stringResource(R.string.ai_input_placeholder),
                                             color = colors.textBody.copy(alpha = 0.4f),
                                             fontSize = fontSettings.scaled(14)
                                         )
@@ -788,6 +802,42 @@ fun MemoScreen(
                             modifier = Modifier
                                 .size(18.dp)
                                 .clickable { showAiCustomInput = false }
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                // Memozy AI 응답 중 표시 + 취소 버튼
+                if (isAiAssistLoading && onAiCancel != null) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFF7C4DFF).copy(alpha = 0.08f))
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(14.dp),
+                            strokeWidth = 2.dp,
+                            color = Color(0xFF7C4DFF)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            stringResource(R.string.ai_loading),
+                            fontSize = fontSettings.scaled(13),
+                            color = Color(0xFF7C4DFF),
+                            modifier = Modifier.weight(1f)
+                        )
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = null,
+                            tint = Color(0xFF7C4DFF),
+                            modifier = Modifier
+                                .size(18.dp)
+                                .clickable {
+                                    onAiCancel()
+                                }
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))

@@ -209,7 +209,7 @@ fun WebSummaryInlineCard(
                         ) {
                             Icon(Icons.Default.AutoFixHigh, null, tint = Color(0xFF7C4DFF), modifier = Modifier.size(12.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Memozy AI", fontSize = fontSettings.scaled(10), color = Color(0xFF7C4DFF), fontWeight = FontWeight.Medium)
+                            Text(stringResource(R.string.memozy_ai), fontSize = fontSettings.scaled(10), color = Color(0xFF7C4DFF), fontWeight = FontWeight.Medium)
                         }
                     }
                 }
