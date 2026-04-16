@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.presentation.screen.home.model.SummaryEntry
 import me.pecos.memozy.presentation.screen.memo.SummaryMode
 import me.pecos.memozy.presentation.theme.AppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
@@ -53,13 +54,15 @@ fun YouTubeSummaryInlineCard(
     memoTitle: String,
     isExpanded: Boolean,
     onExpandToggle: (Boolean) -> Unit,
-    summaryText: String?,
+    summaryEntries: List<SummaryEntry>,
+    streamingText: String?,
     isSummarizing: Boolean,
     currentSummaryMode: SummaryMode?,
     onSummarize: ((String, SummaryMode) -> Unit)?,
     onCancelSummarize: (() -> Unit)?,
     onResummarize: (SummaryMode) -> Unit,
-    onDeleteSummary: (() -> Unit)? = null,
+    onDeleteSummary: ((Int) -> Unit)? = null,
+    onDeleteAllSummaries: (() -> Unit)? = null,
     onAskAi: (() -> Unit)? = null,
     colors: AppColors,
     context: Context,
@@ -67,6 +70,7 @@ fun YouTubeSummaryInlineCard(
     onStyleSelect: (() -> Unit)? = null
 ) {
     val fontSettings = LocalFontSettings.current
+    val hasSummary = summaryEntries.isNotEmpty()
 
     // 접힌 상태
     if (!isExpanded) {
@@ -160,7 +164,7 @@ fun YouTubeSummaryInlineCard(
                         Spacer(modifier = Modifier.width(3.dp))
                         Text(stringResource(R.string.memo_copy), fontSize = fontSettings.scaled(10), color = colors.chipText, fontWeight = FontWeight.Medium)
                     }
-                    if (onSummarize != null && summaryText == null && onStyleSelect != null) {
+                    if (onSummarize != null && onStyleSelect != null) {
                         Row(
                             modifier = Modifier.weight(1f).clip(RoundedCornerShape(6.dp)).background(Color(0xFF2196F3).copy(alpha = 0.1f))
                                 .clickable { onStyleSelect() }
@@ -183,14 +187,51 @@ fun YouTubeSummaryInlineCard(
                         Icon(Icons.Default.Close, contentDescription = null, tint = colors.textSecondary,
                             modifier = Modifier.size(16.dp).clickable { onCancelSummarize?.invoke() })
                     }
+                    // 스트리밍 텍스트 표시
+                    if (streamingText != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        HorizontalDivider(color = colors.cardBorder)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(streamingText, fontSize = fontSettings.scaled(14), lineHeight = 22.sp, color = colors.textBody)
+                    }
                 }
 
-                // 요약 텍스트
-                if (summaryText != null) {
+                // 요약 엔트리들 (각각 별도 섹션)
+                summaryEntries.forEachIndexed { index, entry ->
                     Spacer(modifier = Modifier.height(10.dp))
                     HorizontalDivider(color = colors.cardBorder)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(summaryText, fontSize = fontSettings.scaled(14), lineHeight = 22.sp, color = colors.textBody)
+
+                    // 모드 라벨 + 삭제 버튼
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val modeLabel = when (entry.mode) {
+                            "DETAILED" -> stringResource(R.string.summary_style_detailed)
+                            else -> stringResource(R.string.summary_style_simple)
+                        }
+                        Text(
+                            text = modeLabel,
+                            fontSize = fontSettings.scaled(11),
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF2196F3)
+                        )
+                        if (onDeleteSummary != null) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = null,
+                                tint = colors.textSecondary,
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .clickable { onDeleteSummary(index) }
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(entry.content, fontSize = fontSettings.scaled(14), lineHeight = 22.sp, color = colors.textBody)
 
                     // 요약 내용 복사 + AI 물어보기 버튼
                     Spacer(modifier = Modifier.height(8.dp))
@@ -203,7 +244,7 @@ fun YouTubeSummaryInlineCard(
                                 .clip(RoundedCornerShape(6.dp))
                                 .background(colors.chipBackground)
                                 .clickable {
-                                    clipboardManager.setText(AnnotatedString(summaryText))
+                                    clipboardManager.setText(AnnotatedString(entry.content))
                                     Toast.makeText(context, context.getString(R.string.memo_copy_done), Toast.LENGTH_SHORT).show()
                                 }
                                 .padding(vertical = 6.dp),
@@ -234,7 +275,7 @@ fun YouTubeSummaryInlineCard(
                 }
 
                 // 접기 버튼
-                if (summaryText != null) {
+                if (hasSummary) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth().clickable { onExpandToggle(false) },
@@ -246,8 +287,8 @@ fun YouTubeSummaryInlineCard(
                 }
             }
         }
-        // X 삭제 버튼 (요약 있을 때만)
-        if (summaryText != null && onDeleteSummary != null) {
+        // X 삭제 버튼 (요약 있을 때만 — 전체 삭제)
+        if (hasSummary && onDeleteAllSummaries != null) {
             Icon(
                 Icons.Default.Close,
                 contentDescription = null,
@@ -256,7 +297,7 @@ fun YouTubeSummaryInlineCard(
                     .size(28.dp)
                     .align(Alignment.TopEnd)
                     .padding(6.dp)
-                    .clickable { onDeleteSummary() }
+                    .clickable { onDeleteAllSummaries() }
             )
         }
         }

@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.pecos.memozy.presentation.screen.home.model.MemoUiState
+import me.pecos.memozy.presentation.screen.home.model.parseSummaryEntries
 import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.presentation.screen.home.util.formatMemoTime
 import me.pecos.memozy.presentation.theme.LocalAppColors
@@ -106,7 +107,7 @@ fun MemoCardItem(
                     .replace("&nbsp;", " ")
                     .replace("&amp;", "&")
                     .trim()
-                    .ifBlank { memo.summaryContent?.take(200) ?: "" },
+                    .ifBlank { parseSummaryEntries(memo.summaryContent).firstOrNull()?.content?.take(200) ?: "" },
                 color = colors.textBody,
                 fontFamily = fontSettings.fontFamily,
                 fontSize = fontSettings.bodySize,
