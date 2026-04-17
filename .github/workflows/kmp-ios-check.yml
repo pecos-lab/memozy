@@ -14,7 +14,7 @@ on:
 jobs:
   ios-compile:
     runs-on: macos-latest
-    timeout-minutes: 40
+    timeout-minutes: 25
 
     steps:
       - uses: actions/checkout@v4

@@ -3,12 +3,16 @@ package me.pecos.memozy.presentation.screen.home.util
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.todayIn
 
 // ── 시간 포맷 ───────────────────────────────────────────────────────────────────
+
+private fun LocalDate.formatDot(): String =
+    "%04d.%02d.%02d".format(year, monthNumber, dayOfMonth)
 
 fun formatMemoTime(createdAt: Long, languageCode: String): String {
     if (createdAt == 0L) return ""
@@ -46,6 +50,6 @@ fun formatMemoTime(createdAt: Long, languageCode: String): String {
             "ja" -> "昨日"
             else -> "어제"
         }
-        else -> "${createdDate.year}.${createdDate.monthNumber.toString().padStart(2, '0')}.${createdDate.dayOfMonth.toString().padStart(2, '0')}"
+        else -> createdDate.formatDot()
     }
 }
