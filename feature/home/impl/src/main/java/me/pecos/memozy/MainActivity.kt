@@ -58,6 +58,7 @@ import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import me.pecos.memozy.data.billing.BillingManager
+import me.pecos.memozy.data.datasource.remote.auth.AuthState
 import me.pecos.memozy.presentation.theme.LocalRewardAdProvider
 import me.pecos.memozy.presentation.theme.LocalIsLoggedIn
 import me.pecos.memozy.presentation.theme.LocalSubscriptionTier
@@ -164,7 +165,7 @@ class MainActivity : AppCompatActivity() {
 
             val currentTier by billingManager.subscriptionTier.collectAsState()
             val authState by settingsViewModel.authState.collectAsState()
-            val isLoggedIn = authState is me.pecos.memozy.data.datasource.remote.auth.AuthState.Authenticated
+            val isLoggedIn = authState is AuthState.Authenticated
 
             CompositionLocalProvider(
                 LocalActivity provides this@MainActivity,
