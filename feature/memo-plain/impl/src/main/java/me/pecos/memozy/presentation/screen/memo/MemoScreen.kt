@@ -317,7 +317,7 @@ fun MemoScreen(
             // 요약 텍스트를 별도 상태에 저장
             summaryText = summaryResult
             isSummaryExpanded = true  // 새 요약 완료 시 펼침
-            if (youtubeTitle != null) {
+            if (youtubeTitle != null && (nameText.isBlank() || nameText == existingMemo.name)) {
                 nameText = youtubeTitle
             }
             summaryApplied = true
