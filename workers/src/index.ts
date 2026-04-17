@@ -175,12 +175,13 @@ async function fetchSupadataTranscript(
   }
 
   if (res.status === 202) {
-    // 비동기 처리 — jobId로 폴링 (최대 60초, 3초 간격)
+    // 비동기 처리 — jobId로 폴링 (지수 백오프: 1s→1s→1.5s→2s→3s...)
     const { jobId } = await res.json<{ jobId: string }>();
     console.log(`Supadata async job: ${jobId}, polling...`);
+    const delays = [1000, 1000, 1500, 2000, 3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000, 3000];
 
     for (let i = 0; i < 20; i++) {
-      await new Promise(r => setTimeout(r, 3000));
+      await new Promise(r => setTimeout(r, delays[i]));
       const pollRes = await fetch(`${SUPADATA_BASE_URL}/youtube/transcript/${jobId}`, {
         headers: { "x-api-key": env.SUPADATA_API_KEY },
       });
@@ -211,6 +212,108 @@ async function fetchSupadataTranscript(
   return null;
 }
 
+// --- YouTube 자막 자체 추출 (Supadata 대체) ---
+
+async function extractYoutubeCaptions(
+  videoId: string,
+  lang: string
+): Promise<{ content: string; lang: string; title: string | null } | null> {
+  // 1. YouTube 영상 페이지에서 playerResponse 추출
+  const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+  const pageRes = await fetch(watchUrl, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "Accept-Language": "en-US,en;q=0.9",
+    },
+  });
+
+  if (!pageRes.ok) {
+    console.log(`YouTube page fetch failed: ${pageRes.status}`);
+    return null;
+  }
+
+  const html = await pageRes.text();
+
+  // 2. ytInitialPlayerResponse에서 자막 트랙 URL 추출
+  const playerMatch = html.match(/ytInitialPlayerResponse\s*=\s*(\{.+?\});/s);
+  if (!playerMatch) {
+    console.log("ytInitialPlayerResponse not found");
+    return null;
+  }
+
+  let playerResponse: any;
+  try {
+    playerResponse = JSON.parse(playerMatch[1]);
+  } catch {
+    console.log("Failed to parse playerResponse");
+    return null;
+  }
+
+  // 제목 추출
+  const title = playerResponse?.videoDetails?.title ?? null;
+
+  const captionTracks =
+    playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+  if (!captionTracks || captionTracks.length === 0) {
+    console.log("No caption tracks found");
+    return null;
+  }
+
+  // 3. 요청 언어 자막 찾기, 없으면 en, 그래도 없으면 첫 번째 트랙
+  let track = captionTracks.find((t: any) => t.languageCode === lang);
+  let usedLang = lang;
+  if (!track && lang !== "en") {
+    track = captionTracks.find((t: any) => t.languageCode === "en");
+    usedLang = "en";
+  }
+  if (!track) {
+    track = captionTracks[0];
+    usedLang = track.languageCode ?? "unknown";
+  }
+
+  // 4. 자막 XML 가져오기
+  const captionUrl = track.baseUrl;
+  if (!captionUrl) {
+    console.log("No baseUrl in caption track");
+    return null;
+  }
+
+  const captionRes = await fetch(captionUrl);
+  if (!captionRes.ok) {
+    console.log(`Caption fetch failed: ${captionRes.status}`);
+    return null;
+  }
+
+  const captionXml = await captionRes.text();
+
+  // 5. XML에서 텍스트 추출 (<text>...</text> 태그)
+  const textSegments: string[] = [];
+  const textRegex = /<text[^>]*>([\s\S]*?)<\/text>/g;
+  let match;
+  while ((match = textRegex.exec(captionXml)) !== null) {
+    let segment = match[1]
+      .replace(/&amp;/g, "&")
+      .replace(/&#39;/g, "'")
+      .replace(/&quot;/g, '"')
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&apos;/g, "'")
+      .replace(/<[^>]+>/g, "") // 내부 태그 제거
+      .trim();
+    if (segment) textSegments.push(segment);
+  }
+
+  if (textSegments.length === 0) {
+    console.log("No text segments found in caption XML");
+    return null;
+  }
+
+  const content = textSegments.join(" ");
+  console.log(`Captions extracted: lang=${usedLang}, length=${content.length}`);
+
+  return { content, lang: usedLang, title };
+}
+
 async function handleYoutubeCaptions(req: Request, env: Env): Promise<Response> {
   const reqUrl = new URL(req.url);
   const videoUrl = reqUrl.searchParams.get("url");
@@ -226,53 +329,48 @@ async function handleYoutubeCaptions(req: Request, env: Env): Promise<Response> 
     return Response.json({ error: "Invalid YouTube URL" }, { status: 400 });
   }
 
-  // 1. Supadata API로 자막 추출 (text=true → plain text)
-  const supadataUrl = `${SUPADATA_BASE_URL}/youtube/transcript?url=${encodeURIComponent(videoUrl)}&lang=${lang}&text=true`;
-  const supadataRes = await fetch(supadataUrl, {
-    headers: { "x-api-key": env.SUPADATA_API_KEY },
-  });
+  // 자체 자막 추출 (Supadata 대체)
+  const result = await extractYoutubeCaptions(videoId, lang);
 
-  // Supadata 응답 처리 (200 → 즉시, 202 → 비동기 폴링)
-  let captionData: { content?: string; lang?: string; availableLangs?: string[] } | null = null;
+  if (!result) {
+    // fallback: Supadata API 사용
+    console.log("Self-extraction failed, falling back to Supadata");
+    const supadataUrl = `${SUPADATA_BASE_URL}/youtube/transcript?url=${encodeURIComponent(videoUrl)}&lang=${lang}&text=true`;
+    const captionData = await fetchSupadataTranscript(env, supadataUrl);
 
-  captionData = await fetchSupadataTranscript(env, supadataUrl);
-
-  // lang 폴백: 요청 언어 실패 시 en 시도
-  if (!captionData?.content && lang !== "en") {
-    const fallbackUrl = `${SUPADATA_BASE_URL}/youtube/transcript?url=${encodeURIComponent(videoUrl)}&lang=en&text=true`;
-    captionData = await fetchSupadataTranscript(env, fallbackUrl);
-  }
-
-  if (!captionData?.content) {
-    return Response.json({ error: "no_captions" }, { status: 404 });
-  }
-
-  // HTML entity 디코딩 (&amp;#39; 등 이중 인코딩 대응 — &amp; 먼저 처리)
-  captionData.content = captionData.content
-    .replace(/&amp;/g, "&")
-    .replace(/&#39;/g, "'")
-    .replace(/&quot;/g, '"')
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">");
-
-  // 2. oembed로 제목 가져오기 (Supadata는 title 미제공)
-  let title: string | null = null;
-  try {
-    const oembedRes = await fetch(
-      `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
-    );
-    if (oembedRes.ok) {
-      const oembedData = await oembedRes.json<{ title?: string }>();
-      title = oembedData?.title ?? null;
+    if (!captionData?.content) {
+      return Response.json({ error: "no_captions" }, { status: 404 });
     }
-  } catch {
-    // title은 필수가 아니므로 실패해도 무시
+
+    captionData.content = captionData.content
+      .replace(/&amp;/g, "&")
+      .replace(/&#39;/g, "'")
+      .replace(/&quot;/g, '"')
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">");
+
+    let title: string | null = null;
+    try {
+      const oembedRes = await fetch(
+        `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
+      );
+      if (oembedRes.ok) {
+        const oembedData = await oembedRes.json<{ title?: string }>();
+        title = oembedData?.title ?? null;
+      }
+    } catch {}
+
+    return Response.json({
+      lang: captionData.lang ?? lang,
+      content: captionData.content,
+      title,
+    });
   }
 
   return Response.json({
-    lang: captionData.lang ?? lang,
-    content: captionData.content,
-    title,
+    lang: result.lang,
+    content: result.content,
+    title: result.title,
   });
 }
 

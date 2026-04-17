@@ -73,9 +73,9 @@ abstract class AINetworkModule {
             }
 
             install(HttpTimeout) {
-                requestTimeoutMillis = 120_000
+                requestTimeoutMillis = 60_000
                 connectTimeoutMillis = 15_000
-                socketTimeoutMillis = 120_000
+                socketTimeoutMillis = 60_000
             }
 
             defaultRequest {
