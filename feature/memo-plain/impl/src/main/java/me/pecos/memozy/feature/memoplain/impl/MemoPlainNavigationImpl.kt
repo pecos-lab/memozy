@@ -1057,15 +1057,22 @@ class MemoPlainNavigationImpl @Inject constructor(
         }
         val captions = videoInfo?.captions
         if (captions != null) {
-            // 자막 기반 요약 — 스트리밍
+            // 자막 기반 요약 — 스트리밍 (150ms 배칭으로 recomposition 최소화)
             val fullPrompt = "$prompt\n\n아래는 영상의 자막입니다:\n\n$captions"
             var result = ""
             val sb = StringBuilder()
+            var lastEmit = 0L
             aiApiService.generateContentStream(fullPrompt, longOutput = true).collect { delta ->
                 sb.append(delta)
-                result = stripMarkdown(sb.toString())
-                onStreamUpdate?.invoke(result)
+                val now = System.currentTimeMillis()
+                if (now - lastEmit >= 150) {
+                    result = stripMarkdown(sb.toString())
+                    onStreamUpdate?.invoke(result)
+                    lastEmit = now
+                }
             }
+            result = stripMarkdown(sb.toString())
+            onStreamUpdate?.invoke(result)
             if (result.isBlank()) throw me.pecos.memozy.data.datasource.remote.ai.AIException.UnknownException("Empty streaming response")
             return result
         }
