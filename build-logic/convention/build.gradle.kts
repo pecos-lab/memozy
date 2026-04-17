@@ -25,4 +25,5 @@ dependencies {
     implementation(libs.gradlePlugin.ksp)
     implementation(libs.gradlePlugin.composeCompiler)
     implementation(libs.gradlePlugin.kotlinSerialization)
+    implementation(libs.gradlePlugin.kotlinMultiplatform)
 }
