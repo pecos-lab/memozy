@@ -14,11 +14,12 @@ data class GenerationConfig(
     val maxOutputTokens: Int? = null,
 ) {
     companion object {
+        private const val MAX_OUTPUT_TOKENS = 16384
         private const val MAX_OUTPUT_TOKENS_LONG = 65536
 
         val THINKING_DISABLED = GenerationConfig(
             thinkingConfig = ThinkingConfig(thinkingBudget = 0),
-            maxOutputTokens = 16384
+            maxOutputTokens = MAX_OUTPUT_TOKENS
         )
         val THINKING_DISABLED_LONG_OUTPUT = GenerationConfig(
             thinkingConfig = ThinkingConfig(thinkingBudget = 0),
