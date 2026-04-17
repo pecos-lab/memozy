@@ -363,8 +363,8 @@ async function handleWebScrape(req: Request): Promise<Response> {
     .replace(/\s+/g, " ")
     .trim();
 
-  if (text.length > 15000) {
-    text = text.substring(0, 15000) + "...";
+  if (text.length > 50000) {
+    text = text.substring(0, 50000) + "...";
   }
 
   return Response.json({ title, text });
