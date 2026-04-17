@@ -62,8 +62,8 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
 
-    // MemozyApplication
-    implementation(libs.android.joda)
+    // date/time
+    implementation(libs.kotlinx.datetime)
 
     // work manager
     implementation(libs.work.runtime)

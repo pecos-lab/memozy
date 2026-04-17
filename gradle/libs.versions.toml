@@ -11,7 +11,7 @@ composeBom = "2025.05.00"
 ksp = "2.3.6"
 billingKtx = "7.1.1"
 playServicesAds = "24.4.0"
-androidJoda = "2.12.7"
+kotlinxDatetime = "0.6.2"
 haze = "1.7.2"
 montageAndroid = "3.3.0"
 room = "2.7.0"
@@ -41,7 +41,7 @@ gradlePlugin-ksp = { module = "com.google.devtools.ksp:com.google.devtools.ksp.g
 gradlePlugin-kotlinSerialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "kotlin" }
 gradlePlugin-kotlinMultiplatform = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 sqlite-bundled = { group = "androidx.sqlite", name = "sqlite-bundled", version.ref = "sqliteBundled" }
-android-joda = { module = "net.danlew:android.joda", version.ref = "androidJoda" }
+kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinxDatetime" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "billingKtx" }
 play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }

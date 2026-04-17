@@ -39,7 +39,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.compose.navigation)
     implementation(libs.haze)
-    implementation(libs.android.joda)
+    implementation(libs.kotlinx.datetime)
     implementation(libs.montage.android)
     implementation(libs.billing.ktx)
     implementation(libs.play.services.ads)

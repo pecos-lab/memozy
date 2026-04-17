@@ -1,23 +1,28 @@
 package me.pecos.memozy.presentation.screen.home.util
 
-import org.joda.time.DateTime
-import org.joda.time.LocalDate
-import org.joda.time.format.DateTimeFormat
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.todayIn
 
 // ── 시간 포맷 ───────────────────────────────────────────────────────────────────
 
 fun formatMemoTime(createdAt: Long, languageCode: String): String {
     if (createdAt == 0L) return ""
 
-    val created = DateTime(createdAt)
-    val today = LocalDate.now()
-    val yesterday = today.minusDays(1)
-    val createdDate = created.toLocalDate()
+    val tz = TimeZone.currentSystemDefault()
+    val createdLdt = Instant.fromEpochMilliseconds(createdAt).toLocalDateTime(tz)
+    val createdDate = createdLdt.date
+    val today = Clock.System.todayIn(tz)
+    val yesterday = today.minus(DatePeriod(days = 1))
 
-    return when {
-        createdDate.isEqual(today) -> {
-            val hour = created.hourOfDay
-            val minute = created.minuteOfHour
+    return when (createdDate) {
+        today -> {
+            val hour = createdLdt.hour
+            val minute = createdLdt.minute
             when (languageCode) {
                 "en" -> {
                     val ampm = if (hour < 12) "AM" else "PM"
@@ -36,11 +41,11 @@ fun formatMemoTime(createdAt: Long, languageCode: String): String {
                 }
             }
         }
-        createdDate.isEqual(yesterday) -> when (languageCode) {
+        yesterday -> when (languageCode) {
             "en" -> "Yesterday"
             "ja" -> "昨日"
             else -> "어제"
         }
-        else -> DateTimeFormat.forPattern("yyyy.MM.dd").print(created)
+        else -> "${createdDate.year}.${createdDate.monthNumber.toString().padStart(2, '0')}.${createdDate.dayOfMonth.toString().padStart(2, '0')}"
     }
 }
