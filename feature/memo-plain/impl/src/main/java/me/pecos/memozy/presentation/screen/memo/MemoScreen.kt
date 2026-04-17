@@ -306,7 +306,7 @@ fun MemoScreen(
     }
     var isSummaryExpanded by remember { mutableStateOf(if (existingMemo.summaryContent == null) true else existingMemo.isSummaryExpanded) }
     var webSummaryText by remember { mutableStateOf<String?>(null) }
-    var isWebSummaryExpanded by remember { mutableStateOf(initialSummary == null) }
+    var isWebSummaryExpanded by remember { mutableStateOf(existingMemo.summaryContent == null) }
 
     // 요약 삭제 확인 다이얼로그
     var showSummaryDeleteDialog by remember { mutableStateOf<String?>(null) } // "youtube" or "web"
