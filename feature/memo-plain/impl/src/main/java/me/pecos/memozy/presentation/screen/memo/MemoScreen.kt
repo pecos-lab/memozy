@@ -1,5 +1,7 @@
 package me.pecos.memozy.presentation.screen.memo
 
+import me.pecos.memozy.presentation.util.decodeHtmlEntities
+import me.pecos.memozy.presentation.util.htmlToPlainText
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
@@ -323,7 +325,7 @@ fun MemoScreen(
             val mode = currentSummaryMode?.name ?: "SIMPLE"
             summaryEntries.add(0, SummaryEntry(content = summaryResult, mode = mode))
             isSummaryExpanded = true  // 새 요약 완료 시 펼침
-            if (youtubeTitle != null && nameText.isBlank()) {
+            if (youtubeTitle != null && (nameText.isBlank() || nameText == existingMemo.name)) {
                 nameText = youtubeTitle
             }
             summaryApplied = true
@@ -505,14 +507,7 @@ fun MemoScreen(
                                             appendLine(nameText)
                                             appendLine()
                                         }
-                                        val plainContent = safeContent()
-                                            .replace(Regex("<br\\s*/?>"), "\n")
-                                            .replace(Regex("<[^>]+>"), "")
-                                            .replace("&nbsp;", " ")
-                                            .replace("&amp;", "&")
-                                            .replace("&lt;", "<")
-                                            .replace("&gt;", ">")
-                                            .trim()
+                                        val plainContent = safeContent().htmlToPlainText()
                                         append(plainContent)
                                     }
                                 }
@@ -614,7 +609,7 @@ fun MemoScreen(
                 // 초기 내용 로드 — 본문만 setHtml + initialHtml 캡처
                 var contentInitialized by remember { mutableStateOf(false) }
                 LaunchedEffect(Unit) {
-                    val editorContent = existingMemo.content
+                    val editorContent = existingMemo.content.decodeHtmlEntities()
                     if (editorContent.isNotEmpty()) {
                         val html = if (editorContent.contains("<") && editorContent.contains(">")) {
                             editorContent

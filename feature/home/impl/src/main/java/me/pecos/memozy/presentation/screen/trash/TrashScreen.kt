@@ -1,5 +1,6 @@
 package me.pecos.memozy.presentation.screen.trash
 
+import me.pecos.memozy.presentation.util.htmlToPlainText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -217,13 +218,7 @@ private fun TrashMemoItem(
         if (memo.content.isNotBlank()) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = memo.content
-                    .replace(Regex("<br\\s*/?>"), "\n")
-                    .replace(Regex("<[^>]+>"), "")
-                    .replace("&nbsp;", " ")
-                    .replace("&amp;", "&")
-                    .trim()
-                    .take(100),
+                text = memo.content.htmlToPlainText().take(100),
                 fontSize = fontSettings.scaled(13),
                 color = colors.textBody,
                 maxLines = 2,

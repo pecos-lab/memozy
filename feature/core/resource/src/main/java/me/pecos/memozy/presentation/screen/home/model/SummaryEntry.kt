@@ -39,6 +39,6 @@ fun parseSummaryEntries(json: String?): List<SummaryEntry> {
             listOf(SummaryEntry(content = json))
         }
     } catch (_: Exception) {
-        if (json.isNotBlank()) listOf(SummaryEntry(content = json)) else emptyList()
+        if (!json.isNullOrBlank()) listOf(SummaryEntry(content = json)) else emptyList()
     }
 }
