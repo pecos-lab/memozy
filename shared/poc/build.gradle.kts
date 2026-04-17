@@ -25,8 +25,16 @@ room {
 }
 
 dependencies {
-    add("kspAndroid", libs.room.compiler)
-    add("kspIosX64", libs.room.compiler)
-    add("kspIosArm64", libs.room.compiler)
-    add("kspIosSimulatorArm64", libs.room.compiler)
+    add("kspCommonMainMetadata", libs.room.compiler)
 }
+
+kotlin.sourceSets.named("commonMain") {
+    kotlin.srcDir(layout.buildDirectory.dir("generated/ksp/metadata/commonMain/kotlin"))
+    kotlin.exclude("**/MemoDatabaseConstructor.kt")
+}
+
+tasks.matching { it.name != "kspCommonMainKotlinMetadata" && it.name.startsWith("ksp") }
+    .configureEach { dependsOn("kspCommonMainKotlinMetadata") }
+
+tasks.matching { it.name.startsWith("compileKotlin") || it.name == "sourcesJar" }
+    .configureEach { dependsOn("kspCommonMainKotlinMetadata") }
