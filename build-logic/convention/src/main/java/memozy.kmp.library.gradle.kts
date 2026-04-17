@@ -1,3 +1,5 @@
+import me.pecos.memozy.convention.COMPILE_SDK
+import me.pecos.memozy.convention.MIN_SDK
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 
@@ -10,8 +12,8 @@ extensions.configure<KotlinMultiplatformExtension> {
     jvmToolchain(21)
 
     androidLibrary {
-        compileSdk = 36
-        minSdk = 26
+        compileSdk = COMPILE_SDK
+        minSdk = MIN_SDK
     }
 
     iosX64()
