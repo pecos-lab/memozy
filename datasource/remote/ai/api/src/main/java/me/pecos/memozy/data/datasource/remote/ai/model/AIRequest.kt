@@ -17,7 +17,8 @@ data class GenerationConfig(
         private const val MAX_OUTPUT_TOKENS_LONG = 65536
 
         val THINKING_DISABLED = GenerationConfig(
-            thinkingConfig = ThinkingConfig(thinkingBudget = 0)
+            thinkingConfig = ThinkingConfig(thinkingBudget = 0),
+            maxOutputTokens = 16384
         )
         val THINKING_DISABLED_LONG_OUTPUT = GenerationConfig(
             thinkingConfig = ThinkingConfig(thinkingBudget = 0),
