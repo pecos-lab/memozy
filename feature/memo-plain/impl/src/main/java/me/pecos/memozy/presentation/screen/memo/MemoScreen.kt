@@ -1,5 +1,7 @@
 package me.pecos.memozy.presentation.screen.memo
 
+import me.pecos.memozy.presentation.util.decodeHtmlEntities
+import me.pecos.memozy.presentation.util.htmlToPlainText
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
@@ -494,14 +496,7 @@ fun MemoScreen(
                                             appendLine(nameText)
                                             appendLine()
                                         }
-                                        val plainContent = safeContent()
-                                            .replace(Regex("<br\\s*/?>"), "\n")
-                                            .replace(Regex("<[^>]+>"), "")
-                                            .replace("&nbsp;", " ")
-                                            .replace("&amp;", "&")
-                                            .replace("&lt;", "<")
-                                            .replace("&gt;", ">")
-                                            .trim()
+                                        val plainContent = safeContent().htmlToPlainText()
                                         append(plainContent)
                                     }
                                 }
@@ -603,7 +598,7 @@ fun MemoScreen(
                 // 초기 내용 로드 — 본문만 setHtml + initialHtml 캡처
                 var contentInitialized by remember { mutableStateOf(false) }
                 LaunchedEffect(Unit) {
-                    val editorContent = existingMemo.content
+                    val editorContent = existingMemo.content.decodeHtmlEntities()
                     if (editorContent.isNotEmpty()) {
                         val html = if (editorContent.contains("<") && editorContent.contains(">")) {
                             editorContent

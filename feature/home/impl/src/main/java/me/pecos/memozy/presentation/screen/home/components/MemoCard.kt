@@ -1,5 +1,6 @@
 package me.pecos.memozy.presentation.screen.home.components
 
+import me.pecos.memozy.presentation.util.htmlToPlainText
 import android.content.Context
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -100,12 +101,7 @@ fun MemoCardItem(
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = memo.content
-                    .replace(Regex("<br\\s*/?>"), "\n")
-                    .replace(Regex("<[^>]+>"), "")
-                    .replace("&nbsp;", " ")
-                    .replace("&amp;", "&")
-                    .trim()
+                text = memo.content.htmlToPlainText()
                     .ifBlank { memo.summaryContent?.take(200) ?: "" },
                 color = colors.textBody,
                 fontFamily = fontSettings.fontFamily,
