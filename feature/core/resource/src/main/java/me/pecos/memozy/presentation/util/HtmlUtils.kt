@@ -31,3 +31,13 @@ fun String.htmlToPlainText(): String =
             HTML5_ENTITIES[match.groupValues[1]] ?: match.value
         }
         .trim()
+
+// HTML 구조에 필요한 엔티티는 유지하고 나머지만 디코딩
+private val PRESERVE_ENTITIES = setOf("amp", "lt", "gt", "quot")
+
+fun String.decodeHtmlEntities(): String =
+    replace(ENTITY_REGEX) { match ->
+        val name = match.groupValues[1]
+        if (name in PRESERVE_ENTITIES) match.value
+        else HTML5_ENTITIES[name] ?: match.value
+    }
