@@ -1,7 +1,5 @@
 package me.pecos.memozy.presentation.theme
 
-import androidx.compose.runtime.compositionLocalOf
-
 enum class SubscriptionTier {
     FREE, PRO;
 
@@ -13,5 +11,3 @@ enum class SubscriptionTier {
 
     val isPro: Boolean get() = this == PRO
 }
-
-val LocalSubscriptionTier = compositionLocalOf { SubscriptionTier.FREE }

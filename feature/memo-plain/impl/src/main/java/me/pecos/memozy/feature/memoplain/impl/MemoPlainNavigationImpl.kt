@@ -11,8 +11,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.core.content.ContextCompat
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -23,6 +25,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.presentation.screen.memo.SummaryMode
 import me.pecos.memozy.presentation.screen.memo.SummaryStyle
 import androidx.compose.ui.unit.dp
@@ -58,6 +62,7 @@ import me.pecos.memozy.presentation.screen.home.model.MemoUiState
 import me.pecos.memozy.presentation.screen.memo.MemoScreen
 import me.pecos.memozy.presentation.screen.memo.components.AiLimitBottomSheet
 import me.pecos.memozy.presentation.theme.LocalAppColors
+import me.pecos.memozy.presentation.theme.LocalIsLoggedIn
 import me.pecos.memozy.presentation.theme.LocalRewardAdProvider
 import me.pecos.memozy.presentation.theme.LocalSubscriptionTier
 import javax.inject.Inject
@@ -322,6 +327,10 @@ class MemoPlainNavigationImpl @Inject constructor(
                 }
             }
 
+            // 로그인 여부 체크
+            val isLoggedIn = LocalIsLoggedIn.current
+            var showLoginPrompt by remember { mutableStateOf(false) }
+
             // AI 사용량 체크 (티어별 일일 한도)
             val subscriptionTier = LocalSubscriptionTier.current
             val rewardAdProvider = LocalRewardAdProvider.current
@@ -333,10 +342,14 @@ class MemoPlainNavigationImpl @Inject constructor(
                 dailyAdViewCount = aiUsageDao.getCountSince(FEATURE_REWARD_AD, startOfToday())
             }
             val dailyLimit = subscriptionTier.dailyAiLimit + adBonusCount
-            val canUseAi = dailyUsageCount < dailyLimit
+            val canUseAiQuota = dailyUsageCount < dailyLimit
+            val canUseAi = isLoggedIn && canUseAiQuota
             val canWatchAd = !subscriptionTier.isPro && dailyAdViewCount < MAX_DAILY_AD_VIEWS
             val remainingAdViews = MAX_DAILY_AD_VIEWS - dailyAdViewCount
             var showLimitBottomSheet by remember { mutableStateOf(false) }
+            val notifyAiBlocked: () -> Unit = {
+                if (!isLoggedIn) showLoginPrompt = true else showLimitBottomSheet = true
+            }
 
             // 이미지 OCR 처리
             var imageOcrState by remember { mutableStateOf<SummaryState>(SummaryState.Idle) }
@@ -632,7 +645,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                 youtubeTitle = youtubeTitle,
                 onStartRecording = {
                     if (!canUseAi) {
-                        showLimitBottomSheet = true
+                        notifyAiBlocked()
                     } else {
                         startRecording()
                     }
@@ -652,7 +665,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                 },
                 onWebSummarize = { url, mode ->
                     if (!canUseAi) {
-                        showLimitBottomSheet = true
+                        notifyAiBlocked()
                         return@MemoScreen
                     }
                     currentSummarizeJob = scope.launch {
@@ -857,7 +870,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                 },
                 onAiCustomSend = { userMessage, currentTitle, currentBody ->
                     if (!canUseAi) {
-                        showLimitBottomSheet = true
+                        notifyAiBlocked()
                         return@MemoScreen
                     }
                     aiAssistJob?.cancel()
@@ -908,7 +921,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                 },
                 onAiPresetAction = { actionName, currentTitle, currentBody ->
                     if (!canUseAi) {
-                        showLimitBottomSheet = true
+                        notifyAiBlocked()
                         return@MemoScreen
                     }
                     aiAssistJob?.cancel()
@@ -977,6 +990,19 @@ class MemoPlainNavigationImpl @Inject constructor(
                     }
                 },
             )
+
+            if (showLoginPrompt) {
+                AlertDialog(
+                    onDismissRequest = { showLoginPrompt = false },
+                    title = { Text(stringResource(R.string.login_prompt_title)) },
+                    text = { Text(stringResource(R.string.login_prompt_message)) },
+                    confirmButton = {
+                        TextButton(onClick = { showLoginPrompt = false }) {
+                            Text(stringResource(R.string.confirm))
+                        }
+                    }
+                )
+            }
 
             if (showLimitBottomSheet) {
                 AiLimitBottomSheet(
