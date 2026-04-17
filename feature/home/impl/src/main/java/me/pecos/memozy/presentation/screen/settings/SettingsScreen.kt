@@ -240,32 +240,6 @@ fun SettingsScreen(
             actionArea = PopupActionArea.NONE
         ) {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                AppFontFamily.entries.forEach { family ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { settingsViewModel.selectFontFamily(family) }
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = selectedFontFamily == family,
-                            onClick = { settingsViewModel.selectFontFamily(family) }
-                        )
-                        Text(
-                            text = if (family == AppFontFamily.SYSTEM) stringResource(R.string.font_system) else family.displayName,
-                            color = colors.textBody,
-                            fontFamily = family.fontFamily,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    }
-                }
-
-                HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 12.dp),
-                    color = colors.cardBorder
-                )
-
                 Text(
                     text = stringResource(R.string.font_size),
                     fontWeight = FontWeight.SemiBold,
@@ -354,7 +328,6 @@ fun SettingsScreen(
 
                 Text(
                     text = stringResource(R.string.font_preview_title),
-                    fontFamily = selectedFontFamily.fontFamily,
                     fontSize = selectedFontSize.titleSp.sp,
                     fontWeight = FontWeight.Bold,
                     color = colors.textTitle
@@ -362,7 +335,6 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = stringResource(R.string.font_preview_body),
-                    fontFamily = selectedFontFamily.fontFamily,
                     fontSize = selectedFontSize.bodySp.sp,
                     color = colors.textBody
                 )
