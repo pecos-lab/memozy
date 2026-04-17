@@ -15,3 +15,4 @@ enum class SubscriptionTier {
 }
 
 val LocalSubscriptionTier = compositionLocalOf { SubscriptionTier.FREE }
+val LocalIsLoggedIn = compositionLocalOf { false }

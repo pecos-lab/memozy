@@ -322,6 +322,10 @@ class MemoPlainNavigationImpl @Inject constructor(
                 }
             }
 
+            // 로그인 여부 체크
+            val isLoggedIn = me.pecos.memozy.presentation.theme.LocalIsLoggedIn.current
+            var showLoginPrompt by remember { mutableStateOf(false) }
+
             // AI 사용량 체크 (티어별 일일 한도)
             val subscriptionTier = LocalSubscriptionTier.current
             val rewardAdProvider = LocalRewardAdProvider.current
@@ -333,7 +337,8 @@ class MemoPlainNavigationImpl @Inject constructor(
                 dailyAdViewCount = aiUsageDao.getCountSince(FEATURE_REWARD_AD, startOfToday())
             }
             val dailyLimit = subscriptionTier.dailyAiLimit + adBonusCount
-            val canUseAi = dailyUsageCount < dailyLimit
+            val canUseAiQuota = dailyUsageCount < dailyLimit
+            val canUseAi = isLoggedIn && canUseAiQuota
             val canWatchAd = !subscriptionTier.isPro && dailyAdViewCount < MAX_DAILY_AD_VIEWS
             val remainingAdViews = MAX_DAILY_AD_VIEWS - dailyAdViewCount
             var showLimitBottomSheet by remember { mutableStateOf(false) }
@@ -632,7 +637,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                 youtubeTitle = youtubeTitle,
                 onStartRecording = {
                     if (!canUseAi) {
-                        showLimitBottomSheet = true
+                        if (!isLoggedIn) showLoginPrompt = true else showLimitBottomSheet = true
                     } else {
                         startRecording()
                     }
@@ -652,7 +657,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                 },
                 onWebSummarize = { url, mode ->
                     if (!canUseAi) {
-                        showLimitBottomSheet = true
+                        if (!isLoggedIn) showLoginPrompt = true else showLimitBottomSheet = true
                         return@MemoScreen
                     }
                     currentSummarizeJob = scope.launch {
@@ -857,7 +862,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                 },
                 onAiCustomSend = { userMessage, currentTitle, currentBody ->
                     if (!canUseAi) {
-                        showLimitBottomSheet = true
+                        if (!isLoggedIn) showLoginPrompt = true else showLimitBottomSheet = true
                         return@MemoScreen
                     }
                     aiAssistJob?.cancel()
@@ -908,7 +913,7 @@ class MemoPlainNavigationImpl @Inject constructor(
                 },
                 onAiPresetAction = { actionName, currentTitle, currentBody ->
                     if (!canUseAi) {
-                        showLimitBottomSheet = true
+                        if (!isLoggedIn) showLoginPrompt = true else showLimitBottomSheet = true
                         return@MemoScreen
                     }
                     aiAssistJob?.cancel()
@@ -977,6 +982,19 @@ class MemoPlainNavigationImpl @Inject constructor(
                     }
                 },
             )
+
+            if (showLoginPrompt) {
+                androidx.compose.material3.AlertDialog(
+                    onDismissRequest = { showLoginPrompt = false },
+                    title = { androidx.compose.material3.Text(androidx.compose.ui.res.stringResource(me.pecos.memozy.feature.core.resource.R.string.login_prompt_title)) },
+                    text = { androidx.compose.material3.Text(androidx.compose.ui.res.stringResource(me.pecos.memozy.feature.core.resource.R.string.login_prompt_message)) },
+                    confirmButton = {
+                        androidx.compose.material3.TextButton(onClick = { showLoginPrompt = false }) {
+                            androidx.compose.material3.Text(androidx.compose.ui.res.stringResource(me.pecos.memozy.feature.core.resource.R.string.confirm))
+                        }
+                    }
+                )
+            }
 
             if (showLimitBottomSheet) {
                 AiLimitBottomSheet(
