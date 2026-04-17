@@ -109,7 +109,11 @@ import androidx.compose.ui.unit.sp
 import com.wanted.android.wanted.design.theme.DesignSystemTheme
 import com.wanted.android.wanted.design.input.textinput.textfield.WantedTextField
 import com.wanted.android.wanted.design.input.textinput.textarea.WantedTextArea
+import androidx.compose.runtime.mutableStateListOf
 import me.pecos.memozy.presentation.screen.home.model.MemoUiState
+import me.pecos.memozy.presentation.screen.home.model.SummaryEntry
+import me.pecos.memozy.presentation.screen.home.model.parseSummaryEntries
+import me.pecos.memozy.presentation.screen.home.model.toJson
 import me.pecos.memozy.feature.core.resource.CATEGORY_EMOJIS
 import me.pecos.memozy.feature.core.resource.CATEGORY_RES_IDS
 import me.pecos.memozy.feature.core.resource.R
@@ -295,9 +299,12 @@ fun MemoScreen(
     var selectedSummaryStyle by remember { mutableStateOf(SummaryStyle.SIMPLE) }
 
     // 요약 콘텐츠 접기/펼치기 상태 (summaryContent 별도 컬럼에서 로드)
-    val initialSummary = remember(existingMemo.id) { existingMemo.summaryContent }
-    var summaryText by remember { mutableStateOf(initialSummary) }
-    var isSummaryExpanded by remember { mutableStateOf(if (initialSummary == null) true else existingMemo.isSummaryExpanded) }
+    val summaryEntries = remember { mutableStateListOf<SummaryEntry>() }
+    LaunchedEffect(existingMemo.id) {
+        summaryEntries.clear()
+        summaryEntries.addAll(parseSummaryEntries(existingMemo.summaryContent))
+    }
+    var isSummaryExpanded by remember { mutableStateOf(if (existingMemo.summaryContent == null) true else existingMemo.isSummaryExpanded) }
     var webSummaryText by remember { mutableStateOf<String?>(null) }
     var isWebSummaryExpanded by remember { mutableStateOf(initialSummary == null) }
 
@@ -314,8 +321,9 @@ fun MemoScreen(
             val newText = YOUTUBE_URL_REGEX.replace(bodyText, "").trim()
             bodyText = newText
             richTextState.setHtml(newText.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>"))
-            // 요약 텍스트를 별도 상태에 저장
-            summaryText = summaryResult
+            // 요약 텍스트를 리스트에 추가 (덮어쓰지 않음)
+            val mode = currentSummaryMode?.name ?: "SIMPLE"
+            summaryEntries.add(0, SummaryEntry(content = summaryResult, mode = mode))
             isSummaryExpanded = true  // 새 요약 완료 시 펼침
             if (youtubeTitle != null && (nameText.isBlank() || nameText == existingMemo.name)) {
                 nameText = youtubeTitle
@@ -386,10 +394,13 @@ fun MemoScreen(
         val editorHtml = richTextState.toHtml().trim()
         return if (editorHtml.isNotBlank() && editorHtml != "<p><br></p>") editorHtml else ""
     }
-    fun safeSummaryContent(): String? = summaryText ?: webSummaryText
+    fun safeSummaryContent(): String? {
+        if (summaryEntries.isNotEmpty()) return summaryEntries.toJson()
+        return webSummaryText
+    }
     fun safeStyles(): String? = richTextState.toHtml().takeIf { it.isNotBlank() }
 
-    val canAutoSave = nameText.isNotBlank() || bodyText.isNotBlank() || summaryText != null || webSummaryText != null
+    val canAutoSave = nameText.isNotBlank() || bodyText.isNotBlank() || summaryEntries.isNotEmpty() || webSummaryText != null
 
     // ON_PAUSE 라이프사이클 저장 — 화면 이탈 시에만 저장 (snapshotFlow 제거)
     if (onAutoSave != null) {
@@ -473,7 +484,7 @@ fun MemoScreen(
                 Spacer(modifier = Modifier.weight(1f))
 
                 // 공유 버튼 (기존 메모 또는 요약이 있을 때)
-                val hasSharableContent = !isNewMemo || summaryText != null || webSummaryText != null
+                val hasSharableContent = !isNewMemo || summaryEntries.isNotEmpty() || webSummaryText != null
                 if (hasSharableContent) {
                     Icon(
                         imageVector = Icons.Default.Share,
@@ -488,7 +499,7 @@ fun MemoScreen(
                                         appendLine(ytUrl)
                                         appendLine()
                                     }
-                                    val summary = summaryText ?: webSummaryText
+                                    val summary = summaryEntries.firstOrNull()?.content ?: webSummaryText
                                     if (summary != null) {
                                         append(summary)
                                     } else {
@@ -629,7 +640,7 @@ fun MemoScreen(
                 val ytVideoId = remember(youtubeUrlDisplay) {
                     Regex("""(?:v=|youtu\.be/|shorts/)([a-zA-Z0-9_-]{11})""").find(youtubeUrlDisplay)?.groupValues?.get(1)
                 }
-                val showYoutubeInline = summaryText != null || (youtubeUrlDisplay.isNotBlank() && !youtubeChipDismissed && (savedYoutubeUrl != null || summaryResult != null || youtubeTitle != null))
+                val showYoutubeInline = summaryEntries.isNotEmpty() || (youtubeUrlDisplay.isNotBlank() && !youtubeChipDismissed && (savedYoutubeUrl != null || summaryResult != null || youtubeTitle != null))
                 if (showYoutubeInline) {
                     YouTubeSummaryInlineCard(
                         youtubeUrl = youtubeUrlDisplay,
@@ -638,18 +649,23 @@ fun MemoScreen(
                         memoTitle = nameText,
                         isExpanded = isSummaryExpanded,
                         onExpandToggle = { isSummaryExpanded = it },
-                        summaryText = if (isSummarizing && summaryResult != null) summaryResult else summaryText,
+                        summaryEntries = summaryEntries.toList(),
+                        streamingText = if (isSummarizing && summaryResult != null) summaryResult else null,
                         isSummarizing = isSummarizing,
                         currentSummaryMode = currentSummaryMode,
                         onSummarize = onYoutubeSummarize,
                         onCancelSummarize = onCancelSummarize,
                         onResummarize = { altMode ->
-                            summaryText = null
                             summaryApplied = false
                             currentSummaryMode = altMode
                             detectedYoutubeUrl?.let { onYoutubeSummarize?.invoke(it, altMode) }
                         },
-                        onDeleteSummary = { showSummaryDeleteDialog = "youtube" },
+                        onDeleteSummary = { index ->
+                            if (index < summaryEntries.size) {
+                                summaryEntries.removeAt(index)
+                            }
+                        },
+                        onDeleteAllSummaries = { showSummaryDeleteDialog = "youtube" },
                         onAskAi = if (onAiCustomSend != null) { {
                             showAiCustomInput = true
                         } } else null,
@@ -1080,7 +1096,7 @@ fun MemoScreen(
                 TextButton(onClick = {
                     when (showSummaryDeleteDialog) {
                         "youtube" -> {
-                            summaryText = null
+                            summaryEntries.clear()
                             summaryApplied = false
                         }
                         "web" -> {

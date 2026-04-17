@@ -131,7 +131,10 @@ class MemoWidget : GlanceAppWidget() {
                                         ),
                                         maxLines = 1
                                     )
-                                    val widgetContent = memo.content.ifBlank { memo.summaryContent ?: "" }
+                                    val summaryPreview = memo.summaryContent?.let {
+                                        me.pecos.memozy.presentation.screen.home.model.parseSummaryEntries(it).firstOrNull()?.content
+                                    }
+                                    val widgetContent = memo.content.ifBlank { summaryPreview ?: "" }
                                     if (widgetContent.isNotBlank()) {
                                         Spacer(modifier = GlanceModifier.height(2.dp))
                                         Text(
