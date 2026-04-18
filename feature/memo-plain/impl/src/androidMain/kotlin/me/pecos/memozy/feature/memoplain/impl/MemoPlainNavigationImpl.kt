@@ -60,6 +60,7 @@ import me.pecos.memozy.platform.media.MediaService
 import org.koin.compose.koinInject
 import me.pecos.memozy.feature.core.viewmodel.model.MemoFormatUi
 import me.pecos.memozy.feature.core.viewmodel.model.MemoUiState
+import me.pecos.memozy.feature.core.viewmodel.settings.PreferencesProvider
 import me.pecos.memozy.presentation.screen.memo.MemoScreen
 import me.pecos.memozy.presentation.screen.memo.components.AiLimitBottomSheet
 import me.pecos.memozy.presentation.theme.LocalAppColors
@@ -308,10 +309,9 @@ class MemoPlainNavigationImpl(
             var summaryState by remember { mutableStateOf<SummaryState>(SummaryState.Idle) }
             var youtubeTitle by remember { mutableStateOf<String?>(null) }
 
-            val preContext = LocalContext.current
+            val preferencesProvider: PreferencesProvider = koinInject()
             val languageCode = remember {
-                preContext.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE)
-                    .getString("language_code", "ko") ?: "ko"
+                preferencesProvider.getString("language_code", "ko")
             }
 
             val scope = rememberCoroutineScope()
