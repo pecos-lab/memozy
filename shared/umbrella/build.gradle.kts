@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 
 // `:shared:umbrella` ─ iOS framework `Shared` export용 umbrella 모듈.
 // `:shared:poc`와 공존: poc는 Room KMP 스파이크(CI kmp-ios-check.yml 검증 대상),
@@ -7,6 +8,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 // 전부 `iosMain`에만 배치해 Android compileClasspath에 절대 유입되지 않도록 격리한다.
 plugins {
     id("memozy.kmp.library")
+    id("memozy.cmp.library")
 }
 
 kotlin {
@@ -14,10 +16,13 @@ kotlin {
         namespace = "me.pecos.memozy.shared.umbrella"
     }
 
+    val xcf = XCFramework("Shared")
+
     targets.withType<KotlinNativeTarget>().configureEach {
         binaries.framework {
             baseName = "Shared"
             isStatic = true
+            xcf.add(this)
             export(projects.feature.core.viewmodel)
             export(projects.data.repository.memo.api)
         }
