@@ -102,9 +102,11 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.wanted.android.wanted.design.theme.DesignSystemTheme
 import com.wanted.android.wanted.design.input.textinput.textfield.WantedTextField
 import com.wanted.android.wanted.design.input.textinput.textarea.WantedTextArea
 import androidx.compose.runtime.mutableStateListOf
@@ -1116,3 +1118,13 @@ fun MemoScreen(
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+fun MemoScreenPreview() {
+    DesignSystemTheme {
+        MemoScreen(
+            onSave = {},
+            existingMemo = MemoUiState(1, "테스트 제목", 2, "테스트 내용")
+        )
+    }
+}
