@@ -4,8 +4,6 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,7 +22,6 @@ import me.pecos.memozy.presentation.theme.AppFontFamily
 import me.pecos.memozy.presentation.theme.FontSizeLevel
 import org.json.JSONArray
 import org.json.JSONObject
-import javax.inject.Inject
 
 data class Language(val name: String, val code: String)
 
@@ -50,9 +47,8 @@ sealed class BackupResult {
     data class Error(val message: String) : BackupResult()
 }
 
-@HiltViewModel
-class SettingsViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
+class SettingsViewModel(
+    private val context: Context,
     private val repository: MemoRepository,
     private val memoDao: MemoDao,
     private val authRepository: AuthRepository,

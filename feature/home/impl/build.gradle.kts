@@ -4,7 +4,6 @@ import java.util.Properties
 plugins {
     id("memozy.android.library")
     id("memozy.compose")
-    id("memozy.hilt")
 }
 
 setNamespace("feature.home.impl")
@@ -45,7 +44,7 @@ dependencies {
     implementation(libs.play.services.ads)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.compose.material.icons.extended)
-    implementation(libs.hilt.navigation.compose)
+    implementation(libs.koin.androidx.compose)
     implementation(libs.credential.manager)
     implementation(libs.credential.manager.play)
     implementation(libs.google.id.identity)

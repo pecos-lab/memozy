@@ -2,7 +2,6 @@ package me.pecos.memozy.presentation.screen.trash
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -11,10 +10,8 @@ import kotlinx.coroutines.launch
 import me.pecos.memozy.data.repository.MemoRepository
 import me.pecos.memozy.presentation.screen.home.model.MemoUiState
 import me.pecos.memozy.presentation.screen.home.toUiState
-import javax.inject.Inject
 
-@HiltViewModel
-class TrashViewModel @Inject constructor(
+class TrashViewModel(
     private val repository: MemoRepository
 ) : ViewModel() {
 

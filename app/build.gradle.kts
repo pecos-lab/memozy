@@ -4,7 +4,6 @@ import java.util.Properties
 plugins {
     id("memozy.android.application")
     id("memozy.compose")
-    id("memozy.hilt")
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
 }
@@ -95,10 +94,14 @@ dependencies {
     // date/time
     implementation(libs.kotlinx.datetime)
 
+    // DI (Koin)
+    implementation(libs.koin.core)
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
+    implementation(libs.koin.androidx.workmanager)
+
     // work manager
     implementation(libs.work.runtime)
-    implementation(libs.work.hilt)
-    ksp(libs.work.hilt.compiler)
 
     // glance widget
     implementation(libs.glance.appwidget)

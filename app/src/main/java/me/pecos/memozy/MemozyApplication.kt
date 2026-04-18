@@ -1,36 +1,46 @@
 package me.pecos.memozy
 
 import android.app.Application
-import androidx.hilt.work.HiltWorkerFactory
-import androidx.work.Configuration
-import dagger.hilt.android.HiltAndroidApp
-import me.pecos.memozy.data.datasource.remote.auth.AuthService
-import me.pecos.memozy.data.datasource.remote.auth.AuthState
-import me.pecos.memozy.worker.BackupScheduler
+import com.google.android.gms.ads.MobileAds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import com.google.android.gms.ads.MobileAds
-import javax.inject.Inject
+import me.pecos.memozy.di.aiNetworkModule
+import me.pecos.memozy.di.authModule
+import me.pecos.memozy.di.backupModule
+import me.pecos.memozy.di.chatRepositoryModule
+import me.pecos.memozy.di.memoDatabaseModule
+import me.pecos.memozy.di.memoRepositoryModule
+import me.pecos.memozy.di.userRepositoryModule
+import me.pecos.memozy.di.viewModelModule
+import me.pecos.memozy.feature.memoplain.impl.di.memoPlainModule
+import org.koin.android.ext.koin.androidContext
+import org.koin.androidx.workmanager.koin.workManagerFactory
+import org.koin.core.context.startKoin
 
-@HiltAndroidApp
-class MemozyApplication : Application(), Configuration.Provider {
+class MemozyApplication : Application() {
 
-    @Inject lateinit var workerFactory: HiltWorkerFactory
-    @Inject lateinit var authService: AuthService
-
-    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-
-    override val workManagerConfiguration: Configuration
-        get() = Configuration.Builder()
-            .setWorkerFactory(workerFactory)
-            .build()
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onCreate() {
         super.onCreate()
-        CoroutineScope(Dispatchers.IO).launch {
+        startKoin {
+            androidContext(this@MemozyApplication)
+            workManagerFactory()
+            modules(
+                memoDatabaseModule,
+                aiNetworkModule,
+                authModule,
+                backupModule,
+                memoRepositoryModule,
+                chatRepositoryModule,
+                userRepositoryModule,
+                viewModelModule,
+                memoPlainModule,
+            )
+        }
+        appScope.launch {
             MobileAds.initialize(this@MemozyApplication)
         }
     }

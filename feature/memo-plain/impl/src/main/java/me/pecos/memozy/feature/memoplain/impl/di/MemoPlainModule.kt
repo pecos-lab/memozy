@@ -1,18 +1,18 @@
 package me.pecos.memozy.feature.memoplain.impl.di
 
-import dagger.Binds
-import dagger.Module
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
 import me.pecos.memozy.feature.memoplain.api.MemoPlainNavigation
 import me.pecos.memozy.feature.memoplain.impl.MemoPlainNavigationImpl
+import org.koin.dsl.module
 
-@Module
-@InstallIn(SingletonComponent::class)
-abstract class MemoPlainModule {
-
-    @Binds
-    abstract fun bindMemoPlainNavigation(
-        impl: MemoPlainNavigationImpl
-    ): MemoPlainNavigation
+val memoPlainModule = module {
+    single<MemoPlainNavigation> {
+        MemoPlainNavigationImpl(
+            repository = get(),
+            aiApiService = get(),
+            youtubeSummaryDao = get(),
+            captionService = get(),
+            aiUsageDao = get(),
+            webScrapeService = get(),
+        )
+    }
 }
