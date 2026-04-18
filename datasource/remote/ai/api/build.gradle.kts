@@ -1,13 +1,17 @@
-import me.pecos.memozy.convention.extension.setNamespace
-
 plugins {
-    id("memozy.android.library")
+    id("memozy.kmp.library")
     alias(libs.plugins.kotlin.serialization)
 }
 
-setNamespace("datasource.remote.ai.api")
+kotlin {
+    androidLibrary {
+        namespace = "me.pecos.memozy.datasource.remote.ai.api"
+    }
 
-dependencies {
-    implementation(libs.kotlinx.coroutines.android)
-    implementation(libs.kotlinx.serialization.json)
+    sourceSets {
+        commonMain.dependencies {
+            implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.serialization.json)
+        }
+    }
 }
