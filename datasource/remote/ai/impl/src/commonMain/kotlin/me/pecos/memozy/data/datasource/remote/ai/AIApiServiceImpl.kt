@@ -20,11 +20,7 @@ import me.pecos.memozy.data.datasource.remote.ai.model.GenerationConfig
 import me.pecos.memozy.data.datasource.remote.ai.model.GeminiRequest
 import me.pecos.memozy.data.datasource.remote.ai.model.GeminiResponse
 
-import javax.inject.Inject
-import javax.inject.Singleton
-
-@Singleton
-class AIApiServiceImpl @Inject constructor(
+class AIApiServiceImpl(
     private val httpClient: HttpClient,
     private val json: Json,
 ) : AIApiService {

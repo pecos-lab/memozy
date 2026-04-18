@@ -7,11 +7,8 @@ import io.ktor.client.statement.bodyAsText
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class YouTubeCaptionServiceImpl @Inject constructor(
+class YouTubeCaptionServiceImpl(
     private val httpClient: HttpClient,
     private val json: Json
 ) : YouTubeCaptionService {

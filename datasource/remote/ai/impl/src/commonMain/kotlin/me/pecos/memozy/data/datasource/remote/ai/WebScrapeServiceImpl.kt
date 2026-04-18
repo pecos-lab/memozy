@@ -8,8 +8,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import javax.inject.Inject
-import javax.inject.Singleton
 
 @Serializable
 private data class ScrapeRequest(val url: String)
@@ -21,8 +19,7 @@ private data class ScrapeResponse(
     val error: String? = null
 )
 
-@Singleton
-class WebScrapeServiceImpl @Inject constructor(
+class WebScrapeServiceImpl(
     private val httpClient: HttpClient,
     private val json: Json
 ) : WebScrapeService {

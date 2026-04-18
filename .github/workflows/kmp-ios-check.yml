@@ -48,6 +48,9 @@ jobs:
                     :datasource:remote:ai:api:compileKotlinIosX64 \
                     :datasource:remote:ai:api:compileKotlinIosArm64 \
                     :datasource:remote:ai:api:compileKotlinIosSimulatorArm64 \
+                    :datasource:remote:ai:impl:compileKotlinIosX64 \
+                    :datasource:remote:ai:impl:compileKotlinIosArm64 \
+                    :datasource:remote:ai:impl:compileKotlinIosSimulatorArm64 \
                     :datasource:remote:auth:api:compileKotlinIosX64 \
                     :datasource:remote:auth:api:compileKotlinIosArm64 \
                     :datasource:remote:auth:api:compileKotlinIosSimulatorArm64 \
