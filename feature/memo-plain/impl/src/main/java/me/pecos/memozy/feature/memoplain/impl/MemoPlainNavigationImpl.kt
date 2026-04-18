@@ -3,8 +3,6 @@ package me.pecos.memozy.feature.memoplain.impl
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.MediaRecorder
-import android.os.Build
 import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -57,6 +55,9 @@ import me.pecos.memozy.data.repository.MemoRepository
 import me.pecos.memozy.data.repository.model.MemoFormat
 import me.pecos.memozy.feature.memoplain.api.MemoPlainNavigation
 import me.pecos.memozy.feature.memoplain.api.MemoPlainRoute
+import me.pecos.memozy.platform.media.AudioRecorder
+import me.pecos.memozy.platform.media.MediaService
+import org.koin.compose.koinInject
 import me.pecos.memozy.feature.core.viewmodel.model.MemoFormatUi
 import me.pecos.memozy.feature.core.viewmodel.model.MemoUiState
 import me.pecos.memozy.presentation.screen.memo.MemoScreen
@@ -480,7 +481,8 @@ class MemoPlainNavigationImpl(
                 }
             }
 
-            var mediaRecorder by remember { mutableStateOf<MediaRecorder?>(null) }
+            val mediaService: MediaService = koinInject()
+            var audioRecorder by remember { mutableStateOf<AudioRecorder?>(null) }
             var recordingStartTime by remember { mutableStateOf(0L) }
             val audioFile = remember(context) { java.io.File(context.cacheDir, "recording.m4a") }
 
@@ -490,23 +492,9 @@ class MemoPlainNavigationImpl(
                 if (granted) {
                     // 권한 획득 → 녹음 시작
                     try {
-                        val recorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                            MediaRecorder(context)
-                        } else {
-                            @Suppress("DEPRECATION")
-                            MediaRecorder()
-                        }
-                        recorder.apply {
-                            setAudioSource(MediaRecorder.AudioSource.MIC)
-                            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                            setAudioSamplingRate(16000)
-                            setAudioEncodingBitRate(64000)
-                            setOutputFile(audioFile.absolutePath)
-                            prepare()
-                            start()
-                        }
-                        mediaRecorder = recorder
+                        val recorder = mediaService.createAudioRecorder()
+                        recorder.start(audioFile.absolutePath)
+                        audioRecorder = recorder
                         recordingStartTime = System.currentTimeMillis()
                         isRecording = true
                         transcriptionError = null
@@ -525,23 +513,9 @@ class MemoPlainNavigationImpl(
                 ) == PackageManager.PERMISSION_GRANTED
                 if (hasPermission) {
                     try {
-                        val recorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                            MediaRecorder(context)
-                        } else {
-                            @Suppress("DEPRECATION")
-                            MediaRecorder()
-                        }
-                        recorder.apply {
-                            setAudioSource(MediaRecorder.AudioSource.MIC)
-                            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                            setAudioSamplingRate(16000)
-                            setAudioEncodingBitRate(64000)
-                            setOutputFile(audioFile.absolutePath)
-                            prepare()
-                            start()
-                        }
-                        mediaRecorder = recorder
+                        val recorder = mediaService.createAudioRecorder()
+                        recorder.start(audioFile.absolutePath)
+                        audioRecorder = recorder
                         recordingStartTime = System.currentTimeMillis()
                         isRecording = true
                         transcriptionError = null
@@ -555,10 +529,10 @@ class MemoPlainNavigationImpl(
 
             fun stopRecordingAndTranscribe() {
                 try {
-                    mediaRecorder?.apply { stop(); release() }
+                    audioRecorder?.apply { stop(); release() }
                 } catch (_: Exception) { }
                 val durationSeconds = (System.currentTimeMillis() - recordingStartTime) / 1000
-                mediaRecorder = null
+                audioRecorder = null
                 isRecording = false
 
                 if (!audioFile.exists() || audioFile.length() < 1024) {

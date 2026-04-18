@@ -2,7 +2,6 @@ package me.pecos.memozy.presentation.screen.memo.components
 
 import android.content.Context
 import android.content.Intent
-import android.media.MediaPlayer
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -37,10 +36,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.platform.media.MediaService
 import me.pecos.memozy.presentation.theme.AppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
+import org.koin.compose.koinInject
 
 @Composable
 fun AudioPlayerBar(
@@ -51,15 +51,14 @@ fun AudioPlayerBar(
     onDismiss: () -> Unit
 ) {
     val fontSettings = LocalFontSettings.current
+    val mediaService: MediaService = koinInject()
     var isPlaying by remember { mutableStateOf(false) }
-    val mediaPlayer = remember {
-        MediaPlayer().apply {
-            setDataSource(audioPath)
-            prepare()
+    val audioPlayer = remember(audioPath) {
+        mediaService.createAudioPlayer(audioPath).apply {
             setOnCompletionListener { isPlaying = false }
         }
     }
-    DisposableEffect(Unit) { onDispose { mediaPlayer.release() } }
+    DisposableEffect(audioPlayer) { onDispose { audioPlayer.release() } }
 
     Spacer(modifier = Modifier.height(12.dp))
     Box {
@@ -71,7 +70,7 @@ fun AudioPlayerBar(
         ) {
             Box(
                 modifier = Modifier.size(36.dp).clip(CircleShape).background(colors.chipText)
-                    .clickable { if (isPlaying) { mediaPlayer.pause(); isPlaying = false } else { mediaPlayer.start(); isPlaying = true } },
+                    .clickable { if (isPlaying) { audioPlayer.pause(); isPlaying = false } else { audioPlayer.start(); isPlaying = true } },
                 contentAlignment = Alignment.Center
             ) { Icon(if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp)) }
             Spacer(modifier = Modifier.width(10.dp))

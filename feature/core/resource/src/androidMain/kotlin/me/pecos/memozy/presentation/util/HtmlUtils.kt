@@ -1,7 +1,5 @@
 package me.pecos.memozy.presentation.util
 
-import android.text.Html
-
 private val HTML5_ENTITIES = mapOf(
     "excl" to "!", "quot" to "\"", "num" to "#", "dollar" to "$",
     "percnt" to "%", "amp" to "&", "apos" to "'", "lpar" to "(",
