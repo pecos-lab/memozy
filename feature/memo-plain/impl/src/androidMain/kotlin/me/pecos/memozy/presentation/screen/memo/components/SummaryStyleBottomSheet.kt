@@ -16,7 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.wanted.android.wanted.design.theme.DesignSystemTheme
 import me.pecos.memozy.presentation.screen.memo.SummaryStyle
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
@@ -82,5 +84,16 @@ fun SummaryStyleBottomSheet(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SummaryStyleBottomSheetPreview() {
+    DesignSystemTheme {
+        SummaryStyleBottomSheet(
+            onSelect = {},
+            onDismiss = {}
+        )
     }
 }

@@ -34,6 +34,7 @@ kotlin {
                 implementation(libs.richeditor.compose)
                 implementation(libs.coil.compose)
                 implementation(libs.haze)
+                implementation(libs.androidx.compose.ui.tooling.preview)
             }
         }
     }
