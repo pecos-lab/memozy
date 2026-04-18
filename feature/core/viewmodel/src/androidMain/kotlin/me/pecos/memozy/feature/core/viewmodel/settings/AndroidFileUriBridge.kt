@@ -18,7 +18,7 @@ class AndroidFileUriBridge(
 
     override suspend fun writeText(uri: String, content: String) = withContext(Dispatchers.IO) {
         val parsed = Uri.parse(uri)
-        context.contentResolver.openOutputStream(parsed)?.use { output ->
+        context.contentResolver.openOutputStream(parsed, "wt")?.use { output ->
             output.write(content.toByteArray(Charsets.UTF_8))
         } ?: throw IllegalStateException("Cannot open output stream for $uri")
     }

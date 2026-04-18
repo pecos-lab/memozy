@@ -8,7 +8,9 @@ import me.pecos.memozy.feature.core.viewmodel.settings.AppFontFamily
 import me.pecos.memozy.feature.core.viewmodel.settings.FontSizeLevel
 
 val AppFontFamily.fontFamily: FontFamily
-    get() = FontFamily.Default
+    get() = when (this) {
+        AppFontFamily.SYSTEM -> FontFamily.Default
+    }
 
 data class FontSettings(
     val fontFamily: FontFamily = FontFamily.Default,
