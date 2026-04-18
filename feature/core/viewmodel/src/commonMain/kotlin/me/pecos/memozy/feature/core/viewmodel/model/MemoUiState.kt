@@ -1,4 +1,4 @@
-package me.pecos.memozy.presentation.screen.home.model
+package me.pecos.memozy.feature.core.viewmodel.model
 
 data class MemoUiState(
     val id: Int,

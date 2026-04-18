@@ -67,7 +67,7 @@ import me.pecos.memozy.presentation.components.FloatingNavPill
 import me.pecos.memozy.presentation.screen.donation.DonationScreen
 import me.pecos.memozy.presentation.screen.subscription.SubscriptionScreen
 import me.pecos.memozy.presentation.screen.home.HomeScreen
-import me.pecos.memozy.presentation.screen.home.MainViewModel
+import me.pecos.memozy.feature.core.viewmodel.MainViewModel
 import me.pecos.memozy.presentation.screen.login.LoginScreen
 import me.pecos.memozy.presentation.screen.settings.SettingsScreen
 import me.pecos.memozy.presentation.screen.settings.SettingsViewModel
@@ -325,7 +325,7 @@ class MainActivity : AppCompatActivity() {
                                     )
                                 }
                                 composable(HomeRoute.TRASH) {
-                                    val trashViewModel: me.pecos.memozy.presentation.screen.trash.TrashViewModel = koinViewModel()
+                                    val trashViewModel: me.pecos.memozy.feature.core.viewmodel.TrashViewModel = koinViewModel()
                                     me.pecos.memozy.presentation.screen.trash.TrashScreen(
                                         viewModel = trashViewModel,
                                         onBack = { navController.popBackStack() }

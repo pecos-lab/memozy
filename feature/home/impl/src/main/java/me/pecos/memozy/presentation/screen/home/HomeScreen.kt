@@ -70,8 +70,9 @@ import me.pecos.memozy.presentation.components.PopupActionArea
 import me.pecos.memozy.presentation.components.PopupNavigation
 import me.pecos.memozy.presentation.components.PopupSize
 import me.pecos.memozy.feature.core.resource.R
-import me.pecos.memozy.presentation.screen.home.model.HomeUiState
-import me.pecos.memozy.presentation.screen.home.model.SortOrder
+import me.pecos.memozy.feature.core.viewmodel.MainViewModel
+import me.pecos.memozy.feature.core.viewmodel.model.HomeUiState
+import me.pecos.memozy.feature.core.viewmodel.model.SortOrder
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
 

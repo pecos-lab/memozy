@@ -1,4 +1,4 @@
-package me.pecos.memozy.presentation.screen.home
+package me.pecos.memozy.feature.core.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,10 +12,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import me.pecos.memozy.data.repository.model.MemoFormat
-import me.pecos.memozy.presentation.screen.home.model.HomeUiState
-import me.pecos.memozy.presentation.screen.home.model.MemoFormatUi
-import me.pecos.memozy.presentation.screen.home.model.MemoUiState
-import me.pecos.memozy.presentation.screen.home.model.SortOrder
+import me.pecos.memozy.feature.core.viewmodel.model.HomeUiState
+import me.pecos.memozy.feature.core.viewmodel.model.MemoFormatUi
+import me.pecos.memozy.feature.core.viewmodel.model.MemoUiState
+import me.pecos.memozy.feature.core.viewmodel.model.SortOrder
 import me.pecos.memozy.data.datasource.local.entity.Memo
 import me.pecos.memozy.data.repository.MemoRepository
 
