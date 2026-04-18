@@ -10,3 +10,11 @@ local.properties
 .claude/settings.local.json
 .idea/
 .dev.vars
+
+# iOS / Xcode
+xcuserdata/
+*.xcuserstate
+DerivedData/
+/iosApp/build/
+/iosApp/Pods/
+/iosApp/.build/

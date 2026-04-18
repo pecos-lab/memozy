@@ -1,0 +1,37 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+
+// `:shared:umbrella` ─ iOS framework `Shared` export용 umbrella 모듈.
+// `:shared:poc`와 공존: poc는 Room KMP 스파이크(CI kmp-ios-check.yml 검증 대상),
+// umbrella는 iosApp(Xcode)에 링크할 단일 framework 진입점. 역할이 겹치지 않음.
+// Koin 바인딩/iOS 부트스트랩(sharedModule·initKoin·InMemoryMemoRepository)은
+// 전부 `iosMain`에만 배치해 Android compileClasspath에 절대 유입되지 않도록 격리한다.
+plugins {
+    id("memozy.kmp.library")
+}
+
+kotlin {
+    androidLibrary {
+        namespace = "me.pecos.memozy.shared.umbrella"
+    }
+
+    targets.withType<KotlinNativeTarget>().configureEach {
+        binaries.framework {
+            baseName = "Shared"
+            isStatic = true
+            export(projects.feature.core.viewmodel)
+            export(projects.data.repository.memo.api)
+        }
+    }
+
+    sourceSets {
+        commonMain.dependencies {
+            api(projects.feature.core.viewmodel)
+            api(projects.data.repository.memo.api)
+            implementation(projects.datasource.local.memo.api)
+        }
+        iosMain.dependencies {
+            implementation(libs.koin.core)
+            implementation(libs.kotlinx.coroutines.core)
+        }
+    }
+}
