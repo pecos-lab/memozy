@@ -1,7 +1,7 @@
 package me.pecos.memozy.data.datasource.local.entity
 
 import androidx.room.Entity
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 
 @Entity(tableName = "youtube_summary", primaryKeys = ["videoId", "mode", "language"])
 data class YoutubeSummary(
