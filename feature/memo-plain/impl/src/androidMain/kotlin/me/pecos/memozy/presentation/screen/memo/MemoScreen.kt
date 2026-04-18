@@ -165,9 +165,7 @@ private class StyleVisualTransformation(
                         fontWeight = if (style.bold) FontWeight.Bold else null,
                         fontStyle = if (style.italic) FontStyle.Italic else null,
                         textDecoration = if (style.strikethrough) TextDecoration.LineThrough else null,
-                        color = style.color?.let {
-                            try { Color(android.graphics.Color.parseColor(it)) } catch (_: Exception) { Color.Unspecified }
-                        } ?: Color.Unspecified
+                        color = style.color?.let { parseHexColor(it) } ?: Color.Unspecified
                     ),
                     start = style.start,
                     end = style.end

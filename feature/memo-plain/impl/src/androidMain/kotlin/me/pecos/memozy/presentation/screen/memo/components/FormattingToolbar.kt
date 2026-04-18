@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mohamedrejeb.richeditor.model.RichTextState
+import me.pecos.memozy.presentation.screen.memo.parseHexColor
 import me.pecos.memozy.presentation.theme.AppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
 
@@ -103,11 +104,11 @@ fun FormattingToolbar(
             listOf("#000000", "#FF0000", "#FF9800", "#FFEB3B", "#4CAF50", "#2196F3", "#9C27B0", "#795548", "#607D8B").forEach { hex ->
                 Box(
                     modifier = Modifier.size(22.dp).clip(CircleShape)
-                        .background(Color(android.graphics.Color.parseColor(hex)))
+                        .background(parseHexColor(hex))
                         .pointerInput(hex) {
                             detectTapGestures(onPress = {
                                 if (savedColorSelection.start != savedColorSelection.end) {
-                                    richTextState.addSpanStyle(SpanStyle(color = Color(android.graphics.Color.parseColor(hex))), savedColorSelection)
+                                    richTextState.addSpanStyle(SpanStyle(color = parseHexColor(hex)), savedColorSelection)
                                 }
                                 showColorPicker = false; tryAwaitRelease()
                             })
