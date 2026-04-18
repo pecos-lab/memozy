@@ -4,11 +4,8 @@ import kotlinx.coroutines.flow.Flow
 import me.pecos.memozy.data.datasource.remote.auth.AuthService
 import me.pecos.memozy.data.datasource.remote.auth.AuthState
 import me.pecos.memozy.data.datasource.remote.auth.AuthUser
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class AuthRepositoryImpl @Inject constructor(
+class AuthRepositoryImpl(
     private val authService: AuthService,
 ) : AuthRepository {
 
