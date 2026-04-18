@@ -24,7 +24,7 @@ import me.pecos.memozy.data.datasource.local.entity.YoutubeSummary
         YoutubeSummary::class,
         AiUsage::class
     ],
-    version = 18,
+    version = MEMO_DB_VERSION,
     exportSchema = true
 )
 @TypeConverters(MemoFormatConverter::class)

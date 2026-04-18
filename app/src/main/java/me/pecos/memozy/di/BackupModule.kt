@@ -13,14 +13,13 @@ import me.pecos.memozy.data.backup.BackupRepository
 import me.pecos.memozy.data.backup.BackupRepositoryImpl
 import me.pecos.memozy.data.datasource.local.AiUsageDao
 import me.pecos.memozy.data.datasource.local.CategoryDao
+import me.pecos.memozy.data.datasource.local.MEMO_DB_VERSION
 import me.pecos.memozy.data.datasource.local.MemoDao
 import me.pecos.memozy.data.datasource.local.YoutubeSummaryDao
 import me.pecos.memozy.data.datasource.local.chat.ChatMessageDao
 import me.pecos.memozy.data.datasource.local.chat.ChatSessionDao
 import me.pecos.memozy.data.datasource.remote.auth.AuthService
 import javax.inject.Singleton
-
-private const val BACKUP_DB_VERSION = 17
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -54,7 +53,7 @@ object BackupModule {
             supabaseClient = supabaseClient,
             deviceName = deviceName,
             appVersion = appVersion,
-            dbVersion = BACKUP_DB_VERSION,
+            dbVersion = MEMO_DB_VERSION,
         )
     }
 }
