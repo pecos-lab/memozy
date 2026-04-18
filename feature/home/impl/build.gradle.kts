@@ -123,6 +123,7 @@ kotlin {
                 implementation(projects.platform.billing.api)
                 implementation(projects.platform.ads.api)
                 implementation(projects.platform.credential.api)
+                implementation(projects.platform.intent.api)
                 implementation(libs.androidx.lifecycle.runtime.ktx)
                 implementation(libs.androidx.activity.compose)
                 implementation(libs.androidx.compose.navigation)

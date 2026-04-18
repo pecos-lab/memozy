@@ -1,7 +1,5 @@
 package me.pecos.memozy.presentation.screen.subscription
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -36,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -44,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.platform.billing.BillingService
 import me.pecos.memozy.platform.billing.PurchaseState
+import me.pecos.memozy.platform.intent.UrlLauncher
 import org.koin.compose.koinInject
 import me.pecos.memozy.presentation.components.AppPopup
 import me.pecos.memozy.presentation.components.PopupActionArea
@@ -65,7 +63,7 @@ fun SubscriptionScreen(
     val colors = LocalAppColors.current
     val fontSettings = LocalFontSettings.current
     val activity = LocalActivity.current
-    val context = LocalContext.current
+    val urlLauncher: UrlLauncher = koinInject()
     val isSystemDark = colors.screenBackground == Color(0xFF1C1C1E)
 
     if (purchaseState is PurchaseState.Success) {
@@ -301,9 +299,7 @@ fun SubscriptionScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
-                            context.startActivity(
-                                Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/account/subscriptions"))
-                            )
+                            urlLauncher.open("https://play.google.com/store/account/subscriptions")
                         }
                         .padding(12.dp)
                 )
