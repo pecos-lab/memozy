@@ -1,0 +1,277 @@
+package me.pecos.memozy.data.datasource.local.migration
+
+import androidx.room.migration.Migration
+import androidx.sqlite.SQLiteConnection
+import androidx.sqlite.execSQL
+import kotlinx.datetime.Clock
+
+val MIGRATION_1_2 = object : Migration(1, 2) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE memo ADD COLUMN createdAt INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE memo ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("CREATE TABLE IF NOT EXISTS `category` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL)")
+        connection.execSQL("INSERT INTO `category` (`id`, `name`) VALUES (1,'일반'),(2,'업무'),(3,'아이디어'),(4,'할 일'),(5,'공부'),(6,'일정'),(7,'가계부'),(8,'운동'),(9,'건강'),(10,'여행'),(11,'쇼핑'),(12,'미분류')")
+
+        connection.execSQL("""
+            CREATE TABLE IF NOT EXISTS `memo_new` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `name` TEXT NOT NULL,
+                `categoryId` INTEGER NOT NULL DEFAULT 12,
+                `content` TEXT NOT NULL,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `format` TEXT NOT NULL DEFAULT 'plain'
+            )
+        """.trimIndent())
+
+        connection.execSQL("""
+            INSERT INTO `memo_new` (`id`, `name`, `categoryId`, `content`, `createdAt`, `updatedAt`, `format`)
+            SELECT `id`, `name`,
+                CASE `sex`
+                    WHEN '일반' THEN 1 WHEN 'General' THEN 1 WHEN '一般' THEN 1
+                    WHEN '업무' THEN 2 WHEN 'Work' THEN 2 WHEN '仕事' THEN 2
+                    WHEN '아이디어' THEN 3 WHEN 'Idea' THEN 3 WHEN 'アイデア' THEN 3
+                    WHEN '할 일' THEN 4 WHEN 'To-Do' THEN 4 WHEN 'やること' THEN 4
+                    WHEN '공부' THEN 5 WHEN 'Study' THEN 5 WHEN '勉強' THEN 5
+                    WHEN '일정' THEN 6 WHEN 'Schedule' THEN 6 WHEN '予定' THEN 6
+                    WHEN '가계부' THEN 7 WHEN 'Budget' THEN 7 WHEN '家計簿' THEN 7
+                    WHEN '운동' THEN 8 WHEN 'Exercise' THEN 8 WHEN '運動' THEN 8
+                    WHEN '건강' THEN 9 WHEN 'Health' THEN 9 WHEN '健康' THEN 9
+                    WHEN '여행' THEN 10 WHEN 'Travel' THEN 10 WHEN '旅行' THEN 10
+                    WHEN '쇼핑' THEN 11 WHEN 'Shopping' THEN 11 WHEN 'ショッピング' THEN 11
+                    ELSE 12
+                END,
+                `killThePecos`, `createdAt`, `updatedAt`, 'plain'
+            FROM `memo`
+        """.trimIndent())
+
+        connection.execSQL("DROP TABLE `memo`")
+        connection.execSQL("ALTER TABLE `memo_new` RENAME TO `memo`")
+    }
+}
+
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("""
+            CREATE TABLE IF NOT EXISTS `chat_session` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `title` TEXT NOT NULL,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `category` TEXT NOT NULL DEFAULT 'general'
+            )
+        """.trimIndent())
+
+        connection.execSQL("""
+            CREATE TABLE IF NOT EXISTS `chat_message` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `sessionId` INTEGER NOT NULL DEFAULT 0,
+                `role` TEXT NOT NULL,
+                `content` TEXT NOT NULL,
+                `timestamp` INTEGER NOT NULL DEFAULT 0,
+                `metadata` TEXT,
+                FOREIGN KEY (`sessionId`) REFERENCES `chat_session`(`id`) ON DELETE CASCADE
+            )
+        """.trimIndent())
+
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_chat_message_sessionId` ON `chat_message` (`sessionId`)")
+    }
+}
+
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("""
+            CREATE TABLE IF NOT EXISTS `youtube_summary` (
+                `videoId` TEXT NOT NULL PRIMARY KEY,
+                `url` TEXT NOT NULL,
+                `summary` TEXT NOT NULL,
+                `createdAt` INTEGER NOT NULL DEFAULT 0
+            )
+        """.trimIndent())
+    }
+}
+
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("""
+            CREATE TABLE IF NOT EXISTS `ai_usage` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `feature` TEXT NOT NULL,
+                `usedAt` INTEGER NOT NULL DEFAULT 0
+            )
+        """.trimIndent())
+    }
+}
+
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE memo ADD COLUMN isPinned INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
+val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE memo ADD COLUMN audioPath TEXT DEFAULT NULL")
+    }
+}
+
+val MIGRATION_9_10 = object : Migration(9, 10) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE memo ADD COLUMN styles TEXT DEFAULT NULL")
+    }
+}
+
+val MIGRATION_10_11 = object : Migration(10, 11) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("""
+            CREATE TABLE IF NOT EXISTS `tag` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `name` TEXT NOT NULL,
+                `emoji` TEXT NOT NULL DEFAULT '🏷️',
+                `createdAt` INTEGER NOT NULL DEFAULT 0
+            )
+        """.trimIndent())
+
+        connection.execSQL("""
+            CREATE TABLE IF NOT EXISTS `memo_tag` (
+                `memoId` INTEGER NOT NULL,
+                `tagId` INTEGER NOT NULL,
+                PRIMARY KEY(`memoId`, `tagId`),
+                FOREIGN KEY(`memoId`) REFERENCES `memo`(`id`) ON DELETE CASCADE,
+                FOREIGN KEY(`tagId`) REFERENCES `tag`(`id`) ON DELETE CASCADE
+            )
+        """.trimIndent())
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_memo_tag_memoId` ON `memo_tag` (`memoId`)")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_memo_tag_tagId` ON `memo_tag` (`tagId`)")
+
+        val categoryEmojis = mapOf(
+            1 to "📝", 2 to "💼", 3 to "💡", 4 to "✅", 5 to "📚",
+            6 to "📅", 7 to "💰", 8 to "🏃", 9 to "🏥", 10 to "✈️", 11 to "🛒"
+        )
+
+        data class CategoryRow(val id: Int, val name: String, val emoji: String)
+        val rows = mutableListOf<CategoryRow>()
+
+        connection.prepare("SELECT DISTINCT categoryId FROM memo WHERE categoryId BETWEEN 1 AND 11").use { stmt ->
+            while (stmt.step()) {
+                val catId = stmt.getInt(0)
+                val emoji = categoryEmojis[catId] ?: "🏷️"
+                var name = "태그$catId"
+                connection.prepare("SELECT name FROM category WHERE id = ?").use { nameStmt ->
+                    nameStmt.bindInt(1, catId)
+                    if (nameStmt.step()) name = nameStmt.getText(0)
+                }
+                rows += CategoryRow(catId, name, emoji)
+            }
+        }
+
+        val now = Clock.System.now().toEpochMilliseconds()
+        rows.forEach { row ->
+            connection.prepare("INSERT OR IGNORE INTO `tag` (`id`, `name`, `emoji`, `createdAt`) VALUES (?, ?, ?, ?)").use { stmt ->
+                stmt.bindInt(1, row.id)
+                stmt.bindText(2, row.name)
+                stmt.bindText(3, row.emoji)
+                stmt.bindLong(4, now)
+                stmt.step()
+            }
+        }
+
+        connection.execSQL("INSERT OR IGNORE INTO `memo_tag` (`memoId`, `tagId`) SELECT `id`, `categoryId` FROM `memo` WHERE `categoryId` BETWEEN 1 AND 11")
+    }
+}
+
+val MIGRATION_11_12 = object : Migration(11, 12) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE memo ADD COLUMN youtubeUrl TEXT DEFAULT NULL")
+    }
+}
+
+val MIGRATION_12_13 = object : Migration(12, 13) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE memo ADD COLUMN deletedAt INTEGER DEFAULT NULL")
+    }
+}
+
+val MIGRATION_13_14 = object : Migration(13, 14) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE memo ADD COLUMN reminderAt INTEGER DEFAULT NULL")
+    }
+}
+
+val MIGRATION_14_15 = object : Migration(14, 15) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE memo ADD COLUMN summaryContent TEXT DEFAULT NULL")
+
+        data class SummaryUpdate(val id: Int, val body: String, val summary: String)
+        val updates = mutableListOf<SummaryUpdate>()
+
+        connection.prepare("SELECT id, content FROM memo WHERE content LIKE '%📋%'").use { stmt ->
+            while (stmt.step()) {
+                val id = stmt.getInt(0)
+                val content = stmt.getText(1)
+                val idx = content.indexOf("📋")
+                if (idx >= 0) {
+                    val body = if (idx > 0) content.substring(0, idx).trim() else ""
+                    val summary = content.substring(idx)
+                    updates += SummaryUpdate(id, body, summary)
+                }
+            }
+        }
+
+        updates.forEach { u ->
+            connection.prepare("UPDATE memo SET content = ?, summaryContent = ? WHERE id = ?").use { stmt ->
+                stmt.bindText(1, u.body)
+                stmt.bindText(2, u.summary)
+                stmt.bindInt(3, u.id)
+                stmt.step()
+            }
+        }
+    }
+}
+
+val MIGRATION_15_16 = object : Migration(15, 16) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("DROP TABLE IF EXISTS `youtube_summary`")
+        connection.execSQL("""
+            CREATE TABLE IF NOT EXISTS `youtube_summary` (
+                `videoId` TEXT NOT NULL,
+                `mode` TEXT NOT NULL DEFAULT 'SIMPLE',
+                `language` TEXT NOT NULL DEFAULT 'ko',
+                `url` TEXT NOT NULL,
+                `summary` TEXT NOT NULL,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                PRIMARY KEY(`videoId`, `mode`, `language`)
+            )
+        """.trimIndent())
+    }
+}
+
+val MIGRATION_16_17 = object : Migration(16, 17) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("DROP TABLE IF EXISTS `memo_tag`")
+        connection.execSQL("DROP TABLE IF EXISTS `tag`")
+    }
+}
+
+val MIGRATION_17_18 = object : Migration(17, 18) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE memo ADD COLUMN isSummaryExpanded INTEGER NOT NULL DEFAULT 1")
+    }
+}
+
+val ALL_MEMO_MIGRATIONS: Array<Migration> = arrayOf(
+    MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6,
+    MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11,
+    MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16,
+    MIGRATION_16_17, MIGRATION_17_18
+)

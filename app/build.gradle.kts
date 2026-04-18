@@ -44,7 +44,10 @@ dependencies {
     // 모듈 - Hilt 바인딩을 위해 implementation 필요
     implementation(projects.datasource.local.memo.impl)
     implementation(projects.datasource.local.memo.api) // 위젯에서 Memo 엔티티 참조
+    implementation(projects.datasource.local.chat.api) // MemoDatabaseModule의 ChatSessionDao / ChatMessageDao provider
     implementation(projects.datasource.local.chat.impl)
+    // Room: MemoDatabaseModule이 Builder/Migration/Callback API 직접 사용 (memo/impl이 KMP로 전환되며 implementation dep이 transitive로 노출 안 됨)
+    implementation(libs.room.runtime)
     implementation(projects.datasource.remote.ai.impl)
     implementation(projects.datasource.remote.auth.api)
     implementation(projects.datasource.remote.auth.impl)
