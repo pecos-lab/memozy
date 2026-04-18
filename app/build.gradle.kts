@@ -73,6 +73,7 @@ dependencies {
     implementation(projects.data.repository.memo.impl)
     implementation(projects.data.repository.memo.api) // 위젯에서 MemoRepository 참조
     implementation(projects.data.repository.chat.impl)
+    implementation(projects.data.repository.chat.api) // ChatRepositoryModule의 ChatRepository 바인딩 참조
     implementation(projects.data.repository.user.impl)
     implementation(projects.data.backup.impl)
     implementation(projects.feature.core.resource)

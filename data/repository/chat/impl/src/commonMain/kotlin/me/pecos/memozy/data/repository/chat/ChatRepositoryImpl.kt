@@ -1,15 +1,17 @@
 package me.pecos.memozy.data.repository.chat
 
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.flow.Flow
 import me.pecos.memozy.data.datasource.local.chat.ChatMessageDao
 import me.pecos.memozy.data.datasource.local.chat.ChatSessionDao
 import me.pecos.memozy.data.datasource.local.chat.entity.ChatMessage
 import me.pecos.memozy.data.datasource.local.chat.entity.ChatSession
-import javax.inject.Inject
 
-class ChatRepositoryImpl @Inject constructor(
+@OptIn(ExperimentalTime::class)
+class ChatRepositoryImpl(
     private val sessionDao: ChatSessionDao,
-    private val messageDao: ChatMessageDao
+    private val messageDao: ChatMessageDao,
 ) : ChatRepository {
 
     override fun getSessions(): Flow<List<ChatSession>> = sessionDao.getAllSessions()
@@ -23,7 +25,7 @@ class ChatRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateSession(session: ChatSession) {
-        sessionDao.updateSession(session.copy(updatedAt = System.currentTimeMillis()))
+        sessionDao.updateSession(session.copy(updatedAt = Clock.System.now().toEpochMilliseconds()))
     }
 
     override suspend fun deleteSession(id: Int) {
@@ -37,14 +39,14 @@ class ChatRepositoryImpl @Inject constructor(
         sessionId: Int,
         role: String,
         content: String,
-        metadata: String?
+        metadata: String?,
     ): Long {
         return messageDao.insertMessage(
             ChatMessage(
                 sessionId = sessionId,
                 role = role,
                 content = content,
-                metadata = metadata
+                metadata = metadata,
             )
         )
     }

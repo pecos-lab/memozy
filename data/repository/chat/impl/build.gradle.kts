@@ -1,14 +1,18 @@
-import me.pecos.memozy.convention.extension.setNamespace
-
 plugins {
-    id("memozy.android.library")
-    id("memozy.hilt")
+    id("memozy.kmp.library")
 }
 
-setNamespace("data.repository.chat.impl")
+kotlin {
+    androidLibrary {
+        namespace = "me.pecos.memozy.data.repository.chat.impl"
+    }
 
-dependencies {
-    implementation(projects.data.repository.chat.api)
-    implementation(projects.datasource.local.chat.api)
-    implementation(libs.kotlinx.coroutines.android)
+    sourceSets {
+        commonMain.dependencies {
+            implementation(projects.data.repository.chat.api)
+            implementation(projects.datasource.local.chat.api)
+            implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.datetime)
+        }
+    }
 }
