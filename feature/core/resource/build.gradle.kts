@@ -23,3 +23,8 @@ kotlin {
         }
     }
 }
+
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "me.pecos.memozy.feature.core.resource.generated.resources"
+}
