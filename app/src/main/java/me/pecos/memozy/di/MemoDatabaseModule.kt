@@ -33,20 +33,26 @@ object MemoDatabaseModule {
     }
 
     @Provides
+    @Singleton
     fun provideMemoDao(database: MemoDatabase): MemoDao = database.memoDao()
 
     @Provides
+    @Singleton
     fun provideCategoryDao(database: MemoDatabase): CategoryDao = database.categoryDao()
 
     @Provides
+    @Singleton
     fun provideChatSessionDao(database: MemoDatabase): ChatSessionDao = database.chatSessionDao()
 
     @Provides
+    @Singleton
     fun provideChatMessageDao(database: MemoDatabase): ChatMessageDao = database.chatMessageDao()
 
     @Provides
+    @Singleton
     fun provideYoutubeSummaryDao(database: MemoDatabase): YoutubeSummaryDao = database.youtubeSummaryDao()
 
     @Provides
+    @Singleton
     fun provideAiUsageDao(database: MemoDatabase): AiUsageDao = database.aiUsageDao()
 }
