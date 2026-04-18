@@ -1,18 +1,20 @@
-package me.pecos.memozy.data.repository.user.di
+package me.pecos.memozy.di
 
-import dagger.Binds
 import dagger.Module
+import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import me.pecos.memozy.data.datasource.remote.auth.AuthService
 import me.pecos.memozy.data.repository.user.AuthRepository
 import me.pecos.memozy.data.repository.user.AuthRepositoryImpl
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class UserRepositoryModule {
+object UserRepositoryModule {
 
-    @Binds
+    @Provides
     @Singleton
-    abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
+    fun provideAuthRepository(authService: AuthService): AuthRepository =
+        AuthRepositoryImpl(authService)
 }
