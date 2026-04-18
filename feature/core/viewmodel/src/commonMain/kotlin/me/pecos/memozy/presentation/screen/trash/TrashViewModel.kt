@@ -2,6 +2,8 @@ package me.pecos.memozy.presentation.screen.trash
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -11,6 +13,7 @@ import me.pecos.memozy.data.repository.MemoRepository
 import me.pecos.memozy.presentation.screen.home.model.MemoUiState
 import me.pecos.memozy.presentation.screen.home.toUiState
 
+@OptIn(ExperimentalTime::class)
 class TrashViewModel(
     private val repository: MemoRepository
 ) : ViewModel() {
@@ -18,7 +21,7 @@ class TrashViewModel(
     init {
         // 30일 지난 메모 자동 영구 삭제
         viewModelScope.launch {
-            val threshold = System.currentTimeMillis() - 30L * 24 * 60 * 60 * 1000
+            val threshold = Clock.System.now().toEpochMilliseconds() - 30L * 24 * 60 * 60 * 1000
             repository.purgeOldTrash(threshold)
         }
     }

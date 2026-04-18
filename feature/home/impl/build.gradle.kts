@@ -26,6 +26,7 @@ android {
 dependencies {
     implementation(projects.feature.home.api)
     implementation(projects.feature.core.resource)
+    implementation(projects.feature.core.viewmodel)
     implementation(projects.feature.memoPlain.api)
     implementation(projects.datasource.local.memo.api)
     implementation(projects.data.repository.memo.api)

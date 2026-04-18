@@ -10,6 +10,7 @@ setNamespace("feature.memoplain.impl")
 dependencies {
     implementation(projects.feature.memoPlain.api)
     implementation(projects.feature.core.resource)
+    implementation(projects.feature.core.viewmodel)
     implementation(projects.datasource.local.memo.api)
     implementation(projects.data.repository.memo.api)
     implementation(projects.datasource.remote.ai.api)
