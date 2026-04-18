@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.Clock
 import me.pecos.memozy.data.datasource.local.entity.Memo
 
 @Dao
@@ -33,10 +34,10 @@ interface MemoDao {
     // ── Trash (Soft Delete) ──
 
     @Query("UPDATE memo SET deletedAt = :deletedAt, isPinned = 0 WHERE id = :id")
-    suspend fun softDeleteMemoById(id: Int, deletedAt: Long = System.currentTimeMillis())
+    suspend fun softDeleteMemoById(id: Int, deletedAt: Long = Clock.System.now().toEpochMilliseconds())
 
     @Query("UPDATE memo SET deletedAt = :deletedAt, isPinned = 0 WHERE id IN (:ids)")
-    suspend fun softDeleteMemosByIds(ids: List<Int>, deletedAt: Long = System.currentTimeMillis())
+    suspend fun softDeleteMemosByIds(ids: List<Int>, deletedAt: Long = Clock.System.now().toEpochMilliseconds())
 
     @Query("UPDATE memo SET deletedAt = NULL WHERE id = :id")
     suspend fun restoreMemoById(id: Int)
