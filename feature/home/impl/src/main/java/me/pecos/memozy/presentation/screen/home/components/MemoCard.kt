@@ -30,7 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import me.pecos.memozy.presentation.screen.home.model.MemoUiState
+import me.pecos.memozy.feature.core.viewmodel.model.MemoUiState
 import me.pecos.memozy.presentation.screen.home.model.parseSummaryEntries
 import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.presentation.screen.home.util.formatMemoTime

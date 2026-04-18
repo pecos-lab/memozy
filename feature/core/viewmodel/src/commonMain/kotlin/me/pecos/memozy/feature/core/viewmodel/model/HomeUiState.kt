@@ -1,6 +1,4 @@
-package me.pecos.memozy.presentation.screen.home.model
-
-import me.pecos.memozy.presentation.screen.home.model.MemoUiState
+package me.pecos.memozy.feature.core.viewmodel.model
 
 sealed interface HomeUiState {
     data object Loading : HomeUiState

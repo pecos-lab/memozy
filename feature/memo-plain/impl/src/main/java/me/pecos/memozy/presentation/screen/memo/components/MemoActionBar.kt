@@ -23,7 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import me.pecos.memozy.presentation.screen.home.model.MemoUiState
+import me.pecos.memozy.feature.core.viewmodel.model.MemoUiState
 import me.pecos.memozy.presentation.screen.memo.SummaryMode
 import me.pecos.memozy.presentation.theme.AppColors
 

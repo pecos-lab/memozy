@@ -46,7 +46,8 @@ import me.pecos.memozy.presentation.components.AppPopup
 import me.pecos.memozy.presentation.components.PopupActionArea
 import me.pecos.memozy.presentation.components.PopupNavigation
 import me.pecos.memozy.presentation.components.PopupSize
-import me.pecos.memozy.presentation.screen.home.model.MemoUiState
+import me.pecos.memozy.feature.core.viewmodel.TrashViewModel
+import me.pecos.memozy.feature.core.viewmodel.model.MemoUiState
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
 import java.text.SimpleDateFormat

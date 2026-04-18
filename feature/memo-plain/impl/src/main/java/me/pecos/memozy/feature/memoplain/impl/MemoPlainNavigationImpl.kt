@@ -57,8 +57,8 @@ import me.pecos.memozy.data.repository.MemoRepository
 import me.pecos.memozy.data.repository.model.MemoFormat
 import me.pecos.memozy.feature.memoplain.api.MemoPlainNavigation
 import me.pecos.memozy.feature.memoplain.api.MemoPlainRoute
-import me.pecos.memozy.presentation.screen.home.model.MemoFormatUi
-import me.pecos.memozy.presentation.screen.home.model.MemoUiState
+import me.pecos.memozy.feature.core.viewmodel.model.MemoFormatUi
+import me.pecos.memozy.feature.core.viewmodel.model.MemoUiState
 import me.pecos.memozy.presentation.screen.memo.MemoScreen
 import me.pecos.memozy.presentation.screen.memo.components.AiLimitBottomSheet
 import me.pecos.memozy.presentation.theme.LocalAppColors

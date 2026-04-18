@@ -1,4 +1,4 @@
-package me.pecos.memozy.presentation.screen.home.model
+package me.pecos.memozy.feature.core.viewmodel.model
 
 // UI layer enum — Composable / UiState에서 사용
 enum class MemoFormatUi {

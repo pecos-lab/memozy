@@ -84,6 +84,7 @@ dependencies {
     implementation(projects.data.repository.user.api) // UserRepositoryModule의 AuthRepository 바인딩 참조
     implementation(projects.data.backup.impl)
     implementation(projects.feature.core.resource)
+    implementation(projects.feature.core.viewmodel) // ViewModelModule의 MainViewModel/TrashViewModel/SettingsViewModel 바인딩 참조
     implementation(projects.feature.home.impl)
     implementation(projects.feature.memoPlain.impl)
 

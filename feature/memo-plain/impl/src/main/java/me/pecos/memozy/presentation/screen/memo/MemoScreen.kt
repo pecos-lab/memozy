@@ -110,7 +110,7 @@ import com.wanted.android.wanted.design.theme.DesignSystemTheme
 import com.wanted.android.wanted.design.input.textinput.textfield.WantedTextField
 import com.wanted.android.wanted.design.input.textinput.textarea.WantedTextArea
 import androidx.compose.runtime.mutableStateListOf
-import me.pecos.memozy.presentation.screen.home.model.MemoUiState
+import me.pecos.memozy.feature.core.viewmodel.model.MemoUiState
 import me.pecos.memozy.presentation.screen.home.model.SummaryEntry
 import me.pecos.memozy.presentation.screen.home.model.parseSummaryEntries
 import me.pecos.memozy.presentation.screen.home.model.toJson
