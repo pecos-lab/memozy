@@ -132,6 +132,7 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.android)
                 implementation(compose.materialIconsExtended)
                 implementation(libs.koin.androidx.compose)
+                implementation(libs.androidx.compose.ui.tooling.preview)
             }
         }
     }
