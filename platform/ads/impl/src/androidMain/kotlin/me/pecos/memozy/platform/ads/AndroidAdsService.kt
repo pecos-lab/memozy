@@ -21,7 +21,9 @@ sealed class RewardAdState {
     data class Error(val message: String) : RewardAdState()
 }
 
-class AndroidAdsService(
+fun provideAdsService(context: Context): AdsService = AndroidAdsService(context)
+
+internal class AndroidAdsService(
     context: Context,
 ) : AdsService {
 

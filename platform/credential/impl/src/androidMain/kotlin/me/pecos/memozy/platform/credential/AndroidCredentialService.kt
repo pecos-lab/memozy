@@ -7,7 +7,9 @@ import androidx.credentials.exceptions.GetCredentialCancellationException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 
-class AndroidCredentialService(
+fun provideCredentialService(context: Context): CredentialService = AndroidCredentialService(context)
+
+internal class AndroidCredentialService(
     context: Context,
 ) : CredentialService {
 

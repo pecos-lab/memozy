@@ -28,7 +28,6 @@ import org.koin.core.context.startKoin
 class MemozyApplication : Application() {
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val adsService: AdsService by inject()
 
     override fun onCreate() {
         super.onCreate()
@@ -52,6 +51,7 @@ class MemozyApplication : Application() {
                 htmlTextPlatformModule,
             )
         }
+        val adsService: AdsService by inject()
         appScope.launch {
             adsService.initialize()
         }
