@@ -92,6 +92,8 @@ dependencies {
     implementation(projects.platform.billing.impl)
     implementation(projects.platform.ads.impl)
     implementation(projects.platform.credential.impl)
+    implementation(projects.platform.media.impl)
+    implementation(projects.platform.htmltext.impl)
 
     // core android
     implementation(libs.androidx.core.ktx)
