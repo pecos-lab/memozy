@@ -1,8 +1,13 @@
 import java.util.Properties
+import org.gradle.api.DefaultTask
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.ValueSource
 import org.gradle.api.provider.ValueSourceParameters
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.TaskAction
 
 plugins {
     id("memozy.kmp.library")
@@ -15,14 +20,17 @@ val androidNamespace = "me.pecos.memozy.feature.home.impl"
 // local.properties에서 읽은 Google Web Client ID를 androidMain 전용 Kotlin
 // 소스로 생성한다. LoginScreen·SettingsScreen이 import하여 사용한다.
 //
-// Configuration Cache 호환을 위해 다음 원칙을 따른다:
+// 설계 원칙:
 //   1) local.properties 파일은 ValueSource로 읽어 Gradle이 외부 입력으로
-//      추적·직렬화한다. (스크립트 객체 캡처 없음, 파일 변경 시 CC 무효화.)
-//   2) require() 검증은 task action(doLast) 안에서 실행한다. 다른 모듈의
-//      무관한 태스크 실행 시 Configuration 단계에서 빌드가 실패하지 않는다.
-//   3) 검증 실패 시에도 outputs.dir에 파일이 존재하도록 먼저 기록한 뒤
-//      require()를 호출한다. 빈 출력 디렉토리로 남을 경우 후속 incremental
-//      build의 UP-TO-DATE 판정이 오염되므로 방어 필요.
+//      추적·직렬화한다. 스크립트 객체 캡처 없음, 파일 변경 시 CC 무효화.
+//   2) 생성 로직은 abstract class task로 분리한다. @Input/@OutputDirectory
+//      선언으로 Gradle이 incremental/Configuration Cache를 자동 관리하며
+//      task action 내부에서 외부 람다 캡처가 일어나지 않는다.
+//   3) 파일을 먼저 기록한 뒤 require()로 검증을 수행한다. require 실패 시
+//      빈 GOOGLE_WEB_CLIENT_ID를 가진 파일이 남지만, 이는 local.properties
+//      수정 시 @Input 해시가 변경되어 task가 재실행되므로 UP-TO-DATE 스킵
+//      위험은 없다. 반대로 outputs.dir가 비어 있는 채로 실패하면 후속
+//      compileAndroidMain이 이전 런의 stale 출력을 참조할 수 있어 방지.
 //   4) clientId 값에 "/\가 포함되어도 Kotlin 문자열 리터럴이 깨지지 않도록
 //      이스케이프 후 파일에 기록한다.
 abstract class LocalPropertyValueSource : ValueSource<String, LocalPropertyValueSource.Parameters> {
@@ -40,42 +48,49 @@ abstract class LocalPropertyValueSource : ValueSource<String, LocalPropertyValue
     }
 }
 
-val googleWebClientIdProvider = providers.of(LocalPropertyValueSource::class) {
-    parameters.propertiesFile.set(rootProject.layout.projectDirectory.file("local.properties"))
-    parameters.key.set("google.web.client.id")
-}
+abstract class GenerateBuildConstantsTask : DefaultTask() {
+    @get:Input
+    abstract val clientId: Property<String>
 
-val generateBuildConstants by tasks.registering {
-    val outputDir = layout.buildDirectory.dir("generated/source/buildConstants/androidMain/kotlin")
-    val packageName = androidNamespace
-    // inputs.property(String, Object)는 Provider 값을 lazy input으로 등록한다
-    // (Gradle 공식 문서 참조: "queried when the task is executed").
-    val clientIdInput = googleWebClientIdProvider.orElse("")
-    outputs.dir(outputDir)
-    inputs.property("clientId", clientIdInput)
-    doLast {
-        val clientId = clientIdInput.get()
-        val escaped = clientId
+    @get:Input
+    abstract val packageName: Property<String>
+
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
+
+    @TaskAction
+    fun generate() {
+        val clientIdValue = clientId.get()
+        val packageNameValue = packageName.get()
+        val escaped = clientIdValue
             .replace("\\", "\\\\")
             .replace("\"", "\\\"")
-        val dir = outputDir.get().asFile.resolve(packageName.replace('.', '/'))
+        val dir = outputDir.get().asFile.resolve(packageNameValue.replace('.', '/'))
         dir.mkdirs()
         dir.resolve("BuildConstants.kt").writeText(
-            """|package $packageName
+            """|package $packageNameValue
                |
                |internal object BuildConstants {
                |    const val GOOGLE_WEB_CLIENT_ID: String = "$escaped"
                |}
                |""".trimMargin()
         )
-        // 파일 생성을 먼저 수행하여 outputs.dir 비어 있지 않도록 보장한 뒤
-        // blank 여부를 검증해 task를 실패시킨다. 다음 실행 시 local.properties
-        // 가 수정되면 inputs 해시 변경으로 재실행된다.
-        require(clientId.isNotBlank()) {
+        require(clientIdValue.isNotBlank()) {
             "google.web.client.id is missing in local.properties — Google 로그인이 " +
                 "invalid_client 에러로 실패합니다. local.properties에 값을 추가하세요."
         }
     }
+}
+
+val googleWebClientIdProvider = providers.of(LocalPropertyValueSource::class) {
+    parameters.propertiesFile.set(rootProject.layout.projectDirectory.file("local.properties"))
+    parameters.key.set("google.web.client.id")
+}
+
+val generateBuildConstants = tasks.register<GenerateBuildConstantsTask>("generateBuildConstants") {
+    clientId.set(googleWebClientIdProvider.orElse(""))
+    packageName.set(androidNamespace)
+    outputDir.set(layout.buildDirectory.dir("generated/source/buildConstants/androidMain/kotlin"))
 }
 
 kotlin {
@@ -91,7 +106,9 @@ kotlin {
         // 순수 Composable commonMain 이전은 후속 PR에서 R.*→compose-resources
         // 마이그레이션과 함께 진행 (Issue #231 Wave 2 follow-up).
         androidMain.configure {
-            kotlin.srcDir(generateBuildConstants)
+            // 명시적으로 task 출력 디렉토리를 source로 등록한다. Gradle이
+            // task → compileAndroidMain 의존성을 자동 연결한다.
+            kotlin.srcDir(generateBuildConstants.map { it.outputDir })
             dependencies {
                 implementation(projects.feature.home.api)
                 implementation(projects.feature.core.resource)
