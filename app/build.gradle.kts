@@ -11,24 +11,32 @@ plugins {
 
 setNamespace("")
 
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) load(file.inputStream())
+}
+
 android {
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "me.pecos.memozy"
         versionCode = 3
         versionName = "1.2603.0"
 
-        val admobAppId = rootProject.file("local.properties").let { file ->
-            if (file.exists()) {
-                val props = Properties()
-                props.load(file.inputStream())
-                props.getProperty("admob.app.id", "ca-app-pub-3940256099942544~3347511713")
-            } else {
-                "ca-app-pub-3940256099942544~3347511713"
-            }
-        }
+        val admobAppId = localProperties.getProperty(
+            "admob.app.id",
+            "ca-app-pub-3940256099942544~3347511713"
+        )
         manifestPlaceholders["admobAppId"] = admobAppId
     }
     buildTypes {
+        debug {
+            buildConfigField("String", "WORKER_URL", "\"${localProperties.getProperty("worker.url", "")}\"")
+            buildConfigField("String", "APP_SECRET_KEY", "\"${localProperties.getProperty("app.secret.key", "")}\"")
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -36,6 +44,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String", "WORKER_URL", "\"${localProperties.getProperty("worker.prod.url", "")}\"")
+            buildConfigField("String", "APP_SECRET_KEY", "\"${localProperties.getProperty("app.prod.secret.key", "")}\"")
         }
     }
 }
@@ -49,6 +59,14 @@ dependencies {
     // Room: MemoDatabaseModule이 Builder/Migration/Callback API 직접 사용 (memo/impl이 KMP로 전환되며 implementation dep이 transitive로 노출 안 됨)
     implementation(libs.room.runtime)
     implementation(projects.datasource.remote.ai.impl)
+    implementation(projects.datasource.remote.ai.api) // AiNetworkModule의 서비스 인터페이스 provider
+    // Ktor: AiNetworkModule이 HttpClient/Json 직접 생성 (ai/impl이 KMP로 전환되며 implementation dep이 transitive로 노출 안 됨)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.okhttp)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.client.logging)
+    implementation(libs.kotlinx.serialization.json)
     implementation(projects.datasource.remote.auth.api)
     implementation(projects.datasource.remote.auth.impl)
     implementation(projects.data.backup.api)

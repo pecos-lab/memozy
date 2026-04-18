@@ -1,36 +1,25 @@
-import me.pecos.memozy.convention.extension.setNamespace
-import java.util.Properties
-
 plugins {
-    id("memozy.android.library")
-    id("memozy.hilt")
-    id("memozy.ktor")
+    id("memozy.kmp.library")
+    alias(libs.plugins.kotlin.serialization)
 }
 
-setNamespace("datasource.remote.ai.impl")
-
-val localProperties = Properties().apply {
-    val file = rootProject.file("local.properties")
-    if (file.exists()) load(file.inputStream())
-}
-
-android {
-    buildFeatures {
-        buildConfig = true
+kotlin {
+    androidLibrary {
+        namespace = "me.pecos.memozy.datasource.remote.ai.impl"
     }
 
-    buildTypes {
-        debug {
-            buildConfigField("String", "WORKER_URL", "\"${localProperties.getProperty("worker.url", "")}\"")
-            buildConfigField("String", "APP_SECRET_KEY", "\"${localProperties.getProperty("app.secret.key", "")}\"")
+    sourceSets {
+        commonMain.dependencies {
+            implementation(projects.datasource.remote.ai.api)
+            implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.serialization.json)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.ktor.client.logging)
         }
-        release {
-            buildConfigField("String", "WORKER_URL", "\"${localProperties.getProperty("worker.prod.url", "")}\"")
-            buildConfigField("String", "APP_SECRET_KEY", "\"${localProperties.getProperty("app.prod.secret.key", "")}\"")
+        androidMain.dependencies {
+            implementation(libs.ktor.client.okhttp)
         }
     }
-}
-
-dependencies {
-    implementation(projects.datasource.remote.ai.api)
 }
