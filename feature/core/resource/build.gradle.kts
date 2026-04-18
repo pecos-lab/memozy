@@ -1,12 +1,21 @@
-import me.pecos.memozy.convention.extension.setNamespace
-
 plugins {
-    id("memozy.android.library")
-    id("memozy.compose")
+    id("memozy.kmp.library")
+    id("memozy.cmp.library")
 }
 
-setNamespace("feature.core.resource")
+kotlin {
+    androidLibrary {
+        namespace = "me.pecos.memozy.feature.core.resource"
+        withHostTestBuilder { }
+        androidResources {
+            enable = true
+        }
+    }
 
-dependencies {
-    api(libs.google.fonts)
+    sourceSets {
+        androidMain.dependencies {
+            api(libs.google.fonts)
+            implementation(compose.materialIconsExtended)
+        }
+    }
 }
