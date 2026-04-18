@@ -1,8 +1,5 @@
 package me.pecos.memozy.presentation.screen.memo.components
 
-import android.content.Context
-import android.content.Intent
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -37,6 +34,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.platform.intent.Sharer
+import me.pecos.memozy.platform.intent.ToastDuration
+import me.pecos.memozy.platform.intent.ToastPresenter
 import me.pecos.memozy.platform.media.MediaService
 import me.pecos.memozy.presentation.theme.AppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
@@ -47,11 +47,13 @@ fun AudioPlayerBar(
     audioPath: String,
     memoTitle: String,
     colors: AppColors,
-    context: Context,
     onDismiss: () -> Unit
 ) {
     val fontSettings = LocalFontSettings.current
     val mediaService: MediaService = koinInject()
+    val sharer: Sharer = koinInject()
+    val toastPresenter: ToastPresenter = koinInject()
+    val savedToDownloadsText = stringResource(R.string.saved_to_downloads)
     var isPlaying by remember { mutableStateOf(false) }
     val audioPlayer = remember(audioPath) {
         mediaService.createAudioPlayer(audioPath).apply {
@@ -81,14 +83,12 @@ fun AudioPlayerBar(
                     val dest = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
                     val target = java.io.File(dest, "memozy_${System.currentTimeMillis()}.m4a")
                     source.copyTo(target, overwrite = true)
-                    Toast.makeText(context, "📁 " + context.getString(R.string.saved_to_downloads), Toast.LENGTH_LONG).show()
+                    toastPresenter.show("📁 $savedToDownloadsText", ToastDuration.Long)
                 })
             Spacer(modifier = Modifier.width(12.dp))
             Icon(Icons.Default.Share, contentDescription = null, tint = colors.textSecondary,
                 modifier = Modifier.size(20.dp).clickable {
-                    val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", java.io.File(audioPath))
-                    val shareIntent = Intent(Intent.ACTION_SEND).apply { type = "audio/mp4"; putExtra(Intent.EXTRA_STREAM, uri); addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) }
-                    context.startActivity(Intent.createChooser(shareIntent, null))
+                    sharer.shareFile(audioPath, "audio/mp4")
                 })
         }
         Icon(Icons.Default.Close, contentDescription = null, tint = colors.textSecondary,

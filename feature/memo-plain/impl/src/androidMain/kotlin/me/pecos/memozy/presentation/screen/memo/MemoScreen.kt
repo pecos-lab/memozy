@@ -2,7 +2,8 @@ package me.pecos.memozy.presentation.screen.memo
 
 import me.pecos.memozy.presentation.util.decodeHtmlEntities
 import me.pecos.memozy.presentation.util.htmlToPlainText
-import android.content.Intent
+import me.pecos.memozy.platform.intent.Sharer
+import org.koin.compose.koinInject
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -242,6 +243,7 @@ fun MemoScreen(
 ) {
     val isNewMemo = existingMemo.id <= 0
     val context = LocalContext.current
+    val sharer: Sharer = koinInject()
     val clipboardManager = LocalClipboardManager.current
     val categories = listOf(
         stringResource(R.string.category_general),
@@ -511,11 +513,7 @@ fun MemoScreen(
                                         append(plainContent)
                                     }
                                 }
-                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                    type = "text/plain"
-                                    putExtra(Intent.EXTRA_TEXT, shareText)
-                                }
-                                context.startActivity(Intent.createChooser(shareIntent, null))
+                                sharer.shareText(shareText)
                             }
                     )
                     Spacer(modifier = Modifier.width(16.dp))
@@ -893,7 +891,6 @@ fun MemoScreen(
                         audioPath = effectiveAudioPath,
                         memoTitle = nameText,
                         colors = colors,
-                        context = context,
                         onDismiss = { audioChipDismissed = true }
                     )
                 }
