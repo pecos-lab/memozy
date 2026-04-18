@@ -1,11 +1,10 @@
 package me.pecos.memozy
 
 import android.app.Application
-import androidx.work.Configuration
-import androidx.work.WorkerFactory
 import com.google.android.gms.ads.MobileAds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import me.pecos.memozy.di.aiNetworkModule
 import me.pecos.memozy.di.authModule
@@ -18,18 +17,11 @@ import me.pecos.memozy.di.viewModelModule
 import me.pecos.memozy.feature.memoplain.impl.di.memoPlainModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.workmanager.koin.workManagerFactory
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import org.koin.core.context.startKoin
 
-class MemozyApplication : Application(), Configuration.Provider, KoinComponent {
+class MemozyApplication : Application() {
 
-    private val workerFactory: WorkerFactory by inject()
-
-    override val workManagerConfiguration: Configuration
-        get() = Configuration.Builder()
-            .setWorkerFactory(workerFactory)
-            .build()
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onCreate() {
         super.onCreate()
@@ -48,7 +40,7 @@ class MemozyApplication : Application(), Configuration.Provider, KoinComponent {
                 memoPlainModule,
             )
         }
-        CoroutineScope(Dispatchers.IO).launch {
+        appScope.launch {
             MobileAds.initialize(this@MemozyApplication)
         }
     }
