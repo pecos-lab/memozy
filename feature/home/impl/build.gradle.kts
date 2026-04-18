@@ -13,12 +13,25 @@ val localProperties = Properties().apply {
 // KMP android library 플러그인(AGP 9.0)은 BuildConfig 생성을 지원하지 않으므로
 // local.properties에서 읽은 Google Web Client ID를 androidMain 전용 Kotlin
 // 소스로 생성한다. LoginScreen·SettingsScreen이 import하여 사용한다.
+//
+// Configuration Cache 호환을 위해 doLast 람다는 outer Project 상태를 직접
+// 캡처하지 않는다. clientId는 providers.provider로 lazy 평가하고,
+// task 내부에서는 inputs.properties["clientId"]를 통해 읽는다.
+val clientIdProvider = providers.provider {
+    val value = localProperties.getProperty("google.web.client.id", "")
+    require(value.isNotBlank()) {
+        "google.web.client.id is missing in local.properties — Google 로그인이 " +
+            "invalid_client 에러로 실패합니다. local.properties에 값을 추가하세요."
+    }
+    value
+}
+
 val generateBuildConstants by tasks.registering {
     val outputDir = layout.buildDirectory.dir("generated/source/buildConstants/androidMain/kotlin")
-    val clientId = localProperties.getProperty("google.web.client.id", "")
     outputs.dir(outputDir)
-    inputs.property("clientId", clientId)
+    inputs.property("clientId", clientIdProvider)
     doLast {
+        val clientId = inputs.properties["clientId"] as String
         val dir = outputDir.get().asFile.resolve("me/pecos/memozy/feature/home/impl")
         dir.mkdirs()
         dir.resolve("BuildConstants.kt").writeText(
@@ -36,18 +49,15 @@ val generateBuildConstants by tasks.registering {
 kotlin {
     androidLibrary {
         namespace = "me.pecos.memozy.feature.home.impl"
-        withHostTestBuilder { }
         androidResources {
             enable = true
         }
     }
 
     sourceSets {
-        commonMain.dependencies {
-            // 순수 Composable commonMain 이전은 후속 PR에서 점진적으로 진행.
-            // 현재 이 모듈의 UI는 모두 androidMain 유지 (BuildConstants·R.*·Android
-            // 위젯에 의존).
-        }
+        // commonMain은 현재 비어 있음.
+        // 순수 Composable commonMain 이전은 후속 PR에서 R.*→compose-resources
+        // 마이그레이션과 함께 진행 (Issue #231 Wave 2 follow-up).
         androidMain.configure {
             kotlin.srcDir(generateBuildConstants)
         }
@@ -77,4 +87,3 @@ kotlin {
         }
     }
 }
-
