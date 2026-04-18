@@ -2,7 +2,7 @@ package me.pecos.memozy.data.datasource.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import me.pecos.memozy.data.repository.model.MemoFormat
 
 @Entity(tableName = "memo")

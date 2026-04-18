@@ -2,7 +2,7 @@ package me.pecos.memozy.data.datasource.local.chat.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 
 @Entity(tableName = "chat_session")
 data class ChatSession(
