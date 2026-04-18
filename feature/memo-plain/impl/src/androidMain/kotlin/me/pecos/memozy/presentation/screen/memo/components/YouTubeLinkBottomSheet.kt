@@ -1,8 +1,6 @@
 package me.pecos.memozy.presentation.screen.memo.components
 
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,9 +25,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.platform.intent.UrlLauncher
 import me.pecos.memozy.presentation.screen.memo.SummaryMode
 import me.pecos.memozy.presentation.theme.AppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,6 +45,7 @@ fun YouTubeLinkBottomSheet(
     onDismiss: () -> Unit,
     onSummarizeAndDismiss: (String, SummaryMode) -> Unit
 ) {
+    val urlLauncher = koinInject<UrlLauncher>()
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(),
@@ -77,7 +78,7 @@ fun YouTubeLinkBottomSheet(
                 modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
                     .clickable {
                         val fullUrl = if (url.startsWith("http")) url else "https://$url"
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(fullUrl)))
+                        urlLauncher.open(fullUrl)
                         onDismiss()
                     }
                     .padding(vertical = 14.dp, horizontal = 4.dp),
@@ -92,12 +93,7 @@ fun YouTubeLinkBottomSheet(
                 modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
                     .clickable {
                         val fullUrl = if (url.startsWith("http")) url else "https://$url"
-                        val ytIntent = Intent(Intent.ACTION_VIEW, Uri.parse(fullUrl)).apply {
-                            setPackage("com.google.android.youtube")
-                        }
-                        try { context.startActivity(ytIntent) } catch (_: Exception) {
-                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(fullUrl)))
-                        }
+                        urlLauncher.openPreferringPackage(fullUrl, "com.google.android.youtube")
                         onDismiss()
                     }
                     .padding(vertical = 14.dp, horizontal = 4.dp),

@@ -1,9 +1,6 @@
 package me.pecos.memozy.presentation.screen.memo.components
 
-import android.content.ClipboardManager as AndroidClipboardManager
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -35,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ClipboardManager
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -43,12 +39,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.platform.intent.ClipboardService
+import me.pecos.memozy.platform.intent.UrlLauncher
 import me.pecos.memozy.presentation.components.AppPopup
 import me.pecos.memozy.presentation.components.PopupActionArea
 import me.pecos.memozy.presentation.components.PopupNavigation
 import me.pecos.memozy.presentation.components.PopupSize
 import me.pecos.memozy.presentation.theme.AppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
+import org.koin.compose.koinInject
 
 private val YOUTUBE_URL_REGEX = Regex(
     """(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)[\w\-]+(?:[&?][\w\-=]*)*"""
@@ -57,11 +56,6 @@ private val YOUTUBE_URL_REGEX = Regex(
 private val WEB_URL_REGEX = Regex(
     """https?://\S+"""
 )
-
-private fun getSystemClipboardText(context: Context): String {
-    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? AndroidClipboardManager
-    return clipboard?.primaryClip?.getItemAt(0)?.text?.toString() ?: ""
-}
 
 @Composable
 fun YouTubeUrlDialog(
@@ -72,9 +66,11 @@ fun YouTubeUrlDialog(
     onUrlAdded: (String) -> Unit
 ) {
     val fontSettings = LocalFontSettings.current
+    val clipboardService = koinInject<ClipboardService>()
+    val urlLauncher = koinInject<UrlLauncher>()
     var urlInput by remember { mutableStateOf("") }
     // 다이얼로그가 열릴 때마다 최신 클립보드를 읽도록 key 없이 매번 실행
-    val clipText = getSystemClipboardText(context)
+    val clipText = clipboardService.readPrimaryText() ?: ""
     val isValid = YOUTUBE_URL_REGEX.containsMatchIn(urlInput)
 
     AppPopup(
@@ -126,12 +122,10 @@ fun YouTubeUrlDialog(
             modifier = Modifier
                 .clip(RoundedCornerShape(8.dp))
                 .clickable {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com")).apply {
-                        setPackage("com.google.android.youtube")
-                    }
-                    try { context.startActivity(intent) } catch (_: Exception) {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com")))
-                    }
+                    urlLauncher.openPreferringPackage(
+                        "https://www.youtube.com",
+                        "com.google.android.youtube"
+                    )
                 }
                 .padding(horizontal = 10.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -156,10 +150,10 @@ fun WebUrlDialog(
     onDismiss: () -> Unit,
     onUrlConfirmed: (String) -> Unit
 ) {
-    val context = LocalContext.current
     val fontSettings = LocalFontSettings.current
+    val clipboardService = koinInject<ClipboardService>()
     var webUrlInput by remember { mutableStateOf("") }
-    val clipText = getSystemClipboardText(context)
+    val clipText = clipboardService.readPrimaryText() ?: ""
     val colors = me.pecos.memozy.presentation.theme.LocalAppColors.current
     val isValid = webUrlInput.startsWith("http")
 
@@ -221,6 +215,7 @@ fun WebLinkBottomSheet(
 ) {
     val colors = me.pecos.memozy.presentation.theme.LocalAppColors.current
     val fontSettings = LocalFontSettings.current
+    val urlLauncher = koinInject<UrlLauncher>()
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(),
@@ -248,7 +243,7 @@ fun WebLinkBottomSheet(
                 modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
                     .clickable {
                         val fullUrl = if (url.startsWith("http")) url else "https://$url"
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(fullUrl)))
+                        urlLauncher.open(fullUrl)
                         onDismiss()
                     }
                     .padding(vertical = 14.dp, horizontal = 4.dp),

@@ -1,9 +1,6 @@
 package me.pecos.memozy.presentation.screen.memo.components
 
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -39,9 +36,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.platform.intent.ToastPresenter
+import me.pecos.memozy.platform.intent.UrlLauncher
 import me.pecos.memozy.presentation.screen.memo.SummaryMode
 import me.pecos.memozy.presentation.theme.AppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
+import org.koin.compose.koinInject
 
 @Composable
 fun WebSummaryInlineCard(
@@ -62,6 +62,10 @@ fun WebSummaryInlineCard(
     clipboardManager: ClipboardManager
 ) {
     val fontSettings = LocalFontSettings.current
+    val urlLauncher = koinInject<UrlLauncher>()
+    val toastPresenter = koinInject<ToastPresenter>()
+    val webUrlCopiedMsg = stringResource(R.string.web_url_copied)
+    val copyDoneMsg = stringResource(R.string.memo_copy_done)
 
     // 접힌 상태
     if (!isExpanded) {
@@ -115,7 +119,7 @@ fun WebSummaryInlineCard(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Row(
                     modifier = Modifier.weight(1f).clip(RoundedCornerShape(6.dp)).background(colors.chipBackground)
-                        .clickable { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(webUrl))) }
+                        .clickable { urlLauncher.open(webUrl) }
                         .padding(vertical = 5.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
@@ -127,7 +131,7 @@ fun WebSummaryInlineCard(
                     modifier = Modifier.weight(1f).clip(RoundedCornerShape(6.dp)).background(colors.chipBackground)
                         .clickable {
                             clipboardManager.setText(AnnotatedString(webUrl))
-                            Toast.makeText(context, context.getString(R.string.web_url_copied), Toast.LENGTH_SHORT).show()
+                            toastPresenter.show(webUrlCopiedMsg)
                         }
                         .padding(vertical = 5.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -186,7 +190,7 @@ fun WebSummaryInlineCard(
                             .background(colors.chipBackground)
                             .clickable {
                                 clipboardManager.setText(AnnotatedString(summaryText))
-                                Toast.makeText(context, context.getString(R.string.memo_copy_done), Toast.LENGTH_SHORT).show()
+                                toastPresenter.show(copyDoneMsg)
                             }
                             .padding(vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically,

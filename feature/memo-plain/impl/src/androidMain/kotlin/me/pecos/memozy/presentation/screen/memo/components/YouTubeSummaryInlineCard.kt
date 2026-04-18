@@ -1,9 +1,6 @@
 package me.pecos.memozy.presentation.screen.memo.components
 
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,10 +38,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.platform.intent.ToastPresenter
+import me.pecos.memozy.platform.intent.UrlLauncher
 import me.pecos.memozy.presentation.screen.home.model.SummaryEntry
 import me.pecos.memozy.presentation.screen.memo.SummaryMode
 import me.pecos.memozy.presentation.theme.AppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
+import org.koin.compose.koinInject
 
 @Composable
 fun YouTubeSummaryInlineCard(
@@ -70,6 +70,10 @@ fun YouTubeSummaryInlineCard(
     onStyleSelect: (() -> Unit)? = null
 ) {
     val fontSettings = LocalFontSettings.current
+    val urlLauncher = koinInject<UrlLauncher>()
+    val toastPresenter = koinInject<ToastPresenter>()
+    val urlCopiedMsg = stringResource(R.string.youtube_url_copied)
+    val copyDoneMsg = stringResource(R.string.memo_copy_done)
     val hasSummary = summaryEntries.isNotEmpty()
 
     // 접힌 상태
@@ -138,10 +142,7 @@ fun YouTubeSummaryInlineCard(
                     Row(
                         modifier = Modifier.weight(1f).clip(RoundedCornerShape(6.dp)).background(colors.chipBackground)
                             .clickable {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(youtubeUrl)).apply { setPackage("com.google.android.youtube") }
-                                try { context.startActivity(intent) } catch (_: Exception) {
-                                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(youtubeUrl)))
-                                }
+                                urlLauncher.openPreferringPackage(youtubeUrl, "com.google.android.youtube")
                             }
                             .padding(vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -154,7 +155,7 @@ fun YouTubeSummaryInlineCard(
                         modifier = Modifier.weight(1f).clip(RoundedCornerShape(6.dp)).background(colors.chipBackground)
                             .clickable {
                                 clipboardManager.setText(AnnotatedString(youtubeUrl))
-                                Toast.makeText(context, context.getString(R.string.youtube_url_copied), Toast.LENGTH_SHORT).show()
+                                toastPresenter.show(urlCopiedMsg)
                             }
                             .padding(vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -245,7 +246,7 @@ fun YouTubeSummaryInlineCard(
                                 .background(colors.chipBackground)
                                 .clickable {
                                     clipboardManager.setText(AnnotatedString(entry.content))
-                                    Toast.makeText(context, context.getString(R.string.memo_copy_done), Toast.LENGTH_SHORT).show()
+                                    toastPresenter.show(copyDoneMsg)
                                 }
                                 .padding(vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
