@@ -1,16 +1,10 @@
 package me.pecos.memozy.presentation.theme
 
 import androidx.compose.runtime.compositionLocalOf
+import me.pecos.memozy.platform.ads.AdsService
 
 /**
- * 리워드 광고 상태를 앱 전역에서 참조하기 위한 인터페이스.
- * feature/home/impl의 RewardAdManager가 이를 구현합니다.
+ * 리워드 광고 제공자를 앱 전역에서 참조하기 위한 CompositionLocal.
+ * 실제 구현은 platform/ads/impl의 AndroidAdsService가 담당한다.
  */
-interface RewardAdProvider {
-    val isAdReady: Boolean
-    val isAdLoading: Boolean
-    fun loadAd()
-    fun showAd(onRewarded: () -> Unit)
-}
-
-val LocalRewardAdProvider = compositionLocalOf<RewardAdProvider?> { null }
+val LocalRewardAdProvider = compositionLocalOf<AdsService?> { null }

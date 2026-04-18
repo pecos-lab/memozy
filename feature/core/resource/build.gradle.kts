@@ -17,7 +17,8 @@ kotlin {
             api(projects.feature.core.viewmodel)
         }
         androidMain.dependencies {
-            api(libs.google.fonts)
+            implementation(libs.google.fonts)
+            api(projects.platform.ads.api)
             implementation(compose.materialIconsExtended)
         }
     }

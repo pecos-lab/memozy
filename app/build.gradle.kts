@@ -88,6 +88,11 @@ dependencies {
     implementation(projects.feature.home.impl)
     implementation(projects.feature.memoPlain.impl)
 
+    // platform (Android-only) impls wired through Koin modules
+    implementation(projects.platform.billing.impl)
+    implementation(projects.platform.ads.impl)
+    implementation(projects.platform.credential.impl)
+
     // core android
     implementation(libs.androidx.core.ktx)
 
@@ -106,9 +111,6 @@ dependencies {
     // glance widget
     implementation(libs.glance.appwidget)
     implementation(libs.glance.material3)
-
-    // ads
-    implementation(libs.play.services.ads)
 
     // firebase
     implementation(platform(libs.firebase.bom))

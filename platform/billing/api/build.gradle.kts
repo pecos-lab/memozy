@@ -9,6 +9,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            api(projects.feature.core.resource)
             implementation(libs.kotlinx.coroutines.core)
         }
     }
