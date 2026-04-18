@@ -24,20 +24,14 @@ room {
     schemaDirectory("$projectDir/schemas")
 }
 
+// Room KMP (KSP2): 플랫폼별 KSP로 `actual object MemoDatabaseConstructor`와 `MemoDatabase_Impl`을 각 target에 직접 생성.
+// - commonMain: @Database + `expect object` 만 선언, 수동 actual 없음.
+// - kspAndroid: Android target에 자동 wire → compileAndroidMain이 clearAllTables 등 포함된 완전한 _Impl 본다.
+// - kspIos*: macOS 호스트에서만 실행 (Kotlin/Native KSP는 Apple 호스트 필요). CI(kmp-ios-check.yml)가 macos-latest에서 돌림.
+// - Windows 로컬에서는 iOS KSP가 SKIPPED → iOS compile 불가, 하지만 Android 개발에는 지장 없음.
 dependencies {
-    add("kspCommonMainMetadata", libs.room.compiler)
+    add("kspAndroid", libs.room.compiler)
+    add("kspIosX64", libs.room.compiler)
+    add("kspIosArm64", libs.room.compiler)
+    add("kspIosSimulatorArm64", libs.room.compiler)
 }
-
-// kspCommonMainMetadata가 생성한 actual MemoDatabaseConstructor를 commonMain에서 제외.
-// expect 선언이 commonMain에 있어 같은 source set에 actual이 들어오면 "expect/actual in same module" 컴파일 에러.
-// 플랫폼별 actual은 src/{androidMain,iosMain}/.../MemoDatabaseConstructor.*.kt에 수동 작성 → MemoDatabase_Impl() 호출.
-kotlin.sourceSets.named("commonMain") {
-    kotlin.srcDir(layout.buildDirectory.dir("generated/ksp/metadata/commonMain/kotlin"))
-    kotlin.exclude("**/MemoDatabaseConstructor.kt")
-}
-
-tasks.matching { it.name != "kspCommonMainKotlinMetadata" && it.name.startsWith("ksp") }
-    .configureEach { dependsOn("kspCommonMainKotlinMetadata") }
-
-tasks.matching { it.name.startsWith("compileKotlin") || it.name == "sourcesJar" }
-    .configureEach { dependsOn("kspCommonMainKotlinMetadata") }

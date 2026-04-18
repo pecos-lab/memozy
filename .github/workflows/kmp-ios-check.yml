@@ -42,4 +42,7 @@ jobs:
                     :datasource:local:chat:api:compileKotlinIosX64 \
                     :datasource:local:chat:api:compileKotlinIosArm64 \
                     :datasource:local:chat:api:compileKotlinIosSimulatorArm64 \
+                    :datasource:local:memo:impl:compileKotlinIosX64 \
+                    :datasource:local:memo:impl:compileKotlinIosArm64 \
+                    :datasource:local:memo:impl:compileKotlinIosSimulatorArm64 \
                     --no-daemon --stacktrace
