@@ -1,12 +1,19 @@
-import me.pecos.memozy.convention.extension.setNamespace
-
 plugins {
-    id("memozy.android.library")
-    id("memozy.compose")
+    id("memozy.kmp.library")
+    id("memozy.cmp.library")
 }
 
-setNamespace("feature.home.api")
+kotlin {
+    androidLibrary {
+        namespace = "me.pecos.memozy.feature.home.api"
+    }
 
-dependencies {
-    implementation(libs.androidx.compose.navigation)
+    sourceSets {
+        // HomeRoute는 commonMain(plain Kotlin)에서 공유하고,
+        // androidx.navigation-compose를 사용하는 HomeNavigation 인터페이스는
+        // androidMain에 둔다 (2.8.x 라인은 KMP 미지원).
+        androidMain.dependencies {
+            implementation(libs.androidx.compose.navigation)
+        }
+    }
 }
