@@ -45,4 +45,7 @@ jobs:
                     :datasource:local:memo:impl:compileKotlinIosX64 \
                     :datasource:local:memo:impl:compileKotlinIosArm64 \
                     :datasource:local:memo:impl:compileKotlinIosSimulatorArm64 \
+                    :datasource:remote:ai:api:compileKotlinIosX64 \
+                    :datasource:remote:ai:api:compileKotlinIosArm64 \
+                    :datasource:remote:ai:api:compileKotlinIosSimulatorArm64 \
                     --no-daemon --stacktrace
