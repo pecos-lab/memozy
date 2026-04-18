@@ -7,48 +7,36 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import org.json.JSONArray
-import org.json.JSONObject
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
 
+@Serializable
 data class TextSpanStyle(
-    val start: Int,
-    val end: Int,
-    val bold: Boolean = false,
-    val italic: Boolean = false,
-    val strikethrough: Boolean = false,
-    val color: String? = null
+    @SerialName("s") val start: Int,
+    @SerialName("e") val end: Int,
+    @SerialName("b") val bold: Boolean = false,
+    @SerialName("i") val italic: Boolean = false,
+    @SerialName("st") val strikethrough: Boolean = false,
+    @SerialName("c") val color: String? = null
 )
 
-fun List<TextSpanStyle>.toJson(): String {
-    val arr = JSONArray()
-    for (s in this) {
-        val obj = JSONObject()
-        obj.put("s", s.start)
-        obj.put("e", s.end)
-        if (s.bold) obj.put("b", true)
-        if (s.italic) obj.put("i", true)
-        if (s.strikethrough) obj.put("st", true)
-        if (s.color != null) obj.put("c", s.color)
-        arr.put(obj)
-    }
-    return arr.toString()
+private val styleJson = Json {
+    ignoreUnknownKeys = true
+    explicitNulls = false
+    encodeDefaults = false
 }
+
+private val styleListSerializer = ListSerializer(TextSpanStyle.serializer())
+
+fun List<TextSpanStyle>.toJson(): String =
+    styleJson.encodeToString(styleListSerializer, this)
 
 fun String?.toTextSpanStyles(): List<TextSpanStyle> {
     if (this.isNullOrBlank()) return emptyList()
     return try {
-        val arr = JSONArray(this)
-        (0 until arr.length()).map { idx ->
-            val obj = arr.getJSONObject(idx)
-            TextSpanStyle(
-                start = obj.getInt("s"),
-                end = obj.getInt("e"),
-                bold = obj.optBoolean("b", false),
-                italic = obj.optBoolean("i", false),
-                strikethrough = obj.optBoolean("st", false),
-                color = obj.optString("c", null)
-            )
-        }
+        styleJson.decodeFromString(styleListSerializer, this)
     } catch (_: Exception) {
         emptyList()
     }
@@ -120,7 +108,23 @@ fun toggleStyle(
 
 private fun parseHexColor(hex: String): Color {
     return try {
-        Color(android.graphics.Color.parseColor(hex))
+        val cleaned = hex.removePrefix("#")
+        when (cleaned.length) {
+            6 -> {
+                val r = cleaned.substring(0, 2).toInt(16)
+                val g = cleaned.substring(2, 4).toInt(16)
+                val b = cleaned.substring(4, 6).toInt(16)
+                Color(red = r, green = g, blue = b)
+            }
+            8 -> {
+                val a = cleaned.substring(0, 2).toInt(16)
+                val r = cleaned.substring(2, 4).toInt(16)
+                val g = cleaned.substring(4, 6).toInt(16)
+                val b = cleaned.substring(6, 8).toInt(16)
+                Color(red = r, green = g, blue = b, alpha = a)
+            }
+            else -> Color.Unspecified
+        }
     } catch (_: Exception) {
         Color.Unspecified
     }

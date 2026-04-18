@@ -1,6 +1,7 @@
 plugins {
     id("memozy.kmp.library")
     id("memozy.cmp.library")
+    alias(libs.plugins.kotlin.serialization)
 }
 
 kotlin {
@@ -12,7 +13,9 @@ kotlin {
     }
 
     sourceSets {
-        // commonMain은 현재 비어 있음.
+        commonMain.dependencies {
+            implementation(libs.kotlinx.serialization.json)
+        }
         // 순수 Composable commonMain 이전은 후속 PR에서 R.*→compose-resources
         // 마이그레이션과 함께 진행 (Issue #231 Wave 2 follow-up).
         androidMain.configure {
