@@ -36,7 +36,6 @@ dependencies {
     implementation(projects.data.backup.api)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.compose.navigation)
     implementation(libs.haze)
     implementation(libs.kotlinx.datetime)

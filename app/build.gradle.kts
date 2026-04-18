@@ -90,7 +90,6 @@ dependencies {
 
     // core android
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
 
     // date/time
     implementation(libs.kotlinx.datetime)

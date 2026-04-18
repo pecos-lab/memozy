@@ -6,10 +6,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import me.pecos.memozy.di.adsPlatformModule
 import me.pecos.memozy.di.aiNetworkModule
 import me.pecos.memozy.di.authModule
 import me.pecos.memozy.di.backupModule
+import me.pecos.memozy.di.billingPlatformModule
 import me.pecos.memozy.di.chatRepositoryModule
+import me.pecos.memozy.di.credentialPlatformModule
+import me.pecos.memozy.di.htmlTextPlatformModule
+import me.pecos.memozy.di.mediaPlatformModule
 import me.pecos.memozy.di.memoDatabaseModule
 import me.pecos.memozy.di.memoRepositoryModule
 import me.pecos.memozy.di.userRepositoryModule
@@ -38,6 +43,11 @@ class MemozyApplication : Application() {
                 userRepositoryModule,
                 viewModelModule,
                 memoPlainModule,
+                billingPlatformModule,
+                adsPlatformModule,
+                credentialPlatformModule,
+                mediaPlatformModule,
+                htmlTextPlatformModule,
             )
         }
         appScope.launch {
