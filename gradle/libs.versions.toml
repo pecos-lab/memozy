@@ -67,6 +67,7 @@ androidx-compose-foundation-layout = { group = "androidx.compose.foundation", na
 google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts" }
 androidx-compose-navigation = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose"  }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinxCoroutines" }
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 montage-android = { module = "com.github.wanteddev:montage-android", version.ref = "montageAndroid" }
 richeditor-compose = { module = "com.mohamedrejeb.richeditor:richeditor-compose", version.ref = "richeditor" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
