@@ -12,6 +12,8 @@ import org.koin.dsl.module
 val viewModelModule = module {
     viewModel { MainViewModel(get()) }
     viewModel { TrashViewModel(get()) }
+    // SettingsViewModel은 SharedPreferences / Uri 등 Android-only 의존성 때문에 commonMain 이동 보류.
+    // PreferencesProvider·FileUriBridge 추상화 후 별도 PR에서 feature/core/viewmodel로 이전 예정.
     viewModel {
         SettingsViewModel(
             context = androidContext(),

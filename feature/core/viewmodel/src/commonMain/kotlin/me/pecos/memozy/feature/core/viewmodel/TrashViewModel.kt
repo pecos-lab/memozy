@@ -26,8 +26,10 @@ class TrashViewModel(
     @OptIn(ExperimentalTime::class)
     private fun purgeOldTrash() {
         viewModelScope.launch {
-            val threshold = (Clock.System.now() - TRASH_RETENTION).toEpochMilliseconds()
-            repository.purgeOldTrash(threshold)
+            runCatching {
+                val threshold = (Clock.System.now() - TRASH_RETENTION).toEpochMilliseconds()
+                repository.purgeOldTrash(threshold)
+            }.onFailure { it.printStackTrace() }
         }
     }
 
