@@ -1,6 +1,5 @@
 package me.pecos.memozy.presentation.screen.login
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -34,6 +33,7 @@ import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.feature.home.impl.BuildConstants
 import me.pecos.memozy.platform.credential.CredentialService
 import me.pecos.memozy.platform.credential.GoogleSignInResult
+import me.pecos.memozy.platform.intent.ToastPresenter
 import me.pecos.memozy.presentation.theme.LocalActivity
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
@@ -50,6 +50,7 @@ fun LoginScreen(
     val activity = LocalActivity.current
     val scope = rememberCoroutineScope()
     val credentialService: CredentialService = koinInject()
+    val toastPresenter: ToastPresenter = koinInject()
 
     Scaffold(
         containerColor = colors.screenBackground
@@ -92,11 +93,7 @@ fun LoginScreen(
                             is GoogleSignInResult.Cancelled -> Unit
                             is GoogleSignInResult.Error -> {
                                 android.util.Log.e("LoginScreen", "Sign-in failed: ${result.message}")
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.sign_in_error),
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                toastPresenter.show(context.getString(R.string.sign_in_error))
                             }
                         }
                     }

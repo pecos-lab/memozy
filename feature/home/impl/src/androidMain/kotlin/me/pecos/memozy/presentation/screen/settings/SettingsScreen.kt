@@ -1,6 +1,5 @@
 package me.pecos.memozy.presentation.screen.settings
 
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -80,6 +79,8 @@ import me.pecos.memozy.feature.core.viewmodel.settings.LANGUAGES
 import me.pecos.memozy.feature.core.viewmodel.settings.ThemeMode
 import me.pecos.memozy.platform.credential.CredentialService
 import me.pecos.memozy.platform.credential.GoogleSignInResult
+import me.pecos.memozy.platform.intent.AppInfo
+import me.pecos.memozy.platform.intent.ToastPresenter
 import me.pecos.memozy.presentation.theme.LocalActivity
 import org.koin.compose.koinInject
 import me.pecos.memozy.presentation.theme.LocalAppColors
@@ -119,6 +120,8 @@ fun SettingsScreen(
     val activity = LocalActivity.current
     val scope = rememberCoroutineScope()
     val credentialService: CredentialService = koinInject()
+    val toastPresenter: ToastPresenter = koinInject()
+    val appInfo: AppInfo = koinInject()
 
     // 로그인 상태 변경 시 마지막 백업 시간 로드
     LaunchedEffect(authState) {
@@ -140,20 +143,14 @@ fun SettingsScreen(
     LaunchedEffect(backupResult) {
         when (val result = backupResult) {
             is BackupResult.Success -> {
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.backup_success, result.message.toIntOrNull() ?: 0),
-                    Toast.LENGTH_SHORT
-                ).show()
+                toastPresenter.show(
+                    context.getString(R.string.backup_success, result.message.toIntOrNull() ?: 0)
+                )
                 settingsViewModel.clearBackupResult()
             }
 
             is BackupResult.Error -> {
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.backup_error),
-                    Toast.LENGTH_SHORT
-                ).show()
+                toastPresenter.show(context.getString(R.string.backup_error))
                 settingsViewModel.clearBackupResult()
             }
 
@@ -165,32 +162,26 @@ fun SettingsScreen(
     LaunchedEffect(cloudBackupState) {
         when (val state = cloudBackupState) {
             is CloudBackupState.UploadSuccess -> {
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.cloud_backup_success, state.memoCount),
-                    Toast.LENGTH_SHORT
-                ).show()
+                toastPresenter.show(
+                    context.getString(R.string.cloud_backup_success, state.memoCount)
+                )
                 settingsViewModel.clearCloudBackupState()
             }
             is CloudBackupState.RestoreSuccess -> {
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.cloud_backup_restore_success, state.memoCount),
-                    Toast.LENGTH_SHORT
-                ).show()
+                toastPresenter.show(
+                    context.getString(R.string.cloud_backup_restore_success, state.memoCount)
+                )
                 settingsViewModel.clearCloudBackupState()
             }
             is CloudBackupState.Error -> {
-                Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
+                toastPresenter.show(state.message)
                 settingsViewModel.clearCloudBackupState()
             }
             else -> {}
         }
     }
 
-    val versionName = remember {
-        context.packageManager.getPackageInfo(context.packageName, 0).versionName
-    }
+    val versionName = remember(appInfo) { appInfo.versionName }
 
     if (showThemeDialog) {
         val themeOptions = listOf(
@@ -616,11 +607,7 @@ fun SettingsScreen(
                                                 "SettingsAuth",
                                                 "Sign-in failed: ${result.message}"
                                             )
-                                            Toast.makeText(
-                                                context,
-                                                context.getString(R.string.sign_in_error),
-                                                Toast.LENGTH_SHORT
-                                            ).show()
+                                            toastPresenter.show(context.getString(R.string.sign_in_error))
                                         }
                                     }
                                 }
