@@ -96,6 +96,8 @@ dependencies {
     implementation(projects.platform.media.impl)
     implementation(projects.platform.htmltext.api)
     implementation(projects.platform.htmltext.impl)
+    implementation(projects.platform.intent.api)
+    implementation(projects.platform.intent.impl)
 
     // core android
     implementation(libs.androidx.core.ktx)

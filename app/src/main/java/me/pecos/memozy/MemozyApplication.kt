@@ -20,6 +20,7 @@ import me.pecos.memozy.di.userRepositoryModule
 import me.pecos.memozy.di.viewModelModule
 import me.pecos.memozy.feature.memoplain.impl.di.memoPlainModule
 import me.pecos.memozy.platform.ads.AdsService
+import me.pecos.memozy.platform.intent.di.platformIntentModule
 import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.workmanager.koin.workManagerFactory
@@ -49,6 +50,7 @@ class MemozyApplication : Application() {
                 credentialPlatformModule,
                 mediaPlatformModule,
                 htmlTextPlatformModule,
+                platformIntentModule(),
             )
         }
         val adsService: AdsService by inject()
