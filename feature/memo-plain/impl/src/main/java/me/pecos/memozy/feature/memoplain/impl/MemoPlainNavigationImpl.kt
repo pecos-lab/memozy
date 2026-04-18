@@ -65,9 +65,8 @@ import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalIsLoggedIn
 import me.pecos.memozy.presentation.theme.LocalRewardAdProvider
 import me.pecos.memozy.presentation.theme.LocalSubscriptionTier
-import javax.inject.Inject
 
-class MemoPlainNavigationImpl @Inject constructor(
+class MemoPlainNavigationImpl(
     private val repository: MemoRepository,
     private val aiApiService: AIApiService,
     private val youtubeSummaryDao: YoutubeSummaryDao,

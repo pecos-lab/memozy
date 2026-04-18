@@ -28,22 +28,21 @@ import androidx.glance.layout.size
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
-import dagger.hilt.android.EntryPointAccessors
 import me.pecos.memozy.MainActivity
 import me.pecos.memozy.R
 import me.pecos.memozy.data.datasource.local.entity.Memo
+import me.pecos.memozy.data.repository.MemoRepository
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class MemoWidget : GlanceAppWidget() {
+class MemoWidget : GlanceAppWidget(), KoinComponent {
+
+    private val repository: MemoRepository by inject()
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val entryPoint = EntryPointAccessors.fromApplication(
-            context.applicationContext,
-            WidgetEntryPoint::class.java
-        )
-        val repository = entryPoint.memoRepository()
         val memos = repository.getRecentMemos(5)
 
         provideContent {

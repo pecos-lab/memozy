@@ -45,8 +45,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -84,14 +82,14 @@ import androidx.compose.ui.unit.sp
 import me.pecos.memozy.presentation.theme.OverrideNightMode
 import me.pecos.memozy.presentation.theme.darkAppColors
 import me.pecos.memozy.presentation.theme.lightAppColors
-import javax.inject.Inject
+import org.koin.android.ext.android.inject
+import org.koin.androidx.compose.koinViewModel
 
 // ── Activity ───────────────────────────────────────────────────────────────────
 
-@dagger.hilt.android.AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
-    @Inject lateinit var memoPlainNavigation: MemoPlainNavigation
+    private val memoPlainNavigation: MemoPlainNavigation by inject()
 
     private val billingManager by lazy { BillingManager(this) }
     private val rewardAdManager by lazy { me.pecos.memozy.data.ads.RewardAdManager(this, this) }
@@ -142,7 +140,7 @@ class MainActivity : AppCompatActivity() {
         rewardAdManager.loadAd()
 
         setContent {
-            val settingsViewModel: SettingsViewModel = viewModel()
+            val settingsViewModel: SettingsViewModel = koinViewModel()
             val selectedTheme by settingsViewModel.selectedTheme.collectAsState()
             val systemIsDark = LocalConfiguration.current.uiMode and
                     Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
@@ -202,7 +200,7 @@ class MainActivity : AppCompatActivity() {
                     val defaultTextStyle = LocalTextStyle.current.copy(fontFamily = ff)
                     CompositionLocalProvider(LocalTextStyle provides defaultTextStyle) {
 
-                        val viewModel: MainViewModel = viewModel()
+                        val viewModel: MainViewModel = koinViewModel()
                         val navController = rememberNavController()
                         val currentRoute by navController.currentBackStackEntryAsState()
                         val showBottomNav = remember(currentRoute) {
@@ -327,7 +325,7 @@ class MainActivity : AppCompatActivity() {
                                     )
                                 }
                                 composable(HomeRoute.TRASH) {
-                                    val trashViewModel: me.pecos.memozy.presentation.screen.trash.TrashViewModel = hiltViewModel()
+                                    val trashViewModel: me.pecos.memozy.presentation.screen.trash.TrashViewModel = koinViewModel()
                                     me.pecos.memozy.presentation.screen.trash.TrashScreen(
                                         viewModel = trashViewModel,
                                         onBack = { navController.popBackStack() }

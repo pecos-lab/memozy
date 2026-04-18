@@ -1,9 +1,5 @@
 package me.pecos.memozy.di
 
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.createSupabaseClient
@@ -13,28 +9,22 @@ import kotlinx.serialization.json.Json
 import me.pecos.memozy.BuildConfig
 import me.pecos.memozy.data.datasource.remote.auth.AuthService
 import me.pecos.memozy.data.datasource.remote.auth.AuthServiceImpl
-import javax.inject.Singleton
+import org.koin.dsl.module
 
-@Module
-@InstallIn(SingletonComponent::class)
-object AuthModule {
-
-    @Provides
-    @Singleton
-    fun provideSupabaseClient(): SupabaseClient = createSupabaseClient(
-        supabaseUrl = BuildConfig.SUPABASE_URL,
-        supabaseKey = BuildConfig.SUPABASE_ANON_KEY,
-    ) {
-        defaultSerializer = KotlinXSerializer(Json {
-            encodeDefaults = true
-            ignoreUnknownKeys = true
-        })
-        install(Auth)
-        install(Postgrest)
+val authModule = module {
+    single<SupabaseClient> {
+        createSupabaseClient(
+            supabaseUrl = BuildConfig.SUPABASE_URL,
+            supabaseKey = BuildConfig.SUPABASE_ANON_KEY,
+        ) {
+            defaultSerializer = KotlinXSerializer(Json {
+                encodeDefaults = true
+                ignoreUnknownKeys = true
+            })
+            install(Auth)
+            install(Postgrest)
+        }
     }
 
-    @Provides
-    @Singleton
-    fun provideAuthService(supabaseClient: SupabaseClient): AuthService =
-        AuthServiceImpl(supabaseClient)
+    single<AuthService> { AuthServiceImpl(get()) }
 }

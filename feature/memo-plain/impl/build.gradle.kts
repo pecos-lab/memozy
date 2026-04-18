@@ -3,7 +3,6 @@ import me.pecos.memozy.convention.extension.setNamespace
 plugins {
     id("memozy.android.library")
     id("memozy.compose")
-    id("memozy.hilt")
 }
 
 setNamespace("feature.memoplain.impl")
@@ -17,6 +16,7 @@ dependencies {
     implementation(libs.montage.android)
     implementation(libs.androidx.compose.navigation)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.koin.core)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.richeditor.compose)
