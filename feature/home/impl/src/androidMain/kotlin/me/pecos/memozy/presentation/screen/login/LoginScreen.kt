@@ -31,7 +31,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.ui.res.painterResource
 import kotlinx.coroutines.launch
 import me.pecos.memozy.feature.core.resource.R
-import me.pecos.memozy.feature.home.impl.BuildConfig
+import me.pecos.memozy.feature.home.impl.BuildConstants
 import me.pecos.memozy.platform.credential.CredentialService
 import me.pecos.memozy.platform.credential.GoogleSignInResult
 import me.pecos.memozy.presentation.theme.LocalActivity
@@ -85,7 +85,7 @@ fun LoginScreen(
                     scope.launch {
                         val result = credentialService.signInWithGoogle(
                             activity = activity ?: context,
-                            serverClientId = BuildConfig.GOOGLE_WEB_CLIENT_ID,
+                            serverClientId = BuildConstants.GOOGLE_WEB_CLIENT_ID,
                         )
                         when (result) {
                             is GoogleSignInResult.Success -> onSignIn(result.idToken)

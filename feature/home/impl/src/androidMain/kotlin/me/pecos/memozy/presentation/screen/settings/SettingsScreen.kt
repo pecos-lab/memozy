@@ -56,7 +56,7 @@ import androidx.compose.ui.res.painterResource
 import kotlinx.coroutines.launch
 import me.pecos.memozy.data.datasource.remote.auth.AuthState
 import me.pecos.memozy.feature.core.resource.R
-import me.pecos.memozy.feature.home.impl.BuildConfig
+import me.pecos.memozy.feature.home.impl.BuildConstants
 import me.pecos.memozy.presentation.components.AppPopup
 import me.pecos.memozy.presentation.components.PopupActionArea
 import me.pecos.memozy.presentation.components.PopupNavigation
@@ -605,7 +605,7 @@ fun SettingsScreen(
                                 scope.launch {
                                     val result = credentialService.signInWithGoogle(
                                         activity = activity ?: context,
-                                        serverClientId = BuildConfig.GOOGLE_WEB_CLIENT_ID,
+                                        serverClientId = BuildConstants.GOOGLE_WEB_CLIENT_ID,
                                     )
                                     when (result) {
                                         is GoogleSignInResult.Success ->
