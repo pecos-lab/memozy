@@ -41,9 +41,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import me.pecos.memozy.data.billing.BillingManager
-import me.pecos.memozy.data.billing.PurchaseState
 import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.platform.billing.BillingService
+import me.pecos.memozy.platform.billing.PurchaseState
+import org.koin.compose.koinInject
 import me.pecos.memozy.presentation.components.AppPopup
 import me.pecos.memozy.presentation.components.PopupActionArea
 import me.pecos.memozy.presentation.components.PopupNavigation
@@ -56,10 +57,10 @@ import me.pecos.memozy.presentation.theme.LocalSubscriptionTier
 @Composable
 fun SubscriptionScreen(
     onBack: () -> Unit = {},
-    billingManager: BillingManager
+    billingService: BillingService = koinInject(),
 ) {
-    val subscriptionProducts by billingManager.subscriptionProducts.collectAsState()
-    val purchaseState by billingManager.purchaseState.collectAsState()
+    val subscriptionProducts by billingService.subscriptionProducts.collectAsState()
+    val purchaseState by billingService.purchaseState.collectAsState()
     val currentTier = LocalSubscriptionTier.current
     val colors = LocalAppColors.current
     val fontSettings = LocalFontSettings.current
@@ -69,7 +70,7 @@ fun SubscriptionScreen(
 
     if (purchaseState is PurchaseState.Success) {
         AppPopup(
-            onDismissRequest = { billingManager.resetPurchaseState() },
+            onDismissRequest = { billingService.resetPurchaseState() },
             title = stringResource(R.string.subscription_title),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.MEDIUM,
@@ -84,7 +85,7 @@ fun SubscriptionScreen(
 
     if (purchaseState is PurchaseState.Error) {
         AppPopup(
-            onDismissRequest = { billingManager.resetPurchaseState() },
+            onDismissRequest = { billingService.resetPurchaseState() },
             title = stringResource(R.string.donation_error_title),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.MEDIUM,
@@ -241,8 +242,8 @@ fun SubscriptionScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             // ── 구독 상품 카드 ──
-            val monthly = subscriptionProducts.find { it.productId == BillingManager.SUB_PRO_MONTHLY }
-            val yearly = subscriptionProducts.find { it.productId == BillingManager.SUB_PRO_YEARLY }
+            val monthly = subscriptionProducts.find { it.productId == BillingService.SUB_PRO_MONTHLY }
+            val yearly = subscriptionProducts.find { it.productId == BillingService.SUB_PRO_YEARLY }
 
             if (yearly != null) {
                 SubscriptionCard(
@@ -253,7 +254,7 @@ fun SubscriptionScreen(
                     isRecommended = true,
                     onClick = {
                         if (activity != null && !currentTier.isPro) {
-                            billingManager.launchSubscriptionFlow(activity, BillingManager.SUB_PRO_YEARLY)
+                            billingService.launchSubscriptionFlow(activity, BillingService.SUB_PRO_YEARLY)
                         }
                     }
                 )
@@ -267,7 +268,7 @@ fun SubscriptionScreen(
                     isCurrentPlan = currentTier.isPro,
                     onClick = {
                         if (activity != null && !currentTier.isPro) {
-                            billingManager.launchSubscriptionFlow(activity, BillingManager.SUB_PRO_MONTHLY)
+                            billingService.launchSubscriptionFlow(activity, BillingService.SUB_PRO_MONTHLY)
                         }
                     }
                 )
@@ -315,7 +316,7 @@ fun SubscriptionScreen(
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { billingManager.queryExistingSubscriptions() }
+                    .clickable { billingService.queryExistingSubscriptions() }
                     .padding(12.dp)
             )
 

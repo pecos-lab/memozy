@@ -34,9 +34,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.pecos.memozy.feature.core.resource.R
-import me.pecos.memozy.data.billing.BillingManager
-import me.pecos.memozy.data.billing.DonationProduct
-import me.pecos.memozy.data.billing.PurchaseState
+import me.pecos.memozy.platform.billing.BillingService
+import me.pecos.memozy.platform.billing.DonationProduct
+import me.pecos.memozy.platform.billing.PurchaseState
 import me.pecos.memozy.presentation.components.AppPopup
 import me.pecos.memozy.presentation.components.PopupActionArea
 import me.pecos.memozy.presentation.components.PopupNavigation
@@ -44,6 +44,7 @@ import me.pecos.memozy.presentation.components.PopupSize
 import me.pecos.memozy.presentation.theme.LocalActivity
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
+import org.koin.compose.koinInject
 
 private data class DonationTier(
     val productId: String,
@@ -63,22 +64,22 @@ private val DONATION_TIERS = listOf(
 @Composable
 fun DonationScreen(
     onBack: () -> Unit = {},
-    billingManager: BillingManager
+    billingService: BillingService = koinInject(),
 ) {
-    val products by billingManager.products.collectAsState()
-    val purchaseState by billingManager.purchaseState.collectAsState()
-    val isConnected by billingManager.isConnected.collectAsState()
+    val products by billingService.products.collectAsState()
+    val purchaseState by billingService.purchaseState.collectAsState()
+    val isConnected by billingService.isConnected.collectAsState()
     val colors = LocalAppColors.current
     val fontSettings = LocalFontSettings.current
     val activity = LocalActivity.current
 
     LaunchedEffect(Unit) {
-        billingManager.connect()
+        billingService.connect()
     }
 
     if (purchaseState is PurchaseState.Success) {
         AppPopup(
-            onDismissRequest = { billingManager.resetPurchaseState() },
+            onDismissRequest = { billingService.resetPurchaseState() },
             title = stringResource(R.string.donation_thank_title),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.MEDIUM,
@@ -93,7 +94,7 @@ fun DonationScreen(
 
     if (purchaseState is PurchaseState.Error) {
         AppPopup(
-            onDismissRequest = { billingManager.resetPurchaseState() },
+            onDismissRequest = { billingService.resetPurchaseState() },
             title = stringResource(R.string.donation_error_title),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.MEDIUM,
@@ -148,14 +149,14 @@ fun DonationScreen(
 
             DONATION_TIERS.forEach { tier ->
                 val product = products.find { it.productId == tier.productId }
-                val available = billingManager.isProductAvailable(tier.productId)
+                val available = billingService.isProductAvailable(tier.productId)
                 DonationCard(
                     tier = tier,
                     product = product,
                     isConnected = isConnected && available,
                     onClick = {
                         if (activity != null) {
-                            billingManager.launchPurchaseFlow(activity, tier.productId)
+                            billingService.launchPurchaseFlow(activity, tier.productId)
                         }
                     }
                 )

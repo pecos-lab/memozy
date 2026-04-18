@@ -9,7 +9,11 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(projects.platform.ads.api)
+            api(projects.platform.ads.api)
+        }
+        androidMain.dependencies {
+            implementation(libs.play.services.ads)
+            implementation(libs.kotlinx.coroutines.android)
         }
     }
 }

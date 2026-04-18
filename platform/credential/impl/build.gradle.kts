@@ -9,7 +9,12 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(projects.platform.credential.api)
+            api(projects.platform.credential.api)
+        }
+        androidMain.dependencies {
+            implementation(libs.credential.manager)
+            implementation(libs.credential.manager.play)
+            implementation(libs.google.id.identity)
         }
     }
 }

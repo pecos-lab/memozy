@@ -55,8 +55,9 @@ import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
-import me.pecos.memozy.data.billing.BillingManager
 import me.pecos.memozy.data.datasource.remote.auth.AuthState
+import me.pecos.memozy.platform.ads.AdsService
+import me.pecos.memozy.platform.billing.BillingService
 import me.pecos.memozy.presentation.theme.LocalRewardAdProvider
 import me.pecos.memozy.presentation.theme.LocalIsLoggedIn
 import me.pecos.memozy.presentation.theme.LocalSubscriptionTier
@@ -92,8 +93,8 @@ class MainActivity : ComponentActivity() {
 
     private val memoPlainNavigation: MemoPlainNavigation by inject()
 
-    private val billingManager by lazy { BillingManager(this) }
-    private val rewardAdManager by lazy { me.pecos.memozy.data.ads.RewardAdManager(this, this) }
+    private val billingService: BillingService by inject()
+    private val adsService: AdsService by inject()
 
     // 공유 Intent 상태 — singleTask에서 onNewIntent 처리
     private val _currentIntent = androidx.compose.runtime.mutableStateOf<Intent?>(null)
@@ -105,8 +106,9 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        adsService.unbindActivity()
+        billingService.disconnect()
         super.onDestroy()
-        billingManager.disconnect()
     }
 
     override fun attachBaseContext(newBase: Context) {
@@ -137,8 +139,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        billingManager.connect()
-        rewardAdManager.loadAd()
+        adsService.bindActivity(this)
+        billingService.connect()
+        adsService.loadAd()
 
         setContent {
             val settingsViewModel: SettingsViewModel = koinViewModel()
@@ -162,14 +165,14 @@ class MainActivity : ComponentActivity() {
                 appFontFamily = selectedFontFamily
             )
 
-            val currentTier by billingManager.subscriptionTier.collectAsState()
+            val currentTier by billingService.subscriptionTier.collectAsState()
             val authState by settingsViewModel.authState.collectAsState()
             val isLoggedIn = authState is AuthState.Authenticated
 
             CompositionLocalProvider(
                 LocalActivity provides this@MainActivity,
                 LocalSubscriptionTier provides currentTier,
-                LocalRewardAdProvider provides rewardAdManager,
+                LocalRewardAdProvider provides adsService,
                 LocalIsLoggedIn provides isLoggedIn
             ) {
             OverrideNightMode(isDarkTheme = isDarkTheme) {
@@ -335,13 +338,11 @@ class MainActivity : ComponentActivity() {
                                 composable("donation") {
                                     DonationScreen(
                                         onBack = { navController.popBackStack() },
-                                        billingManager = this@MainActivity.billingManager
                                     )
                                 }
                                 composable("subscription") {
                                     SubscriptionScreen(
                                         onBack = { navController.popBackStack() },
-                                        billingManager = this@MainActivity.billingManager
                                     )
                                 }
                                 memoPlainNavigation.registerGraph(

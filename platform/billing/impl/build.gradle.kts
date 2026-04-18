@@ -9,7 +9,11 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(projects.platform.billing.api)
+            api(projects.platform.billing.api)
+        }
+        androidMain.dependencies {
+            implementation(libs.billing.ktx)
+            implementation(libs.kotlinx.coroutines.android)
         }
     }
 }

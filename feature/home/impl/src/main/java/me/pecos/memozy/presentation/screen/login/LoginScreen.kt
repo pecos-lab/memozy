@@ -20,10 +20,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.credentials.CredentialManager
-import androidx.credentials.GetCredentialRequest
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Spacer as SpacerImport
 import androidx.compose.foundation.layout.size
@@ -36,9 +32,12 @@ import androidx.compose.ui.res.painterResource
 import kotlinx.coroutines.launch
 import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.feature.home.impl.BuildConfig
+import me.pecos.memozy.platform.credential.CredentialService
+import me.pecos.memozy.platform.credential.GoogleSignInResult
 import me.pecos.memozy.presentation.theme.LocalActivity
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
+import org.koin.compose.koinInject
 
 @Composable
 fun LoginScreen(
@@ -50,6 +49,7 @@ fun LoginScreen(
     val context = LocalContext.current
     val activity = LocalActivity.current
     val scope = rememberCoroutineScope()
+    val credentialService: CredentialService = koinInject()
 
     Scaffold(
         containerColor = colors.screenBackground
@@ -83,32 +83,21 @@ fun LoginScreen(
             OutlinedButton(
                 onClick = {
                     scope.launch {
-                        try {
-                            val credentialManager = CredentialManager.create(context)
-                            val googleIdOption = GetGoogleIdOption.Builder()
-                                .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
-                                .setFilterByAuthorizedAccounts(false)
-                                .build()
-                            val request = GetCredentialRequest.Builder()
-                                .addCredentialOption(googleIdOption)
-                                .build()
-                            val result = credentialManager.getCredential(
-                                context = activity ?: context,
-                                request = request,
-                            )
-                            val googleIdToken = GoogleIdTokenCredential
-                                .createFrom(result.credential.data)
-                                .idToken
-                            onSignIn(googleIdToken)
-                        } catch (e: androidx.credentials.exceptions.GetCredentialCancellationException) {
-                            // 사용자가 취소 — 무시
-                        } catch (e: Exception) {
-                            android.util.Log.e("LoginScreen", "Sign-in failed", e)
-                            Toast.makeText(
-                                context,
-                                context.getString(R.string.sign_in_error),
-                                Toast.LENGTH_SHORT
-                            ).show()
+                        val result = credentialService.signInWithGoogle(
+                            activity = activity ?: context,
+                            serverClientId = BuildConfig.GOOGLE_WEB_CLIENT_ID,
+                        )
+                        when (result) {
+                            is GoogleSignInResult.Success -> onSignIn(result.idToken)
+                            is GoogleSignInResult.Cancelled -> Unit
+                            is GoogleSignInResult.Error -> {
+                                android.util.Log.e("LoginScreen", "Sign-in failed: ${result.message}")
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.sign_in_error),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                         }
                     }
                 },
