@@ -9,6 +9,8 @@ plugins {
     id("memozy.cmp.library")
 }
 
+val androidNamespace = "me.pecos.memozy.feature.home.impl"
+
 // KMP android library 플러그인(AGP 9.0)은 BuildConfig 생성을 지원하지 않으므로
 // local.properties에서 읽은 Google Web Client ID를 androidMain 전용 Kotlin
 // 소스로 생성한다. LoginScreen·SettingsScreen이 import하여 사용한다.
@@ -16,9 +18,12 @@ plugins {
 // Configuration Cache 호환을 위해 다음 원칙을 따른다:
 //   1) local.properties 파일은 ValueSource로 읽어 Gradle이 외부 입력으로
 //      추적·직렬화한다. (스크립트 객체 캡처 없음, 파일 변경 시 CC 무효화.)
-//   2) require() 검증은 task action(doLast) 안에서만 실행한다. 다른 모듈의
+//   2) require() 검증은 task action(doLast) 안에서 실행한다. 다른 모듈의
 //      무관한 태스크 실행 시 Configuration 단계에서 빌드가 실패하지 않는다.
-//   3) clientId 값에 "/\가 포함되어도 Kotlin 문자열 리터럴이 깨지지 않도록
+//   3) 검증 실패 시에도 outputs.dir에 파일이 존재하도록 먼저 기록한 뒤
+//      require()를 호출한다. 빈 출력 디렉토리로 남을 경우 후속 incremental
+//      build의 UP-TO-DATE 판정이 오염되므로 방어 필요.
+//   4) clientId 값에 "/\가 포함되어도 Kotlin 문자열 리터럴이 깨지지 않도록
 //      이스케이프 후 파일에 기록한다.
 abstract class LocalPropertyValueSource : ValueSource<String, LocalPropertyValueSource.Parameters> {
     interface Parameters : ValueSourceParameters {
@@ -42,35 +47,40 @@ val googleWebClientIdProvider = providers.of(LocalPropertyValueSource::class) {
 
 val generateBuildConstants by tasks.registering {
     val outputDir = layout.buildDirectory.dir("generated/source/buildConstants/androidMain/kotlin")
-    val clientIdInput = googleWebClientIdProvider
+    val packageName = androidNamespace
+    // inputs.property(String, Object)는 Provider 값을 lazy input으로 등록한다
+    // (Gradle 공식 문서 참조: "queried when the task is executed").
+    val clientIdInput = googleWebClientIdProvider.orElse("")
     outputs.dir(outputDir)
-    inputs.property("clientId", clientIdInput.orElse(""))
+    inputs.property("clientId", clientIdInput)
     doLast {
-        val clientId = clientIdInput.orNull.orEmpty()
+        val clientId = clientIdInput.get()
+        val escaped = clientId
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+        val dir = outputDir.get().asFile.resolve(packageName.replace('.', '/'))
+        dir.mkdirs()
+        dir.resolve("BuildConstants.kt").writeText(
+            """|package $packageName
+               |
+               |internal object BuildConstants {
+               |    const val GOOGLE_WEB_CLIENT_ID: String = "$escaped"
+               |}
+               |""".trimMargin()
+        )
+        // 파일 생성을 먼저 수행하여 outputs.dir 비어 있지 않도록 보장한 뒤
+        // blank 여부를 검증해 task를 실패시킨다. 다음 실행 시 local.properties
+        // 가 수정되면 inputs 해시 변경으로 재실행된다.
         require(clientId.isNotBlank()) {
             "google.web.client.id is missing in local.properties — Google 로그인이 " +
                 "invalid_client 에러로 실패합니다. local.properties에 값을 추가하세요."
         }
-        val escaped = clientId
-            .replace("\\", "\\\\")
-            .replace("\"", "\\\"")
-        val dir = outputDir.get().asFile.resolve("me/pecos/memozy/feature/home/impl")
-        dir.mkdirs()
-        dir.resolve("BuildConstants.kt").writeText(
-            """
-            |package me.pecos.memozy.feature.home.impl
-            |
-            |internal object BuildConstants {
-            |    const val GOOGLE_WEB_CLIENT_ID: String = "$escaped"
-            |}
-            """.trimMargin()
-        )
     }
 }
 
 kotlin {
     androidLibrary {
-        namespace = "me.pecos.memozy.feature.home.impl"
+        namespace = androidNamespace
         androidResources {
             enable = true
         }
