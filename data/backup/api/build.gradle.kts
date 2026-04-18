@@ -1,13 +1,17 @@
-import me.pecos.memozy.convention.extension.setNamespace
-
 plugins {
-    id("memozy.android.library")
+    id("memozy.kmp.library")
     alias(libs.plugins.kotlin.serialization)
 }
 
-setNamespace("data.backup.api")
+kotlin {
+    androidLibrary {
+        namespace = "me.pecos.memozy.data.backup.api"
+    }
 
-dependencies {
-    implementation(libs.kotlinx.coroutines.android)
-    implementation(libs.kotlinx.serialization.json)
+    sourceSets {
+        commonMain.dependencies {
+            implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.serialization.json)
+        }
+    }
 }

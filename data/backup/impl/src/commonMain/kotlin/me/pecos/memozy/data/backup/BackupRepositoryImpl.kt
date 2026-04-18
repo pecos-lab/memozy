@@ -1,7 +1,5 @@
 package me.pecos.memozy.data.backup
 
-import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import me.pecos.memozy.data.datasource.local.AiUsageDao
@@ -18,12 +16,8 @@ import me.pecos.memozy.data.datasource.local.entity.Memo
 import me.pecos.memozy.data.datasource.local.entity.YoutubeSummary
 import me.pecos.memozy.data.datasource.remote.auth.AuthService
 import me.pecos.memozy.data.repository.model.MemoFormat
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class BackupRepositoryImpl @Inject constructor(
-    @ApplicationContext private val context: Context,
+class BackupRepositoryImpl(
     private val memoDao: MemoDao,
     private val categoryDao: CategoryDao,
     private val chatSessionDao: ChatSessionDao,
@@ -32,6 +26,9 @@ class BackupRepositoryImpl @Inject constructor(
     private val aiUsageDao: AiUsageDao,
     private val authService: AuthService,
     private val supabaseClient: SupabaseClient,
+    private val deviceName: String,
+    private val appVersion: String,
+    private val dbVersion: Int,
 ) : BackupRepository {
 
     private fun userId(): String =
@@ -92,14 +89,11 @@ class BackupRepositoryImpl @Inject constructor(
         }
 
         // 7. Backup metadata
-        val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
         val metadata = SupaBackupMetadataInsert(
             userId = uid,
-            deviceName = android.provider.Settings.Global.getString(
-                context.contentResolver, "device_name"
-            ) ?: android.os.Build.MODEL,
-            appVersion = packageInfo.versionName ?: "unknown",
-            dbVersion = 17,
+            deviceName = deviceName,
+            appVersion = appVersion,
+            dbVersion = dbVersion,
             memoCount = memos.size,
             totalRows = totalRows,
         )
@@ -186,14 +180,10 @@ class BackupRepositoryImpl @Inject constructor(
     // ── Local JSON backup (legacy, for file export/import) ──
 
     override suspend fun createBackupPayload(): BackupPayload {
-        val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-
         return BackupPayload(
-            deviceName = android.provider.Settings.Global.getString(
-                context.contentResolver, "device_name"
-            ) ?: android.os.Build.MODEL,
-            appVersion = packageInfo.versionName ?: "unknown",
-            dbVersion = 17,
+            deviceName = deviceName,
+            appVersion = appVersion,
+            dbVersion = dbVersion,
             tables = BackupTables(
                 memos = memoDao.getAllMemosForBackup().map { it.toBackup() },
                 categories = categoryDao.getAllCategoriesOnce().map { it.toBackup() },
