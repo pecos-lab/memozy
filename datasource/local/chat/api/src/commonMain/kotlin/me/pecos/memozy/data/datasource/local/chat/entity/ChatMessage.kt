@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import kotlinx.datetime.Clock
 
 @Entity(
     tableName = "chat_message",
@@ -23,6 +24,6 @@ data class ChatMessage(
     val sessionId: Int,
     val role: String,
     val content: String,
-    val timestamp: Long = System.currentTimeMillis(),
+    val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
     val metadata: String? = null
 )
