@@ -27,6 +27,7 @@ kotlin {
                 implementation(projects.data.repository.memo.api)
                 implementation(projects.datasource.remote.ai.api)
                 implementation(projects.platform.media.api)
+                implementation(projects.platform.intent.api)
                 implementation(libs.montage.android)
                 implementation(libs.androidx.compose.navigation)
                 implementation(libs.kotlinx.coroutines.android)

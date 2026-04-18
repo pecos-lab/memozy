@@ -1,6 +1,5 @@
 package me.pecos.memozy.presentation.screen.memo.components
 
-import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,12 +15,14 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import me.pecos.memozy.platform.intent.HapticKind
+import me.pecos.memozy.platform.intent.HapticService
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
+import org.koin.compose.koinInject
 
 enum class AiPresetAction(
     val emoji: String,
@@ -41,7 +42,7 @@ fun AiActionMenu(
 ) {
     val colors = LocalAppColors.current
     val fontSettings = LocalFontSettings.current
-    val view = LocalView.current
+    val hapticService = koinInject<HapticService>()
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -67,7 +68,7 @@ fun AiActionMenu(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
-                            view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                            hapticService.perform(HapticKind.KeyboardTap)
                             onPresetSelected(action)
                         }
                         .padding(horizontal = 20.dp, vertical = 14.dp),

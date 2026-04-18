@@ -1,11 +1,5 @@
 package me.pecos.memozy.presentation.screen.memo.components
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -33,7 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -41,9 +34,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.platform.intent.ClipboardService
+import me.pecos.memozy.platform.intent.ToastPresenter
+import me.pecos.memozy.platform.intent.UrlLauncher
 import me.pecos.memozy.presentation.screen.memo.SummaryMode
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
+import org.koin.compose.koinInject
 
 enum class SummarySourceType { YOUTUBE, WEB, TWITTER }
 
@@ -60,8 +57,13 @@ fun SummaryCard(
     onDismiss: () -> Unit
 ) {
     val colors = LocalAppColors.current
-    val context = LocalContext.current
     val fontSettings = LocalFontSettings.current
+    val urlLauncher = koinInject<UrlLauncher>()
+    val clipboardService = koinInject<ClipboardService>()
+    val toastPresenter = koinInject<ToastPresenter>()
+    val youtubeUrlCopiedMsg = stringResource(R.string.youtube_url_copied)
+    val webUrlCopiedMsg = stringResource(R.string.web_url_copied)
+    val memoCopiedMsg = stringResource(R.string.memo_copied)
 
     Box {
         Column(
@@ -137,18 +139,10 @@ fun SummaryCard(
                             .clip(RoundedCornerShape(8.dp))
                             .background(colors.chipBackground)
                             .clickable {
-                                val intent = when (sourceType) {
-                                    SummarySourceType.YOUTUBE -> {
-                                        Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
-                                            setPackage("com.google.android.youtube")
-                                        }
-                                    }
-                                    else -> Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                                }
-                                try {
-                                    context.startActivity(intent)
-                                } catch (_: Exception) {
-                                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                                when (sourceType) {
+                                    SummarySourceType.YOUTUBE ->
+                                        urlLauncher.openPreferringPackage(url, "com.google.android.youtube")
+                                    else -> urlLauncher.open(url)
                                 }
                             }
                             .padding(horizontal = 10.dp, vertical = 6.dp),
@@ -165,14 +159,13 @@ fun SummaryCard(
                             .clip(RoundedCornerShape(8.dp))
                             .background(colors.chipBackground)
                             .clickable {
-                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                clipboard.setPrimaryClip(ClipData.newPlainText("url", url))
+                                clipboardService.copyPlainText("url", url)
                                 val toastMsg = when (sourceType) {
-                                    SummarySourceType.YOUTUBE -> context.getString(R.string.youtube_url_copied)
-                                    SummarySourceType.WEB -> context.getString(R.string.web_url_copied)
-                                    else -> context.getString(R.string.memo_copied)
+                                    SummarySourceType.YOUTUBE -> youtubeUrlCopiedMsg
+                                    SummarySourceType.WEB -> webUrlCopiedMsg
+                                    else -> memoCopiedMsg
                                 }
-                                Toast.makeText(context, toastMsg, Toast.LENGTH_SHORT).show()
+                                toastPresenter.show(toastMsg)
                             }
                             .padding(horizontal = 10.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
