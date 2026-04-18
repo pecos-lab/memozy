@@ -4,19 +4,13 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
+import me.pecos.memozy.feature.core.viewmodel.settings.AppFontFamily
+import me.pecos.memozy.feature.core.viewmodel.settings.FontSizeLevel
 
-enum class FontSizeLevel(val titleSp: Int, val bodySp: Int, val sizeOffset: Int) {
-    SMALL(20, 13, -2),
-    NORMAL(22, 15, 0),
-    LARGE(24, 17, 2)
-}
-
-enum class AppFontFamily(val value: String, val displayName: String) {
-    SYSTEM("system", "시스템 기본");
-
-    val fontFamily: FontFamily
-        get() = FontFamily.Default
-}
+val AppFontFamily.fontFamily: FontFamily
+    get() = when (this) {
+        AppFontFamily.SYSTEM -> FontFamily.Default
+    }
 
 data class FontSettings(
     val fontFamily: FontFamily = FontFamily.Default,

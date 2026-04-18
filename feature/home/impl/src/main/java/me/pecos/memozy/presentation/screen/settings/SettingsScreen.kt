@@ -75,8 +75,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import kotlin.math.roundToInt
-import me.pecos.memozy.presentation.theme.AppFontFamily
-import me.pecos.memozy.presentation.theme.FontSizeLevel
+import me.pecos.memozy.feature.core.viewmodel.SettingsViewModel
+import me.pecos.memozy.feature.core.viewmodel.settings.AppFontFamily
+import me.pecos.memozy.feature.core.viewmodel.settings.BackupResult
+import me.pecos.memozy.feature.core.viewmodel.settings.CloudBackupState
+import me.pecos.memozy.feature.core.viewmodel.settings.FontSizeLevel
+import me.pecos.memozy.feature.core.viewmodel.settings.LANGUAGES
+import me.pecos.memozy.feature.core.viewmodel.settings.ThemeMode
 import me.pecos.memozy.presentation.theme.LocalActivity
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalSubscriptionTier
@@ -125,11 +130,11 @@ fun SettingsScreen(
     // SAF launchers
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
-    ) { uri -> if (uri != null) settingsViewModel.exportBackup(uri) }
+    ) { uri -> if (uri != null) settingsViewModel.exportBackup(uri.toString()) }
 
     val importLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
-    ) { uri -> if (uri != null) settingsViewModel.importBackup(uri) }
+    ) { uri -> if (uri != null) settingsViewModel.importBackup(uri.toString()) }
 
     // 백업 결과 토스트
     LaunchedEffect(backupResult) {

@@ -13,6 +13,9 @@ kotlin {
     }
 
     sourceSets {
+        commonMain.dependencies {
+            api(projects.feature.core.viewmodel)
+        }
         androidMain.dependencies {
             api(libs.google.fonts)
             implementation(compose.materialIconsExtended)
