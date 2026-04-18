@@ -7,11 +7,8 @@ import io.github.jan.supabase.auth.providers.builtin.IDToken
 import io.github.jan.supabase.auth.status.SessionStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class AuthServiceImpl @Inject constructor(
+class AuthServiceImpl(
     private val supabaseClient: SupabaseClient,
 ) : AuthService {
 

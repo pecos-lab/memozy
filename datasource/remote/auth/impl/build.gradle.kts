@@ -1,39 +1,17 @@
-import me.pecos.memozy.convention.extension.setNamespace
-import java.util.Properties
-
 plugins {
-    id("memozy.android.library")
-    id("memozy.hilt")
-    id("memozy.ktor")
+    id("memozy.kmp.library")
 }
 
-setNamespace("datasource.remote.auth.impl")
-
-val localProperties = Properties().apply {
-    val file = rootProject.file("local.properties")
-    if (file.exists()) load(file.inputStream())
-}
-
-android {
-    buildFeatures {
-        buildConfig = true
+kotlin {
+    androidLibrary {
+        namespace = "me.pecos.memozy.datasource.remote.auth.impl"
     }
 
-    buildTypes {
-        debug {
-            buildConfigField("String", "SUPABASE_URL", "\"${localProperties.getProperty("supabase.url", "")}\"")
-            buildConfigField("String", "SUPABASE_ANON_KEY", "\"${localProperties.getProperty("supabase.anon.key", "")}\"")
-        }
-        release {
-            buildConfigField("String", "SUPABASE_URL", "\"${localProperties.getProperty("supabase.prod.url", "")}\"")
-            buildConfigField("String", "SUPABASE_ANON_KEY", "\"${localProperties.getProperty("supabase.prod.anon.key", "")}\"")
+    sourceSets {
+        commonMain.dependencies {
+            implementation(projects.datasource.remote.auth.api)
+            implementation(libs.supabase.auth)
+            implementation(libs.kotlinx.coroutines.core)
         }
     }
-}
-
-dependencies {
-    implementation(projects.datasource.remote.auth.api)
-    implementation(platform(libs.supabase.bom))
-    implementation(libs.supabase.auth)
-    implementation(libs.supabase.postgrest)
 }

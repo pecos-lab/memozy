@@ -36,6 +36,8 @@ android {
         debug {
             buildConfigField("String", "WORKER_URL", "\"${localProperties.getProperty("worker.url", "")}\"")
             buildConfigField("String", "APP_SECRET_KEY", "\"${localProperties.getProperty("app.secret.key", "")}\"")
+            buildConfigField("String", "SUPABASE_URL", "\"${localProperties.getProperty("supabase.url", "")}\"")
+            buildConfigField("String", "SUPABASE_ANON_KEY", "\"${localProperties.getProperty("supabase.anon.key", "")}\"")
         }
         release {
             isMinifyEnabled = true
@@ -46,6 +48,8 @@ android {
             )
             buildConfigField("String", "WORKER_URL", "\"${localProperties.getProperty("worker.prod.url", "")}\"")
             buildConfigField("String", "APP_SECRET_KEY", "\"${localProperties.getProperty("app.prod.secret.key", "")}\"")
+            buildConfigField("String", "SUPABASE_URL", "\"${localProperties.getProperty("supabase.prod.url", "")}\"")
+            buildConfigField("String", "SUPABASE_ANON_KEY", "\"${localProperties.getProperty("supabase.prod.anon.key", "")}\"")
         }
     }
 }
@@ -66,8 +70,12 @@ dependencies {
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.ktor.client.logging)
     implementation(libs.kotlinx.serialization.json)
-    implementation(projects.datasource.remote.auth.api)
+    implementation(projects.datasource.remote.auth.api) // AuthModule의 AuthService 바인딩 참조
     implementation(projects.datasource.remote.auth.impl)
+    // Supabase: AuthModule이 SupabaseClient/Auth/Postgrest 직접 생성 (auth/impl이 KMP로 전환되며 implementation dep이 transitive로 노출 안 됨)
+    implementation(platform(libs.supabase.bom))
+    implementation(libs.supabase.auth)
+    implementation(libs.supabase.postgrest)
     implementation(projects.data.backup.api)
     implementation(projects.data.repository.memo.impl)
     implementation(projects.data.repository.memo.api) // 위젯에서 MemoRepository 참조
