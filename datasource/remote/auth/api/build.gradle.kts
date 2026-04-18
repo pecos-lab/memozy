@@ -1,11 +1,15 @@
-import me.pecos.memozy.convention.extension.setNamespace
-
 plugins {
-    id("memozy.android.library")
+    id("memozy.kmp.library")
 }
 
-setNamespace("datasource.remote.auth.api")
+kotlin {
+    androidLibrary {
+        namespace = "me.pecos.memozy.datasource.remote.auth.api"
+    }
 
-dependencies {
-    implementation(libs.kotlinx.coroutines.android)
+    sourceSets {
+        commonMain.dependencies {
+            implementation(libs.kotlinx.coroutines.core)
+        }
+    }
 }
