@@ -92,7 +92,9 @@ dependencies {
     implementation(projects.platform.billing.impl)
     implementation(projects.platform.ads.impl)
     implementation(projects.platform.credential.impl)
+    implementation(projects.platform.media.api)
     implementation(projects.platform.media.impl)
+    implementation(projects.platform.htmltext.api)
     implementation(projects.platform.htmltext.impl)
 
     // core android
