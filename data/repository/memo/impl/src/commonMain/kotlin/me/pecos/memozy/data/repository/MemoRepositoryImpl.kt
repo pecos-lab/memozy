@@ -1,11 +1,13 @@
 package me.pecos.memozy.data.repository
 
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.flow.Flow
 import me.pecos.memozy.data.datasource.local.entity.Memo
 import me.pecos.memozy.data.datasource.local.MemoDao
-import javax.inject.Inject
 
-class MemoRepositoryImpl @Inject constructor(private val memoDao: MemoDao) : MemoRepository {
+@OptIn(ExperimentalTime::class)
+class MemoRepositoryImpl(private val memoDao: MemoDao) : MemoRepository {
 
     override fun getMemos(): Flow<List<Memo>> = memoDao.getAllMemos()
 
@@ -20,7 +22,7 @@ class MemoRepositoryImpl @Inject constructor(private val memoDao: MemoDao) : Mem
     }
 
     override suspend fun updateMemo(memo: Memo) {
-        memoDao.updateMemo(memo.copy(updatedAt = System.currentTimeMillis()))
+        memoDao.updateMemo(memo.copy(updatedAt = Clock.System.now().toEpochMilliseconds()))
     }
 
     override suspend fun clearAllMemos() {

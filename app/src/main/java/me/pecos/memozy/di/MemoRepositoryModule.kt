@@ -1,18 +1,20 @@
-package me.pecos.memozy.data.repository.di
+package me.pecos.memozy.di
 
-import dagger.Binds
 import dagger.Module
+import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import me.pecos.memozy.data.datasource.local.MemoDao
 import me.pecos.memozy.data.repository.MemoRepository
 import me.pecos.memozy.data.repository.MemoRepositoryImpl
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class RepositoryModule {
+object MemoRepositoryModule {
 
-    @Binds
+    @Provides
     @Singleton
-    abstract fun bindMemoRepository(impl: MemoRepositoryImpl): MemoRepository
+    fun provideMemoRepository(memoDao: MemoDao): MemoRepository =
+        MemoRepositoryImpl(memoDao)
 }
