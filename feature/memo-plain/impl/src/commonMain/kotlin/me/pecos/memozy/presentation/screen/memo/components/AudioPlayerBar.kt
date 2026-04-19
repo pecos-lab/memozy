@@ -30,18 +30,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import me.pecos.memozy.feature.core.resource.R
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import me.pecos.memozy.feature.core.resource.generated.resources.Res
+import me.pecos.memozy.feature.core.resource.generated.resources.recording_file
+import me.pecos.memozy.feature.core.resource.generated.resources.saved_to_downloads
 import me.pecos.memozy.platform.intent.Sharer
 import me.pecos.memozy.platform.intent.ToastDuration
 import me.pecos.memozy.platform.intent.ToastPresenter
+import me.pecos.memozy.platform.media.AudioFileStore
 import me.pecos.memozy.platform.media.MediaService
 import me.pecos.memozy.presentation.theme.AppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
+@OptIn(ExperimentalTime::class)
 @Composable
 fun AudioPlayerBar(
     audioPath: String,
@@ -53,7 +59,8 @@ fun AudioPlayerBar(
     val mediaService: MediaService = koinInject()
     val sharer: Sharer = koinInject()
     val toastPresenter: ToastPresenter = koinInject()
-    val savedToDownloadsText = stringResource(R.string.saved_to_downloads)
+    val audioFileStore: AudioFileStore = koinInject()
+    val savedToDownloadsText = stringResource(Res.string.saved_to_downloads)
     var isPlaying by remember { mutableStateOf(false) }
     val audioPlayer = remember(audioPath) {
         mediaService.createAudioPlayer(audioPath).apply {
@@ -76,16 +83,17 @@ fun AudioPlayerBar(
                 contentAlignment = Alignment.Center
             ) { Icon(if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp)) }
             Spacer(modifier = Modifier.width(10.dp))
-            Text("🎙️ ${memoTitle.ifBlank { stringResource(R.string.recording_file) }}", fontSize = fontSettings.scaled(14), color = colors.textBody, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), maxLines = 1)
-            Icon(Icons.Default.Download, contentDescription = null, tint = colors.textSecondary,
-                modifier = Modifier.size(20.dp).clickable {
-                    val source = java.io.File(audioPath)
-                    val dest = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
-                    val target = java.io.File(dest, "memozy_${System.currentTimeMillis()}.m4a")
-                    source.copyTo(target, overwrite = true)
-                    toastPresenter.show("📁 $savedToDownloadsText", ToastDuration.Long)
-                })
-            Spacer(modifier = Modifier.width(12.dp))
+            Text("🎙️ ${memoTitle.ifBlank { stringResource(Res.string.recording_file) }}", fontSize = fontSettings.scaled(14), color = colors.textBody, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), maxLines = 1)
+            val downloadsTarget = audioFileStore.downloadsPath("memozy_${Clock.System.now().toEpochMilliseconds()}.m4a")
+            if (downloadsTarget != null) {
+                Icon(Icons.Default.Download, contentDescription = null, tint = colors.textSecondary,
+                    modifier = Modifier.size(20.dp).clickable {
+                        if (audioFileStore.copy(audioPath, downloadsTarget)) {
+                            toastPresenter.show("📁 $savedToDownloadsText", ToastDuration.Long)
+                        }
+                    })
+                Spacer(modifier = Modifier.width(12.dp))
+            }
             Icon(Icons.Default.Share, contentDescription = null, tint = colors.textSecondary,
                 modifier = Modifier.size(20.dp).clickable {
                     sharer.shareFile(audioPath, "audio/mp4")
