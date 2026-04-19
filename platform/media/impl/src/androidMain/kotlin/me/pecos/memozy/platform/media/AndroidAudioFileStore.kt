@@ -38,6 +38,12 @@ class AndroidAudioFileStore(
         return true
     }
 
+    override fun readBytes(path: String): ByteArray = File(path).readBytes()
+
+    override fun length(path: String): Long = File(path).length()
+
+    override fun delete(path: String): Boolean = File(path).delete()
+
     private companion object {
         const val AUDIO_SUBDIR = "audio"
         const val AUDIO_EXT = "m4a"

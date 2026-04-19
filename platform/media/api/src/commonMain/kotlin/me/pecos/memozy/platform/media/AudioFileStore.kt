@@ -16,4 +16,10 @@ interface AudioFileStore {
     fun exists(path: String): Boolean
 
     fun copy(srcPath: String, dstPath: String): Boolean
+
+    fun readBytes(path: String): ByteArray
+
+    fun length(path: String): Long
+
+    fun delete(path: String): Boolean
 }
