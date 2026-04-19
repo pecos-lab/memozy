@@ -4,7 +4,6 @@ import me.pecos.memozy.presentation.util.decodeHtmlEntities
 import me.pecos.memozy.presentation.util.htmlToPlainText
 import me.pecos.memozy.platform.intent.Sharer
 import org.koin.compose.koinInject
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -99,17 +98,10 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.wanted.android.wanted.design.theme.DesignSystemTheme
-import com.wanted.android.wanted.design.input.textinput.textfield.WantedTextField
-import com.wanted.android.wanted.design.input.textinput.textarea.WantedTextArea
 import androidx.compose.runtime.mutableStateListOf
 import me.pecos.memozy.feature.core.viewmodel.model.MemoUiState
 import me.pecos.memozy.presentation.screen.home.model.SummaryEntry
@@ -117,7 +109,31 @@ import me.pecos.memozy.presentation.screen.home.model.parseSummaryEntries
 import me.pecos.memozy.presentation.screen.home.model.toJson
 import me.pecos.memozy.feature.core.resource.CATEGORY_EMOJIS
 import me.pecos.memozy.feature.core.resource.CATEGORY_RES_IDS
-import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.feature.core.resource.generated.resources.Res
+import me.pecos.memozy.feature.core.resource.generated.resources.ai_input_placeholder
+import me.pecos.memozy.feature.core.resource.generated.resources.ai_loading
+import me.pecos.memozy.feature.core.resource.generated.resources.cancel
+import me.pecos.memozy.feature.core.resource.generated.resources.category_budget
+import me.pecos.memozy.feature.core.resource.generated.resources.category_exercise
+import me.pecos.memozy.feature.core.resource.generated.resources.category_general
+import me.pecos.memozy.feature.core.resource.generated.resources.category_health
+import me.pecos.memozy.feature.core.resource.generated.resources.category_idea
+import me.pecos.memozy.feature.core.resource.generated.resources.category_schedule
+import me.pecos.memozy.feature.core.resource.generated.resources.category_shopping
+import me.pecos.memozy.feature.core.resource.generated.resources.category_study
+import me.pecos.memozy.feature.core.resource.generated.resources.category_todo
+import me.pecos.memozy.feature.core.resource.generated.resources.category_travel
+import me.pecos.memozy.feature.core.resource.generated.resources.category_work
+import me.pecos.memozy.feature.core.resource.generated.resources.memo_content_placeholder
+import me.pecos.memozy.feature.core.resource.generated.resources.memo_done
+import me.pecos.memozy.feature.core.resource.generated.resources.memo_share
+import me.pecos.memozy.feature.core.resource.generated.resources.memo_title_placeholder
+import me.pecos.memozy.feature.core.resource.generated.resources.recording_tap_to_stop
+import me.pecos.memozy.feature.core.resource.generated.resources.summary_delete_action
+import me.pecos.memozy.feature.core.resource.generated.resources.summary_delete_message
+import me.pecos.memozy.feature.core.resource.generated.resources.summary_delete_title
+import me.pecos.memozy.feature.core.resource.generated.resources.transcribing
+import org.jetbrains.compose.resources.stringResource
 import me.pecos.memozy.presentation.screen.memo.components.AudioPlayerBar
 import me.pecos.memozy.presentation.screen.memo.components.FormattingToolbar
 import me.pecos.memozy.presentation.screen.memo.components.WebLinkBottomSheet
@@ -138,14 +154,16 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.ui.platform.LocalDensity
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
+import kotlinx.datetime.toLocalDateTime
 
 private val YOUTUBE_URL_REGEX = Regex(
     """(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)[\w\-]+(?:[&?][\w\-=]*)*"""
@@ -203,7 +221,7 @@ private class UrlHighlightTransformation : VisualTransformation {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class, FlowPreview::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class, FlowPreview::class, kotlin.time.ExperimentalTime::class)
 @Composable
 fun MemoScreen(
     onSave: (MemoUiState) -> Unit,
@@ -240,21 +258,20 @@ fun MemoScreen(
     existingMemo: MemoUiState = MemoUiState(0, "", 1, "")
 ) {
     val isNewMemo = existingMemo.id <= 0
-    val context = LocalContext.current
     val sharer: Sharer = koinInject()
-    val clipboardManager = LocalClipboardManager.current
+    val audioFileStore: me.pecos.memozy.platform.media.AudioFileStore = koinInject()
     val categories = listOf(
-        stringResource(R.string.category_general),
-        stringResource(R.string.category_work),
-        stringResource(R.string.category_idea),
-        stringResource(R.string.category_todo),
-        stringResource(R.string.category_study),
-        stringResource(R.string.category_schedule),
-        stringResource(R.string.category_budget),
-        stringResource(R.string.category_exercise),
-        stringResource(R.string.category_health),
-        stringResource(R.string.category_travel),
-        stringResource(R.string.category_shopping),
+        stringResource(Res.string.category_general),
+        stringResource(Res.string.category_work),
+        stringResource(Res.string.category_idea),
+        stringResource(Res.string.category_todo),
+        stringResource(Res.string.category_study),
+        stringResource(Res.string.category_schedule),
+        stringResource(Res.string.category_budget),
+        stringResource(Res.string.category_exercise),
+        stringResource(Res.string.category_health),
+        stringResource(Res.string.category_travel),
+        stringResource(Res.string.category_shopping),
     )
     // 초기값만 한 번 설정, 이후 recomposition에서 덮어쓰지 않음
     var initialized by remember { mutableStateOf(false) }
@@ -440,7 +457,8 @@ fun MemoScreen(
         containerColor = colors.screenBackground,
         contentWindowInsets = WindowInsets(0)
     ) { innerPadding ->
-        val isKeyboardVisible = WindowInsets.isImeVisible
+        val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
+        val isKeyboardVisible = imeBottom > 0
         val hazeState = rememberHazeState()
         val isSystemDark = colors.screenBackground == Color(0xFF1C1C1E)
         val glassStyle = remember(isSystemDark) {
@@ -488,7 +506,7 @@ fun MemoScreen(
                 if (hasSharableContent) {
                     Icon(
                         imageVector = Icons.Default.Share,
-                        contentDescription = stringResource(R.string.memo_share),
+                        contentDescription = stringResource(Res.string.memo_share),
                         tint = colors.textSecondary,
                         modifier = Modifier
                             .size(22.dp)
@@ -519,7 +537,7 @@ fun MemoScreen(
 
                 // 완료 버튼 (새 메모 + 기존 메모 모두 표시)
                 Text(
-                    text = stringResource(R.string.memo_done),
+                    text = stringResource(Res.string.memo_done),
                     fontSize = fontSettings.scaled(16),
                     fontWeight = FontWeight.SemiBold,
                     color = colors.chipText,
@@ -570,7 +588,7 @@ fun MemoScreen(
                         Box {
                             if (nameText.isEmpty()) {
                                 Text(
-                                    text = stringResource(R.string.memo_title_placeholder),
+                                    text = stringResource(Res.string.memo_title_placeholder),
                                     fontSize = fontSettings.titleSize,
                                     fontWeight = FontWeight.Bold,
                                     fontFamily = fontSettings.fontFamily,
@@ -594,8 +612,12 @@ fun MemoScreen(
             
                         // 제목이 비어있으면 자동 설정
                         if (nameText.isBlank()) {
-                            val now = java.text.SimpleDateFormat("yy.MM.dd HH:mm", java.util.Locale.getDefault()).format(java.util.Date())
-                            nameText = "$now 녹음"
+                            val now = kotlin.time.Clock.System.now()
+                                .toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault())
+                            fun Int.pad2(): String = toString().padStart(2, '0')
+                            val yy = (now.year % 100).pad2()
+                            val formatted = "$yy.${now.monthNumber.pad2()}.${now.dayOfMonth.pad2()} ${now.hour.pad2()}:${now.minute.pad2()}"
+                            nameText = "$formatted 녹음"
                         }
                     }
                 }
@@ -666,8 +688,6 @@ fun MemoScreen(
                             showAiCustomInput = true
                         } } else null,
                         colors = colors,
-                        context = context,
-                        clipboardManager = clipboardManager,
                         onStyleSelect = { showSummaryStyleSheet = true }
                     )
                 }
@@ -708,9 +728,7 @@ fun MemoScreen(
                         onAskAi = if (onAiCustomSend != null) { {
                             showAiCustomInput = true
                         } } else null,
-                        colors = colors,
-                        context = context,
-                        clipboardManager = clipboardManager
+                        colors = colors
                     )
                 }
 
@@ -738,7 +756,7 @@ fun MemoScreen(
                         Box(modifier = Modifier.heightIn(min = 150.dp)) {
                             if (richTextState.annotatedString.text.isEmpty()) {
                                 Text(
-                                    text = stringResource(R.string.memo_content_placeholder),
+                                    text = stringResource(Res.string.memo_content_placeholder),
                                     fontSize = fontSettings.bodySize,
                                     fontFamily = fontSettings.fontFamily,
                                     color = colors.textSecondary.copy(alpha = 0.4f)
@@ -767,7 +785,7 @@ fun MemoScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            stringResource(R.string.ai_loading),
+                            stringResource(Res.string.ai_loading),
                             fontSize = fontSettings.scaled(13),
                             color = colors.chipText,
                             modifier = Modifier.weight(1f)
@@ -792,8 +810,6 @@ fun MemoScreen(
                     YouTubeLinkBottomSheet(
                         url = selectedYoutubeUrl!!,
                         colors = colors,
-                        context = context,
-                        clipboardManager = clipboardManager,
                         isSummarizing = isSummarizing,
                         isWebSummarizing = isWebSummarizing,
                         summaryResult = summaryResult,
@@ -824,7 +840,7 @@ fun MemoScreen(
                             Icon(Icons.Default.Stop, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
                         }
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text("🔴 " + stringResource(R.string.recording_tap_to_stop), fontSize = fontSettings.scaled(13), color = Color(0xFFE24B4A), fontWeight = FontWeight.SemiBold)
+                        Text("🔴 " + stringResource(Res.string.recording_tap_to_stop), fontSize = fontSettings.scaled(13), color = Color(0xFFE24B4A), fontWeight = FontWeight.SemiBold)
                     }
                 }
                 // 음성 변환 중
@@ -833,7 +849,7 @@ fun MemoScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         androidx.compose.material3.CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = colors.textSecondary)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.transcribing), fontSize = fontSettings.scaled(13), color = colors.textSecondary, modifier = Modifier.weight(1f))
+                        Text(stringResource(Res.string.transcribing), fontSize = fontSettings.scaled(13), color = colors.textSecondary, modifier = Modifier.weight(1f))
                         Icon(Icons.Default.Close, contentDescription = null, tint = colors.textSecondary,
                             modifier = Modifier.size(16.dp).clickable { onCancelSummarize?.invoke() })
                     }
@@ -884,7 +900,7 @@ fun MemoScreen(
                 // 오디오 재생 바 (서식 툴바 아래)
                 var audioChipDismissed by remember { mutableStateOf(false) }
                 val effectiveAudioPath = audioPath ?: existingMemo.audioPath
-                if (effectiveAudioPath != null && java.io.File(effectiveAudioPath).exists() && !audioChipDismissed) {
+                if (effectiveAudioPath != null && audioFileStore.exists(effectiveAudioPath) && !audioChipDismissed) {
                     AudioPlayerBar(
                         audioPath = effectiveAudioPath,
                         memoTitle = nameText,
@@ -943,7 +959,7 @@ fun MemoScreen(
                                     Box(contentAlignment = Alignment.CenterStart) {
                                         if (aiInputText.isEmpty()) {
                                             Text(
-                                                stringResource(R.string.ai_input_placeholder),
+                                                stringResource(Res.string.ai_input_placeholder),
                                                 color = colors.textBody.copy(alpha = 0.4f),
                                                 fontSize = fontSettings.scaled(14)
                                             )
@@ -1042,7 +1058,6 @@ fun MemoScreen(
     // 웹 URL 입력 다이얼로그
     if (showWebDialog && onWebSummarize != null) {
         WebUrlDialog(
-            clipboardManager = clipboardManager,
             onDismiss = { showWebDialog = false },
             onUrlConfirmed = { url ->
                 savedWebUrl = url
@@ -1056,8 +1071,6 @@ fun MemoScreen(
     if (selectedWebUrl != null) {
         WebLinkBottomSheet(
             url = selectedWebUrl!!,
-            clipboardManager = clipboardManager,
-            context = context,
             onDismiss = { selectedWebUrl = null }
         )
     }
@@ -1066,8 +1079,6 @@ fun MemoScreen(
     if (showYoutubeDialog && onYoutubeSummarize != null) {
         YouTubeUrlDialog(
             colors = colors,
-            clipboardManager = clipboardManager,
-            context = context,
             onDismiss = { showYoutubeDialog = false },
             onUrlAdded = { url ->
                 bodyText = if (bodyText.isBlank()) url else "$bodyText\n$url"
@@ -1085,8 +1096,8 @@ fun MemoScreen(
     if (showSummaryDeleteDialog != null) {
         AlertDialog(
             onDismissRequest = { showSummaryDeleteDialog = null },
-            title = { Text(stringResource(R.string.summary_delete_title)) },
-            text = { Text(stringResource(R.string.summary_delete_message)) },
+            title = { Text(stringResource(Res.string.summary_delete_title)) },
+            text = { Text(stringResource(Res.string.summary_delete_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     when (showSummaryDeleteDialog) {
@@ -1101,25 +1112,15 @@ fun MemoScreen(
                     }
                     showSummaryDeleteDialog = null
                 }) {
-                    Text(stringResource(R.string.summary_delete_action), color = Color.Red)
+                    Text(stringResource(Res.string.summary_delete_action), color = Color.Red)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showSummaryDeleteDialog = null }) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         )
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun MemoScreenPreview() {
-    DesignSystemTheme {
-        MemoScreen(
-            onSave = {},
-            existingMemo = MemoUiState(1, "테스트 제목", 2, "테스트 내용")
-        )
-    }
-}
