@@ -1,13 +1,11 @@
 package me.pecos.memozy.platform.intent
 
-// TODO(C-1): UIPasteboard.generalPasteboard 기반 구현.
+import platform.UIKit.UIPasteboard
+
 class IosClipboardService : ClipboardService {
     override fun copyPlainText(label: String, text: String) {
-        println("[platform-intent] IosClipboardService.copyPlainText stub: [$label] ${text.take(32)}...")
+        UIPasteboard.generalPasteboard.setString(text)
     }
 
-    override fun readPrimaryText(): String? {
-        println("[platform-intent] IosClipboardService.readPrimaryText stub")
-        return null
-    }
+    override fun readPrimaryText(): String? = UIPasteboard.generalPasteboard.string
 }
