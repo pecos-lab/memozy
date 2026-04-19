@@ -102,36 +102,36 @@ kotlin {
     }
 
     sourceSets {
-        // commonMain은 현재 비어 있음.
-        // 순수 Composable commonMain 이전은 후속 PR에서 R.*→compose-resources
-        // 마이그레이션과 함께 진행 (Issue #231 Wave 2 follow-up).
+        commonMain.dependencies {
+            implementation(projects.feature.home.api)
+            implementation(projects.feature.core.resource)
+            implementation(projects.feature.core.viewmodel)
+            implementation(projects.feature.memoPlain.api)
+            implementation(projects.datasource.local.memo.api)
+            implementation(projects.data.repository.memo.api)
+            implementation(projects.data.repository.user.api)
+            implementation(projects.datasource.remote.auth.api)
+            implementation(projects.datasource.remote.ai.api)
+            implementation(projects.data.backup.api)
+            implementation(projects.platform.billing.api)
+            implementation(projects.platform.ads.api)
+            implementation(projects.platform.credential.api)
+            implementation(projects.platform.intent.api)
+            implementation(libs.haze)
+            implementation(libs.kotlinx.datetime)
+            implementation(libs.koin.compose)
+            implementation(compose.materialIconsExtended)
+        }
         androidMain.configure {
             // 명시적으로 task 출력 디렉토리를 source로 등록한다. Gradle이
             // task → compileAndroidMain 의존성을 자동 연결한다.
             kotlin.srcDir(generateBuildConstants.map { it.outputDir })
             dependencies {
-                implementation(projects.feature.home.api)
-                implementation(projects.feature.core.resource)
-                implementation(projects.feature.core.viewmodel)
-                implementation(projects.feature.memoPlain.api)
-                implementation(projects.datasource.local.memo.api)
-                implementation(projects.data.repository.memo.api)
-                implementation(projects.data.repository.user.api)
-                implementation(projects.datasource.remote.auth.api)
-                implementation(projects.datasource.remote.ai.api)
-                implementation(projects.data.backup.api)
-                implementation(projects.platform.billing.api)
-                implementation(projects.platform.ads.api)
-                implementation(projects.platform.credential.api)
-                implementation(projects.platform.intent.api)
                 implementation(libs.androidx.lifecycle.runtime.ktx)
                 implementation(libs.androidx.activity.compose)
                 implementation(libs.androidx.compose.navigation)
-                implementation(libs.haze)
-                implementation(libs.kotlinx.datetime)
                 implementation(libs.montage.android)
                 implementation(libs.kotlinx.coroutines.android)
-                implementation(compose.materialIconsExtended)
                 implementation(libs.koin.androidx.compose)
                 implementation(libs.androidx.compose.ui.tooling.preview)
             }

@@ -1,12 +1,30 @@
 package me.pecos.memozy.platform.intent
 
-// TODO(C-1): UIActivityViewController 기반 구현. root UIViewController 획득 경로 C-1 에서 결정.
+import platform.Foundation.NSURL
+import platform.UIKit.UIActivityViewController
+import platform.UIKit.UIApplication
+import platform.UIKit.UIViewController
+
 class IosSharer : Sharer {
     override fun shareText(text: String, chooserTitle: String?) {
-        println("[platform-intent] IosSharer.shareText stub: ${text.take(32)}...")
+        present(UIActivityViewController(activityItems = listOf(text), applicationActivities = null))
     }
 
     override fun shareFile(path: String, mimeType: String, chooserTitle: String?) {
-        println("[platform-intent] IosSharer.shareFile stub: $path ($mimeType)")
+        val url = NSURL.fileURLWithPath(path)
+        present(UIActivityViewController(activityItems = listOf(url), applicationActivities = null))
+    }
+
+    private fun present(vc: UIActivityViewController) {
+        val root = topViewController() ?: return
+        root.presentViewController(vc, animated = true, completion = null)
+    }
+
+    private fun topViewController(): UIViewController? {
+        var vc = UIApplication.sharedApplication.keyWindow?.rootViewController
+        while (vc?.presentedViewController != null) {
+            vc = vc.presentedViewController
+        }
+        return vc
     }
 }

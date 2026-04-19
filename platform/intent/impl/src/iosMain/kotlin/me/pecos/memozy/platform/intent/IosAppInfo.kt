@@ -1,8 +1,10 @@
 package me.pecos.memozy.platform.intent
 
-// TODO(C-1): NSBundle.mainBundle.infoDictionary CFBundleShortVersionString / CFBundleIdentifier 매핑.
-class IosAppInfo : AppInfo {
-    override val versionName: String = ""
+import platform.Foundation.NSBundle
 
-    override val packageName: String = ""
+class IosAppInfo : AppInfo {
+    override val versionName: String =
+        NSBundle.mainBundle.infoDictionary?.get("CFBundleShortVersionString") as? String ?: ""
+
+    override val packageName: String = NSBundle.mainBundle.bundleIdentifier ?: ""
 }

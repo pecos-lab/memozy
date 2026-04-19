@@ -1,15 +1,16 @@
 package me.pecos.memozy.platform.intent
 
-// TODO(C-1): UIApplication.sharedApplication.openURL / canOpenURL 기반 구현.
-// 현재 스파이크 단계: 호출은 실패(false)로 처리하고 로그만 남긴다.
+import platform.Foundation.NSURL
+import platform.UIKit.UIApplication
+
 class IosUrlLauncher : UrlLauncher {
     override fun open(url: String): Boolean {
-        println("[platform-intent] IosUrlLauncher.open stub: $url")
-        return false
+        val nsUrl = NSURL.URLWithString(url) ?: return false
+        val app = UIApplication.sharedApplication
+        if (!app.canOpenURL(nsUrl)) return false
+        app.openURL(nsUrl, options = emptyMap<Any?, Any>(), completionHandler = null)
+        return true
     }
 
-    override fun openPreferringPackage(url: String, preferredPackage: String): Boolean {
-        println("[platform-intent] IosUrlLauncher.openPreferringPackage stub: $url ($preferredPackage)")
-        return false
-    }
+    override fun openPreferringPackage(url: String, preferredPackage: String): Boolean = open(url)
 }

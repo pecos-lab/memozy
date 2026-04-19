@@ -1,11 +1,16 @@
 package me.pecos.memozy.platform.media
 
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.usePinned
 import platform.Foundation.NSCachesDirectory
+import platform.Foundation.NSData
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
+import platform.Foundation.NSFileSize
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
 import platform.Foundation.NSUserDomainMask
+import platform.posix.memcpy
 
 /**
  * iOS 구현. NSFileManager + NSCachesDirectory / NSDocumentDirectory 기반.
@@ -44,6 +49,27 @@ class IosAudioFileStore : AudioFileStore {
         }
         return fileManager.copyItemAtPath(srcPath, toPath = dstPath, error = null)
     }
+
+    override fun readBytes(path: String): ByteArray {
+        val data = NSData.dataWithContentsOfFile(path) ?: return ByteArray(0)
+        val size = data.length.toInt()
+        val bytes = ByteArray(size)
+        if (size > 0) {
+            bytes.usePinned { pinned ->
+                memcpy(pinned.addressOf(0), data.bytes, size.toULong())
+            }
+        }
+        return bytes
+    }
+
+    override fun length(path: String): Long {
+        val attrs = fileManager.attributesOfItemAtPath(path, error = null) ?: return 0L
+        val size = attrs[NSFileSize] as? Number ?: return 0L
+        return size.toLong()
+    }
+
+    override fun delete(path: String): Boolean =
+        fileManager.removeItemAtPath(path, error = null)
 
     private fun firstPath(directory: platform.Foundation.NSSearchPathDirectory): String {
         val paths = NSSearchPathForDirectoriesInDomains(directory, NSUserDomainMask, true)

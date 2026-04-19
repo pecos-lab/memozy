@@ -1,14 +1,20 @@
 package me.pecos.memozy.platform.intent.di
 
 import me.pecos.memozy.platform.intent.AppInfo
+import me.pecos.memozy.platform.intent.AppRestarter
 import me.pecos.memozy.platform.intent.ClipboardService
 import me.pecos.memozy.platform.intent.HapticService
 import me.pecos.memozy.platform.intent.IosAppInfo
+import me.pecos.memozy.platform.intent.IosAppRestarter
 import me.pecos.memozy.platform.intent.IosClipboardService
 import me.pecos.memozy.platform.intent.IosHapticService
+import me.pecos.memozy.platform.intent.IosPermissionService
+import me.pecos.memozy.platform.intent.IosSharedContentReader
 import me.pecos.memozy.platform.intent.IosSharer
 import me.pecos.memozy.platform.intent.IosToastPresenter
 import me.pecos.memozy.platform.intent.IosUrlLauncher
+import me.pecos.memozy.platform.intent.PermissionService
+import me.pecos.memozy.platform.intent.SharedContentReader
 import me.pecos.memozy.platform.intent.Sharer
 import me.pecos.memozy.platform.intent.ToastPresenter
 import me.pecos.memozy.platform.intent.UrlLauncher
@@ -22,4 +28,7 @@ actual fun platformIntentModule(): Module = module {
     single<ToastPresenter> { IosToastPresenter() }
     single<HapticService> { IosHapticService() }
     single<AppInfo> { IosAppInfo() }
+    single<PermissionService> { IosPermissionService() }
+    single<SharedContentReader> { IosSharedContentReader() }
+    single<AppRestarter> { IosAppRestarter() }
 }

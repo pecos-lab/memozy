@@ -32,11 +32,27 @@ kotlin {
         commonMain.dependencies {
             api(projects.feature.core.viewmodel)
             api(projects.data.repository.memo.api)
+            api(projects.feature.home.impl)
             implementation(projects.datasource.local.memo.api)
+            implementation(projects.feature.home.api)
+            implementation(projects.feature.core.resource)
+            implementation(libs.jetbrains.navigation.compose)
+            implementation(libs.haze)
+            implementation(compose.materialIconsExtended)
         }
         iosMain.dependencies {
             implementation(libs.koin.core)
             implementation(libs.kotlinx.coroutines.core)
+            implementation(projects.datasource.local.memo.impl)
+            implementation(projects.data.repository.memo.impl)
+            implementation(projects.datasource.remote.auth.api)
+            implementation(projects.data.repository.user.api)
+            implementation(projects.data.repository.user.impl)
+            implementation(projects.data.backup.api)
+            implementation(projects.platform.intent.api)
+            implementation(projects.platform.intent.impl)
+            implementation(projects.platform.credential.api)
+            implementation(projects.platform.credential.impl)
         }
     }
 }

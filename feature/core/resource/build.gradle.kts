@@ -1,6 +1,7 @@
 plugins {
     id("memozy.kmp.library")
     id("memozy.cmp.library")
+    alias(libs.plugins.kotlin.serialization)
 }
 
 kotlin {
@@ -15,11 +16,16 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(projects.feature.core.viewmodel)
+            api(projects.platform.ads.api)
+            api(projects.platform.intent.api)
+            implementation(compose.materialIconsExtended)
+            implementation(libs.kotlinx.serialization.json)
         }
         androidMain.dependencies {
             implementation(libs.google.fonts)
-            api(projects.platform.ads.api)
-            implementation(compose.materialIconsExtended)
+            implementation(libs.coil.compose)
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.montage.android)
         }
     }
 }

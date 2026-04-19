@@ -1,0 +1,57 @@
+package me.pecos.memozy.presentation.screen.home.util
+
+import kotlin.time.Clock
+import kotlin.time.Instant
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.todayIn
+
+// ── 시간 포맷 ───────────────────────────────────────────────────────────────────
+
+private fun Int.pad(width: Int): String = toString().padStart(width, '0')
+
+private fun LocalDate.formatDot(): String =
+    "${year.pad(4)}.${monthNumber.pad(2)}.${dayOfMonth.pad(2)}"
+
+fun formatMemoTime(createdAt: Long, languageCode: String): String {
+    if (createdAt == 0L) return ""
+
+    val tz = TimeZone.currentSystemDefault()
+    val createdLdt = Instant.fromEpochMilliseconds(createdAt).toLocalDateTime(tz)
+    val createdDate = createdLdt.date
+    val today = Clock.System.todayIn(tz)
+    val yesterday = today.minus(DatePeriod(days = 1))
+
+    return when (createdDate) {
+        today -> {
+            val hour = createdLdt.hour
+            val minute = createdLdt.minute
+            when (languageCode) {
+                "en" -> {
+                    val ampm = if (hour < 12) "AM" else "PM"
+                    val h = if (hour % 12 == 0) 12 else hour % 12
+                    "$h:${minute.toString().padStart(2, '0')} $ampm"
+                }
+                "ja" -> {
+                    val ampm = if (hour < 12) "午前" else "午後"
+                    val h = if (hour % 12 == 0) 12 else hour % 12
+                    "$ampm${h}:${minute.toString().padStart(2, '0')}"
+                }
+                else -> {
+                    val ampm = if (hour < 12) "오전" else "오후"
+                    val h = if (hour % 12 == 0) 12 else hour % 12
+                    "$ampm ${h}:${minute.toString().padStart(2, '0')}"
+                }
+            }
+        }
+        yesterday -> when (languageCode) {
+            "en" -> "Yesterday"
+            "ja" -> "昨日"
+            else -> "어제"
+        }
+        else -> createdDate.formatDot()
+    }
+}

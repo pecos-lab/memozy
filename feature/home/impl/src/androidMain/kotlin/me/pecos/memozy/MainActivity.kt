@@ -49,7 +49,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.wanted.android.wanted.design.theme.DesignSystemTheme
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
@@ -70,9 +69,11 @@ import me.pecos.memozy.presentation.screen.subscription.SubscriptionScreen
 import me.pecos.memozy.presentation.screen.home.HomeScreen
 import me.pecos.memozy.feature.core.viewmodel.MainViewModel
 import me.pecos.memozy.feature.core.viewmodel.SettingsViewModel
+import me.pecos.memozy.feature.core.viewmodel.settings.PreferencesProvider
 import me.pecos.memozy.feature.core.viewmodel.settings.ThemeMode
 import me.pecos.memozy.presentation.screen.login.LoginScreen
 import me.pecos.memozy.presentation.screen.settings.SettingsScreen
+import me.pecos.memozy.presentation.theme.AppThemeShell
 import me.pecos.memozy.presentation.theme.LocalActivity
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -95,6 +96,7 @@ class MainActivity : ComponentActivity() {
 
     private val billingService: BillingService by inject()
     private val adsService: AdsService by inject()
+    private val preferencesProvider: PreferencesProvider by inject()
 
     // 공유 Intent 상태 — singleTask에서 onNewIntent 처리
     private val _currentIntent = androidx.compose.runtime.mutableStateOf<Intent?>(null)
@@ -177,10 +179,9 @@ class MainActivity : ComponentActivity() {
             ) {
             OverrideNightMode(isDarkTheme = isDarkTheme) {
                 CompositionLocalProvider(
-                    LocalAppColors provides appColors,
                     LocalFontSettings provides fontSettings
                 ) {
-                    DesignSystemTheme(isDarkTheme = isDarkTheme) {
+                    AppThemeShell(isDarkTheme = isDarkTheme) {
                     val currentTypography = MaterialTheme.typography
                     val ff = fontSettings.fontFamily
                     val customTypography = currentTypography.copy(
@@ -261,10 +262,9 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
-                        val prefs = remember {
-                            applicationContext.getSharedPreferences("settings", Context.MODE_PRIVATE)
+                        val onboardingDone = remember {
+                            preferencesProvider.getBoolean("onboarding_done", false)
                         }
-                        val onboardingDone = remember { prefs.getBoolean("onboarding_done", false) }
                         val startDest = if (onboardingDone) HomeRoute.MAIN else HomeRoute.LOGIN
 
                         val hazeState = rememberHazeState()
@@ -295,13 +295,13 @@ class MainActivity : ComponentActivity() {
                                     LoginScreen(
                                         onSignIn = { idToken ->
                                             settingsViewModel.signInWithGoogle(idToken)
-                                            prefs.edit().putBoolean("onboarding_done", true).apply()
+                                            preferencesProvider.putBoolean("onboarding_done", true)
                                             navController.navigate(HomeRoute.MAIN) {
                                                 popUpTo(HomeRoute.LOGIN) { inclusive = true }
                                             }
                                         },
                                         onSkip = {
-                                            prefs.edit().putBoolean("onboarding_done", true).apply()
+                                            preferencesProvider.putBoolean("onboarding_done", true)
                                             navController.navigate(HomeRoute.MAIN) {
                                                 popUpTo(HomeRoute.LOGIN) { inclusive = true }
                                             }
@@ -417,7 +417,7 @@ class MainActivity : ComponentActivity() {
                 }
             } // CompositionLocalProvider(LocalTextStyle)
             } // MaterialTheme(customTypography)
-            } // DesignSystemTheme + CompositionLocalProvider(LocalAppColors, LocalFontSettings)
+            } // AppThemeShell + CompositionLocalProvider(LocalFontSettings)
             } // OverrideNightMode + CompositionLocalProvider(LocalActivity)
         }
     }
