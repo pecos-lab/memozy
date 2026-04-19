@@ -75,6 +75,7 @@ import me.pecos.memozy.feature.core.resource.generated.resources.font_size_large
 import me.pecos.memozy.feature.core.resource.generated.resources.font_size_normal
 import me.pecos.memozy.feature.core.resource.generated.resources.font_size_small
 import me.pecos.memozy.feature.core.resource.generated.resources.ic_google
+import me.pecos.memozy.feature.core.resource.generated.resources.ios_restart_required
 import me.pecos.memozy.feature.core.resource.generated.resources.language_settings
 import me.pecos.memozy.feature.core.resource.generated.resources.open_source_license
 import me.pecos.memozy.feature.core.resource.generated.resources.reset
@@ -398,7 +399,14 @@ fun SettingsScreen(
                     val onSelectLanguage = {
                         settingsViewModel.selectLanguage(language)
                         showLanguageDialog = false
-                        appRestarter.restart()
+                        if (appRestarter.isRestartSupported) {
+                            appRestarter.restart()
+                        } else {
+                            // iOS: 프로세스 재시작 수단이 없으므로 사용자에게 수동 재시작 안내
+                            scope.launch {
+                                toastPresenter.show(getString(Res.string.ios_restart_required))
+                            }
+                        }
                     }
                     Row(
                         modifier = Modifier
