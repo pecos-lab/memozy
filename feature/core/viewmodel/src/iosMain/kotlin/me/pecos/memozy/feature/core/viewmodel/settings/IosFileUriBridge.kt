@@ -20,7 +20,8 @@ class IosFileUriBridge : FileUriBridge {
         val started = url.startAccessingSecurityScopedResource()
         try {
             val data = NSData.dataWithContentsOfURL(url) ?: error("Cannot read $uri")
-            NSString.create(data = data, encoding = NSUTF8StringEncoding) ?: ""
+            @Suppress("USELESS_CAST")
+            (NSString.create(data = data, encoding = NSUTF8StringEncoding) as String?) ?: ""
         } finally {
             if (started) url.stopAccessingSecurityScopedResource()
         }
