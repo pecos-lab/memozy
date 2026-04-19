@@ -15,4 +15,11 @@ class SharedPreferencesProvider(
     override fun putString(key: String, value: String) {
         prefs.edit().putString(key, value).apply()
     }
+
+    override fun getBoolean(key: String, defaultValue: Boolean): Boolean =
+        prefs.getBoolean(key, defaultValue)
+
+    override fun putBoolean(key: String, value: Boolean) {
+        prefs.edit().putBoolean(key, value).apply()
+    }
 }
