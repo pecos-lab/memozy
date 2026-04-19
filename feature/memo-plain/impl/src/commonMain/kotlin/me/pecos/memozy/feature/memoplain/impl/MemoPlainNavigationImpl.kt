@@ -978,9 +978,10 @@ class MemoPlainNavigationImpl(
             }
 
             if (showLimitBottomSheet) {
+                val isAdPlatformSupported = rewardAdProvider?.isPlatformSupported != false
                 AiLimitBottomSheet(
                     subscriptionTier = subscriptionTier,
-                    canWatchAd = canWatchAd,
+                    canWatchAd = canWatchAd && isAdPlatformSupported,
                     remainingAdViews = remainingAdViews,
                     isAdLoading = rewardAdProvider?.isAdLoading == true,
                     onWatchAd = {
@@ -994,7 +995,8 @@ class MemoPlainNavigationImpl(
                         }
                     },
                     onUpgrade = { showLimitBottomSheet = false },
-                    onDismiss = { showLimitBottomSheet = false }
+                    onDismiss = { showLimitBottomSheet = false },
+                    isPlatformSupported = isAdPlatformSupported,
                 )
             }
         }

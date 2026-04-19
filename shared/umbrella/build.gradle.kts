@@ -53,6 +53,8 @@ kotlin {
             implementation(projects.platform.intent.impl)
             implementation(projects.platform.credential.api)
             implementation(projects.platform.credential.impl)
+            implementation(projects.platform.ads.api)
+            implementation(projects.platform.ads.impl)
         }
     }
 }

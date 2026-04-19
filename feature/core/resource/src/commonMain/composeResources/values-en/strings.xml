@@ -246,6 +246,7 @@
     <string name="ai_limit_ad_remaining">%d more views available today</string>
     <string name="ai_limit_ad_exhausted">No more ad views available today</string>
     <string name="ai_limit_ad_loading">Loading ad…</string>
+    <string name="ai_limit_ios_unsupported">Reward ads are not supported on iOS</string>
     <string name="ai_limit_close">Close</string>
 
     <!-- Subscription -->

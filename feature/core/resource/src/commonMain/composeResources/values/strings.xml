@@ -246,6 +246,7 @@
     <string name="ai_limit_ad_remaining">오늘 %d회 더 시청 가능</string>
     <string name="ai_limit_ad_exhausted">오늘 광고 시청 횟수를 모두 사용했어요</string>
     <string name="ai_limit_ad_loading">광고 준비 중…</string>
+    <string name="ai_limit_ios_unsupported">리워드 광고 기능은 iOS에서 지원하지 않아요</string>
     <string name="ai_limit_close">닫기</string>
 
     <!-- Subscription -->
