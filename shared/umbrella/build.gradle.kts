@@ -45,6 +45,14 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
             implementation(projects.datasource.local.memo.impl)
             implementation(projects.data.repository.memo.impl)
+            implementation(projects.datasource.remote.auth.api)
+            implementation(projects.data.repository.user.api)
+            implementation(projects.data.repository.user.impl)
+            implementation(projects.data.backup.api)
+            implementation(projects.platform.intent.api)
+            implementation(projects.platform.intent.impl)
+            implementation(projects.platform.credential.api)
+            implementation(projects.platform.credential.impl)
         }
     }
 }
