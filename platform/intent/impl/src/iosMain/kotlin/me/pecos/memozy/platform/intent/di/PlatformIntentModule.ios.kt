@@ -1,9 +1,11 @@
 package me.pecos.memozy.platform.intent.di
 
 import me.pecos.memozy.platform.intent.AppInfo
+import me.pecos.memozy.platform.intent.AppRestarter
 import me.pecos.memozy.platform.intent.ClipboardService
 import me.pecos.memozy.platform.intent.HapticService
 import me.pecos.memozy.platform.intent.IosAppInfo
+import me.pecos.memozy.platform.intent.IosAppRestarter
 import me.pecos.memozy.platform.intent.IosClipboardService
 import me.pecos.memozy.platform.intent.IosHapticService
 import me.pecos.memozy.platform.intent.IosPermissionService
@@ -28,4 +30,5 @@ actual fun platformIntentModule(): Module = module {
     single<AppInfo> { IosAppInfo() }
     single<PermissionService> { IosPermissionService() }
     single<SharedContentReader> { IosSharedContentReader() }
+    single<AppRestarter> { IosAppRestarter() }
 }

@@ -1,6 +1,8 @@
 package me.pecos.memozy.platform.intent.di
 
+import me.pecos.memozy.platform.intent.ActivityHolder
 import me.pecos.memozy.platform.intent.AndroidAppInfo
+import me.pecos.memozy.platform.intent.AndroidAppRestarter
 import me.pecos.memozy.platform.intent.AndroidClipboardService
 import me.pecos.memozy.platform.intent.AndroidHapticService
 import me.pecos.memozy.platform.intent.AndroidPermissionService
@@ -9,6 +11,7 @@ import me.pecos.memozy.platform.intent.AndroidSharer
 import me.pecos.memozy.platform.intent.AndroidToastPresenter
 import me.pecos.memozy.platform.intent.AndroidUrlLauncher
 import me.pecos.memozy.platform.intent.AppInfo
+import me.pecos.memozy.platform.intent.AppRestarter
 import me.pecos.memozy.platform.intent.ClipboardService
 import me.pecos.memozy.platform.intent.HapticService
 import me.pecos.memozy.platform.intent.PermissionService
@@ -29,4 +32,5 @@ actual fun platformIntentModule(): Module = module {
     single<AppInfo> { AndroidAppInfo(androidContext()) }
     single<PermissionService> { AndroidPermissionService(androidContext()) }
     single<SharedContentReader> { AndroidSharedContentReader(androidContext()) }
+    single<AppRestarter> { AndroidAppRestarter(ActivityHolder::current) }
 }
