@@ -6,6 +6,7 @@
     <string name="section_data">データ</string>
     <string name="section_other">その他</string>
     <string name="language_settings">言語設定</string>
+    <string name="ios_restart_required">アプリを再起動すると反映されます</string>
     <string name="open_source_license">オープンソースライセンス</string>
     <string name="reset_memos">メモをリセット</string>
     <string name="reset_confirm">保存されたすべてのメモが削除されます。\n本当にリセットしますか？</string>

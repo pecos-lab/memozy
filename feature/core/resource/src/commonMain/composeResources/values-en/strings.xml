@@ -6,6 +6,7 @@
     <string name="section_data">Data</string>
     <string name="section_other">Other</string>
     <string name="language_settings">Language</string>
+    <string name="ios_restart_required">Changes will apply after restarting the app</string>
     <string name="open_source_license">Open Source Licenses</string>
     <string name="reset_memos">Reset Memos</string>
     <string name="reset_confirm">All saved memos will be deleted.\nAre you sure you want to reset?</string>
