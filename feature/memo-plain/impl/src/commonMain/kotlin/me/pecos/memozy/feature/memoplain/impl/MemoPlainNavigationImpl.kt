@@ -1,12 +1,6 @@
 package me.pecos.memozy.feature.memoplain.impl
 
-import android.Manifest
-import android.content.Intent
-import android.content.pm.PackageManager
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
-import androidx.core.content.ContextCompat
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -21,7 +15,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import me.pecos.memozy.feature.core.resource.generated.resources.Res
 import me.pecos.memozy.feature.core.resource.generated.resources.confirm
 import me.pecos.memozy.feature.core.resource.generated.resources.login_prompt_message
@@ -42,6 +35,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import androidx.savedstate.read
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -64,9 +58,15 @@ import me.pecos.memozy.data.repository.MemoRepository
 import me.pecos.memozy.data.repository.model.MemoFormat
 import me.pecos.memozy.feature.memoplain.api.MemoPlainNavigation
 import me.pecos.memozy.feature.memoplain.api.MemoPlainRoute
+import me.pecos.memozy.platform.intent.AppPermission
+import me.pecos.memozy.platform.intent.PermissionService
+import me.pecos.memozy.platform.intent.PermissionStatus
+import me.pecos.memozy.platform.intent.SharedContentReader
+import me.pecos.memozy.platform.intent.percentDecodeUtf8
 import me.pecos.memozy.platform.media.AudioFileStore
 import me.pecos.memozy.platform.media.AudioRecorder
 import me.pecos.memozy.platform.media.MediaService
+import me.pecos.memozy.presentation.components.rememberPermissionLauncher
 import org.koin.compose.koinInject
 import me.pecos.memozy.feature.core.viewmodel.model.MemoFormatUi
 import me.pecos.memozy.feature.core.viewmodel.model.MemoUiState
@@ -287,7 +287,7 @@ class MemoPlainNavigationImpl(
             popEnterTransition = { fadeIn(tween(150)) },
             popExitTransition = { fadeOut(tween(150)) }
         ) { backStackEntry ->
-            val memoIdStr = backStackEntry.arguments?.getString("memoId") ?: ""
+            val memoIdStr = backStackEntry.arguments?.read { getStringOrNull("memoId") } ?: ""
             val isShared = memoIdStr.startsWith("shared_")
             val isSharedImage = memoIdStr.startsWith("shared_image_")
             val isSharedPdf = memoIdStr.startsWith("shared_pdf_")
@@ -297,17 +297,17 @@ class MemoPlainNavigationImpl(
             val sharedText = remember {
                 if (isShared && !isSharedImage && !isSharedPdf) {
                     try {
-                        java.net.URLDecoder.decode(memoIdStr.removePrefix("shared_"), "UTF-8")
+                        percentDecodeUtf8(memoIdStr.removePrefix("shared_"))
                     } catch (e: Exception) { "" }
                 } else ""
             }
 
-            // 이미지/PDF URI 디코딩
-            val sharedFileUri = remember {
+            // 이미지/PDF URI 디코딩 — 플랫폼 무관 문자열로 보관.
+            val sharedFileUri: String? = remember {
                 if (isSharedImage || isSharedPdf) {
                     try {
                         val prefix = if (isSharedImage) "shared_image_" else "shared_pdf_"
-                        android.net.Uri.parse(java.net.URLDecoder.decode(memoIdStr.removePrefix(prefix), "UTF-8"))
+                        percentDecodeUtf8(memoIdStr.removePrefix(prefix))
                     } catch (e: Exception) { null }
                 } else null
             }
@@ -362,7 +362,7 @@ class MemoPlainNavigationImpl(
 
             // 이미지 OCR 처리
             var imageOcrState by remember { mutableStateOf<SummaryState>(SummaryState.Idle) }
-            val imageContext = LocalContext.current
+            val sharedContentReader: SharedContentReader = koinInject()
 
             LaunchedEffect(sharedFileUri, isSharedImage) {
                 if (isSharedImage && sharedFileUri != null && imageOcrState is SummaryState.Idle) {
@@ -372,11 +372,11 @@ class MemoPlainNavigationImpl(
                     }
                     imageOcrState = SummaryState.Loading
                     try {
-                        val bytes = imageContext.contentResolver.openInputStream(sharedFileUri)?.use { it.readBytes() }
+                        val bytes = sharedContentReader.readBytes(sharedFileUri)
                             ?: throw Exception("Cannot read image")
                         @OptIn(ExperimentalEncodingApi::class)
                         val base64 = Base64.Default.encode(bytes)
-                        val mimeType = imageContext.contentResolver.getType(sharedFileUri) ?: "image/jpeg"
+                        val mimeType = sharedContentReader.getMimeType(sharedFileUri) ?: "image/jpeg"
                         val result = aiApiService.describeImage(base64, mimeType)
                         imageOcrState = SummaryState.Success(result)
                         aiUsageDao.insert(AiUsage(feature = FEATURE_IMAGE_OCR))
@@ -453,8 +453,6 @@ class MemoPlainNavigationImpl(
                     existingMemo ?: MemoUiState(0, "", 1, "")
                 }
 
-            val context = LocalContext.current
-
             // 요약 상태 통합 (ACTION_SEND + 메모 내 링크 감지)
             var inlineSummaryState by remember { mutableStateOf<SummaryState>(SummaryState.Idle) }
             // ACTION_SEND 요약 결과를 inlineSummaryState에 반영
@@ -493,48 +491,37 @@ class MemoPlainNavigationImpl(
 
             val mediaService: MediaService = koinInject()
             val audioFileStore: AudioFileStore = koinInject()
+            val permissionService: PermissionService = koinInject()
             var audioRecorder by remember { mutableStateOf<AudioRecorder?>(null) }
             var recordingStartTime by remember { mutableStateOf(0L) }
             val audioCachePath = remember { audioFileStore.cachePath("recording.m4a") }
 
-            val permissionLauncher = rememberLauncherForActivityResult(
-                ActivityResultContracts.RequestPermission()
-            ) { granted ->
-                if (granted) {
-                    // 권한 획득 → 녹음 시작
-                    try {
-                        val recorder = mediaService.createAudioRecorder()
-                        recorder.start(audioCachePath)
-                        audioRecorder = recorder
-                        recordingStartTime = Clock.System.now().toEpochMilliseconds()
-                        isRecording = true
-                        transcriptionError = null
-                    } catch (e: Exception) {
-                        transcriptionError = "녹음을 시작할 수 없어요."
-                    }
-                } else {
-                    transcriptionError = "마이크 권한이 필요해요."
+            fun beginRecording() {
+                try {
+                    val recorder = mediaService.createAudioRecorder()
+                    recorder.start(audioCachePath)
+                    audioRecorder = recorder
+                    recordingStartTime = Clock.System.now().toEpochMilliseconds()
+                    isRecording = true
+                    transcriptionError = null
+                } catch (e: Exception) {
+                    transcriptionError = "녹음을 시작할 수 없어요."
                 }
+            }
+
+            val launchRecordPermission = rememberPermissionLauncher(
+                permission = AppPermission.RECORD_AUDIO,
+            ) { granted ->
+                if (granted) beginRecording()
+                else transcriptionError = "마이크 권한이 필요해요."
             }
 
             fun startRecording() {
                 transcriptionResult = null
-                val hasPermission = ContextCompat.checkSelfPermission(
-                    context, Manifest.permission.RECORD_AUDIO
-                ) == PackageManager.PERMISSION_GRANTED
-                if (hasPermission) {
-                    try {
-                        val recorder = mediaService.createAudioRecorder()
-                        recorder.start(audioCachePath)
-                        audioRecorder = recorder
-                        recordingStartTime = Clock.System.now().toEpochMilliseconds()
-                        isRecording = true
-                        transcriptionError = null
-                    } catch (e: Exception) {
-                        transcriptionError = "녹음을 시작할 수 없어요."
-                    }
+                if (permissionService.status(AppPermission.RECORD_AUDIO) == PermissionStatus.GRANTED) {
+                    beginRecording()
                 } else {
-                    permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    launchRecordPermission()
                 }
             }
 
@@ -1076,7 +1063,7 @@ class MemoPlainNavigationImpl(
             var lastEmit = 0L
             aiApiService.generateContentStream(fullPrompt, longOutput = true).collect { delta ->
                 sb.append(delta)
-                val now = System.currentTimeMillis()
+                val now = Clock.System.now().toEpochMilliseconds()
                 if (now - lastEmit >= 150) {
                     result = stripMarkdown(sb.toString())
                     onStreamUpdate?.invoke(result)
