@@ -15,6 +15,8 @@ import me.pecos.memozy.feature.core.viewmodel.settings.FileUriBridge
 import me.pecos.memozy.feature.core.viewmodel.settings.IosFileUriBridge
 import me.pecos.memozy.feature.core.viewmodel.settings.NSUserDefaultsPreferencesProvider
 import me.pecos.memozy.feature.core.viewmodel.settings.PreferencesProvider
+import me.pecos.memozy.platform.ads.AdsService
+import me.pecos.memozy.platform.ads.IosAdsService
 import me.pecos.memozy.platform.credential.CredentialService
 import me.pecos.memozy.platform.credential.IosCredentialService
 import me.pecos.memozy.platform.intent.AppInfo
@@ -68,6 +70,9 @@ val sharedModule: Module = module {
 
     // Credential
     single<CredentialService> { IosCredentialService() }
+
+    // Ads (iOS no-op — 이슈 #280 옵션 A)
+    single<AdsService> { IosAdsService() }
 
     // Stubs (Supabase 연결 완료 전까지 임시)
     single<AuthService> { IosStubAuthService() }
