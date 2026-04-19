@@ -25,6 +25,7 @@ kotlin {
             implementation(libs.google.fonts)
             implementation(libs.coil.compose)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.montage.android)
         }
     }
 }
