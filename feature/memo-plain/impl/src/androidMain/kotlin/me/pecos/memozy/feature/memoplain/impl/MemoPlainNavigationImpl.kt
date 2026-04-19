@@ -23,8 +23,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.feature.core.resource.generated.resources.Res
+import me.pecos.memozy.feature.core.resource.generated.resources.confirm
+import me.pecos.memozy.feature.core.resource.generated.resources.login_prompt_message
+import me.pecos.memozy.feature.core.resource.generated.resources.login_prompt_title
+import org.jetbrains.compose.resources.stringResource
 import me.pecos.memozy.presentation.screen.memo.SummaryMode
 import me.pecos.memozy.presentation.screen.memo.SummaryStyle
 import androidx.compose.ui.unit.dp
@@ -967,11 +970,11 @@ class MemoPlainNavigationImpl(
             if (showLoginPrompt) {
                 AlertDialog(
                     onDismissRequest = { showLoginPrompt = false },
-                    title = { Text(stringResource(R.string.login_prompt_title)) },
-                    text = { Text(stringResource(R.string.login_prompt_message)) },
+                    title = { Text(stringResource(Res.string.login_prompt_title)) },
+                    text = { Text(stringResource(Res.string.login_prompt_message)) },
                     confirmButton = {
                         TextButton(onClick = { showLoginPrompt = false }) {
-                            Text(stringResource(R.string.confirm))
+                            Text(stringResource(Res.string.confirm))
                         }
                     }
                 )
