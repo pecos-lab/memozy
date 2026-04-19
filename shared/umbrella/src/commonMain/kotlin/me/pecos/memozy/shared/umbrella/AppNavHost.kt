@@ -1,7 +1,7 @@
 package me.pecos.memozy.shared.umbrella
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -14,6 +14,7 @@ import me.pecos.memozy.presentation.screen.donation.DonationScreen
 import me.pecos.memozy.presentation.screen.home.HomeScreen
 import me.pecos.memozy.presentation.screen.subscription.SubscriptionScreen
 import me.pecos.memozy.presentation.screen.trash.TrashScreen
+import me.pecos.memozy.presentation.theme.AppThemeShell
 
 private const val ROUTE_HOME = "home"
 private const val ROUTE_TRASH = "trash"
@@ -24,8 +25,9 @@ private const val ROUTE_SUBSCRIPTION = "subscription"
 fun AppNavHost(
     mainViewModel: MainViewModel,
     trashViewModel: TrashViewModel,
+    isDarkTheme: Boolean = isSystemInDarkTheme(),
 ) {
-    MaterialTheme {
+    AppThemeShell(isDarkTheme = isDarkTheme) {
         Surface(modifier = Modifier.fillMaxSize()) {
             val navController = rememberNavController()
             NavHost(
