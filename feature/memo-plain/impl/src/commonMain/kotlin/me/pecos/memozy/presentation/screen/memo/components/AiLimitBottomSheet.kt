@@ -26,6 +26,7 @@ import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_ad_exh
 import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_ad_remaining
 import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_close
 import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_free_message
+import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_ios_unsupported
 import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_pro_message
 import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_title
 import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_upgrade
@@ -45,7 +46,8 @@ fun AiLimitBottomSheet(
     isAdLoading: Boolean,
     onWatchAd: () -> Unit,
     onUpgrade: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    isPlatformSupported: Boolean = true,
 ) {
     val colors = LocalAppColors.current
     val fontSettings = LocalFontSettings.current
@@ -88,8 +90,16 @@ fun AiLimitBottomSheet(
             Spacer(modifier = Modifier.height(20.dp))
 
             if (!subscriptionTier.isPro) {
-                // 광고 시청 버튼 (Free 유저만)
-                if (canWatchAd) {
+                // 광고 시청 버튼 (Free 유저만) — iOS는 현재 리워드 광고 SDK 미연동
+                if (!isPlatformSupported) {
+                    Text(
+                        text = stringResource(Res.string.ai_limit_ios_unsupported),
+                        fontSize = fontSettings.scaled(13),
+                        color = colors.textSecondary,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                } else if (canWatchAd) {
                     Button(
                         onClick = onWatchAd,
                         enabled = !isAdLoading,
