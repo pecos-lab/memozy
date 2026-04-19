@@ -32,11 +32,16 @@ kotlin {
         commonMain.dependencies {
             api(projects.feature.core.viewmodel)
             api(projects.data.repository.memo.api)
+            api(projects.feature.home.impl)
             implementation(projects.datasource.local.memo.api)
+            implementation(projects.feature.core.resource)
+            implementation(libs.jetbrains.navigation.compose)
         }
         iosMain.dependencies {
             implementation(libs.koin.core)
             implementation(libs.kotlinx.coroutines.core)
+            implementation(projects.datasource.local.memo.impl)
+            implementation(projects.data.repository.memo.impl)
         }
     }
 }
