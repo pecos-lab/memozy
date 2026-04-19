@@ -27,19 +27,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
-import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.feature.core.resource.generated.resources.Res
+import me.pecos.memozy.feature.core.resource.generated.resources.memo_copied
+import me.pecos.memozy.feature.core.resource.generated.resources.memo_copy
+import me.pecos.memozy.feature.core.resource.generated.resources.summary_card_open
+import me.pecos.memozy.feature.core.resource.generated.resources.summary_card_web
+import me.pecos.memozy.feature.core.resource.generated.resources.summary_mode_detailed
+import me.pecos.memozy.feature.core.resource.generated.resources.summary_mode_simple
+import me.pecos.memozy.feature.core.resource.generated.resources.web_url_copied
+import me.pecos.memozy.feature.core.resource.generated.resources.youtube_url_copied
 import me.pecos.memozy.platform.intent.ClipboardService
 import me.pecos.memozy.platform.intent.ToastPresenter
 import me.pecos.memozy.platform.intent.UrlLauncher
+import me.pecos.memozy.presentation.components.RemoteAsyncImage
 import me.pecos.memozy.presentation.screen.memo.SummaryMode
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 enum class SummarySourceType { YOUTUBE, WEB, TWITTER }
@@ -61,9 +69,9 @@ fun SummaryCard(
     val urlLauncher = koinInject<UrlLauncher>()
     val clipboardService = koinInject<ClipboardService>()
     val toastPresenter = koinInject<ToastPresenter>()
-    val youtubeUrlCopiedMsg = stringResource(R.string.youtube_url_copied)
-    val webUrlCopiedMsg = stringResource(R.string.web_url_copied)
-    val memoCopiedMsg = stringResource(R.string.memo_copied)
+    val youtubeUrlCopiedMsg = stringResource(Res.string.youtube_url_copied)
+    val webUrlCopiedMsg = stringResource(Res.string.web_url_copied)
+    val memoCopiedMsg = stringResource(Res.string.memo_copied)
 
     Box {
         Column(
@@ -72,10 +80,9 @@ fun SummaryCard(
                 .clip(RoundedCornerShape(12.dp))
                 .background(colors.cardBackground)
         ) {
-            // 프리뷰 이미지
             if (imageUrl != null) {
-                AsyncImage(
-                    model = imageUrl,
+                RemoteAsyncImage(
+                    url = imageUrl,
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -94,7 +101,7 @@ fun SummaryCard(
                 }
                 val sourceLabel = when (sourceType) {
                     SummarySourceType.YOUTUBE -> "YouTube"
-                    SummarySourceType.WEB -> stringResource(R.string.summary_card_web)
+                    SummarySourceType.WEB -> stringResource(Res.string.summary_card_web)
                     SummarySourceType.TWITTER -> "X / Twitter"
                 }
                 Text(
@@ -150,7 +157,7 @@ fun SummaryCard(
                     ) {
                         Icon(Icons.Default.OpenInBrowser, null, tint = colors.chipText, modifier = Modifier.size(14.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(R.string.summary_card_open), fontSize = fontSettings.scaled(11), color = colors.chipText, fontWeight = FontWeight.Medium)
+                        Text(stringResource(Res.string.summary_card_open), fontSize = fontSettings.scaled(11), color = colors.chipText, fontWeight = FontWeight.Medium)
                     }
 
                     // URL 복사
@@ -172,7 +179,7 @@ fun SummaryCard(
                     ) {
                         Icon(Icons.Default.ContentCopy, null, tint = colors.chipText, modifier = Modifier.size(14.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(R.string.memo_copy), fontSize = fontSettings.scaled(11), color = colors.chipText, fontWeight = FontWeight.Medium)
+                        Text(stringResource(Res.string.memo_copy), fontSize = fontSettings.scaled(11), color = colors.chipText, fontWeight = FontWeight.Medium)
                     }
 
                     if (!hasSummary && onSummarize != null) {
@@ -187,7 +194,7 @@ fun SummaryCard(
                         ) {
                             Icon(Icons.Default.Summarize, null, tint = Color(0xFF2196F3), modifier = Modifier.size(14.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(stringResource(R.string.summary_mode_simple), fontSize = fontSettings.scaled(11), color = Color(0xFF2196F3), fontWeight = FontWeight.Medium)
+                            Text(stringResource(Res.string.summary_mode_simple), fontSize = fontSettings.scaled(11), color = Color(0xFF2196F3), fontWeight = FontWeight.Medium)
                         }
                         Row(
                             modifier = Modifier
@@ -199,7 +206,7 @@ fun SummaryCard(
                         ) {
                             Icon(Icons.Default.Summarize, null, tint = Color(0xFFFF9800), modifier = Modifier.size(14.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(stringResource(R.string.summary_mode_detailed), fontSize = fontSettings.scaled(11), color = Color(0xFFFF9800), fontWeight = FontWeight.Medium)
+                            Text(stringResource(Res.string.summary_mode_detailed), fontSize = fontSettings.scaled(11), color = Color(0xFFFF9800), fontWeight = FontWeight.Medium)
                         }
                     }
                 }
