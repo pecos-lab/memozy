@@ -49,7 +49,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.wanted.android.wanted.design.theme.DesignSystemTheme
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
@@ -74,6 +73,7 @@ import me.pecos.memozy.feature.core.viewmodel.settings.PreferencesProvider
 import me.pecos.memozy.feature.core.viewmodel.settings.ThemeMode
 import me.pecos.memozy.presentation.screen.login.LoginScreen
 import me.pecos.memozy.presentation.screen.settings.SettingsScreen
+import me.pecos.memozy.presentation.theme.AppThemeShell
 import me.pecos.memozy.presentation.theme.LocalActivity
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -179,10 +179,9 @@ class MainActivity : ComponentActivity() {
             ) {
             OverrideNightMode(isDarkTheme = isDarkTheme) {
                 CompositionLocalProvider(
-                    LocalAppColors provides appColors,
                     LocalFontSettings provides fontSettings
                 ) {
-                    DesignSystemTheme(isDarkTheme = isDarkTheme) {
+                    AppThemeShell(isDarkTheme = isDarkTheme) {
                     val currentTypography = MaterialTheme.typography
                     val ff = fontSettings.fontFamily
                     val customTypography = currentTypography.copy(
@@ -418,7 +417,7 @@ class MainActivity : ComponentActivity() {
                 }
             } // CompositionLocalProvider(LocalTextStyle)
             } // MaterialTheme(customTypography)
-            } // DesignSystemTheme + CompositionLocalProvider(LocalAppColors, LocalFontSettings)
+            } // AppThemeShell + CompositionLocalProvider(LocalFontSettings)
             } // OverrideNightMode + CompositionLocalProvider(LocalActivity)
         }
     }
