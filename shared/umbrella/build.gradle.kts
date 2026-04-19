@@ -34,8 +34,11 @@ kotlin {
             api(projects.data.repository.memo.api)
             api(projects.feature.home.impl)
             implementation(projects.datasource.local.memo.api)
+            implementation(projects.feature.home.api)
             implementation(projects.feature.core.resource)
             implementation(libs.jetbrains.navigation.compose)
+            implementation(libs.haze)
+            implementation(compose.materialIconsExtended)
         }
         iosMain.dependencies {
             implementation(libs.koin.core)
