@@ -3,7 +3,6 @@ package me.pecos.memozy.feature.memoplain.impl
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
@@ -51,13 +50,21 @@ import me.pecos.memozy.data.datasource.local.YoutubeSummaryDao
 import me.pecos.memozy.data.datasource.local.entity.AiUsage
 import me.pecos.memozy.data.datasource.local.entity.Memo
 import me.pecos.memozy.data.datasource.local.entity.YoutubeSummary
-import java.util.Calendar
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 import me.pecos.memozy.data.datasource.remote.ai.AIApiService
 import me.pecos.memozy.data.datasource.remote.ai.YouTubeCaptionService
 import me.pecos.memozy.data.repository.MemoRepository
 import me.pecos.memozy.data.repository.model.MemoFormat
 import me.pecos.memozy.feature.memoplain.api.MemoPlainNavigation
 import me.pecos.memozy.feature.memoplain.api.MemoPlainRoute
+import me.pecos.memozy.platform.media.AudioFileStore
 import me.pecos.memozy.platform.media.AudioRecorder
 import me.pecos.memozy.platform.media.MediaService
 import org.koin.compose.koinInject
@@ -101,13 +108,12 @@ class MemoPlainNavigationImpl(
             .replace(Regex("""^\d+\.\s+""", RegexOption.MULTILINE), "")     // 1. 번호 리스트
             .replace(Regex("""`(.+?)`"""), "$1")                             // `코드`
 
+        @OptIn(ExperimentalTime::class)
         private fun startOfToday(): Long {
-            return Calendar.getInstance().apply {
-                set(Calendar.HOUR_OF_DAY, 0)
-                set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
-            }.timeInMillis
+            val zone = TimeZone.currentSystemDefault()
+            val now = Clock.System.now().toLocalDateTime(zone)
+            val midnight = LocalDateTime(now.year, now.monthNumber, now.dayOfMonth, 0, 0, 0, 0)
+            return midnight.toInstant(zone).toEpochMilliseconds()
         }
 
         private val YOUTUBE_REGEX = Regex(
@@ -368,7 +374,8 @@ class MemoPlainNavigationImpl(
                     try {
                         val bytes = imageContext.contentResolver.openInputStream(sharedFileUri)?.use { it.readBytes() }
                             ?: throw Exception("Cannot read image")
-                        val base64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
+                        @OptIn(ExperimentalEncodingApi::class)
+                        val base64 = Base64.Default.encode(bytes)
                         val mimeType = imageContext.contentResolver.getType(sharedFileUri) ?: "image/jpeg"
                         val result = aiApiService.describeImage(base64, mimeType)
                         imageOcrState = SummaryState.Success(result)
@@ -485,9 +492,10 @@ class MemoPlainNavigationImpl(
             }
 
             val mediaService: MediaService = koinInject()
+            val audioFileStore: AudioFileStore = koinInject()
             var audioRecorder by remember { mutableStateOf<AudioRecorder?>(null) }
             var recordingStartTime by remember { mutableStateOf(0L) }
-            val audioFile = remember(context) { java.io.File(context.cacheDir, "recording.m4a") }
+            val audioCachePath = remember { audioFileStore.cachePath("recording.m4a") }
 
             val permissionLauncher = rememberLauncherForActivityResult(
                 ActivityResultContracts.RequestPermission()
@@ -496,9 +504,9 @@ class MemoPlainNavigationImpl(
                     // 권한 획득 → 녹음 시작
                     try {
                         val recorder = mediaService.createAudioRecorder()
-                        recorder.start(audioFile.absolutePath)
+                        recorder.start(audioCachePath)
                         audioRecorder = recorder
-                        recordingStartTime = System.currentTimeMillis()
+                        recordingStartTime = Clock.System.now().toEpochMilliseconds()
                         isRecording = true
                         transcriptionError = null
                     } catch (e: Exception) {
@@ -517,9 +525,9 @@ class MemoPlainNavigationImpl(
                 if (hasPermission) {
                     try {
                         val recorder = mediaService.createAudioRecorder()
-                        recorder.start(audioFile.absolutePath)
+                        recorder.start(audioCachePath)
                         audioRecorder = recorder
-                        recordingStartTime = System.currentTimeMillis()
+                        recordingStartTime = Clock.System.now().toEpochMilliseconds()
                         isRecording = true
                         transcriptionError = null
                     } catch (e: Exception) {
@@ -534,37 +542,39 @@ class MemoPlainNavigationImpl(
                 try {
                     audioRecorder?.apply { stop(); release() }
                 } catch (_: Exception) { }
-                val durationSeconds = (System.currentTimeMillis() - recordingStartTime) / 1000
+                val durationSeconds = (Clock.System.now().toEpochMilliseconds() - recordingStartTime) / 1000
                 audioRecorder = null
                 isRecording = false
 
-                if (!audioFile.exists() || audioFile.length() < 1024) {
+                if (!audioFileStore.exists(audioCachePath) || audioFileStore.length(audioCachePath) < 1024) {
                     transcriptionError = "녹음이 너무 짧아요. 다시 시도해주세요."
-                    audioFile.delete()
+                    audioFileStore.delete(audioCachePath)
                     return
                 }
 
                 isTranscribing = true
                 scope.launch {
                     try {
-                        val audioBytes = audioFile.readBytes()
-                        val base64 = Base64.encodeToString(audioBytes, Base64.NO_WRAP)
+                        val audioBytes = audioFileStore.readBytes(audioCachePath)
+                        @OptIn(ExperimentalEncodingApi::class)
+                        val base64 = Base64.Default.encode(audioBytes)
                         val result = aiApiService.transcribeAudio(base64, "audio/mp4", durationSeconds)
                         // Gemini가 프롬프트를 그대로 반환하는 경우 필터링
                         if (result.contains("받아쓰기") || result.contains("텍스트만 출력") || result.isBlank()) {
                             transcriptionError = "음성이 감지되지 않았어요. 다시 시도해주세요."
                             transcriptionResult = null
-                            audioFile.delete()
+                            audioFileStore.delete(audioCachePath)
                         } else {
                             // 오디오 파일을 영구 저장소로 이동 (제목과 동일한 파일명)
-                            val audioDir = java.io.File(context.filesDir, "audio")
-                            if (!audioDir.exists()) audioDir.mkdirs()
-                            val now = java.text.SimpleDateFormat("yy.MM.dd HH:mm", java.util.Locale.getDefault()).format(java.util.Date())
-                            val safeFileName = "$now 녹음".replace(":", "-").replace("/", "-")
-                            val permanentFile = java.io.File(audioDir, "$safeFileName.m4a")
-                            audioFile.copyTo(permanentFile, overwrite = true)
-                            audioFile.delete()
-                            savedAudioPath = permanentFile.absolutePath
+                            val nowLocal = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+                            fun Int.pad2(): String = toString().padStart(2, '0')
+                            val yy = (nowLocal.year % 100).pad2()
+                            val stamp = "$yy.${nowLocal.monthNumber.pad2()}.${nowLocal.dayOfMonth.pad2()} ${nowLocal.hour.pad2()}:${nowLocal.minute.pad2()}"
+                            val safeFileName = "$stamp 녹음".replace(":", "-").replace("/", "-")
+                            val permanentPath = audioFileStore.permanentPath(safeFileName)
+                            audioFileStore.copy(audioCachePath, permanentPath)
+                            audioFileStore.delete(audioCachePath)
+                            savedAudioPath = permanentPath
 
                             transcriptionResult = result
                             transcriptionError = null
@@ -572,7 +582,7 @@ class MemoPlainNavigationImpl(
                         }
                     } catch (e: Exception) {
                         transcriptionError = "음성 변환에 실패했어요."
-                        audioFile.delete()
+                        audioFileStore.delete(audioCachePath)
                     } finally {
                         isTranscribing = false
                     }
