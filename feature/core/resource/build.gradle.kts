@@ -17,12 +17,14 @@ kotlin {
         commonMain.dependencies {
             api(projects.feature.core.viewmodel)
             api(projects.platform.ads.api)
+            api(projects.platform.intent.api)
             implementation(compose.materialIconsExtended)
             implementation(libs.kotlinx.serialization.json)
         }
         androidMain.dependencies {
             implementation(libs.google.fonts)
             implementation(libs.coil.compose)
+            implementation(libs.androidx.activity.compose)
         }
     }
 }
