@@ -70,6 +70,7 @@ import me.pecos.memozy.presentation.screen.subscription.SubscriptionScreen
 import me.pecos.memozy.presentation.screen.home.HomeScreen
 import me.pecos.memozy.feature.core.viewmodel.MainViewModel
 import me.pecos.memozy.feature.core.viewmodel.SettingsViewModel
+import me.pecos.memozy.feature.core.viewmodel.settings.PreferencesProvider
 import me.pecos.memozy.feature.core.viewmodel.settings.ThemeMode
 import me.pecos.memozy.presentation.screen.login.LoginScreen
 import me.pecos.memozy.presentation.screen.settings.SettingsScreen
@@ -95,6 +96,7 @@ class MainActivity : ComponentActivity() {
 
     private val billingService: BillingService by inject()
     private val adsService: AdsService by inject()
+    private val preferencesProvider: PreferencesProvider by inject()
 
     // 공유 Intent 상태 — singleTask에서 onNewIntent 처리
     private val _currentIntent = androidx.compose.runtime.mutableStateOf<Intent?>(null)
@@ -261,10 +263,9 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
-                        val prefs = remember {
-                            applicationContext.getSharedPreferences("settings", Context.MODE_PRIVATE)
+                        val onboardingDone = remember {
+                            preferencesProvider.getBoolean("onboarding_done", false)
                         }
-                        val onboardingDone = remember { prefs.getBoolean("onboarding_done", false) }
                         val startDest = if (onboardingDone) HomeRoute.MAIN else HomeRoute.LOGIN
 
                         val hazeState = rememberHazeState()
@@ -295,13 +296,13 @@ class MainActivity : ComponentActivity() {
                                     LoginScreen(
                                         onSignIn = { idToken ->
                                             settingsViewModel.signInWithGoogle(idToken)
-                                            prefs.edit().putBoolean("onboarding_done", true).apply()
+                                            preferencesProvider.putBoolean("onboarding_done", true)
                                             navController.navigate(HomeRoute.MAIN) {
                                                 popUpTo(HomeRoute.LOGIN) { inclusive = true }
                                             }
                                         },
                                         onSkip = {
-                                            prefs.edit().putBoolean("onboarding_done", true).apply()
+                                            preferencesProvider.putBoolean("onboarding_done", true)
                                             navController.navigate(HomeRoute.MAIN) {
                                                 popUpTo(HomeRoute.LOGIN) { inclusive = true }
                                             }
