@@ -18,14 +18,23 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.feature.core.resource.generated.resources.Res
+import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_ad_exhausted
+import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_ad_remaining
+import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_close
+import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_free_message
+import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_pro_message
+import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_title
+import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_upgrade
+import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_upgrade_desc
+import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_watch_ad
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
 import me.pecos.memozy.presentation.theme.SubscriptionTier
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,7 +63,7 @@ fun AiLimitBottomSheet(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = stringResource(R.string.ai_limit_title),
+                text = stringResource(Res.string.ai_limit_title),
                 fontSize = fontSettings.scaled(18),
                 fontWeight = FontWeight.Bold,
                 color = colors.textTitle,
@@ -64,9 +73,9 @@ fun AiLimitBottomSheet(
             Spacer(modifier = Modifier.height(12.dp))
 
             val message = if (subscriptionTier.isPro) {
-                stringResource(R.string.ai_limit_pro_message, subscriptionTier.dailyAiLimit)
+                stringResource(Res.string.ai_limit_pro_message, subscriptionTier.dailyAiLimit)
             } else {
-                stringResource(R.string.ai_limit_free_message, subscriptionTier.dailyAiLimit)
+                stringResource(Res.string.ai_limit_free_message, subscriptionTier.dailyAiLimit)
             }
 
             Text(
@@ -98,7 +107,7 @@ fun AiLimitBottomSheet(
                             )
                         } else {
                             Text(
-                                text = stringResource(R.string.ai_limit_watch_ad),
+                                text = stringResource(Res.string.ai_limit_watch_ad),
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(vertical = 4.dp)
                             )
@@ -108,7 +117,7 @@ fun AiLimitBottomSheet(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = stringResource(R.string.ai_limit_ad_remaining, remainingAdViews),
+                        text = stringResource(Res.string.ai_limit_ad_remaining, remainingAdViews),
                         fontSize = fontSettings.scaled(12),
                         color = colors.textBody.copy(alpha = 0.6f),
                         textAlign = TextAlign.Center
@@ -117,7 +126,7 @@ fun AiLimitBottomSheet(
                     Spacer(modifier = Modifier.height(12.dp))
                 } else {
                     Text(
-                        text = stringResource(R.string.ai_limit_ad_exhausted),
+                        text = stringResource(Res.string.ai_limit_ad_exhausted),
                         fontSize = fontSettings.scaled(13),
                         color = colors.textSecondary,
                         textAlign = TextAlign.Center
@@ -132,7 +141,7 @@ fun AiLimitBottomSheet(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = stringResource(R.string.ai_limit_upgrade),
+                        text = stringResource(Res.string.ai_limit_upgrade),
                         color = colors.chipText,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(vertical = 4.dp)
@@ -142,7 +151,7 @@ fun AiLimitBottomSheet(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = stringResource(R.string.ai_limit_upgrade_desc),
+                    text = stringResource(Res.string.ai_limit_upgrade_desc),
                     fontSize = fontSettings.scaled(12),
                     color = colors.textBody.copy(alpha = 0.6f),
                     textAlign = TextAlign.Center
@@ -157,7 +166,7 @@ fun AiLimitBottomSheet(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.ai_limit_close),
+                    text = stringResource(Res.string.ai_limit_close),
                     color = colors.textBody,
                     modifier = Modifier.padding(vertical = 4.dp)
                 )

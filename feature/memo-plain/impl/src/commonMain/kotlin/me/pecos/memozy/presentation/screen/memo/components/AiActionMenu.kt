@@ -15,23 +15,30 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import me.pecos.memozy.feature.core.resource.generated.resources.Res
+import me.pecos.memozy.feature.core.resource.generated.resources.ai_action_custom
+import me.pecos.memozy.feature.core.resource.generated.resources.ai_action_explain
+import me.pecos.memozy.feature.core.resource.generated.resources.ai_action_organize
+import me.pecos.memozy.feature.core.resource.generated.resources.ai_action_summarize
+import me.pecos.memozy.feature.core.resource.generated.resources.memozy_ai
 import me.pecos.memozy.platform.intent.HapticKind
 import me.pecos.memozy.platform.intent.HapticService
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 enum class AiPresetAction(
     val emoji: String,
-    val labelResId: Int
+    val labelResId: StringResource
 ) {
-    EXPLAIN("\uD83E\uDD14", me.pecos.memozy.feature.core.resource.R.string.ai_action_explain),
-    ORGANIZE("\uD83D\uDCDD", me.pecos.memozy.feature.core.resource.R.string.ai_action_organize),
-    SUMMARIZE("✂\uFE0F", me.pecos.memozy.feature.core.resource.R.string.ai_action_summarize),
-    CUSTOM("✏\uFE0F", me.pecos.memozy.feature.core.resource.R.string.ai_action_custom);
+    EXPLAIN("\uD83E\uDD14", Res.string.ai_action_explain),
+    ORGANIZE("\uD83D\uDCDD", Res.string.ai_action_organize),
+    SUMMARIZE("✂\uFE0F", Res.string.ai_action_summarize),
+    CUSTOM("✏\uFE0F", Res.string.ai_action_custom);
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,7 +62,7 @@ fun AiActionMenu(
                 .padding(bottom = 24.dp)
         ) {
             Text(
-                text = stringResource(me.pecos.memozy.feature.core.resource.R.string.memozy_ai),
+                text = stringResource(Res.string.memozy_ai),
                 fontSize = fontSettings.scaled(16),
                 fontWeight = FontWeight.Bold,
                 color = colors.textTitle,
