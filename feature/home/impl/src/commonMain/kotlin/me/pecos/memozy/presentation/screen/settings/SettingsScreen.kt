@@ -1,7 +1,6 @@
 package me.pecos.memozy.presentation.screen.settings
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import kotlinx.datetime.toLocalDateTime
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Arrangement
@@ -31,7 +30,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
@@ -98,7 +96,7 @@ import me.pecos.memozy.feature.core.resource.generated.resources.theme_light
 import me.pecos.memozy.feature.core.resource.generated.resources.theme_settings
 import me.pecos.memozy.feature.core.resource.generated.resources.theme_system
 import me.pecos.memozy.feature.core.resource.generated.resources.trash_title
-import me.pecos.memozy.feature.home.impl.BuildConstants
+import me.pecos.memozy.feature.home.impl.GOOGLE_WEB_CLIENT_ID
 import me.pecos.memozy.presentation.components.AppPopup
 import me.pecos.memozy.presentation.components.PopupActionArea
 import me.pecos.memozy.presentation.components.PopupNavigation
@@ -123,7 +121,10 @@ import me.pecos.memozy.feature.core.viewmodel.settings.ThemeMode
 import me.pecos.memozy.platform.credential.CredentialService
 import me.pecos.memozy.platform.credential.GoogleSignInResult
 import me.pecos.memozy.platform.intent.AppInfo
+import me.pecos.memozy.platform.intent.AppRestarter
 import me.pecos.memozy.platform.intent.ToastPresenter
+import me.pecos.memozy.presentation.components.rememberCreateDocumentLauncher
+import me.pecos.memozy.presentation.components.rememberOpenDocumentLauncher
 import me.pecos.memozy.presentation.theme.LocalActivity
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
@@ -133,7 +134,7 @@ import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalSubscriptionTier
 import me.pecos.memozy.presentation.theme.LocalFontSettings
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, kotlin.time.ExperimentalTime::class)
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit = {},
@@ -162,12 +163,12 @@ fun SettingsScreen(
     val lastBackupTime by settingsViewModel.lastBackupTime.collectAsState()
     val colors = LocalAppColors.current
     val fontSettings = LocalFontSettings.current
-    val context = LocalContext.current
-    val activity = LocalActivity.current as? android.app.Activity
+    val activity = LocalActivity.current
     val scope = rememberCoroutineScope()
     val credentialService: CredentialService = koinInject()
     val toastPresenter: ToastPresenter = koinInject()
     val appInfo: AppInfo = koinInject()
+    val appRestarter: AppRestarter = koinInject()
 
     // 로그인 상태 변경 시 마지막 백업 시간 로드
     LaunchedEffect(authState) {
@@ -176,14 +177,14 @@ fun SettingsScreen(
         }
     }
 
-    // SAF launchers
-    val exportLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.CreateDocument("application/json")
-    ) { uri -> if (uri != null) settingsViewModel.exportBackup(uri.toString()) }
+    // SAF launchers (expect/actual 경유 — iOS 는 후속 구현)
+    val launchExport = rememberCreateDocumentLauncher(
+        mimeType = "application/json",
+    ) { uri -> if (uri != null) settingsViewModel.exportBackup(uri) }
 
-    val importLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.OpenDocument()
-    ) { uri -> if (uri != null) settingsViewModel.importBackup(uri.toString()) }
+    val launchImport = rememberOpenDocumentLauncher(
+        mimeTypes = arrayOf("application/json"),
+    ) { uri -> if (uri != null) settingsViewModel.importBackup(uri) }
 
     // 백업 결과 토스트
     LaunchedEffect(backupResult) {
@@ -397,11 +398,7 @@ fun SettingsScreen(
                     val onSelectLanguage = {
                         settingsViewModel.selectLanguage(language)
                         showLanguageDialog = false
-                        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                            @Suppress("DEPRECATION")
-                            activity?.overridePendingTransition(0, 0)
-                            activity?.recreate()
-                        }, 200)
+                        appRestarter.restart()
                     }
                     Row(
                         modifier = Modifier
@@ -436,7 +433,7 @@ fun SettingsScreen(
             isPrimaryDestructive = true,
             onPrimaryClick = {
                 showRestoreDialog = false
-                importLauncher.launch(arrayOf("application/json"))
+                launchImport()
             },
             secondaryButtonText = stringResource(Res.string.cancel),
             onSecondaryClick = { showRestoreDialog = false }
@@ -641,18 +638,15 @@ fun SettingsScreen(
                             onClick = {
                                 scope.launch {
                                     val result = credentialService.signInWithGoogle(
-                                        activity = activity ?: context,
-                                        serverClientId = BuildConstants.GOOGLE_WEB_CLIENT_ID,
+                                        activity = activity,
+                                        serverClientId = GOOGLE_WEB_CLIENT_ID,
                                     )
                                     when (result) {
                                         is GoogleSignInResult.Success ->
                                             settingsViewModel.signInWithGoogle(result.idToken)
                                         is GoogleSignInResult.Cancelled -> Unit
                                         is GoogleSignInResult.Error -> {
-                                            android.util.Log.e(
-                                                "SettingsAuth",
-                                                "Sign-in failed: ${result.message}"
-                                            )
+                                            println("SettingsAuth: Sign-in failed: ${result.message}")
                                             toastPresenter.show(getString(Res.string.sign_in_error))
                                         }
                                     }
@@ -839,13 +833,11 @@ fun SettingsScreen(
                     // 비로그인: 로컬 백업
                     OutlinedButton(
                         onClick = {
-                            val fileName = "memozy_backup_${
-                                java.text.SimpleDateFormat(
-                                    "yyyyMMdd_HHmm",
-                                    java.util.Locale.getDefault()
-                                ).format(java.util.Date())
-                            }.json"
-                            exportLauncher.launch(fileName)
+                            val nowLocal = kotlin.time.Clock.System.now()
+                                .toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault())
+                            fun Int.pad2(): String = toString().padStart(2, '0')
+                            val stamp = "${nowLocal.year}${nowLocal.monthNumber.pad2()}${nowLocal.dayOfMonth.pad2()}_${nowLocal.hour.pad2()}${nowLocal.minute.pad2()}"
+                            launchExport("memozy_backup_$stamp.json")
                         },
                         modifier = Modifier
                             .fillMaxWidth()
