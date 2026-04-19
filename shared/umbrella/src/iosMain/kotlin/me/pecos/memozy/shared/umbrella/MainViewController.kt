@@ -7,5 +7,6 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
     AppNavHost(
         mainViewModel = provideMainViewModel(),
         trashViewModel = provideTrashViewModel(),
+        settingsViewModel = provideSettingsViewModel(),
     )
 }

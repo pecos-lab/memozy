@@ -22,7 +22,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -39,11 +38,13 @@ import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import me.pecos.memozy.feature.core.viewmodel.MainViewModel
+import me.pecos.memozy.feature.core.viewmodel.SettingsViewModel
 import me.pecos.memozy.feature.core.viewmodel.TrashViewModel
 import me.pecos.memozy.feature.home.api.HomeRoute
 import me.pecos.memozy.presentation.components.FloatingNavPill
 import me.pecos.memozy.presentation.screen.donation.DonationScreen
 import me.pecos.memozy.presentation.screen.home.HomeScreen
+import me.pecos.memozy.presentation.screen.settings.SettingsScreen
 import me.pecos.memozy.presentation.screen.subscription.SubscriptionScreen
 import me.pecos.memozy.presentation.screen.trash.TrashScreen
 import me.pecos.memozy.presentation.theme.AppThemeShell
@@ -56,6 +57,7 @@ private const val ROUTE_SUBSCRIPTION = "subscription"
 fun AppNavHost(
     mainViewModel: MainViewModel,
     trashViewModel: TrashViewModel,
+    settingsViewModel: SettingsViewModel,
     isDarkTheme: Boolean = isSystemInDarkTheme(),
     onOpenMemo: (() -> Unit)? = null,
 ) {
@@ -95,9 +97,13 @@ fun AppNavHost(
                     )
                 }
                 composable(HomeRoute.SETTINGS) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Settings — iOS 바인딩 대기 중")
-                    }
+                    SettingsScreen(
+                        onBack = { navController.popBackStack() },
+                        onDonation = { navController.navigate(ROUTE_DONATION) },
+                        onSubscription = { navController.navigate(ROUTE_SUBSCRIPTION) },
+                        onTrash = { navController.navigate(HomeRoute.TRASH) },
+                        settingsViewModel = settingsViewModel,
+                    )
                 }
                 composable(HomeRoute.TRASH) {
                     TrashScreen(
