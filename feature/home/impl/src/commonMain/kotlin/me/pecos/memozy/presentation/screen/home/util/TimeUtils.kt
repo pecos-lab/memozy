@@ -11,8 +11,10 @@ import kotlinx.datetime.todayIn
 
 // ── 시간 포맷 ───────────────────────────────────────────────────────────────────
 
+private fun Int.pad(width: Int): String = toString().padStart(width, '0')
+
 private fun LocalDate.formatDot(): String =
-    "%04d.%02d.%02d".format(year, monthNumber, dayOfMonth)
+    "${year.pad(4)}.${monthNumber.pad(2)}.${dayOfMonth.pad(2)}"
 
 fun formatMemoTime(createdAt: Long, languageCode: String): String {
     if (createdAt == 0L) return ""

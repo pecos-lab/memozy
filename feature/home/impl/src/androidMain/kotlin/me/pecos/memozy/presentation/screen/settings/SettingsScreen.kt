@@ -32,7 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
@@ -51,10 +50,54 @@ import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RippleConfiguration
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.res.painterResource
 import kotlinx.coroutines.launch
 import me.pecos.memozy.data.datasource.remote.auth.AuthState
-import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.feature.core.resource.generated.resources.Res
+import me.pecos.memozy.feature.core.resource.generated.resources.backup_error
+import me.pecos.memozy.feature.core.resource.generated.resources.backup_export
+import me.pecos.memozy.feature.core.resource.generated.resources.backup_restore
+import me.pecos.memozy.feature.core.resource.generated.resources.backup_restore_action
+import me.pecos.memozy.feature.core.resource.generated.resources.backup_restore_confirm
+import me.pecos.memozy.feature.core.resource.generated.resources.backup_success
+import me.pecos.memozy.feature.core.resource.generated.resources.cancel
+import me.pecos.memozy.feature.core.resource.generated.resources.cloud_backup_last_time
+import me.pecos.memozy.feature.core.resource.generated.resources.cloud_backup_now
+import me.pecos.memozy.feature.core.resource.generated.resources.cloud_backup_restore
+import me.pecos.memozy.feature.core.resource.generated.resources.cloud_backup_restore_confirm
+import me.pecos.memozy.feature.core.resource.generated.resources.cloud_backup_restore_success
+import me.pecos.memozy.feature.core.resource.generated.resources.cloud_backup_restoring
+import me.pecos.memozy.feature.core.resource.generated.resources.cloud_backup_success
+import me.pecos.memozy.feature.core.resource.generated.resources.cloud_backup_uploading
+import me.pecos.memozy.feature.core.resource.generated.resources.donation_button
+import me.pecos.memozy.feature.core.resource.generated.resources.font_preview_body
+import me.pecos.memozy.feature.core.resource.generated.resources.font_preview_title
+import me.pecos.memozy.feature.core.resource.generated.resources.font_settings
+import me.pecos.memozy.feature.core.resource.generated.resources.font_size
+import me.pecos.memozy.feature.core.resource.generated.resources.font_size_large
+import me.pecos.memozy.feature.core.resource.generated.resources.font_size_normal
+import me.pecos.memozy.feature.core.resource.generated.resources.font_size_small
+import me.pecos.memozy.feature.core.resource.generated.resources.ic_google
+import me.pecos.memozy.feature.core.resource.generated.resources.language_settings
+import me.pecos.memozy.feature.core.resource.generated.resources.open_source_license
+import me.pecos.memozy.feature.core.resource.generated.resources.reset
+import me.pecos.memozy.feature.core.resource.generated.resources.reset_confirm
+import me.pecos.memozy.feature.core.resource.generated.resources.reset_memos
+import me.pecos.memozy.feature.core.resource.generated.resources.section_account
+import me.pecos.memozy.feature.core.resource.generated.resources.section_data
+import me.pecos.memozy.feature.core.resource.generated.resources.section_other
+import me.pecos.memozy.feature.core.resource.generated.resources.section_theme
+import me.pecos.memozy.feature.core.resource.generated.resources.settings
+import me.pecos.memozy.feature.core.resource.generated.resources.sign_in_error
+import me.pecos.memozy.feature.core.resource.generated.resources.sign_in_google
+import me.pecos.memozy.feature.core.resource.generated.resources.sign_in_loading
+import me.pecos.memozy.feature.core.resource.generated.resources.sign_out
+import me.pecos.memozy.feature.core.resource.generated.resources.sign_out_confirm
+import me.pecos.memozy.feature.core.resource.generated.resources.subscription_current_plan
+import me.pecos.memozy.feature.core.resource.generated.resources.theme_dark
+import me.pecos.memozy.feature.core.resource.generated.resources.theme_light
+import me.pecos.memozy.feature.core.resource.generated.resources.theme_settings
+import me.pecos.memozy.feature.core.resource.generated.resources.theme_system
+import me.pecos.memozy.feature.core.resource.generated.resources.trash_title
 import me.pecos.memozy.feature.home.impl.BuildConstants
 import me.pecos.memozy.presentation.components.AppPopup
 import me.pecos.memozy.presentation.components.PopupActionArea
@@ -82,6 +125,9 @@ import me.pecos.memozy.platform.credential.GoogleSignInResult
 import me.pecos.memozy.platform.intent.AppInfo
 import me.pecos.memozy.platform.intent.ToastPresenter
 import me.pecos.memozy.presentation.theme.LocalActivity
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalSubscriptionTier
@@ -117,7 +163,7 @@ fun SettingsScreen(
     val colors = LocalAppColors.current
     val fontSettings = LocalFontSettings.current
     val context = LocalContext.current
-    val activity = LocalActivity.current
+    val activity = LocalActivity.current as? android.app.Activity
     val scope = rememberCoroutineScope()
     val credentialService: CredentialService = koinInject()
     val toastPresenter: ToastPresenter = koinInject()
@@ -144,13 +190,13 @@ fun SettingsScreen(
         when (val result = backupResult) {
             is BackupResult.Success -> {
                 toastPresenter.show(
-                    context.getString(R.string.backup_success, result.message.toIntOrNull() ?: 0)
+                    getString(Res.string.backup_success, result.message.toIntOrNull() ?: 0)
                 )
                 settingsViewModel.clearBackupResult()
             }
 
             is BackupResult.Error -> {
-                toastPresenter.show(context.getString(R.string.backup_error))
+                toastPresenter.show(getString(Res.string.backup_error))
                 settingsViewModel.clearBackupResult()
             }
 
@@ -163,13 +209,13 @@ fun SettingsScreen(
         when (val state = cloudBackupState) {
             is CloudBackupState.UploadSuccess -> {
                 toastPresenter.show(
-                    context.getString(R.string.cloud_backup_success, state.memoCount)
+                    getString(Res.string.cloud_backup_success, state.memoCount)
                 )
                 settingsViewModel.clearCloudBackupState()
             }
             is CloudBackupState.RestoreSuccess -> {
                 toastPresenter.show(
-                    context.getString(R.string.cloud_backup_restore_success, state.memoCount)
+                    getString(Res.string.cloud_backup_restore_success, state.memoCount)
                 )
                 settingsViewModel.clearCloudBackupState()
             }
@@ -185,13 +231,13 @@ fun SettingsScreen(
 
     if (showThemeDialog) {
         val themeOptions = listOf(
-            ThemeMode.LIGHT to stringResource(R.string.theme_light),
-            ThemeMode.DARK to stringResource(R.string.theme_dark),
-            ThemeMode.SYSTEM to stringResource(R.string.theme_system),
+            ThemeMode.LIGHT to stringResource(Res.string.theme_light),
+            ThemeMode.DARK to stringResource(Res.string.theme_dark),
+            ThemeMode.SYSTEM to stringResource(Res.string.theme_system),
         )
         AppPopup(
             onDismissRequest = { showThemeDialog = false },
-            title = stringResource(R.string.theme_settings),
+            title = stringResource(Res.string.theme_settings),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.MEDIUM,
             actionArea = PopupActionArea.NONE
@@ -230,14 +276,14 @@ fun SettingsScreen(
     if (showFontDialog) {
         AppPopup(
             onDismissRequest = { showFontDialog = false },
-            title = stringResource(R.string.font_settings),
+            title = stringResource(Res.string.font_settings),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.XLARGE,
             actionArea = PopupActionArea.NONE
         ) {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 Text(
-                    text = stringResource(R.string.font_size),
+                    text = stringResource(Res.string.font_size),
                     fontWeight = FontWeight.SemiBold,
                     color = colors.textTitle,
                     fontSize = fontSettings.scaled(14)
@@ -248,9 +294,9 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(stringResource(R.string.font_size_small), fontSize = fontSettings.scaled(12), color = colors.textSecondary)
-                    Text(stringResource(R.string.font_size_normal), fontSize = fontSettings.scaled(12), color = colors.textSecondary)
-                    Text(stringResource(R.string.font_size_large), fontSize = fontSettings.scaled(12), color = colors.textSecondary)
+                    Text(stringResource(Res.string.font_size_small), fontSize = fontSettings.scaled(12), color = colors.textSecondary)
+                    Text(stringResource(Res.string.font_size_normal), fontSize = fontSettings.scaled(12), color = colors.textSecondary)
+                    Text(stringResource(Res.string.font_size_large), fontSize = fontSettings.scaled(12), color = colors.textSecondary)
                 }
                 // 커스텀 슬라이더 (원티드 디자인 스타일)
                 val trackHeight = 6.dp
@@ -323,14 +369,14 @@ fun SettingsScreen(
                 )
 
                 Text(
-                    text = stringResource(R.string.font_preview_title),
+                    text = stringResource(Res.string.font_preview_title),
                     fontSize = selectedFontSize.titleSp.sp,
                     fontWeight = FontWeight.Bold,
                     color = colors.textTitle
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = stringResource(R.string.font_preview_body),
+                    text = stringResource(Res.string.font_preview_body),
                     fontSize = selectedFontSize.bodySp.sp,
                     color = colors.textBody
                 )
@@ -341,7 +387,7 @@ fun SettingsScreen(
     if (showLanguageDialog) {
         AppPopup(
             onDismissRequest = { showLanguageDialog = false },
-            title = stringResource(R.string.language_settings),
+            title = stringResource(Res.string.language_settings),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.MEDIUM,
             actionArea = PopupActionArea.NONE
@@ -382,20 +428,20 @@ fun SettingsScreen(
     if (showRestoreDialog) {
         AppPopup(
             onDismissRequest = { showRestoreDialog = false },
-            title = stringResource(R.string.backup_restore),
+            title = stringResource(Res.string.backup_restore),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.MEDIUM,
             actionArea = PopupActionArea.NEUTRAL,
-            primaryButtonText = stringResource(R.string.backup_restore_action),
+            primaryButtonText = stringResource(Res.string.backup_restore_action),
             isPrimaryDestructive = true,
             onPrimaryClick = {
                 showRestoreDialog = false
                 importLauncher.launch(arrayOf("application/json"))
             },
-            secondaryButtonText = stringResource(R.string.cancel),
+            secondaryButtonText = stringResource(Res.string.cancel),
             onSecondaryClick = { showRestoreDialog = false }
         ) {
-            Text(stringResource(R.string.backup_restore_confirm), color = colors.textBody)
+            Text(stringResource(Res.string.backup_restore_confirm), color = colors.textBody)
         }
     }
 
@@ -403,60 +449,60 @@ fun SettingsScreen(
     if (showCloudRestoreConfirm) {
         AppPopup(
             onDismissRequest = { showCloudRestoreConfirm = false },
-            title = stringResource(R.string.cloud_backup_restore),
+            title = stringResource(Res.string.cloud_backup_restore),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.MEDIUM,
             actionArea = PopupActionArea.NEUTRAL,
-            primaryButtonText = stringResource(R.string.backup_restore_action),
+            primaryButtonText = stringResource(Res.string.backup_restore_action),
             isPrimaryDestructive = true,
             onPrimaryClick = {
                 showCloudRestoreConfirm = false
                 settingsViewModel.restoreFromCloud()
             },
-            secondaryButtonText = stringResource(R.string.cancel),
+            secondaryButtonText = stringResource(Res.string.cancel),
             onSecondaryClick = { showCloudRestoreConfirm = false }
         ) {
-            Text(stringResource(R.string.cloud_backup_restore_confirm), color = colors.textBody)
+            Text(stringResource(Res.string.cloud_backup_restore_confirm), color = colors.textBody)
         }
     }
 
     if (showSignOutDialog) {
         AppPopup(
             onDismissRequest = { showSignOutDialog = false },
-            title = stringResource(R.string.sign_out),
+            title = stringResource(Res.string.sign_out),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.MEDIUM,
             actionArea = PopupActionArea.NEUTRAL,
-            primaryButtonText = stringResource(R.string.sign_out),
+            primaryButtonText = stringResource(Res.string.sign_out),
             isPrimaryDestructive = true,
             onPrimaryClick = {
                 showSignOutDialog = false
                 settingsViewModel.signOut()
             },
-            secondaryButtonText = stringResource(R.string.cancel),
+            secondaryButtonText = stringResource(Res.string.cancel),
             onSecondaryClick = { showSignOutDialog = false }
         ) {
-            Text(stringResource(R.string.sign_out_confirm), color = colors.textBody)
+            Text(stringResource(Res.string.sign_out_confirm), color = colors.textBody)
         }
     }
 
     if (showClearDialog) {
         AppPopup(
             onDismissRequest = { showClearDialog = false },
-            title = stringResource(R.string.reset_memos),
+            title = stringResource(Res.string.reset_memos),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.MEDIUM,
             actionArea = PopupActionArea.NEUTRAL,
-            primaryButtonText = stringResource(R.string.reset),
+            primaryButtonText = stringResource(Res.string.reset),
             isPrimaryDestructive = true,
             onPrimaryClick = {
                 settingsViewModel.clearAllMemos()
                 showClearDialog = false
             },
-            secondaryButtonText = stringResource(R.string.cancel),
+            secondaryButtonText = stringResource(Res.string.cancel),
             onSecondaryClick = { showClearDialog = false }
         ) {
-            Text(stringResource(R.string.reset_confirm), color = colors.textBody)
+            Text(stringResource(Res.string.reset_confirm), color = colors.textBody)
         }
     }
 
@@ -471,7 +517,7 @@ fun SettingsScreen(
 
         AppPopup(
             onDismissRequest = { showLicenseDialog = false },
-            title = stringResource(R.string.open_source_license),
+            title = stringResource(Res.string.open_source_license),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.LARGE,
             actionArea = PopupActionArea.NONE
@@ -543,7 +589,7 @@ fun SettingsScreen(
                     .padding(horizontal = 16.dp, vertical = 24.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.settings),
+                    text = stringResource(Res.string.settings),
                     fontSize = fontSettings.scaled(22),
                     fontWeight = FontWeight.Bold,
                     color = colors.topbarTitle,
@@ -556,7 +602,7 @@ fun SettingsScreen(
                 )
 
                 Text(
-                    text = stringResource(R.string.section_account),
+                    text = stringResource(Res.string.section_account),
                     fontSize = fontSettings.scaled(12),
                     fontWeight = FontWeight.Bold,
                     color = colors.topbarTitle,
@@ -577,7 +623,7 @@ fun SettingsScreen(
                                 color = colors.textSecondary
                             )
                             Text(
-                                text = stringResource(R.string.sign_in_loading),
+                                text = stringResource(Res.string.sign_in_loading),
                                 color = colors.textSecondary,
                                 fontSize = fontSettings.scaled(13),
                                 modifier = Modifier.padding(start = 8.dp)
@@ -607,15 +653,15 @@ fun SettingsScreen(
                                                 "SettingsAuth",
                                                 "Sign-in failed: ${result.message}"
                                             )
-                                            toastPresenter.show(context.getString(R.string.sign_in_error))
+                                            toastPresenter.show(getString(Res.string.sign_in_error))
                                         }
                                     }
                                 }
                             }
                         ) {
-                            Icon(painter = painterResource(R.drawable.ic_google), contentDescription = null, modifier = Modifier.size(18.dp))
+                            Icon(painter = painterResource(Res.drawable.ic_google), contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.sign_in_google), fontSize = fontSettings.scaled(14))
+                            Text(stringResource(Res.string.sign_in_google), fontSize = fontSettings.scaled(14))
                         }
                     }
                     is AuthState.Authenticated -> {
@@ -632,7 +678,7 @@ fun SettingsScreen(
                                 color = colors.textBody,
                             )
                             Text(
-                                text = stringResource(R.string.sign_out),
+                                text = stringResource(Res.string.sign_out),
                                 fontSize = fontSettings.scaled(12),
                                 color = colors.textSecondary,
                                 modifier = Modifier
@@ -643,7 +689,7 @@ fun SettingsScreen(
                         // 마지막 백업 시간 표시 (이메일 아래)
                         lastBackupTime?.let { time ->
                             Text(
-                                text = stringResource(R.string.cloud_backup_last_time, time.take(16).replace("T", " ")),
+                                text = stringResource(Res.string.cloud_backup_last_time, time.take(16).replace("T", " ")),
                                 fontSize = fontSettings.scaled(11),
                                 color = colors.textSecondary,
                                 modifier = Modifier.padding(start = 20.dp, bottom = 4.dp)
@@ -669,7 +715,7 @@ fun SettingsScreen(
                     if (currentTier.isPro) {
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = stringResource(R.string.subscription_current_plan),
+                            text = stringResource(Res.string.subscription_current_plan),
                             fontSize = fontSettings.scaled(10),
                             color = colors.textSecondary,
                             modifier = Modifier
@@ -696,7 +742,7 @@ fun SettingsScreen(
                 )
 
                 Text(
-                    text = stringResource(R.string.section_theme),
+                    text = stringResource(Res.string.section_theme),
                     fontSize = fontSettings.scaled(12),
                     fontWeight = FontWeight.Bold,
                     color = colors.topbarTitle,
@@ -712,7 +758,7 @@ fun SettingsScreen(
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
                 ) {
-                    Text(stringResource(R.string.language_settings), fontSize = fontSettings.scaled(14))
+                    Text(stringResource(Res.string.language_settings), fontSize = fontSettings.scaled(14))
                 }
 
                 Spacer(modifier = Modifier.height(6.dp))
@@ -726,7 +772,7 @@ fun SettingsScreen(
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
                 ) {
-                    Text(stringResource(R.string.theme_settings), fontSize = fontSettings.scaled(14))
+                    Text(stringResource(Res.string.theme_settings), fontSize = fontSettings.scaled(14))
                 }
 
                 Spacer(modifier = Modifier.height(6.dp))
@@ -740,7 +786,7 @@ fun SettingsScreen(
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
                 ) {
-                    Text(stringResource(R.string.font_settings), fontSize = fontSettings.scaled(14))
+                    Text(stringResource(Res.string.font_settings), fontSize = fontSettings.scaled(14))
                 }
 
                 Spacer(modifier = Modifier.height(6.dp))
@@ -751,7 +797,7 @@ fun SettingsScreen(
                 )
 
                 Text(
-                    text = stringResource(R.string.section_data),
+                    text = stringResource(Res.string.section_data),
                     fontSize = fontSettings.scaled(12),
                     fontWeight = FontWeight.Bold,
                     color = colors.topbarTitle,
@@ -770,8 +816,8 @@ fun SettingsScreen(
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
                     ) {
                         Text(if (cloudBackupState is CloudBackupState.Uploading)
-                            stringResource(R.string.cloud_backup_uploading)
-                        else stringResource(R.string.cloud_backup_now), fontSize = fontSettings.scaled(14))
+                            stringResource(Res.string.cloud_backup_uploading)
+                        else stringResource(Res.string.cloud_backup_now), fontSize = fontSettings.scaled(14))
                     }
 
                     Spacer(modifier = Modifier.height(6.dp))
@@ -786,8 +832,8 @@ fun SettingsScreen(
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
                     ) {
                         Text(if (cloudBackupState is CloudBackupState.Restoring)
-                            stringResource(R.string.cloud_backup_restoring)
-                        else stringResource(R.string.cloud_backup_restore), fontSize = fontSettings.scaled(14))
+                            stringResource(Res.string.cloud_backup_restoring)
+                        else stringResource(Res.string.cloud_backup_restore), fontSize = fontSettings.scaled(14))
                     }
                 } else {
                     // 비로그인: 로컬 백업
@@ -808,7 +854,7 @@ fun SettingsScreen(
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
                     ) {
-                        Text(stringResource(R.string.backup_export), fontSize = fontSettings.scaled(14))
+                        Text(stringResource(Res.string.backup_export), fontSize = fontSettings.scaled(14))
                     }
 
                     Spacer(modifier = Modifier.height(6.dp))
@@ -822,7 +868,7 @@ fun SettingsScreen(
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
                     ) {
-                        Text(stringResource(R.string.backup_restore), fontSize = fontSettings.scaled(14))
+                        Text(stringResource(Res.string.backup_restore), fontSize = fontSettings.scaled(14))
                     }
                 }
 
@@ -837,7 +883,7 @@ fun SettingsScreen(
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
                 ) {
-                    Text(stringResource(R.string.trash_title), fontSize = fontSettings.scaled(14))
+                    Text(stringResource(Res.string.trash_title), fontSize = fontSettings.scaled(14))
                 }
 
                 if (isDonationEnabled) {
@@ -852,7 +898,7 @@ fun SettingsScreen(
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
                     ) {
-                        Text(stringResource(R.string.donation_button), fontSize = fontSettings.scaled(14))
+                        Text(stringResource(Res.string.donation_button), fontSize = fontSettings.scaled(14))
                     }
                 }
 
@@ -867,7 +913,7 @@ fun SettingsScreen(
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFE24B4A)),
                 ) {
-                    Text(stringResource(R.string.reset_memos), fontSize = fontSettings.scaled(14))
+                    Text(stringResource(Res.string.reset_memos), fontSize = fontSettings.scaled(14))
                 }
 
                 HorizontalDivider(
@@ -876,7 +922,7 @@ fun SettingsScreen(
                 )
 
                 Text(
-                    text = stringResource(R.string.section_other),
+                    text = stringResource(Res.string.section_other),
                     fontSize = fontSettings.scaled(12),
                     fontWeight = FontWeight.Bold,
                     color = colors.topbarTitle,
@@ -892,7 +938,7 @@ fun SettingsScreen(
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
                 ) {
-                    Text(stringResource(R.string.open_source_license), fontSize = fontSettings.scaled(14))
+                    Text(stringResource(Res.string.open_source_license), fontSize = fontSettings.scaled(14))
                 }
 
                 Text(

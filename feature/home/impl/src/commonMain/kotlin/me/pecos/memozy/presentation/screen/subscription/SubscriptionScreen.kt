@@ -34,14 +34,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.feature.core.resource.generated.resources.Res
+import me.pecos.memozy.feature.core.resource.generated.resources.close
+import me.pecos.memozy.feature.core.resource.generated.resources.donation_error_message
+import me.pecos.memozy.feature.core.resource.generated.resources.donation_error_title
+import me.pecos.memozy.feature.core.resource.generated.resources.donation_loading
+import me.pecos.memozy.feature.core.resource.generated.resources.subscription_current_plan
+import me.pecos.memozy.feature.core.resource.generated.resources.subscription_desc
+import me.pecos.memozy.feature.core.resource.generated.resources.subscription_feature_more
+import me.pecos.memozy.feature.core.resource.generated.resources.subscription_feature_no_ads
+import me.pecos.memozy.feature.core.resource.generated.resources.subscription_feature_ocr
+import me.pecos.memozy.feature.core.resource.generated.resources.subscription_feature_web
+import me.pecos.memozy.feature.core.resource.generated.resources.subscription_feature_youtube
+import me.pecos.memozy.feature.core.resource.generated.resources.subscription_manage
+import me.pecos.memozy.feature.core.resource.generated.resources.subscription_monthly
+import me.pecos.memozy.feature.core.resource.generated.resources.subscription_restore
+import me.pecos.memozy.feature.core.resource.generated.resources.subscription_title
+import me.pecos.memozy.feature.core.resource.generated.resources.subscription_yearly
+import me.pecos.memozy.feature.core.resource.generated.resources.subscription_yearly_discount
 import me.pecos.memozy.platform.billing.BillingService
 import me.pecos.memozy.platform.billing.PurchaseState
 import me.pecos.memozy.platform.intent.UrlLauncher
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import me.pecos.memozy.presentation.components.AppPopup
 import me.pecos.memozy.presentation.components.PopupActionArea
@@ -69,7 +86,7 @@ fun SubscriptionScreen(
     if (purchaseState is PurchaseState.Success) {
         AppPopup(
             onDismissRequest = { billingService.resetPurchaseState() },
-            title = stringResource(R.string.subscription_title),
+            title = stringResource(Res.string.subscription_title),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.MEDIUM,
             actionArea = PopupActionArea.NONE
@@ -84,13 +101,13 @@ fun SubscriptionScreen(
     if (purchaseState is PurchaseState.Error) {
         AppPopup(
             onDismissRequest = { billingService.resetPurchaseState() },
-            title = stringResource(R.string.donation_error_title),
+            title = stringResource(Res.string.donation_error_title),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.MEDIUM,
             actionArea = PopupActionArea.NONE
         ) {
             Text(
-                text = stringResource(R.string.donation_error_message),
+                text = stringResource(Res.string.donation_error_message),
                 color = colors.textBody
             )
         }
@@ -124,7 +141,7 @@ fun SubscriptionScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.close),
+                            contentDescription = stringResource(Res.string.close),
                             tint = Color.White
                         )
                     }
@@ -141,7 +158,7 @@ fun SubscriptionScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = stringResource(R.string.subscription_desc),
+                        text = stringResource(Res.string.subscription_desc),
                         fontSize = fontSettings.scaled(15),
                         color = Color.White.copy(alpha = 0.85f)
                     )
@@ -149,7 +166,7 @@ fun SubscriptionScreen(
                     if (currentTier.isPro) {
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = stringResource(R.string.subscription_current_plan),
+                            text = stringResource(Res.string.subscription_current_plan),
                             fontSize = fontSettings.scaled(13),
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
@@ -199,11 +216,11 @@ fun SubscriptionScreen(
 
                 // 비교 항목
                 val comparisons = listOf(
-                    Triple(stringResource(R.string.subscription_feature_youtube), true, true),
-                    Triple(stringResource(R.string.subscription_feature_web), false, true),
-                    Triple(stringResource(R.string.subscription_feature_ocr), false, true),
-                    Triple(stringResource(R.string.subscription_feature_more), false, true),
-                    Triple(stringResource(R.string.subscription_feature_no_ads), false, true),
+                    Triple(stringResource(Res.string.subscription_feature_youtube), true, true),
+                    Triple(stringResource(Res.string.subscription_feature_web), false, true),
+                    Triple(stringResource(Res.string.subscription_feature_ocr), false, true),
+                    Triple(stringResource(Res.string.subscription_feature_more), false, true),
+                    Triple(stringResource(Res.string.subscription_feature_no_ads), false, true),
                 )
 
                 comparisons.forEach { (label, free, pro) ->
@@ -245,9 +262,9 @@ fun SubscriptionScreen(
 
             if (yearly != null) {
                 SubscriptionCard(
-                    label = stringResource(R.string.subscription_yearly),
+                    label = stringResource(Res.string.subscription_yearly),
                     price = yearly.formattedPrice,
-                    badge = stringResource(R.string.subscription_yearly_discount),
+                    badge = stringResource(Res.string.subscription_yearly_discount),
                     isCurrentPlan = currentTier.isPro,
                     isRecommended = true,
                     onClick = {
@@ -261,7 +278,7 @@ fun SubscriptionScreen(
 
             if (monthly != null) {
                 SubscriptionCard(
-                    label = stringResource(R.string.subscription_monthly),
+                    label = stringResource(Res.string.subscription_monthly),
                     price = monthly.formattedPrice,
                     isCurrentPlan = currentTier.isPro,
                     onClick = {
@@ -276,7 +293,7 @@ fun SubscriptionScreen(
             // 상품이 아직 로드 안 됐을 때
             if (subscriptionProducts.isEmpty()) {
                 Text(
-                    text = stringResource(R.string.donation_loading),
+                    text = stringResource(Res.string.donation_loading),
                     fontSize = fontSettings.scaled(14),
                     color = colors.textSecondary,
                     textAlign = TextAlign.Center,
@@ -291,7 +308,7 @@ fun SubscriptionScreen(
             // ── 하단 링크 ──
             if (currentTier.isPro) {
                 Text(
-                    text = stringResource(R.string.subscription_manage),
+                    text = stringResource(Res.string.subscription_manage),
                     fontSize = fontSettings.scaled(14),
                     color = colors.chipText,
                     fontWeight = FontWeight.Medium,
@@ -306,7 +323,7 @@ fun SubscriptionScreen(
             }
 
             Text(
-                text = stringResource(R.string.subscription_restore),
+                text = stringResource(Res.string.subscription_restore),
                 fontSize = fontSettings.scaled(14),
                 color = colors.textSecondary,
                 textAlign = TextAlign.Center,

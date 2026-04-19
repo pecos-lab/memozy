@@ -1,7 +1,5 @@
 package me.pecos.memozy.presentation.screen.home.components
 
-import me.pecos.memozy.presentation.util.htmlToPlainText
-import android.content.Context
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,30 +10,30 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.Icon
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import me.pecos.memozy.feature.core.resource.generated.resources.Res
+import me.pecos.memozy.feature.core.resource.generated.resources.memo_updated_at
 import me.pecos.memozy.feature.core.viewmodel.model.MemoUiState
 import me.pecos.memozy.presentation.screen.home.model.parseSummaryEntries
-import me.pecos.memozy.feature.core.resource.R
 import me.pecos.memozy.presentation.screen.home.util.formatMemoTime
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
+import me.pecos.memozy.presentation.theme.LocalLanguageCode
+import me.pecos.memozy.presentation.util.htmlToPlainText
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun MemoCardItem(
@@ -44,11 +42,7 @@ fun MemoCardItem(
 ) {
     val colors = LocalAppColors.current
     val fontSettings = LocalFontSettings.current
-    val context = LocalContext.current
-    val languageCode = remember {
-        context.getSharedPreferences("settings", Context.MODE_PRIVATE)
-            .getString("language_code", "ko") ?: "ko"
-    }
+    val languageCode = LocalLanguageCode.current
 
     Card(
         shape = RoundedCornerShape(12.dp),
@@ -93,7 +87,7 @@ fun MemoCardItem(
                     )
                     if (memo.updatedAt > memo.createdAt + 60_000L) {
                         Text(
-                            text = "${stringResource(R.string.memo_updated_at)} ${formatMemoTime(memo.updatedAt, languageCode)}",
+                            text = "${stringResource(Res.string.memo_updated_at)} ${formatMemoTime(memo.updatedAt, languageCode)}",
                             fontSize = fontSettings.scaled(11),
                             color = colors.textSecondary.copy(alpha = 0.7f)
                         )

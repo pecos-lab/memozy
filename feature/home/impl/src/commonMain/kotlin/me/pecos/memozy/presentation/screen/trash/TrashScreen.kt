@@ -36,12 +36,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.feature.core.resource.generated.resources.Res
+import me.pecos.memozy.feature.core.resource.generated.resources.cancel
+import me.pecos.memozy.feature.core.resource.generated.resources.memo_title_placeholder
+import me.pecos.memozy.feature.core.resource.generated.resources.trash_auto_delete_hint
+import me.pecos.memozy.feature.core.resource.generated.resources.trash_days_left
+import me.pecos.memozy.feature.core.resource.generated.resources.trash_empty
+import me.pecos.memozy.feature.core.resource.generated.resources.trash_empty_action
+import me.pecos.memozy.feature.core.resource.generated.resources.trash_empty_confirm_message
+import me.pecos.memozy.feature.core.resource.generated.resources.trash_empty_confirm_title
+import me.pecos.memozy.feature.core.resource.generated.resources.trash_permanent_delete_action
+import me.pecos.memozy.feature.core.resource.generated.resources.trash_permanent_delete_message
+import me.pecos.memozy.feature.core.resource.generated.resources.trash_permanent_delete_title
+import me.pecos.memozy.feature.core.resource.generated.resources.trash_restore
+import me.pecos.memozy.feature.core.resource.generated.resources.trash_soon_delete
+import me.pecos.memozy.feature.core.resource.generated.resources.trash_title
 import me.pecos.memozy.presentation.components.AppPopup
 import me.pecos.memozy.presentation.components.PopupActionArea
 import me.pecos.memozy.presentation.components.PopupNavigation
@@ -50,10 +63,9 @@ import me.pecos.memozy.feature.core.viewmodel.TrashViewModel
 import me.pecos.memozy.feature.core.viewmodel.model.MemoUiState
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.concurrent.TimeUnit
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun TrashScreen(
@@ -68,21 +80,21 @@ fun TrashScreen(
     if (showEmptyDialog) {
         AppPopup(
             onDismissRequest = { showEmptyDialog = false },
-            title = stringResource(R.string.trash_empty_confirm_title),
+            title = stringResource(Res.string.trash_empty_confirm_title),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.MEDIUM,
             actionArea = PopupActionArea.NEUTRAL,
-            primaryButtonText = stringResource(R.string.trash_empty_action),
+            primaryButtonText = stringResource(Res.string.trash_empty_action),
             isPrimaryDestructive = true,
             onPrimaryClick = {
                 viewModel.emptyTrash()
                 showEmptyDialog = false
             },
-            secondaryButtonText = stringResource(R.string.cancel),
+            secondaryButtonText = stringResource(Res.string.cancel),
             onSecondaryClick = { showEmptyDialog = false }
         ) {
             Text(
-                stringResource(R.string.trash_empty_confirm_message),
+                stringResource(Res.string.trash_empty_confirm_message),
                 color = colors.textBody
             )
         }
@@ -108,7 +120,7 @@ fun TrashScreen(
                     )
                 }
                 Text(
-                    text = stringResource(R.string.trash_title),
+                    text = stringResource(Res.string.trash_title),
                     fontSize = fontSettings.scaled(22),
                     fontWeight = FontWeight.Bold,
                     color = colors.topbarTitle,
@@ -117,7 +129,7 @@ fun TrashScreen(
                 if (deletedMemos.isNotEmpty()) {
                     TextButton(onClick = { showEmptyDialog = true }) {
                         Text(
-                            stringResource(R.string.trash_empty_action),
+                            stringResource(Res.string.trash_empty_action),
                             color = colors.actionDeleteTint,
                             fontSize = fontSettings.scaled(14)
                         )
@@ -128,7 +140,7 @@ fun TrashScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = stringResource(R.string.trash_auto_delete_hint),
+                text = stringResource(Res.string.trash_auto_delete_hint),
                 fontSize = fontSettings.scaled(12),
                 color = colors.textSecondary,
                 modifier = Modifier.padding(horizontal = 16.dp)
@@ -144,7 +156,7 @@ fun TrashScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = stringResource(R.string.trash_empty),
+                        text = stringResource(Res.string.trash_empty),
                         color = colors.textSecondary,
                         fontSize = fontSettings.scaled(14)
                     )
@@ -180,21 +192,21 @@ private fun TrashMemoItem(
     if (showDeleteDialog) {
         AppPopup(
             onDismissRequest = { showDeleteDialog = false },
-            title = stringResource(R.string.trash_permanent_delete_title),
+            title = stringResource(Res.string.trash_permanent_delete_title),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.MEDIUM,
             actionArea = PopupActionArea.NEUTRAL,
-            primaryButtonText = stringResource(R.string.trash_permanent_delete_action),
+            primaryButtonText = stringResource(Res.string.trash_permanent_delete_action),
             isPrimaryDestructive = true,
             onPrimaryClick = {
                 onDelete()
                 showDeleteDialog = false
             },
-            secondaryButtonText = stringResource(R.string.cancel),
+            secondaryButtonText = stringResource(Res.string.cancel),
             onSecondaryClick = { showDeleteDialog = false }
         ) {
             Text(
-                stringResource(R.string.trash_permanent_delete_message),
+                stringResource(Res.string.trash_permanent_delete_message),
                 color = colors.textBody
             )
         }
@@ -208,7 +220,7 @@ private fun TrashMemoItem(
             .padding(16.dp)
     ) {
         Text(
-            text = memo.name.ifBlank { stringResource(R.string.memo_title_placeholder) },
+            text = memo.name.ifBlank { stringResource(Res.string.memo_title_placeholder) },
             fontSize = fontSettings.scaled(16),
             fontWeight = FontWeight.Medium,
             color = colors.textTitle,
@@ -242,7 +254,7 @@ private fun TrashMemoItem(
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    text = stringResource(R.string.trash_restore),
+                    text = stringResource(Res.string.trash_restore),
                     fontSize = fontSettings.scaled(12),
                     fontWeight = FontWeight.Medium,
                     color = colors.actionEditTint,
@@ -252,7 +264,7 @@ private fun TrashMemoItem(
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 )
                 Text(
-                    text = stringResource(R.string.trash_permanent_delete_action),
+                    text = stringResource(Res.string.trash_permanent_delete_action),
                     fontSize = fontSettings.scaled(12),
                     fontWeight = FontWeight.Medium,
                     color = colors.actionDeleteTint,
@@ -266,14 +278,16 @@ private fun TrashMemoItem(
     }
 }
 
+@OptIn(ExperimentalTime::class)
 @Composable
 private fun formatDeletedTime(deletedAt: Long?): String {
     if (deletedAt == null) return ""
-    val now = System.currentTimeMillis()
-    val daysLeft = 30 - TimeUnit.MILLISECONDS.toDays(now - deletedAt)
+    val now = Clock.System.now().toEpochMilliseconds()
+    val msPerDay = 24L * 60L * 60L * 1000L
+    val daysLeft = 30 - (now - deletedAt) / msPerDay
     return if (daysLeft > 0) {
-        stringResource(R.string.trash_days_left, daysLeft.toInt())
+        stringResource(Res.string.trash_days_left, daysLeft.toInt())
     } else {
-        stringResource(R.string.trash_soon_delete)
+        stringResource(Res.string.trash_soon_delete)
     }
 }

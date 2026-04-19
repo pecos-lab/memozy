@@ -13,30 +13,33 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Spacer as SpacerImport
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.ui.res.painterResource
 import kotlinx.coroutines.launch
-import me.pecos.memozy.feature.core.resource.R
-import me.pecos.memozy.feature.home.impl.BuildConstants
+import me.pecos.memozy.feature.core.resource.generated.resources.Res
+import me.pecos.memozy.feature.core.resource.generated.resources.ic_google
+import me.pecos.memozy.feature.core.resource.generated.resources.login_skip
+import me.pecos.memozy.feature.core.resource.generated.resources.login_subtitle
+import me.pecos.memozy.feature.core.resource.generated.resources.sign_in_error
+import me.pecos.memozy.feature.core.resource.generated.resources.sign_in_google
+import me.pecos.memozy.feature.home.impl.GOOGLE_WEB_CLIENT_ID
 import me.pecos.memozy.platform.credential.CredentialService
 import me.pecos.memozy.platform.credential.GoogleSignInResult
 import me.pecos.memozy.platform.intent.ToastPresenter
 import me.pecos.memozy.presentation.theme.LocalActivity
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 @Composable
@@ -46,7 +49,6 @@ fun LoginScreen(
 ) {
     val colors = LocalAppColors.current
     val fontSettings = LocalFontSettings.current
-    val context = LocalContext.current
     val activity = LocalActivity.current
     val scope = rememberCoroutineScope()
     val credentialService: CredentialService = koinInject()
@@ -73,7 +75,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = stringResource(R.string.login_subtitle),
+                text = stringResource(Res.string.login_subtitle),
                 fontSize = fontSettings.scaled(14),
                 color = colors.textSecondary,
                 textAlign = TextAlign.Center
@@ -85,15 +87,15 @@ fun LoginScreen(
                 onClick = {
                     scope.launch {
                         val result = credentialService.signInWithGoogle(
-                            activity = activity ?: context,
-                            serverClientId = BuildConstants.GOOGLE_WEB_CLIENT_ID,
+                            activity = activity,
+                            serverClientId = GOOGLE_WEB_CLIENT_ID,
                         )
                         when (result) {
                             is GoogleSignInResult.Success -> onSignIn(result.idToken)
                             is GoogleSignInResult.Cancelled -> Unit
                             is GoogleSignInResult.Error -> {
-                                android.util.Log.e("LoginScreen", "Sign-in failed: ${result.message}")
-                                toastPresenter.show(context.getString(R.string.sign_in_error))
+                                println("LoginScreen: Sign-in failed: ${result.message}")
+                                toastPresenter.show(getString(Res.string.sign_in_error))
                             }
                         }
                     }
@@ -103,9 +105,9 @@ fun LoginScreen(
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
             ) {
-                Icon(painter = painterResource(R.drawable.ic_google), contentDescription = null, modifier = Modifier.size(18.dp))
+                Icon(painter = painterResource(Res.drawable.ic_google), contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.sign_in_google), fontSize = fontSettings.scaled(14))
+                Text(stringResource(Res.string.sign_in_google), fontSize = fontSettings.scaled(14))
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -117,7 +119,7 @@ fun LoginScreen(
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textSecondary),
             ) {
-                Text(stringResource(R.string.login_skip), fontSize = fontSettings.scaled(14))
+                Text(stringResource(Res.string.login_skip), fontSize = fontSettings.scaled(14))
             }
         }
     }

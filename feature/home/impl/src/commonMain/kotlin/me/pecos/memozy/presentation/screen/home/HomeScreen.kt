@@ -58,8 +58,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -69,12 +67,28 @@ import me.pecos.memozy.presentation.screen.home.components.MemoCardItem
 import me.pecos.memozy.presentation.components.PopupActionArea
 import me.pecos.memozy.presentation.components.PopupNavigation
 import me.pecos.memozy.presentation.components.PopupSize
-import me.pecos.memozy.feature.core.resource.R
+import me.pecos.memozy.feature.core.resource.generated.resources.Res
+import me.pecos.memozy.feature.core.resource.generated.resources.cancel
+import me.pecos.memozy.feature.core.resource.generated.resources.delete_action
+import me.pecos.memozy.feature.core.resource.generated.resources.delete_selected_message
+import me.pecos.memozy.feature.core.resource.generated.resources.delete_selected_title
+import me.pecos.memozy.feature.core.resource.generated.resources.deselect_all
+import me.pecos.memozy.feature.core.resource.generated.resources.edit_mode
+import me.pecos.memozy.feature.core.resource.generated.resources.empty_memo_hint
+import me.pecos.memozy.feature.core.resource.generated.resources.logo_full
+import me.pecos.memozy.feature.core.resource.generated.resources.memo_count
+import me.pecos.memozy.feature.core.resource.generated.resources.pin
+import me.pecos.memozy.feature.core.resource.generated.resources.select_all
+import me.pecos.memozy.feature.core.resource.generated.resources.selected_count
+import me.pecos.memozy.feature.core.resource.generated.resources.sort_newest
+import me.pecos.memozy.feature.core.resource.generated.resources.sort_oldest
 import me.pecos.memozy.feature.core.viewmodel.MainViewModel
 import me.pecos.memozy.feature.core.viewmodel.model.HomeUiState
 import me.pecos.memozy.feature.core.viewmodel.model.SortOrder
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 // ── 홈 화면 ────────────────────────────────────────────────────────────────────
 
@@ -124,7 +138,7 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (isSelectionMode) stringResource(R.string.selected_count, selectedIds.size) else "Memozy",
+                        text = if (isSelectionMode) stringResource(Res.string.selected_count, selectedIds.size) else "Memozy",
                         fontSize = fontSettings.scaled(22),
                         fontWeight = FontWeight.Bold,
                         color = colors.topbarTitle,
@@ -132,7 +146,7 @@ fun HomeScreen(
                     )
                     if (!isSelectionMode) {
                         Text(
-                            text = stringResource(R.string.memo_count, filteredList.size),
+                            text = stringResource(Res.string.memo_count, filteredList.size),
                             fontSize = fontSettings.scaled(12),
                             color = colors.textSecondary
                         )
@@ -151,8 +165,8 @@ fun HomeScreen(
                     ) {
                         // 전체선택
                         Text(
-                            text = if (allSelected) stringResource(R.string.deselect_all)
-                                    else stringResource(R.string.select_all),
+                            text = if (allSelected) stringResource(Res.string.deselect_all)
+                                    else stringResource(Res.string.select_all),
                             fontSize = fontSettings.scaled(13),
                             fontWeight = FontWeight.Medium,
                             color = colors.chipText,
@@ -166,7 +180,7 @@ fun HomeScreen(
                         )
                         // 고정
                         Text(
-                            text = stringResource(R.string.pin),
+                            text = stringResource(Res.string.pin),
                             fontSize = fontSettings.scaled(13),
                             fontWeight = FontWeight.Medium,
                             color = if (selectedIds.isNotEmpty()) Color(0xFFFFA726) else colors.textSecondary,
@@ -183,9 +197,9 @@ fun HomeScreen(
                         // 삭제
                         Text(
                             text = if (selectedIds.isNotEmpty())
-                                "${stringResource(R.string.delete_action)} ${selectedIds.size}"
+                                "${stringResource(Res.string.delete_action)} ${selectedIds.size}"
                             else
-                                stringResource(R.string.delete_action),
+                                stringResource(Res.string.delete_action),
                             fontSize = fontSettings.scaled(13),
                             fontWeight = FontWeight.Medium,
                             color = if (selectedIds.isNotEmpty()) Color(0xFFE24B4A) else colors.textSecondary,
@@ -198,7 +212,7 @@ fun HomeScreen(
                         )
                         // 취소
                         Text(
-                            text = stringResource(R.string.cancel),
+                            text = stringResource(Res.string.cancel),
                             fontSize = fontSettings.scaled(13),
                             fontWeight = FontWeight.Medium,
                             color = colors.textSecondary,
@@ -228,9 +242,9 @@ fun HomeScreen(
                         ) {
                             Text(
                                 text = if (sortOrder == SortOrder.NEWEST)
-                                    stringResource(R.string.sort_newest)
+                                    stringResource(Res.string.sort_newest)
                                 else
-                                    stringResource(R.string.sort_oldest),
+                                    stringResource(Res.string.sort_oldest),
                                 fontSize = fontSettings.scaled(13),
                                 fontWeight = FontWeight.Medium,
                                 color = colors.textSecondary
@@ -245,7 +259,7 @@ fun HomeScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = stringResource(R.string.edit_mode),
+                                text = stringResource(Res.string.edit_mode),
                                 fontSize = fontSettings.scaled(13),
                                 fontWeight = FontWeight.Medium,
                                 color = colors.textSecondary
@@ -335,14 +349,14 @@ fun HomeScreen(
                         modifier = Modifier.align(Alignment.Center)
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.logo_full),
+                            painter = painterResource(Res.drawable.logo_full),
                             contentDescription = null,
                             modifier = Modifier.size(160.dp),
                             alpha = if (isSystemInDarkTheme()) 0.7f else 0.15f
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = stringResource(R.string.empty_memo_hint),
+                            text = stringResource(Res.string.empty_memo_hint),
                             fontSize = fontSettings.scaled(14),
                             color = colors.textSecondary.copy(alpha = if (isSystemInDarkTheme()) 0.75f else 0.5f),
                             textAlign = TextAlign.Center
@@ -357,11 +371,11 @@ fun HomeScreen(
     if (showDeleteConfirm) {
         AppPopup(
             onDismissRequest = { showDeleteConfirm = false },
-            title = stringResource(R.string.delete_selected_title),
+            title = stringResource(Res.string.delete_selected_title),
             navigation = PopupNavigation.EMPHASIZED,
             size = PopupSize.MEDIUM,
             actionArea = PopupActionArea.NEUTRAL,
-            primaryButtonText = stringResource(R.string.delete_action),
+            primaryButtonText = stringResource(Res.string.delete_action),
             isPrimaryDestructive = true,
             onPrimaryClick = {
                 viewModel.deleteMemos(selectedIds)
@@ -369,11 +383,11 @@ fun HomeScreen(
                 isSelectionMode = false
                 selectedIds = emptySet()
             },
-            secondaryButtonText = stringResource(R.string.cancel),
+            secondaryButtonText = stringResource(Res.string.cancel),
             onSecondaryClick = { showDeleteConfirm = false }
         ) {
             Text(
-                stringResource(R.string.delete_selected_message, selectedIds.size),
+                stringResource(Res.string.delete_selected_message, selectedIds.size),
                 color = LocalAppColors.current.textBody
             )
         }
