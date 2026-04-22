@@ -10,6 +10,8 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(projects.platform.billing.api)
+            implementation(projects.data.repository.subscription.api)
+            implementation(projects.data.repository.user.api)
         }
         androidMain.dependencies {
             implementation(libs.billing.ktx)
