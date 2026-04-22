@@ -14,5 +14,10 @@ kotlin {
             implementation(projects.feature.core.resource)
             implementation(libs.kotlinx.coroutines.core)
         }
+        commonTest.dependencies {
+            implementation(libs.junit)
+            implementation(libs.mockk)
+            implementation(libs.kotlinx.coroutines.test)
+        }
     }
 }

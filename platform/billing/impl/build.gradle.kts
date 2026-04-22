@@ -17,5 +17,11 @@ kotlin {
             implementation(libs.billing.ktx)
             implementation(libs.kotlinx.coroutines.android)
         }
+        androidInstrumentedTest.dependencies {
+            implementation(libs.androidx.junit)
+            implementation(libs.androidx.espresso.core)
+            implementation(libs.mockk)
+            implementation(libs.kotlinx.coroutines.test)
+        }
     }
 }
