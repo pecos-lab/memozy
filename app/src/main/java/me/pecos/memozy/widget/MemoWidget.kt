@@ -108,11 +108,13 @@ class MemoWidget : GlanceAppWidget(), KoinComponent {
                         }
                     } else {
                         Column(modifier = GlanceModifier.defaultWeight()) {
-                            for (memo in memos) {
+                            memos.forEachIndexed { index, memo ->
+                                if (index > 0) {
+                                    Spacer(modifier = GlanceModifier.height(8.dp))
+                                }
                                 Column(
                                     modifier = GlanceModifier
                                         .fillMaxWidth()
-                                        .padding(vertical = 4.dp)
                                         .cornerRadius(12.dp)
                                         .background(MemoWidgetColors.cardBackground)
                                         .padding(12.dp)
