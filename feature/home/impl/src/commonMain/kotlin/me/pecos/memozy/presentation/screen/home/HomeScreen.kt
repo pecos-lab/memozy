@@ -88,6 +88,7 @@ import me.pecos.memozy.feature.core.viewmodel.model.SortOrder
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
 import org.jetbrains.compose.resources.painterResource
+import me.pecos.memozy.presentation.util.stringResourceFormatted
 import org.jetbrains.compose.resources.stringResource
 
 // ── 홈 화면 ────────────────────────────────────────────────────────────────────
@@ -138,7 +139,7 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (isSelectionMode) stringResource(Res.string.selected_count, selectedIds.size) else "Memozy",
+                        text = if (isSelectionMode) stringResourceFormatted(Res.string.selected_count, selectedIds.size) else "Memozy",
                         fontSize = fontSettings.scaled(22),
                         fontWeight = FontWeight.Bold,
                         color = colors.topbarTitle,
@@ -146,7 +147,7 @@ fun HomeScreen(
                     )
                     if (!isSelectionMode) {
                         Text(
-                            text = stringResource(Res.string.memo_count, filteredList.size),
+                            text = stringResourceFormatted(Res.string.memo_count, filteredList.size),
                             fontSize = fontSettings.scaled(12),
                             color = colors.textSecondary
                         )
@@ -387,7 +388,7 @@ fun HomeScreen(
             onSecondaryClick = { showDeleteConfirm = false }
         ) {
             Text(
-                stringResource(Res.string.delete_selected_message, selectedIds.size),
+                stringResourceFormatted(Res.string.delete_selected_message, selectedIds.size),
                 color = LocalAppColors.current.textBody
             )
         }

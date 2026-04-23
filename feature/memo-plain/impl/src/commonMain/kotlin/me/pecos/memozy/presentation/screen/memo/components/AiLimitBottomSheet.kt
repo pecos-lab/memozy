@@ -35,6 +35,7 @@ import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_watch_
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
 import me.pecos.memozy.presentation.theme.SubscriptionTier
+import me.pecos.memozy.presentation.util.stringResourceFormatted
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -75,9 +76,9 @@ fun AiLimitBottomSheet(
             Spacer(modifier = Modifier.height(12.dp))
 
             val message = if (subscriptionTier.isPro) {
-                stringResource(Res.string.ai_limit_pro_message, subscriptionTier.dailyAiLimit)
+                stringResourceFormatted(Res.string.ai_limit_pro_message, subscriptionTier.dailyAiLimit)
             } else {
-                stringResource(Res.string.ai_limit_free_message, subscriptionTier.dailyAiLimit)
+                stringResourceFormatted(Res.string.ai_limit_free_message, subscriptionTier.dailyAiLimit)
             }
 
             Text(
@@ -127,7 +128,7 @@ fun AiLimitBottomSheet(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = stringResource(Res.string.ai_limit_ad_remaining, remainingAdViews),
+                        text = stringResourceFormatted(Res.string.ai_limit_ad_remaining, remainingAdViews),
                         fontSize = fontSettings.scaled(12),
                         color = colors.textBody.copy(alpha = 0.6f),
                         textAlign = TextAlign.Center
