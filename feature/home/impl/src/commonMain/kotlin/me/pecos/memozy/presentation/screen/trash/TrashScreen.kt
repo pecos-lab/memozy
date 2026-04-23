@@ -1,6 +1,7 @@
 package me.pecos.memozy.presentation.screen.trash
 
 import me.pecos.memozy.presentation.util.htmlToPlainText
+import me.pecos.memozy.presentation.util.stringResourceFormatted
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -286,7 +287,7 @@ private fun formatDeletedTime(deletedAt: Long?): String {
     val msPerDay = 24L * 60L * 60L * 1000L
     val daysLeft = 30 - (now - deletedAt) / msPerDay
     return if (daysLeft > 0) {
-        stringResource(Res.string.trash_days_left, daysLeft.toInt())
+        stringResourceFormatted(Res.string.trash_days_left, daysLeft.toInt())
     } else {
         stringResource(Res.string.trash_soon_delete)
     }

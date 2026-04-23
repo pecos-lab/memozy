@@ -129,6 +129,7 @@ import me.pecos.memozy.presentation.components.rememberOpenDocumentLauncher
 import me.pecos.memozy.presentation.theme.LocalActivity
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
+import me.pecos.memozy.presentation.util.stringResourceFormatted
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import me.pecos.memozy.presentation.theme.LocalAppColors
@@ -691,7 +692,7 @@ fun SettingsScreen(
                         // 마지막 백업 시간 표시 (이메일 아래)
                         lastBackupTime?.let { time ->
                             Text(
-                                text = stringResource(Res.string.cloud_backup_last_time, time.take(16).replace("T", " ")),
+                                text = stringResourceFormatted(Res.string.cloud_backup_last_time, time.take(16).replace("T", " ")),
                                 fontSize = fontSettings.scaled(11),
                                 color = colors.textSecondary,
                                 modifier = Modifier.padding(start = 20.dp, bottom = 4.dp)
