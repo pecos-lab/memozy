@@ -32,6 +32,7 @@ import me.pecos.memozy.MainActivity
 import me.pecos.memozy.R
 import me.pecos.memozy.data.datasource.local.entity.Memo
 import me.pecos.memozy.data.repository.MemoRepository
+import me.pecos.memozy.presentation.util.htmlToPlainText
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.text.SimpleDateFormat
@@ -107,11 +108,13 @@ class MemoWidget : GlanceAppWidget(), KoinComponent {
                         }
                     } else {
                         Column(modifier = GlanceModifier.defaultWeight()) {
-                            for (memo in memos) {
+                            memos.forEachIndexed { index, memo ->
+                                if (index > 0) {
+                                    Spacer(modifier = GlanceModifier.height(8.dp))
+                                }
                                 Column(
                                     modifier = GlanceModifier
                                         .fillMaxWidth()
-                                        .padding(vertical = 4.dp)
                                         .cornerRadius(12.dp)
                                         .background(MemoWidgetColors.cardBackground)
                                         .padding(12.dp)
@@ -133,7 +136,7 @@ class MemoWidget : GlanceAppWidget(), KoinComponent {
                                     val summaryPreview = memo.summaryContent?.let {
                                         me.pecos.memozy.presentation.screen.home.model.parseSummaryEntries(it).firstOrNull()?.content
                                     }
-                                    val widgetContent = memo.content.ifBlank { summaryPreview ?: "" }
+                                    val widgetContent = memo.content.htmlToPlainText().ifBlank { summaryPreview ?: "" }
                                     if (widgetContent.isNotBlank()) {
                                         Spacer(modifier = GlanceModifier.height(2.dp))
                                         Text(
