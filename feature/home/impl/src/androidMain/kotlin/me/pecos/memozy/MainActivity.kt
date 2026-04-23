@@ -254,8 +254,8 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
-                        // 위젯 액션 처리
-                        val widgetRoute = remember { getWidgetMemoRoute(intent) }
+                        // 위젯 액션 처리 — activeIntent를 key로 걸어 onNewIntent로 들어오는 새 intent도 반영
+                        val widgetRoute = remember(activeIntent) { getWidgetMemoRoute(activeIntent) }
                         LaunchedEffect(widgetRoute) {
                             if (widgetRoute != null) {
                                 navController.navigate(widgetRoute)
