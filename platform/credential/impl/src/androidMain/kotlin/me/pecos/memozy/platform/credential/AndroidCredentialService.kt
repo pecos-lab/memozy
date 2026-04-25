@@ -43,4 +43,13 @@ internal class AndroidCredentialService(
             GoogleSignInResult.Error(e.message ?: "Unknown sign-in error")
         }
     }
+
+    override suspend fun signInWithApple(activity: Any?): AppleSignInResult {
+        // Android 는 Apple 네이티브 SDK 가 없어 OAuth Web flow (Custom Tabs) 가 필요. 별도
+        // 작업 항목 — Apple Developer Portal Service ID + Supabase OAuth redirect URI 등록 후
+        // SupabaseClient.auth.signInWith(Apple) 직접 호출하는 플로우로 구현. 이 PR 스코프 외.
+        return AppleSignInResult.Error(
+            message = "Apple Sign-In on Android requires Custom Tabs OAuth flow — not yet implemented.",
+        )
+    }
 }

@@ -9,6 +9,7 @@ interface AuthRepository {
     val currentUser: AuthUser?
     val isLoggedIn: Boolean
     suspend fun signInWithGoogle(idToken: String): Result<AuthUser>
+    suspend fun signInWithApple(idToken: String, rawNonce: String): Result<AuthUser>
     suspend fun signOut()
     fun getAccessToken(): String?
 }

@@ -118,6 +118,12 @@ class SettingsViewModel(
         }
     }
 
+    fun signInWithApple(idToken: String, rawNonce: String) {
+        viewModelScope.launch {
+            authRepository.signInWithApple(idToken, rawNonce)
+        }
+    }
+
     fun signOut() {
         viewModelScope.launch {
             authRepository.signOut()

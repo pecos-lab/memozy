@@ -313,6 +313,13 @@ class MainActivity : ComponentActivity() {
                                                 popUpTo(HomeRoute.LOGIN) { inclusive = true }
                                             }
                                         },
+                                        onAppleSignIn = { idToken, rawNonce ->
+                                            settingsViewModel.signInWithApple(idToken, rawNonce)
+                                            preferencesProvider.putBoolean("onboarding_done", true)
+                                            navController.navigate(HomeRoute.MAIN) {
+                                                popUpTo(HomeRoute.LOGIN) { inclusive = true }
+                                            }
+                                        },
                                         onSkip = {
                                             preferencesProvider.putBoolean("onboarding_done", true)
                                             navController.navigate(HomeRoute.MAIN) {
