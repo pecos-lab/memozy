@@ -64,6 +64,8 @@ kotlin {
             implementation(projects.platform.credential.api)
             implementation(projects.platform.credential.impl)
             implementation(projects.platform.ads.impl)
+            implementation(projects.platform.billing.api)
+            implementation(projects.platform.billing.impl)
             implementation(projects.platform.media.api)
             implementation(projects.platform.media.impl)
             // Supabase — iosMain SupabaseClient 직접 생성용. KMP commonMain 에서는 platform(BOM)
