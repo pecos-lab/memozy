@@ -32,13 +32,12 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 enum class AiPresetAction(
-    val emoji: String,
     val labelResId: StringResource
 ) {
-    EXPLAIN("\uD83E\uDD14", Res.string.ai_action_explain),
-    ORGANIZE("\uD83D\uDCDD", Res.string.ai_action_organize),
-    SUMMARIZE("✂\uFE0F", Res.string.ai_action_summarize),
-    CUSTOM("✏\uFE0F", Res.string.ai_action_custom);
+    EXPLAIN(Res.string.ai_action_explain),
+    ORGANIZE(Res.string.ai_action_organize),
+    SUMMARIZE(Res.string.ai_action_summarize),
+    CUSTOM(Res.string.ai_action_custom);
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,11 +82,6 @@ fun AiActionMenu(
                         .padding(horizontal = 20.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = action.emoji,
-                        fontSize = fontSettings.scaled(18)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = stringResource(action.labelResId),
                         fontSize = fontSettings.scaled(15),

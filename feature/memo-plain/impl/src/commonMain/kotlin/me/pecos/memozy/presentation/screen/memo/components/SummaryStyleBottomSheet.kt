@@ -51,34 +51,26 @@ fun SummaryStyleBottomSheet(
             Spacer(modifier = Modifier.height(16.dp))
 
             SummaryStyle.entries.forEach { style ->
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
                             onSelect(style)
                             onDismiss()
                         }
-                        .padding(vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(vertical = 12.dp)
                 ) {
                     Text(
-                        text = style.emoji,
-                        fontSize = fontSettings.scaled(20)
+                        text = style.displayName,
+                        fontSize = fontSettings.scaled(15),
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.textTitle
                     )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = style.displayName,
-                            fontSize = fontSettings.scaled(15),
-                            fontWeight = FontWeight.SemiBold,
-                            color = colors.textTitle
-                        )
-                        Text(
-                            text = style.description,
-                            fontSize = fontSettings.scaled(12),
-                            color = colors.textSecondary
-                        )
-                    }
+                    Text(
+                        text = style.description,
+                        fontSize = fontSettings.scaled(12),
+                        color = colors.textSecondary
+                    )
                 }
             }
         }
