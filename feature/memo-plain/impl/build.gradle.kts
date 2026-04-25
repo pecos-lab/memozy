@@ -16,6 +16,7 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.richeditor.compose)
+            implementation(libs.compose.ui.backhandler)
             implementation(projects.feature.memoPlain.api)
             implementation(projects.feature.core.resource)
             implementation(projects.feature.core.viewmodel)

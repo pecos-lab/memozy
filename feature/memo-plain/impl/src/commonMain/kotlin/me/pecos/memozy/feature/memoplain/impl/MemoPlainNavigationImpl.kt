@@ -1,6 +1,6 @@
 package me.pecos.memozy.feature.memoplain.impl
 
-import androidx.activity.compose.BackHandler
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.AlertDialog
@@ -286,6 +286,7 @@ class MemoPlainNavigationImpl(
         }
     }
 
+    @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
     override fun registerGraph(
         navGraphBuilder: NavGraphBuilder,
         onNavigateToHome: () -> Unit,
