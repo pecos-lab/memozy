@@ -51,7 +51,7 @@ class IosAudioFileStore : AudioFileStore {
     }
 
     override fun readBytes(path: String): ByteArray {
-        val data = NSData.dataWithContentsOfFile(path) ?: return ByteArray(0)
+        val data = fileManager.contentsAtPath(path) ?: return ByteArray(0)
         val size = data.length.toInt()
         val bytes = ByteArray(size)
         if (size > 0) {
