@@ -5,7 +5,7 @@ enum class SubscriptionTier {
 
     val dailyAiLimit: Int
         get() = when (this) {
-            FREE -> 15
+            FREE -> 3
             PRO -> 100
         }
 
