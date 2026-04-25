@@ -15,5 +15,6 @@ data class MemoUiState(
     val deletedAt: Long? = null,
     val reminderAt: Long? = null,
     val summaryContent: String? = null,
-    val isSummaryExpanded: Boolean = true
+    val isSummaryExpanded: Boolean = true,
+    val webUrl: String? = null
 )

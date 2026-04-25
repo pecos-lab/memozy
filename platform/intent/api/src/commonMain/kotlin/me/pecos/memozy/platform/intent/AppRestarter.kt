@@ -13,4 +13,10 @@ interface AppRestarter {
     val isRestartSupported: Boolean get() = true
 
     fun restart()
+
+    /**
+     * 앱 언어 즉시 반영. Android 는 AppCompatDelegate 로 per-app locale 적용 후 Activity 재구성,
+     * iOS 는 no-op (호출 측이 ios_restart_required 안내 노출).
+     */
+    fun applyAppLanguage(code: String) { restart() }
 }

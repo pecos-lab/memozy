@@ -1,3 +1,3 @@
 package me.pecos.memozy.data.datasource.local
 
-const val MEMO_DB_VERSION = 18
+const val MEMO_DB_VERSION = 19

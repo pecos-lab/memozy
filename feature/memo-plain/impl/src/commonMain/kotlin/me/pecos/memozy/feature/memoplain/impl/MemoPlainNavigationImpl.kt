@@ -1,5 +1,6 @@
 package me.pecos.memozy.feature.memoplain.impl
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.AlertDialog
@@ -36,9 +37,14 @@ import androidx.compose.animation.fadeOut
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.savedstate.read
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import me.pecos.memozy.data.datasource.local.AiUsageDao
 import me.pecos.memozy.data.datasource.local.YoutubeSummaryDao
 import me.pecos.memozy.data.datasource.local.entity.AiUsage
@@ -86,6 +92,11 @@ class MemoPlainNavigationImpl(
     private val aiUsageDao: AiUsageDao,
     private val webScrapeService: me.pecos.memozy.data.datasource.remote.ai.WebScrapeService
 ) : MemoPlainNavigation {
+
+    // 화면 dispose 후에도 살아있어야 하는 저장 작업용 (싱글톤 라이프타임)
+    private val saveScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    // onSave/onAutoSave 직렬화 — 동시 INSERT/UPDATE race 방지
+    private val saveMutex = Mutex()
 
     companion object {
         private const val FEATURE_YOUTUBE_SUMMARY = "youtube_summary"
@@ -436,7 +447,9 @@ class MemoPlainNavigationImpl(
                             audioPath = it.audioPath,
                             styles = it.styles,
                             youtubeUrl = it.youtubeUrl,
-                            summaryContent = it.summaryContent
+                            summaryContent = it.summaryContent,
+                            isSummaryExpanded = it.isSummaryExpanded,
+                            webUrl = it.webUrl
                         )
                     }
                     memoLoaded = true
@@ -591,20 +604,28 @@ class MemoPlainNavigationImpl(
             // 자동저장용 memoId 추적 (새 메모 insert 후 update로 전환)
             var savedMemoId by remember { mutableStateOf(memoId) }
 
+            // 시스템 뒤로가기 / 제스처 백 → 좌상단 화살표와 동일하게 onBack(=홈으로 pop) 으로 위임.
+            // 기본 NavController pop 은 직전 라우트(설정 등)로 가버려서 메모 → 홈 보장이 안 됨.
+            BackHandler { onBack() }
+
             MemoScreen(
                 existingMemo = finalMemo,
                 onBack = onBack,
                 onAutoSave = { memo ->
-                    @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
-                    GlobalScope.launch {
-                        val memoWithAudio = memo.copy(audioPath = savedAudioPath ?: memo.audioPath)
-                        if (savedMemoId > 0) {
-                            repository.updateMemo(memoWithAudio.copy(id = savedMemoId).toEntity())
-                        } else if (memoWithAudio.name.isNotBlank() || memoWithAudio.content.isNotBlank()) {
-                            // 즉시 임시 ID 설정하여 race condition 방지
-                            savedMemoId = -999
-                            val newId = repository.addMemo(memoWithAudio.toEntity())
-                            savedMemoId = newId.toInt()
+                    saveScope.launch {
+                        saveMutex.withLock {
+                            val memoWithAudio = memo.copy(audioPath = savedAudioPath ?: memo.audioPath)
+                            if (savedMemoId > 0) {
+                                repository.updateMemo(memoWithAudio.copy(id = savedMemoId).toEntity())
+                            } else if (memoWithAudio.name.isNotBlank()
+                                || memoWithAudio.content.isNotBlank()
+                                || memoWithAudio.summaryContent != null
+                                || memoWithAudio.youtubeUrl != null
+                                || memoWithAudio.webUrl != null
+                            ) {
+                                val newId = repository.addMemo(memoWithAudio.toEntity())
+                                savedMemoId = newId.toInt()
+                            }
                         }
                     }
                 },
@@ -805,24 +826,21 @@ class MemoPlainNavigationImpl(
                     }
                 },
                 onSave = { memo ->
-                    scope.launch {
-                        val memoWithAudio = memo.copy(audioPath = savedAudioPath ?: memo.audioPath)
-                        val finalMemoId: Int
-                        // savedMemoId == -999 은 autoSave가 진행 중 → 완료 대기
-                        if (savedMemoId == -999) {
-                            // autoSave가 완료될 때까지 대기
-                            while (savedMemoId == -999) { kotlinx.coroutines.delay(50) }
+                    saveScope.launch {
+                        saveMutex.withLock {
+                            val memoWithAudio = memo.copy(audioPath = savedAudioPath ?: memo.audioPath)
+                            if (savedMemoId > 0) {
+                                repository.updateMemo(memoWithAudio.copy(id = savedMemoId).toEntity())
+                            } else if (memoId > 0 && existingMemo != null) {
+                                repository.updateMemo(memoWithAudio.toEntity())
+                            } else {
+                                val newId = repository.addMemo(memoWithAudio.toEntity()).toInt()
+                                savedMemoId = newId
+                            }
                         }
-                        if (savedMemoId > 0) {
-                            repository.updateMemo(memoWithAudio.copy(id = savedMemoId).toEntity())
-                            finalMemoId = savedMemoId
-                        } else if (memoId > 0 && existingMemo != null) {
-                            repository.updateMemo(memoWithAudio.toEntity())
-                            finalMemoId = memoId
-                        } else {
-                            finalMemoId = repository.addMemo(memoWithAudio.toEntity()).toInt()
+                        withContext(Dispatchers.Main) {
+                            onNavigateToHome()
                         }
-                        onNavigateToHome()
                     }
                 },
                 onDelete = if (memoId > 0) { id ->
@@ -1011,7 +1029,8 @@ class MemoPlainNavigationImpl(
         styles = styles,
         youtubeUrl = youtubeUrl,
         summaryContent = summaryContent,
-        isSummaryExpanded = isSummaryExpanded
+        isSummaryExpanded = isSummaryExpanded,
+        webUrl = webUrl
     )
 
     // 503 에러 시 최대 3회 재시도 (exponential backoff)
