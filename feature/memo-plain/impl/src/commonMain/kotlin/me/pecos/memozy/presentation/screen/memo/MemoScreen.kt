@@ -80,6 +80,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
@@ -281,8 +282,6 @@ fun MemoScreen(
     }
     var bodyText by remember { mutableStateOf(existingMemo.content) }
     val richTextState = com.mohamedrejeb.richeditor.model.rememberRichTextState()
-    // 초기 HTML 스냅샷 — setHtml 직후 캡처, 이후 toHtml()과 비교하여 변경 감지
-    var initialHtml by remember { mutableStateOf("") }
 
     if (!initialized && existingMemo.id > 0 && existingMemo.name.isNotEmpty()) {
         nameText = existingMemo.name
@@ -290,11 +289,6 @@ fun MemoScreen(
         bodyText = existingMemo.content
         initialized = true
     }
-    // HTML-to-HTML 비교로 변경 감지 (setHtml 왕복에 의한 false positive 방지)
-    val hasChanges = nameText != existingMemo.name
-        || richTextState.toHtml() != initialHtml
-        || categoryIndex != (existingMemo.categoryId - 1).coerceIn(0, CATEGORY_RES_IDS.size - 1)
-
     // 유튜브 URL 감지 (하단바에서도 사용)
     val detectedYoutubeUrl = remember(bodyText) {
         YOUTUBE_URL_REGEX.find(bodyText)?.value
@@ -305,7 +299,7 @@ fun MemoScreen(
     var showWebDialog by remember { mutableStateOf(false) }
     var youtubeChipDismissed by remember { mutableStateOf(false) }
     var webChipDismissed by remember { mutableStateOf(false) }
-    var savedWebUrl by remember { mutableStateOf<String?>(null) }
+    var savedWebUrl by remember { mutableStateOf(existingMemo.webUrl) }
     var selectedWebUrl by remember { mutableStateOf<String?>(null) }
     // 요약 전 원본 URL 보관 (버튼으로 추가하거나 DB에 저장된 경우만)
     var savedYoutubeUrl by remember { mutableStateOf(existingMemo.youtubeUrl) }
@@ -316,14 +310,17 @@ fun MemoScreen(
     var selectedSummaryStyle by remember { mutableStateOf(SummaryStyle.SIMPLE) }
 
     // 요약 콘텐츠 접기/펼치기 상태 (summaryContent 별도 컬럼에서 로드)
+    // webUrl 이 있으면 웹 요약 메모 — summaryEntries 채우지 않고 webSummaryText 로 보관
     val summaryEntries = remember { mutableStateListOf<SummaryEntry>() }
     LaunchedEffect(existingMemo.id) {
         summaryEntries.clear()
-        summaryEntries.addAll(parseSummaryEntries(existingMemo.summaryContent))
+        if (existingMemo.webUrl == null) {
+            summaryEntries.addAll(parseSummaryEntries(existingMemo.summaryContent))
+        }
     }
     var isSummaryExpanded by remember { mutableStateOf(if (existingMemo.summaryContent == null) true else existingMemo.isSummaryExpanded) }
-    var webSummaryText by remember { mutableStateOf<String?>(null) }
-    var isWebSummaryExpanded by remember { mutableStateOf(existingMemo.summaryContent == null) }
+    var webSummaryText by remember { mutableStateOf(if (existingMemo.webUrl != null) existingMemo.summaryContent else null) }
+    var isWebSummaryExpanded by remember { mutableStateOf(if (existingMemo.summaryContent == null) true else existingMemo.isSummaryExpanded) }
 
     // 요약 삭제 확인 다이얼로그
     var showSummaryDeleteDialog by remember { mutableStateOf<String?>(null) } // "youtube" or "web"
@@ -417,31 +414,50 @@ fun MemoScreen(
     }
     fun safeStyles(): String? = richTextState.toHtml().takeIf { it.isNotBlank() }
 
-    val canAutoSave = nameText.isNotBlank() || bodyText.isNotBlank() || summaryEntries.isNotEmpty() || webSummaryText != null
+    val canAutoSave = nameText.isNotBlank() || bodyText.isNotBlank() || summaryEntries.isNotEmpty() || webSummaryText != null || savedYoutubeUrl != null || savedWebUrl != null
 
-    // ON_PAUSE 라이프사이클 저장 — 화면 이탈 시에만 저장 (snapshotFlow 제거)
+    // ON_PAUSE / onDispose 라이프사이클 저장 — 화면 이탈 시에만 저장 (snapshotFlow 제거)
+    // rememberUpdatedState 로 saveAction 자체를 매 컴포지션 갱신해서 stale closure 방지.
+    // (canAutoSave 가 등록 시점 값으로 박혀서 빈 메모는 영영 저장 안 되던 버그 수정)
+    val currentExistingMemo by rememberUpdatedState(existingMemo)
+    val saveAction: () -> Unit by rememberUpdatedState(save@{
+        val cb = onAutoSave ?: return@save
+        if (!canAutoSave) return@save
+        val newContent = safeContent()
+        val newSummary = safeSummaryContent()
+        val expectedCategoryIndex = (currentExistingMemo.categoryId - 1)
+            .coerceIn(0, CATEGORY_RES_IDS.size - 1)
+        if (newContent == currentExistingMemo.content
+            && nameText == currentExistingMemo.name
+            && newSummary == currentExistingMemo.summaryContent
+            && savedYoutubeUrl == currentExistingMemo.youtubeUrl
+            && savedWebUrl == currentExistingMemo.webUrl
+            && categoryIndex == expectedCategoryIndex
+        ) return@save
+        cb(MemoUiState(
+            id = currentExistingMemo.id,
+            name = nameText,
+            categoryId = categoryIndex + 1,
+            content = newContent,
+            styles = safeStyles(),
+            youtubeUrl = savedYoutubeUrl,
+            summaryContent = newSummary,
+            isSummaryExpanded = if (savedWebUrl != null) isWebSummaryExpanded else isSummaryExpanded,
+            webUrl = savedWebUrl
+        ))
+    })
     if (onAutoSave != null) {
         val lifecycleOwner = LocalLifecycleOwner.current
         DisposableEffect(lifecycleOwner) {
             val observer = LifecycleEventObserver { _, event ->
-                if (event == Lifecycle.Event.ON_PAUSE && hasChanges && canAutoSave) {
-                    val newContent = safeContent()
-                    // content가 기존과 동일하면 불필요한 저장 스킵
-                    if (newContent == existingMemo.content && nameText == existingMemo.name) return@LifecycleEventObserver
-                    onAutoSave(MemoUiState(
-                        id = existingMemo.id,
-                        name = nameText,
-                        categoryId = categoryIndex + 1,
-                        content = newContent,
-                        styles = safeStyles(),
-                        youtubeUrl = savedYoutubeUrl,
-                        summaryContent = safeSummaryContent(),
-                        isSummaryExpanded = isSummaryExpanded
-                    ))
-                }
+                if (event == Lifecycle.Event.ON_PAUSE) saveAction()
             }
             lifecycleOwner.lifecycle.addObserver(observer)
-            onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+            onDispose {
+                lifecycleOwner.lifecycle.removeObserver(observer)
+                // back nav 으로 라우트 pop 될 때 ON_PAUSE 가 안 뜨는 케이스 보장
+                saveAction()
+            }
         }
     }
 
@@ -543,7 +559,7 @@ fun MemoScreen(
                     color = colors.chipText,
                     modifier = Modifier
                         .clickable {
-                            onSave(MemoUiState(id = existingMemo.id, name = nameText, categoryId = categoryIndex + 1, content = safeContent(), styles = safeStyles(), youtubeUrl = savedYoutubeUrl, summaryContent = safeSummaryContent(), isSummaryExpanded = isSummaryExpanded))
+                            onSave(MemoUiState(id = existingMemo.id, name = nameText, categoryId = categoryIndex + 1, content = safeContent(), styles = safeStyles(), youtubeUrl = savedYoutubeUrl, summaryContent = safeSummaryContent(), isSummaryExpanded = if (savedWebUrl != null) isWebSummaryExpanded else isSummaryExpanded, webUrl = savedWebUrl))
                         }
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 )
@@ -624,7 +640,7 @@ fun MemoScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // 초기 내용 로드 — 본문만 setHtml + initialHtml 캡처
+                // 초기 내용 로드 — 본문만 setHtml
                 var contentInitialized by remember { mutableStateOf(false) }
                 LaunchedEffect(Unit) {
                     val editorContent = existingMemo.content.decodeHtmlEntities()
@@ -637,8 +653,6 @@ fun MemoScreen(
                         }
                         richTextState.setHtml(html)
                     }
-                    // setHtml 직후 스냅샷 캡처 — 이후 toHtml()과 비교하여 변경 감지
-                    initialHtml = richTextState.toHtml()
                     contentInitialized = true
                 }
 

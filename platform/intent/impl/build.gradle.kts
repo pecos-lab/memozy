@@ -15,6 +15,7 @@ kotlin {
         androidMain.configure {
             dependencies {
                 implementation(libs.koin.android)
+                implementation(libs.androidx.appcompat)
             }
         }
     }

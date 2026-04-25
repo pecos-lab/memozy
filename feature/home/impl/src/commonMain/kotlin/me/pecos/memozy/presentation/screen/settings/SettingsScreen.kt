@@ -401,7 +401,7 @@ fun SettingsScreen(
                         settingsViewModel.selectLanguage(language)
                         showLanguageDialog = false
                         if (appRestarter.isRestartSupported) {
-                            appRestarter.restart()
+                            appRestarter.applyAppLanguage(language.code)
                         } else {
                             // iOS: 프로세스 재시작 수단이 없으므로 사용자에게 수동 재시작 안내
                             scope.launch {

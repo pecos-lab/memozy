@@ -49,6 +49,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -108,6 +109,15 @@ fun HomeScreen(
     val filteredList by viewModel.filteredList.collectAsState()
 
     val listState = remember(sortOrder) { LazyListState() }
+
+    // 새 메모 추가 시 최상단 스크롤 (LazyColumn 기본 anchor 동작으로 새 아이템이 화면 밖으로 밀리는 문제 방지)
+    var prevListSize by remember { mutableStateOf(filteredList.size) }
+    LaunchedEffect(filteredList.size) {
+        if (filteredList.size > prevListSize) {
+            listState.animateScrollToItem(0)
+        }
+        prevListSize = filteredList.size
+    }
 
     // 다중 선택 모드
     var isSelectionMode by remember { mutableStateOf(false) }

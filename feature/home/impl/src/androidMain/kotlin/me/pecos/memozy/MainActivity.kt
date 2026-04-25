@@ -147,6 +147,19 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val settingsViewModel: SettingsViewModel = koinViewModel()
+            // 즉시 언어 반영: selectedLanguage 변경 시 LocalConfiguration 의 locale 을 갈아끼움.
+            // CMP 리소스가 androidx.compose.ui.text.intl.Locale.current (LocalConfiguration 기반) 으로
+            // 로케일을 결정하기 때문에 이걸 override 하면 process restart 없이 stringResource 가 즉시 갱신됨.
+            val selectedLanguage by settingsViewModel.selectedLanguage.collectAsState()
+            val baseConfiguration = LocalConfiguration.current
+            val localizedConfiguration = remember(selectedLanguage.code, baseConfiguration) {
+                Configuration(baseConfiguration).apply {
+                    val locale = java.util.Locale(selectedLanguage.code)
+                    java.util.Locale.setDefault(locale)
+                    setLocale(locale)
+                }
+            }
+            CompositionLocalProvider(LocalConfiguration provides localizedConfiguration) {
             val selectedTheme by settingsViewModel.selectedTheme.collectAsState()
             val systemIsDark = LocalConfiguration.current.uiMode and
                     Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
@@ -419,6 +432,7 @@ class MainActivity : ComponentActivity() {
             } // MaterialTheme(customTypography)
             } // AppThemeShell + CompositionLocalProvider(LocalFontSettings)
             } // OverrideNightMode + CompositionLocalProvider(LocalActivity)
+            } // CompositionLocalProvider(LocalConfiguration override)
         }
     }
 }
