@@ -49,12 +49,15 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.ktor.client.core)
             implementation(projects.datasource.local.memo.impl)
+            implementation(projects.datasource.local.chat.api)
             implementation(projects.datasource.remote.ai.api)
             implementation(projects.datasource.remote.ai.impl)
+            implementation(projects.datasource.remote.auth.impl)
             implementation(projects.data.repository.memo.impl)
             implementation(projects.data.repository.user.api)
             implementation(projects.data.repository.user.impl)
             implementation(projects.data.backup.api)
+            implementation(projects.data.backup.impl)
             implementation(projects.feature.memoPlain.impl)
             implementation(projects.platform.intent.api)
             implementation(projects.platform.intent.impl)
@@ -63,6 +66,10 @@ kotlin {
             implementation(projects.platform.ads.impl)
             implementation(projects.platform.media.api)
             implementation(projects.platform.media.impl)
+            // Supabase — iosMain SupabaseClient 직접 생성용. KMP commonMain 에서는 platform(BOM)
+            // deprecated 되어 개별 lib 의 version.ref 만으로 처리.
+            implementation(libs.supabase.auth)
+            implementation(libs.supabase.postgrest)
         }
     }
 }

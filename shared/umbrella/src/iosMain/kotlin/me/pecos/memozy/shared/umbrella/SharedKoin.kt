@@ -1,12 +1,22 @@
 package me.pecos.memozy.shared.umbrella
 
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.Auth
+import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.serializer.KotlinXSerializer
 import io.ktor.client.HttpClient
 import kotlinx.serialization.json.Json
 import me.pecos.memozy.data.backup.BackupRepository
+import me.pecos.memozy.data.backup.BackupRepositoryImpl
 import me.pecos.memozy.data.datasource.local.AiUsageDao
+import me.pecos.memozy.data.datasource.local.CategoryDao
+import me.pecos.memozy.data.datasource.local.MEMO_DB_VERSION
 import me.pecos.memozy.data.datasource.local.MemoDatabase
 import me.pecos.memozy.data.datasource.local.MemoDatabaseFactory
 import me.pecos.memozy.data.datasource.local.YoutubeSummaryDao
+import me.pecos.memozy.data.datasource.local.chat.ChatMessageDao
+import me.pecos.memozy.data.datasource.local.chat.ChatSessionDao
 import me.pecos.memozy.data.datasource.remote.ai.AIApiService
 import me.pecos.memozy.data.datasource.remote.ai.AIApiServiceImpl
 import me.pecos.memozy.data.datasource.remote.ai.WebScrapeService
@@ -16,10 +26,12 @@ import me.pecos.memozy.data.datasource.remote.ai.YouTubeCaptionServiceImpl
 import me.pecos.memozy.data.datasource.remote.ai.createAiHttpClient
 import me.pecos.memozy.data.datasource.remote.ai.createYouTubeHttpClient
 import me.pecos.memozy.data.datasource.remote.auth.AuthService
+import me.pecos.memozy.data.datasource.remote.auth.AuthServiceImpl
 import me.pecos.memozy.data.repository.MemoRepository
 import me.pecos.memozy.data.repository.MemoRepositoryImpl
 import me.pecos.memozy.data.repository.user.AuthRepository
 import me.pecos.memozy.data.repository.user.AuthRepositoryImpl
+import platform.UIKit.UIDevice
 import me.pecos.memozy.feature.core.viewmodel.MainViewModel
 import me.pecos.memozy.feature.core.viewmodel.SettingsViewModel
 import me.pecos.memozy.feature.core.viewmodel.TrashViewModel
@@ -55,8 +67,6 @@ import me.pecos.memozy.platform.intent.SharedContentReader
 import me.pecos.memozy.platform.intent.Sharer
 import me.pecos.memozy.platform.intent.ToastPresenter
 import me.pecos.memozy.platform.intent.UrlLauncher
-import me.pecos.memozy.shared.umbrella.stub.IosStubAuthService
-import me.pecos.memozy.shared.umbrella.stub.IosStubBackupRepository
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.core.qualifier.named
@@ -70,6 +80,9 @@ val sharedModule: Module = module {
     single { MemoDatabaseFactory() }
     single<MemoDatabase> { get<MemoDatabaseFactory>().create().build() }
     single { get<MemoDatabase>().memoDao() }
+    single<CategoryDao> { get<MemoDatabase>().categoryDao() }
+    single<ChatSessionDao> { get<MemoDatabase>().chatSessionDao() }
+    single<ChatMessageDao> { get<MemoDatabase>().chatMessageDao() }
     single<AiUsageDao> { get<MemoDatabase>().aiUsageDao() }
     single<YoutubeSummaryDao> { get<MemoDatabase>().youtubeSummaryDao() }
 
@@ -82,8 +95,7 @@ val sharedModule: Module = module {
     // MediaService — iOS no-op stub. AVAudioPlayer/Recorder 실구현은 후속 PR.
     single<MediaService> { IosMediaService() }
 
-    // AI / Web / YouTube — iOS 에서 secrets 파이프 미정. baseUrl/appSecretKey 빈 값 주입 →
-    // DI 는 성공하나 실제 AI 호출은 401/실패. secrets 통합은 #276 후속 PR (Wave 3-F) 스코프.
+    // AI / Web / YouTube — IosSecrets 를 통해 Info.plist 값 읽음 (Android BuildConfig 와 대응).
     single<Json> {
         Json {
             ignoreUnknownKeys = true
@@ -94,8 +106,8 @@ val sharedModule: Module = module {
     single<HttpClient> {
         createAiHttpClient(
             json = get(),
-            baseUrl = "",
-            appSecretKey = "",
+            baseUrl = IosSecrets.workerUrl,
+            appSecretKey = IosSecrets.appSecretKey,
             isDebug = true,
         )
     }
@@ -125,10 +137,39 @@ val sharedModule: Module = module {
     // Ads (iOS no-op — 이슈 #280 옵션 A)
     single<AdsService> { IosAdsService() }
 
-    // Stubs (Supabase 연결 완료 전까지 임시)
-    single<AuthService> { IosStubAuthService() }
+    // Supabase + Auth + Backup (Wave 3-F #276 — IosStub 제거)
+    single<SupabaseClient> {
+        createSupabaseClient(
+            supabaseUrl = IosSecrets.supabaseUrl,
+            supabaseKey = IosSecrets.supabaseAnonKey,
+        ) {
+            defaultSerializer = KotlinXSerializer(Json {
+                encodeDefaults = true
+                ignoreUnknownKeys = true
+            })
+            install(Auth)
+            install(Postgrest)
+        }
+    }
+    single<AuthService> { AuthServiceImpl(get()) }
     single<AuthRepository> { AuthRepositoryImpl(get()) }
-    single<BackupRepository> { IosStubBackupRepository() }
+    single<BackupRepository> {
+        val infoDict = platform.Foundation.NSBundle.mainBundle.infoDictionary
+        val appVersion = infoDict?.get("CFBundleShortVersionString") as? String ?: ""
+        BackupRepositoryImpl(
+            memoDao = get(),
+            categoryDao = get(),
+            chatSessionDao = get(),
+            chatMessageDao = get(),
+            youtubeSummaryDao = get(),
+            aiUsageDao = get(),
+            authService = get(),
+            supabaseClient = get(),
+            deviceName = UIDevice.currentDevice.name,
+            appVersion = appVersion,
+            dbVersion = MEMO_DB_VERSION,
+        )
+    }
 
     // ViewModels
     factory { MainViewModel(get()) }

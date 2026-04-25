@@ -48,5 +48,15 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- ── Secrets (Android BuildConfig 와 대응) ── -->
+	<!-- 운영 빌드 전 xcconfig + Info.plist 변수 치환으로 전환 권장. 현재는 placeholder. -->
+	<key>SUPABASE_URL</key>
+	<string></string>
+	<key>SUPABASE_ANON_KEY</key>
+	<string></string>
+	<key>WORKER_URL</key>
+	<string></string>
+	<key>APP_SECRET_KEY</key>
+	<string></string>
 </dict>
 </plist>
