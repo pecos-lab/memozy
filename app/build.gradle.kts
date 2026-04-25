@@ -32,11 +32,16 @@ android {
         manifestPlaceholders["admobAppId"] = admobAppId
     }
     buildTypes {
+        // AdMob 광고 단위 ID — local.properties 미지정 시 AdMob 공식 테스트 ID 사용 (계정 정지 위험 제로).
+        // 출시 빌드 전 admob.reward.ad.unit.id 를 실제 단위 ID 로 설정 + admob.test.device.ids 에 단말 ID 등록 필수.
+        val testRewardAdUnitId = "ca-app-pub-3940256099942544/5224354917"
         debug {
             buildConfigField("String", "WORKER_URL", "\"${localProperties.getProperty("worker.url", "")}\"")
             buildConfigField("String", "APP_SECRET_KEY", "\"${localProperties.getProperty("app.secret.key", "")}\"")
             buildConfigField("String", "SUPABASE_URL", "\"${localProperties.getProperty("supabase.url", "")}\"")
             buildConfigField("String", "SUPABASE_ANON_KEY", "\"${localProperties.getProperty("supabase.anon.key", "")}\"")
+            buildConfigField("String", "ADMOB_REWARD_AD_UNIT_ID", "\"${localProperties.getProperty("admob.reward.ad.unit.id", testRewardAdUnitId)}\"")
+            buildConfigField("String", "ADMOB_TEST_DEVICE_IDS", "\"${localProperties.getProperty("admob.test.device.ids", "")}\"")
         }
         release {
             isMinifyEnabled = true
@@ -49,6 +54,8 @@ android {
             buildConfigField("String", "APP_SECRET_KEY", "\"${localProperties.getProperty("app.prod.secret.key", "")}\"")
             buildConfigField("String", "SUPABASE_URL", "\"${localProperties.getProperty("supabase.prod.url", "")}\"")
             buildConfigField("String", "SUPABASE_ANON_KEY", "\"${localProperties.getProperty("supabase.prod.anon.key", "")}\"")
+            buildConfigField("String", "ADMOB_REWARD_AD_UNIT_ID", "\"${localProperties.getProperty("admob.reward.ad.unit.id", testRewardAdUnitId)}\"")
+            buildConfigField("String", "ADMOB_TEST_DEVICE_IDS", "\"${localProperties.getProperty("admob.test.device.ids", "")}\"")
         }
     }
 }

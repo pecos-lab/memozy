@@ -21,15 +21,26 @@ sealed class RewardAdState {
     data class Error(val message: String) : RewardAdState()
 }
 
-fun provideAdsService(context: Context): AdsService = AndroidAdsService(context)
+/**
+ * @param adUnitId 리워드 광고 단위 ID. 미지정 시 AdMob 공식 테스트 ID 사용.
+ *   출시 빌드는 local.properties 의 admob.reward.ad.unit.id 를 통해 실제 ID 주입.
+ * @param testDeviceIds 실제 광고 ID 사용 시 개발 단말 ID 목록. 등록 안 하고 실광고 클릭 시 계정 정지 위험.
+ */
+fun provideAdsService(
+    context: Context,
+    adUnitId: String = AndroidAdsService.TEST_REWARD_AD_UNIT_ID,
+    testDeviceIds: List<String> = emptyList(),
+): AdsService = AndroidAdsService(context, adUnitId, testDeviceIds)
 
 internal class AndroidAdsService(
     context: Context,
+    private val adUnitId: String = TEST_REWARD_AD_UNIT_ID,
+    private val testDeviceIds: List<String> = emptyList(),
 ) : AdsService {
 
-    private companion object {
-        // 테스트 광고 단위 ID — 출시 시 실제 ID로 교체
-        const val AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917"
+    internal companion object {
+        // AdMob 공식 테스트 리워드 광고 단위 ID — debug/내부 테스트 용도
+        const val TEST_REWARD_AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917"
     }
 
     private val appContext = context.applicationContext
@@ -44,6 +55,13 @@ internal class AndroidAdsService(
     override val isAdLoading: Boolean get() = _state.value is RewardAdState.Loading
 
     override fun initialize() {
+        if (testDeviceIds.isNotEmpty()) {
+            MobileAds.setRequestConfiguration(
+                com.google.android.gms.ads.RequestConfiguration.Builder()
+                    .setTestDeviceIds(testDeviceIds)
+                    .build()
+            )
+        }
         MobileAds.initialize(appContext)
     }
 
@@ -61,7 +79,7 @@ internal class AndroidAdsService(
         _state.value = RewardAdState.Loading
 
         val adRequest = AdRequest.Builder().build()
-        RewardedAd.load(appContext, AD_UNIT_ID, adRequest, object : RewardedAdLoadCallback() {
+        RewardedAd.load(appContext, adUnitId, adRequest, object : RewardedAdLoadCallback() {
             override fun onAdLoaded(ad: RewardedAd) {
                 rewardedAd = ad
                 _state.value = RewardAdState.Ready

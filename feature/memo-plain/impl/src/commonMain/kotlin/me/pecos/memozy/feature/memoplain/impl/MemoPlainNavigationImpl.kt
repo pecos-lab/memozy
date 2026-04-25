@@ -207,31 +207,42 @@ class MemoPlainNavigationImpl(
                     |절대 #, ##, **, *** 같은 마크다운 서식을 사용하지 마. 이모지와 일반 텍스트만 써.
                     |인사말이나 부가 설명 없이 바로 아래 형식대로만 출력해:
                     |
+                    |【번역 원칙 — 매우 중요】
+                    |- 자막은 음성을 전사한 것일 뿐이라 직역하면 어색하다. 자막의 단어를 그대로 옮기지 말고,
+                    |  화자가 진짜 전달하려는 의미를 ${userLang} 사용자에게 자연스럽게 전달해라.
+                    |- 관용 표현·구어·줄임말은 ${userLang}의 자연스러운 대응 표현으로 의역해라.
+                    |- 문맥상 생략된 주어·목적어가 있으면 ${userLang} 번역에서 보완해 자연스럽게 만들어라.
+                    |- 원어가 짧다고 번역도 짧을 필요 없다. 의미가 잘 전달되는 길이가 우선.
+                    |- 직역 같은 부자연스러운 표현(예: "그것을 하다", "이것을 봐주세요" 같은 기계 번역체) 금지.
+                    |
                     |📋 핵심 표현 (10~15개)
                     |
-                    |영상에서 나온 외국어 표현을 원문 그대로 적고, 바로 다음 줄에 ${userLang} 뜻을 적어.
+                    |영상에서 나온 외국어 표현을 원문 그대로 적고, 바로 다음 줄에 ${userLang} 뜻을 자연스럽게 적어.
+                    |단어 단위 직역이 아니라 ${userLang} 화자가 같은 상황에서 실제로 쓸 표현으로.
                     |표현과 표현 사이에는 빈 줄을 넣어.
                     |
                     |외국어 원문
-                    |${userLang} 뜻
+                    |${userLang} 뜻 (자연스러운 의역)
                     |
                     |외국어 원문
-                    |${userLang} 뜻
+                    |${userLang} 뜻 (자연스러운 의역)
                     |
                     |📖 주요 문장 (5~10개)
                     |
                     |영상에서 나온 핵심 문장을 원문 그대로 적고, 다음 줄에 ${userLang} 해석을 적어.
+                    |해석은 자막 직역이 아니라, 그 문장이 영상 흐름에서 어떤 의미인지 반영한 자연스러운 번역으로.
                     |각 문장 앞에 * 를 붙여. 문장과 문장 사이에는 빈 줄을 넣어.
                     |
                     |* 외국어 원문 문장
-                    |${userLang} 해석
+                    |${userLang} 해석 (자연스러운 번역)
                     |
                     |* 외국어 원문 문장
-                    |${userLang} 해석
+                    |${userLang} 해석 (자연스러운 번역)
                     |
                     |💡 학습 포인트
                     |
-                    |문법, 뉘앙스, 발음, 사용법 등 학습에 도움되는 내용을 ${userLang}로 2~4줄 정리.
+                    |문법, 뉘앙스, 직역과 의역의 차이, 발음, 사용 상황 등 학습에 도움되는 내용을 ${userLang}로 2~4줄 정리.
+                    |특히 위에서 의역한 표현 중 직역과 큰 차이가 있는 것이 있다면 왜 그렇게 번역했는지 설명해.
                 """.trimMargin()
                 }
             }
@@ -359,8 +370,13 @@ class MemoPlainNavigationImpl(
             var dailyAdViewCount by remember { mutableStateOf(0) }
             var adBonusCount by remember { mutableStateOf(0) }
             LaunchedEffect(Unit) {
-                dailyUsageCount = aiUsageDao.getTotalCountSince(startOfToday())
+                val total = aiUsageDao.getTotalCountSince(startOfToday())
                 dailyAdViewCount = aiUsageDao.getCountSince(FEATURE_REWARD_AD, startOfToday())
+                // ai_usage 에 광고 시청 기록도 들어가므로 실제 AI 사용량은 total - 광고시청 횟수.
+                dailyUsageCount = total - dailyAdViewCount
+                // adBonusCount 는 in-memory 라 화면 재진입 시 사라지지만 광고 시청은 DB 에 남으므로
+                // 광고 본 횟수만큼 보너스를 복원해서 일관성 유지.
+                adBonusCount = dailyAdViewCount
             }
             val dailyLimit = subscriptionTier.dailyAiLimit + adBonusCount
             val canUseAiQuota = dailyUsageCount < dailyLimit
