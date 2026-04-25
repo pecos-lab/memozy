@@ -14,17 +14,30 @@ import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import me.pecos.memozy.data.repository.subscription.SubscriptionRepository
+import me.pecos.memozy.data.repository.user.AuthRepository
 import me.pecos.memozy.presentation.theme.SubscriptionTier
 
-fun provideBillingService(context: Context): BillingService = AndroidBillingService(context)
+fun provideBillingService(
+    context: Context,
+    subscriptionRepository: SubscriptionRepository,
+    authRepository: AuthRepository,
+): BillingService = AndroidBillingService(context, subscriptionRepository, authRepository)
 
 internal class AndroidBillingService(
     context: Context,
+    private val subscriptionRepository: SubscriptionRepository,
+    private val authRepository: AuthRepository,
 ) : BillingService, PurchasesUpdatedListener {
 
     private val appContext = context.applicationContext
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private companion object {
         const val PRODUCT_RICE_1 = "donation_rice_1"
@@ -85,6 +98,7 @@ internal class AndroidBillingService(
                     queryProducts()
                     querySubscriptions()
                     queryExistingSubscriptions()
+                    syncSubscriptionFromServer()
                 } else {
                     _isConnected.value = false
                 }
@@ -95,6 +109,20 @@ internal class AndroidBillingService(
                 connect()
             }
         })
+    }
+
+    private fun syncSubscriptionFromServer() {
+        val userId = authRepository.currentUser?.id ?: return
+        serviceScope.launch {
+            subscriptionRepository.syncSubscriptionStatus(userId)
+                .onSuccess { tier ->
+                    _subscriptionTier.value = tier
+                }
+                .onFailure { error ->
+                    // Log error but don't block - local state remains as fallback
+                    println("Failed to sync subscription from server: ${error.message}")
+                }
+        }
     }
 
     private fun queryProducts() {
@@ -234,8 +262,7 @@ internal class AndroidBillingService(
                         val isSubscription = purchase.products.any { it in SUBSCRIPTION_IDS }
                         if (isSubscription) {
                             acknowledgePurchase(purchase)
-                            _subscriptionTier.value = SubscriptionTier.PRO
-                            _purchaseState.value = PurchaseState.Success
+                            validatePurchaseWithServer(purchase)
                         } else {
                             consumePurchase(purchase)
                         }
@@ -247,6 +274,35 @@ internal class AndroidBillingService(
             }
             else -> {
                 _purchaseState.value = PurchaseState.Error(billingResult.debugMessage)
+            }
+        }
+    }
+
+    private fun validatePurchaseWithServer(purchase: Purchase) {
+        val userId = authRepository.currentUser?.id
+        if (userId == null) {
+            _purchaseState.value = PurchaseState.Error("User not logged in")
+            return
+        }
+
+        val productId = purchase.products.firstOrNull() ?: ""
+        val purchaseToken = purchase.purchaseToken
+
+        serviceScope.launch {
+            subscriptionRepository.validatePurchase(
+                userId = userId,
+                productId = productId,
+                purchaseToken = purchaseToken,
+                platform = "android",
+            ).onSuccess { tier ->
+                _subscriptionTier.value = tier
+                _purchaseState.value = PurchaseState.Success
+            }.onFailure { error ->
+                // Even if server validation fails, we still set PRO locally
+                // Server validation can be retried later via sync
+                _subscriptionTier.value = SubscriptionTier.PRO
+                _purchaseState.value = PurchaseState.Success
+                println("Server validation failed, will retry on next sync: ${error.message}")
             }
         }
     }

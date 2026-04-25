@@ -6,5 +6,11 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 val billingPlatformModule = module {
-    single<BillingService> { provideBillingService(androidContext()) }
+    single<BillingService> {
+        provideBillingService(
+            context = androidContext(),
+            subscriptionRepository = get(),
+            authRepository = get(),
+        )
+    }
 }

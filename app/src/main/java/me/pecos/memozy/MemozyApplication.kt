@@ -22,6 +22,8 @@ import me.pecos.memozy.di.htmlTextPlatformModule
 import me.pecos.memozy.di.mediaPlatformModule
 import me.pecos.memozy.di.memoDatabaseModule
 import me.pecos.memozy.di.memoRepositoryModule
+import me.pecos.memozy.di.subscriptionNetworkModule
+import me.pecos.memozy.di.subscriptionRepositoryModule
 import me.pecos.memozy.di.userRepositoryModule
 import me.pecos.memozy.di.viewModelModule
 import me.pecos.memozy.feature.memoplain.impl.di.memoPlainModule
@@ -49,6 +51,8 @@ class MemozyApplication : Application() {
                 memoRepositoryModule,
                 chatRepositoryModule,
                 userRepositoryModule,
+                subscriptionNetworkModule,
+                subscriptionRepositoryModule,
                 viewModelModule,
                 memoPlainModule,
                 billingPlatformModule,

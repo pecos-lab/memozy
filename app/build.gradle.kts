@@ -82,6 +82,10 @@ dependencies {
     implementation(projects.data.repository.chat.api) // ChatRepositoryModule의 ChatRepository 바인딩 참조
     implementation(projects.data.repository.user.impl)
     implementation(projects.data.repository.user.api) // UserRepositoryModule의 AuthRepository 바인딩 참조
+    implementation(projects.datasource.remote.subscription.impl)
+    implementation(projects.datasource.remote.subscription.api) // SubscriptionNetworkModule의 SubscriptionApiService 바인딩 참조
+    implementation(projects.data.repository.subscription.impl)
+    implementation(projects.data.repository.subscription.api) // SubscriptionRepositoryModule의 SubscriptionRepository 바인딩 참조
     implementation(projects.data.backup.impl)
     implementation(projects.feature.core.resource)
     implementation(projects.feature.core.viewmodel) // ViewModelModule의 MainViewModel/TrashViewModel/SettingsViewModel 바인딩 참조
