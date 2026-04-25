@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
+import java.util.Properties
 
 // `:shared:umbrella` ─ iOS framework `Shared` export용 umbrella 모듈.
 // `:shared:poc`와 공존: poc는 Room KMP 스파이크(CI kmp-ios-check.yml 검증 대상),
@@ -9,6 +10,48 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 plugins {
     id("memozy.kmp.library")
     id("memozy.cmp.library")
+}
+
+// local.properties 의 secrets 키를 빌드 시점에 IosSecrets Kotlin object 로 주입.
+// Android 의 `app/build.gradle.kts` BuildConfig 패턴과 대응 — 동일 local.properties 단일 출처.
+// Info.plist + xcconfig 도 가능하나 dev 편의를 위해 자동 생성 방식 채택.
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) load(file.inputStream())
+}
+
+val generateIosSecrets by tasks.registering {
+    val outputDir = layout.buildDirectory.dir("generated/secrets/iosMain/kotlin")
+    outputs.dir(outputDir)
+    val supabaseUrl = localProperties.getProperty("supabase.url", "")
+    val supabaseAnonKey = localProperties.getProperty("supabase.anon.key", "")
+    val workerUrl = localProperties.getProperty("worker.url", "")
+    val appSecretKey = localProperties.getProperty("app.secret.key", "")
+    inputs.property("supabaseUrl", supabaseUrl)
+    inputs.property("supabaseAnonKey", supabaseAnonKey)
+    inputs.property("workerUrl", workerUrl)
+    inputs.property("appSecretKey", appSecretKey)
+    doLast {
+        val packageDir = outputDir.get().asFile.resolve("me/pecos/memozy/shared/umbrella")
+        packageDir.mkdirs()
+        packageDir.resolve("IosSecrets.kt").writeText(
+            """
+            package me.pecos.memozy.shared.umbrella
+
+            /**
+             * iOS secrets pipe — Android BuildConfig 와 대응.
+             * 빌드 시점에 generateIosSecrets Gradle task 가 local.properties 값으로 자동 생성.
+             * 누락된 키는 빈 문자열 → SupabaseClient init / AI 호출이 빈 URL 로 실패하게 됨.
+             */
+            internal object IosSecrets {
+                const val supabaseUrl: String = "$supabaseUrl"
+                const val supabaseAnonKey: String = "$supabaseAnonKey"
+                const val workerUrl: String = "$workerUrl"
+                const val appSecretKey: String = "$appSecretKey"
+            }
+            """.trimIndent()
+        )
+    }
 }
 
 kotlin {
@@ -42,6 +85,9 @@ kotlin {
             implementation(libs.jetbrains.navigation.compose)
             implementation(libs.haze)
             implementation(compose.materialIconsExtended)
+        }
+        iosMain {
+            kotlin.srcDir(generateIosSecrets.map { it.outputs.files })
         }
         iosMain.dependencies {
             implementation(libs.koin.core)

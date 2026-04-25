@@ -400,10 +400,11 @@ fun SettingsScreen(
                     val onSelectLanguage = {
                         settingsViewModel.selectLanguage(language)
                         showLanguageDialog = false
-                        if (appRestarter.isRestartSupported) {
-                            appRestarter.applyAppLanguage(language.code)
-                        } else {
-                            // iOS: 프로세스 재시작 수단이 없으므로 사용자에게 수동 재시작 안내
+                        // 항상 호출 — Android: 즉시 재시작/재구성. iOS: NSUserDefaults AppleLanguages 갱신
+                        // (cold restart 후 적용). 두 플랫폼 다 같은 진입점이라 호출 측은 분기 불필요.
+                        appRestarter.applyAppLanguage(language.code)
+                        if (!appRestarter.isRestartSupported) {
+                            // iOS: 즉시 반영 불가 — 수동 재시작 안내
                             scope.launch {
                                 toastPresenter.show(getString(Res.string.ios_restart_required))
                             }
