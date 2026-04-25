@@ -51,9 +51,11 @@ fun AiActionMenu(
     val fontSettings = LocalFontSettings.current
     val hapticService = koinInject<HapticService>()
 
+    // skipPartiallyExpanded = true: 콘텐츠가 짧아서 반접힌 상태로 떠 첫 항목만 보이는 문제 방지.
+    // 한 번에 전체 펼쳐진 상태로 노출.
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(),
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = colors.cardBackground
     ) {
         Column(

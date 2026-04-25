@@ -467,6 +467,9 @@ fun MemoScreen(
 
     var showAiActionMenu by remember { mutableStateOf(false) }
     var showAiCustomInput by remember { mutableStateOf(false) }
+    // AI 액션 메뉴 / 기타 바텀시트 띄울 때 키보드 먼저 내리기 — IME 와 ModalBottomSheet 가 충돌해서
+    // 시트가 가려지거나 위치가 어긋나 보이는 문제 방지.
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
 
     // containerColor 명시 → MaterialTheme.colorScheme.surface 무시
     Scaffold(
@@ -1042,7 +1045,10 @@ fun MemoScreen(
                                     onWebSummarize = onWebSummarize,
                                     onWebDialogOpen = { showWebDialog = true },
                                     onAiAssistClick = if (onAiPresetAction != null) {
-                                        { showAiActionMenu = true }
+                                        {
+                                            focusManager.clearFocus()
+                                            showAiActionMenu = true
+                                        }
                                     } else null
                                 )
                                 Spacer(modifier = Modifier.weight(1f))
