@@ -26,7 +26,6 @@ import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_ad_exh
 import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_ad_remaining
 import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_close
 import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_free_message
-import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_ios_unsupported
 import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_pro_message
 import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_title
 import me.pecos.memozy.feature.core.resource.generated.resources.ai_limit_upgrade
@@ -91,16 +90,8 @@ fun AiLimitBottomSheet(
             Spacer(modifier = Modifier.height(20.dp))
 
             if (!subscriptionTier.isPro) {
-                // 광고 시청 버튼 (Free 유저만) — iOS는 현재 리워드 광고 SDK 미연동
-                if (!isPlatformSupported) {
-                    Text(
-                        text = stringResource(Res.string.ai_limit_ios_unsupported),
-                        fontSize = fontSettings.scaled(13),
-                        color = colors.textSecondary,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                } else if (canWatchAd) {
+                // 광고 시청 버튼 (Android Free 유저, 광고 시청 가능할 때) — iOS는 미지원이라 두 분기 모두 진입 X
+                if (isPlatformSupported && canWatchAd) {
                     Button(
                         onClick = onWatchAd,
                         enabled = !isAdLoading,
@@ -135,7 +126,8 @@ fun AiLimitBottomSheet(
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
-                } else {
+                } else if (isPlatformSupported) {
+                    // Android Free 유저 + 광고 다 봤음
                     Text(
                         text = stringResource(Res.string.ai_limit_ad_exhausted),
                         fontSize = fontSettings.scaled(13),
@@ -144,6 +136,16 @@ fun AiLimitBottomSheet(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                 }
+
+                // Pro 업그레이드 안내 — 이전엔 버튼 아래에 desc 가 있었으나 위로 옮겨 한눈에 가치 전달.
+                Text(
+                    text = stringResource(Res.string.ai_limit_upgrade_desc),
+                    fontSize = fontSettings.scaled(13),
+                    color = colors.textSecondary,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
 
                 // Pro 업그레이드 버튼
                 OutlinedButton(
@@ -159,16 +161,8 @@ fun AiLimitBottomSheet(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = stringResource(Res.string.ai_limit_upgrade_desc),
-                    fontSize = fontSettings.scaled(12),
-                    color = colors.textBody.copy(alpha = 0.6f),
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
+                // Pro 업그레이드 ↔ 닫기 사이 간격을 자연스럽게 좁힘 (이전 12dp 였음).
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
             OutlinedButton(
