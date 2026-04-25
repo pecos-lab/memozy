@@ -19,6 +19,7 @@ interface AuthService {
     val authState: Flow<AuthState>
     val currentUser: AuthUser?
     suspend fun signInWithGoogle(idToken: String): Result<AuthUser>
+    suspend fun signInWithApple(idToken: String, rawNonce: String): Result<AuthUser>
     suspend fun signOut()
     fun getAccessToken(): String?
 }

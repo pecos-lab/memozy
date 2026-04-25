@@ -31,6 +31,7 @@ import me.pecos.memozy.feature.core.resource.generated.resources.login_subtitle
 import me.pecos.memozy.feature.core.resource.generated.resources.sign_in_error
 import me.pecos.memozy.feature.core.resource.generated.resources.sign_in_google
 import me.pecos.memozy.feature.home.impl.GOOGLE_WEB_CLIENT_ID
+import me.pecos.memozy.platform.credential.AppleSignInResult
 import me.pecos.memozy.platform.credential.CredentialService
 import me.pecos.memozy.platform.credential.GoogleSignInResult
 import me.pecos.memozy.platform.intent.ToastPresenter
@@ -45,6 +46,7 @@ import org.koin.compose.koinInject
 @Composable
 fun LoginScreen(
     onSignIn: (idToken: String) -> Unit,
+    onAppleSignIn: (idToken: String, rawNonce: String) -> Unit = { _, _ -> },
     onSkip: () -> Unit,
 ) {
     val colors = LocalAppColors.current
@@ -108,6 +110,33 @@ fun LoginScreen(
                 Icon(painter = painterResource(Res.drawable.ic_google), contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(Res.string.sign_in_google), fontSize = fontSettings.scaled(14))
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Apple 로 계속하기 — Apple HIG: 검정 배경 + 사과 로고. iOS 에서만 실제 동작 (Android 는 미구현 안내).
+            OutlinedButton(
+                onClick = {
+                    scope.launch {
+                        val result = credentialService.signInWithApple(activity = activity)
+                        when (result) {
+                            is AppleSignInResult.Success -> onAppleSignIn(result.idToken, result.rawNonce)
+                            is AppleSignInResult.Cancelled -> Unit
+                            is AppleSignInResult.Error -> {
+                                println("LoginScreen: Apple sign-in failed: ${result.message}")
+                                toastPresenter.show(getString(Res.string.sign_in_error))
+                            }
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                border = BorderStroke(1.dp, colors.cardBorder),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
+            ) {
+                Text("\uF8FF", fontSize = fontSettings.scaled(16))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Apple 로 계속하기", fontSize = fontSettings.scaled(14))
             }
 
             Spacer(modifier = Modifier.height(16.dp))

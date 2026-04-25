@@ -20,6 +20,9 @@ class AuthRepositoryImpl(
     override suspend fun signInWithGoogle(idToken: String): Result<AuthUser> =
         authService.signInWithGoogle(idToken)
 
+    override suspend fun signInWithApple(idToken: String, rawNonce: String): Result<AuthUser> =
+        authService.signInWithApple(idToken, rawNonce)
+
     override suspend fun signOut() = authService.signOut()
 
     override fun getAccessToken(): String? = authService.getAccessToken()
