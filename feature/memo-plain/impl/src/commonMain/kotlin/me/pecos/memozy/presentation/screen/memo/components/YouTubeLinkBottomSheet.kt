@@ -69,7 +69,6 @@ fun YouTubeLinkBottomSheet(
                     .padding(vertical = 14.dp, horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("■", fontSize = fontSettings.scaled(20)); Spacer(modifier = Modifier.width(12.dp))
                 Text(stringResource(Res.string.copy_link), fontSize = fontSettings.scaled(16), color = colors.textBody)
             }
 
@@ -83,7 +82,6 @@ fun YouTubeLinkBottomSheet(
                     .padding(vertical = 14.dp, horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("●", fontSize = fontSettings.scaled(20)); Spacer(modifier = Modifier.width(12.dp))
                 Text(stringResource(Res.string.open_in_browser), fontSize = fontSettings.scaled(16), color = colors.textBody)
             }
 
