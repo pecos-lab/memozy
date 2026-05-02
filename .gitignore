@@ -19,3 +19,6 @@ DerivedData/
 /iosApp/build/
 /iosApp/Pods/
 /iosApp/.build/
+# Kotlin/Native test artifacts
+program.kexe
+program.kexe.dSYM/

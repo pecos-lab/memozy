@@ -69,6 +69,7 @@ kotlin {
             export(projects.feature.core.viewmodel)
             export(projects.data.repository.memo.api)
             export(projects.platform.credential.impl)
+            export(projects.platform.analytics.impl)
         }
     }
 
@@ -111,6 +112,7 @@ kotlin {
             implementation(projects.platform.credential.api)
             api(projects.platform.credential.impl)
             implementation(projects.platform.ads.impl)
+            api(projects.platform.analytics.impl)
             implementation(projects.platform.billing.api)
             implementation(projects.platform.billing.impl)
             implementation(projects.platform.media.api)

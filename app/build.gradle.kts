@@ -98,6 +98,7 @@ dependencies {
     // platform (Android-only) impls wired through Koin modules
     implementation(projects.platform.billing.impl)
     implementation(projects.platform.ads.impl)
+    implementation(projects.platform.analytics.impl)
     implementation(projects.platform.credential.impl)
     implementation(projects.platform.media.api)
     implementation(projects.platform.media.impl)
