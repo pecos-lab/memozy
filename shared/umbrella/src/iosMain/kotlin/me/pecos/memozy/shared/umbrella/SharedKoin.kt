@@ -43,6 +43,8 @@ import me.pecos.memozy.feature.core.viewmodel.settings.NSUserDefaultsPreferences
 import me.pecos.memozy.feature.core.viewmodel.settings.PreferencesProvider
 import me.pecos.memozy.platform.ads.AdsService
 import me.pecos.memozy.platform.ads.IosAdsService
+import me.pecos.memozy.platform.analytics.AnalyticsService
+import me.pecos.memozy.platform.analytics.IosAnalyticsService
 import me.pecos.memozy.platform.billing.BillingService
 import me.pecos.memozy.platform.billing.IosBillingService
 import me.pecos.memozy.platform.credential.CredentialService
@@ -138,6 +140,9 @@ val sharedModule: Module = module {
 
     // Ads (iOS no-op — 이슈 #280 옵션 A)
     single<AdsService> { IosAdsService() }
+
+    // Analytics — Swift 브릿지로 위임 (FirebaseAnalytics)
+    single<AnalyticsService> { IosAnalyticsService() }
 
     // Billing (iOS — Wave 3-I #279 stub. StoreKit 실 결제 플로우는 follow-up)
     single<BillingService> { IosBillingService() }
