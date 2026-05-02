@@ -7,10 +7,8 @@ import Shared
 @main
 struct iOSApp: App {
     init() {
-        // Firebase 초기화는 Koin 보다 먼저
-        if FirebaseApp.app() == nil {
-            FirebaseApp.configure()
-        }
+        // Firebase 초기화는 Koin 보다 먼저 — @main 진입점은 단일 호출 보장
+        FirebaseApp.configure()
 
         SharedKoinKt.doInitKoin()
         GoogleSignInRegistrar.shared.handler = IosGoogleSignInBridge()
