@@ -195,6 +195,7 @@ fun initKoin() {
     startKoin {
         modules(sharedModule, memoPlainModule)
     }
+    KoinPlatform.getKoin().get<BillingService>().connect()
 }
 
 fun provideMainViewModel(): MainViewModel = KoinPlatform.getKoin().get()

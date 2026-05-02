@@ -68,6 +68,7 @@ kotlin {
             xcf.add(this)
             export(projects.feature.core.viewmodel)
             export(projects.data.repository.memo.api)
+            export(projects.platform.credential.impl)
         }
     }
 
@@ -108,7 +109,7 @@ kotlin {
             implementation(projects.platform.intent.api)
             implementation(projects.platform.intent.impl)
             implementation(projects.platform.credential.api)
-            implementation(projects.platform.credential.impl)
+            api(projects.platform.credential.impl)
             implementation(projects.platform.ads.impl)
             implementation(projects.platform.billing.api)
             implementation(projects.platform.billing.impl)
