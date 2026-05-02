@@ -18,7 +18,6 @@ import platform.AuthenticationServices.ASAuthorizationScopeFullName
 import platform.AuthenticationServices.ASPresentationAnchor
 import platform.CoreCrypto.CC_SHA256
 import platform.CoreCrypto.CC_SHA256_DIGEST_LENGTH
-import platform.Foundation.NSData
 import platform.Foundation.NSError
 import platform.Foundation.NSString
 import platform.Foundation.NSUTF8StringEncoding
@@ -30,14 +29,45 @@ import platform.UIKit.UIWindow
 import platform.darwin.NSObject
 import kotlin.coroutines.resume
 
+interface GoogleSignInCallback {
+    fun onSuccess(idToken: String)
+    fun onCancelled()
+    fun onError(message: String)
+}
+
+interface GoogleSignInHandler {
+    fun signIn(callback: GoogleSignInCallback)
+}
+
+object GoogleSignInRegistrar {
+    var handler: GoogleSignInHandler? = null
+}
+
 class IosCredentialService : CredentialService {
 
     override suspend fun signInWithGoogle(
         activity: Any?,
         serverClientId: String,
-    ): GoogleSignInResult = GoogleSignInResult.Error(
-        message = "Google Sign-In is not available on iOS. Use Apple Sign-In instead.",
-    )
+    ): GoogleSignInResult = suspendCancellableCoroutine { cont ->
+        val handler = GoogleSignInRegistrar.handler
+        if (handler == null) {
+            if (cont.isActive) {
+                cont.resume(GoogleSignInResult.Error("Google Sign-In이 초기화되지 않았습니다."))
+            }
+            return@suspendCancellableCoroutine
+        }
+        handler.signIn(object : GoogleSignInCallback {
+            override fun onSuccess(idToken: String) {
+                if (cont.isActive) cont.resume(GoogleSignInResult.Success(idToken))
+            }
+            override fun onCancelled() {
+                if (cont.isActive) cont.resume(GoogleSignInResult.Cancelled)
+            }
+            override fun onError(message: String) {
+                if (cont.isActive) cont.resume(GoogleSignInResult.Error(message))
+            }
+        })
+    }
 
     @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
     override suspend fun signInWithApple(activity: Any?): AppleSignInResult =
@@ -57,7 +87,6 @@ class IosCredentialService : CredentialService {
             val controller = ASAuthorizationController(authorizationRequests = listOf(request))
             controller.delegate = handler
             controller.presentationContextProvider = handler
-            // 핸들러를 cont 의 invokeOnCancellation 에 묶어 GC 지연 — 인증 끝날 때까지 살아있어야 함
             cont.invokeOnCancellation { _ -> handler.detach() }
             controller.performRequests()
         }

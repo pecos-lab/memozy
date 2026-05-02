@@ -2,6 +2,7 @@ package me.pecos.memozy.platform.billing
 
 import android.app.Activity
 import android.content.Context
+import android.content.SharedPreferences
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
@@ -14,8 +15,13 @@ import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import me.pecos.memozy.presentation.theme.SubscriptionTier
 
 fun provideBillingService(context: Context): BillingService = AndroidBillingService(context)
@@ -25,8 +31,12 @@ internal class AndroidBillingService(
 ) : BillingService, PurchasesUpdatedListener {
 
     private val appContext = context.applicationContext
+    private val prefs: SharedPreferences =
+        appContext.getSharedPreferences("billing_cache", Context.MODE_PRIVATE)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private companion object {
+        const val KEY_TIER = "subscription_tier"
         const val PRODUCT_RICE_1 = "donation_rice_1"
         const val PRODUCT_RICE_2 = "donation_rice_2"
         const val PRODUCT_RICE_3 = "donation_rice_3"
@@ -72,8 +82,16 @@ internal class AndroidBillingService(
     private val _isConnected = MutableStateFlow(false)
     override val isConnected: StateFlow<Boolean> = _isConnected
 
-    private val _subscriptionTier = MutableStateFlow(SubscriptionTier.FREE)
+    private val _subscriptionTier = MutableStateFlow(
+        if (prefs.getString(KEY_TIER, null) == SubscriptionTier.PRO.name) SubscriptionTier.PRO
+        else SubscriptionTier.FREE
+    )
     override val subscriptionTier: StateFlow<SubscriptionTier> = _subscriptionTier
+
+    private fun setTier(tier: SubscriptionTier) {
+        _subscriptionTier.value = tier
+        prefs.edit().putString(KEY_TIER, tier.name).apply()
+    }
 
     override fun connect() {
         if (billingClient.isReady) return
@@ -92,7 +110,10 @@ internal class AndroidBillingService(
 
             override fun onBillingServiceDisconnected() {
                 _isConnected.value = false
-                connect()
+                scope.launch {
+                    delay(3_000)
+                    connect()
+                }
             }
         })
     }
@@ -204,6 +225,10 @@ internal class AndroidBillingService(
     }
 
     override fun queryExistingSubscriptions() {
+        if (!billingClient.isReady) {
+            connect()
+            return
+        }
         billingClient.queryPurchasesAsync(
             QueryPurchasesParams.newBuilder()
                 .setProductType(BillingClient.ProductType.SUBS)
@@ -214,7 +239,7 @@ internal class AndroidBillingService(
                     purchase.purchaseState == Purchase.PurchaseState.PURCHASED &&
                         purchase.products.any { it in SUBSCRIPTION_IDS }
                 }
-                _subscriptionTier.value = if (hasActiveSub) SubscriptionTier.PRO else SubscriptionTier.FREE
+                setTier(if (hasActiveSub) SubscriptionTier.PRO else SubscriptionTier.FREE)
 
                 purchases.filter {
                     it.purchaseState == Purchase.PurchaseState.PURCHASED && !it.isAcknowledged
@@ -234,7 +259,7 @@ internal class AndroidBillingService(
                         val isSubscription = purchase.products.any { it in SUBSCRIPTION_IDS }
                         if (isSubscription) {
                             acknowledgePurchase(purchase)
-                            _subscriptionTier.value = SubscriptionTier.PRO
+                            setTier(SubscriptionTier.PRO)
                             _purchaseState.value = PurchaseState.Success
                         } else {
                             consumePurchase(purchase)
@@ -265,12 +290,19 @@ internal class AndroidBillingService(
         }
     }
 
-    private fun acknowledgePurchase(purchase: Purchase) {
+    private fun acknowledgePurchase(purchase: Purchase, retryCount: Int = 0) {
         if (purchase.isAcknowledged) return
         val params = AcknowledgePurchaseParams.newBuilder()
             .setPurchaseToken(purchase.purchaseToken)
             .build()
-        billingClient.acknowledgePurchase(params) { /* no-op */ }
+        billingClient.acknowledgePurchase(params) { result ->
+            if (result.responseCode != BillingClient.BillingResponseCode.OK && retryCount < 3) {
+                scope.launch {
+                    delay(2_000L * (retryCount + 1))
+                    acknowledgePurchase(purchase, retryCount + 1)
+                }
+            }
+        }
     }
 
     override fun resetPurchaseState() {

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -32,7 +33,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -55,6 +55,7 @@ import me.pecos.memozy.feature.core.resource.generated.resources.subscription_re
 import me.pecos.memozy.feature.core.resource.generated.resources.subscription_title
 import me.pecos.memozy.feature.core.resource.generated.resources.subscription_yearly
 import me.pecos.memozy.feature.core.resource.generated.resources.subscription_yearly_discount
+import me.pecos.memozy.platform.ads.AdsService
 import me.pecos.memozy.platform.billing.BillingService
 import me.pecos.memozy.platform.billing.PurchaseState
 import me.pecos.memozy.platform.intent.UrlLauncher
@@ -67,16 +68,19 @@ import me.pecos.memozy.presentation.components.PopupSize
 import me.pecos.memozy.presentation.theme.LocalActivity
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
+import me.pecos.memozy.presentation.theme.LocalIsLoggedIn
 import me.pecos.memozy.presentation.theme.LocalSubscriptionTier
 
 @Composable
 fun SubscriptionScreen(
     onBack: () -> Unit = {},
     billingService: BillingService = koinInject(),
+    adsService: AdsService = koinInject(),
 ) {
     val subscriptionProducts by billingService.subscriptionProducts.collectAsState()
     val purchaseState by billingService.purchaseState.collectAsState()
     val currentTier = LocalSubscriptionTier.current
+    val isLoggedIn = LocalIsLoggedIn.current
     val colors = LocalAppColors.current
     val fontSettings = LocalFontSettings.current
     val activity = LocalActivity.current
@@ -123,26 +127,23 @@ fun SubscriptionScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             // ── 히어로 영역 ──
-            val heroGradient = if (isSystemDark) {
-                Brush.verticalGradient(listOf(Color(0xFF1A3A5C), Color(0xFF2A1A4E), colors.screenBackground))
-            } else {
-                Brush.verticalGradient(listOf(Color(0xFF4A90D9), Color(0xFF7B5EA7), colors.screenBackground))
-            }
-
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(heroGradient)
+                    .background(colors.screenBackground)
                     .padding(horizontal = 24.dp)
                     .padding(top = 24.dp, bottom = 32.dp)
             ) {
                 Column {
-                    // 뒤로가기
-                    IconButton(onClick = onBack) {
+                    // 뒤로가기 — IconButton 기본 12dp 내부 패딩 보정해서 M과 좌측 정렬
+                    IconButton(
+                        onClick = onBack,
+                        modifier = Modifier.offset(x = (-12).dp)
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(Res.string.close),
-                            tint = Color.White
+                            tint = colors.textTitle
                         )
                     }
 
@@ -152,7 +153,7 @@ fun SubscriptionScreen(
                         text = "Memozy Pro",
                         fontSize = fontSettings.scaled(28),
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = colors.textTitle
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -160,7 +161,7 @@ fun SubscriptionScreen(
                     Text(
                         text = stringResource(Res.string.subscription_desc),
                         fontSize = fontSettings.scaled(15),
-                        color = Color.White.copy(alpha = 0.85f)
+                        color = colors.textSecondary
                     )
 
                     if (currentTier.isPro) {
@@ -169,10 +170,10 @@ fun SubscriptionScreen(
                             text = stringResource(Res.string.subscription_current_plan),
                             fontSize = fontSettings.scaled(13),
                             fontWeight = FontWeight.Bold,
-                            color = Color.White,
+                            color = colors.chipText,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(Color.White.copy(alpha = 0.2f))
+                                .background(colors.chipText.copy(alpha = 0.1f))
                                 .padding(horizontal = 10.dp, vertical = 4.dp)
                         )
                     }
@@ -185,21 +186,31 @@ fun SubscriptionScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(colors.cardBackground)
+                    .background(colors.screenBackground)
                     .border(1.dp, colors.cardBorder, RoundedCornerShape(16.dp))
                     .padding(20.dp)
             ) {
                 // 헤더
                 Row(modifier = Modifier.fillMaxWidth()) {
                     Spacer(modifier = Modifier.weight(1.4f))
-                    Text(
-                        text = "Free",
-                        fontSize = fontSettings.scaled(13),
-                        fontWeight = FontWeight.Bold,
-                        color = colors.textSecondary,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.weight(1f)
-                    )
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Free",
+                            fontSize = fontSettings.scaled(13),
+                            fontWeight = FontWeight.Bold,
+                            color = colors.textSecondary,
+                            textAlign = TextAlign.Center,
+                        )
+                        Text(
+                            text = "광고 시청 후 이용",
+                            fontSize = fontSettings.scaled(10),
+                            color = colors.textSecondary,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
                     Text(
                         text = "Pro",
                         fontSize = fontSettings.scaled(13),
@@ -217,9 +228,7 @@ fun SubscriptionScreen(
                 // 비교 항목
                 val comparisons = listOf(
                     Triple(stringResource(Res.string.subscription_feature_youtube), true, true),
-                    Triple(stringResource(Res.string.subscription_feature_web), false, true),
-                    Triple(stringResource(Res.string.subscription_feature_ocr), false, true),
-                    Triple(stringResource(Res.string.subscription_feature_more), false, true),
+                    Triple(stringResource(Res.string.subscription_feature_web), true, true),
                     Triple(stringResource(Res.string.subscription_feature_no_ads), false, true),
                 )
 
@@ -255,6 +264,22 @@ fun SubscriptionScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+
+            if (!isLoggedIn) {
+                Text(
+                    text = "로그인 없이는 구독이 어렵습니다",
+                    fontSize = fontSettings.scaled(13),
+                    color = colors.textSecondary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(colors.cardBorder.copy(alpha = 0.15f))
+                        .padding(horizontal = 16.dp, vertical = 10.dp)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
             // ── 구독 상품 카드 ──
             val monthly = subscriptionProducts.find { it.productId == BillingService.SUB_PRO_MONTHLY }
@@ -349,26 +374,16 @@ private fun SubscriptionCard(
 ) {
     val colors = LocalAppColors.current
     val fontSettings = LocalFontSettings.current
-    val isSystemDark = colors.screenBackground == Color(0xFF1C1C1E)
-
-    val cardGradient = if (isRecommended && !isCurrentPlan) {
-        if (isSystemDark) {
-            Brush.linearGradient(listOf(Color(0xFF1A3A5C), Color(0xFF2A1A4E)))
-        } else {
-            Brush.linearGradient(listOf(Color(0xFF4A90D9), Color(0xFF7B5EA7)))
-        }
-    } else null
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
             .clip(RoundedCornerShape(16.dp))
-            .then(
-                if (cardGradient != null) Modifier.background(cardGradient)
-                else Modifier
-                    .background(colors.cardBackground)
-                    .border(1.dp, colors.cardBorder, RoundedCornerShape(16.dp))
+            .background(colors.screenBackground)
+            .border(
+                width = if (isRecommended && !isCurrentPlan) 2.dp else 1.dp,
+                color = if (isRecommended && !isCurrentPlan) colors.chipText else colors.cardBorder,
+                shape = RoundedCornerShape(16.dp)
             )
             .clickable(enabled = !isCurrentPlan) { onClick() }
             .padding(20.dp)
@@ -384,7 +399,7 @@ private fun SubscriptionCard(
                         text = label,
                         fontSize = fontSettings.scaled(16),
                         fontWeight = FontWeight.Bold,
-                        color = if (cardGradient != null) Color.White else colors.textTitle
+                        color = colors.textTitle
                     )
                     if (badge != null) {
                         Spacer(modifier = Modifier.width(8.dp))
@@ -392,13 +407,10 @@ private fun SubscriptionCard(
                             text = badge,
                             fontSize = fontSettings.scaled(11),
                             fontWeight = FontWeight.Bold,
-                            color = if (cardGradient != null) Color.White else colors.chipText,
+                            color = colors.chipText,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(4.dp))
-                                .background(
-                                    if (cardGradient != null) Color.White.copy(alpha = 0.2f)
-                                    else colors.chipText.copy(alpha = 0.1f)
-                                )
+                                .background(colors.chipText.copy(alpha = 0.1f))
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
@@ -409,11 +421,7 @@ private fun SubscriptionCard(
                 text = price,
                 fontSize = fontSettings.scaled(18),
                 fontWeight = FontWeight.Bold,
-                color = when {
-                    isCurrentPlan -> colors.textSecondary
-                    cardGradient != null -> Color.White
-                    else -> colors.chipText
-                },
+                color = if (isCurrentPlan) colors.textSecondary else colors.chipText,
                 textAlign = TextAlign.End
             )
         }

@@ -200,7 +200,8 @@
 
     <!-- Auth -->
     <string name="section_account">계정</string>
-    <string name="sign_in_google">Google 계정 로그인</string>
+    <string name="sign_in_google">Google로 계속하기</string>
+    <string name="sign_in_apple">Apple로 계속하기</string>
     <string name="sign_out">로그아웃</string>
     <string name="sign_in_error">로그인에 실패했습니다</string>
     <string name="sign_out_confirm">로그아웃하시겠습니까?</string>

@@ -87,11 +87,13 @@ import me.pecos.memozy.feature.core.resource.generated.resources.section_other
 import me.pecos.memozy.feature.core.resource.generated.resources.section_theme
 import me.pecos.memozy.feature.core.resource.generated.resources.settings
 import me.pecos.memozy.feature.core.resource.generated.resources.sign_in_error
+import me.pecos.memozy.feature.core.resource.generated.resources.sign_in_apple
 import me.pecos.memozy.feature.core.resource.generated.resources.sign_in_google
 import me.pecos.memozy.feature.core.resource.generated.resources.sign_in_loading
 import me.pecos.memozy.feature.core.resource.generated.resources.sign_out
 import me.pecos.memozy.feature.core.resource.generated.resources.sign_out_confirm
 import me.pecos.memozy.feature.core.resource.generated.resources.subscription_current_plan
+import me.pecos.memozy.feature.core.resource.generated.resources.subscription_title
 import me.pecos.memozy.feature.core.resource.generated.resources.theme_dark
 import me.pecos.memozy.feature.core.resource.generated.resources.theme_light
 import me.pecos.memozy.feature.core.resource.generated.resources.theme_settings
@@ -119,6 +121,7 @@ import me.pecos.memozy.feature.core.viewmodel.settings.CloudBackupState
 import me.pecos.memozy.feature.core.viewmodel.settings.FontSizeLevel
 import me.pecos.memozy.feature.core.viewmodel.settings.LANGUAGES
 import me.pecos.memozy.feature.core.viewmodel.settings.ThemeMode
+import me.pecos.memozy.platform.credential.AppleSignInResult
 import me.pecos.memozy.platform.credential.CredentialService
 import me.pecos.memozy.platform.credential.GoogleSignInResult
 import me.pecos.memozy.platform.intent.AppInfo
@@ -638,34 +641,65 @@ fun SettingsScreen(
                         }
                     }
                     is AuthState.Unauthenticated -> {
-                        OutlinedButton(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            border = BorderStroke(1.dp, colors.cardBorder),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
-                            onClick = {
-                                scope.launch {
-                                    val result = credentialService.signInWithGoogle(
-                                        activity = activity,
-                                        serverClientId = GOOGLE_WEB_CLIENT_ID,
-                                    )
-                                    when (result) {
-                                        is GoogleSignInResult.Success ->
-                                            settingsViewModel.signInWithGoogle(result.idToken)
-                                        is GoogleSignInResult.Cancelled -> Unit
-                                        is GoogleSignInResult.Error -> {
-                                            println("SettingsAuth: Sign-in failed: ${result.message}")
-                                            toastPresenter.show(getString(Res.string.sign_in_error))
+                        Column {
+                            OutlinedButton(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp),
+                                border = BorderStroke(1.dp, colors.cardBorder),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
+                                onClick = {
+                                    scope.launch {
+                                        val result = credentialService.signInWithGoogle(
+                                            activity = activity,
+                                            serverClientId = GOOGLE_WEB_CLIENT_ID,
+                                        )
+                                        when (result) {
+                                            is GoogleSignInResult.Success ->
+                                                settingsViewModel.signInWithGoogle(result.idToken)
+                                            is GoogleSignInResult.Cancelled -> Unit
+                                            is GoogleSignInResult.Error -> {
+                                                println("SettingsAuth: Sign-in failed: ${result.message}")
+                                                toastPresenter.show(getString(Res.string.sign_in_error))
+                                            }
                                         }
                                     }
                                 }
+                            ) {
+                                Icon(painter = painterResource(Res.drawable.ic_google), contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(stringResource(Res.string.sign_in_google), fontSize = fontSettings.scaled(14))
                             }
-                        ) {
-                            Icon(painter = painterResource(Res.drawable.ic_google), contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(Res.string.sign_in_google), fontSize = fontSettings.scaled(14))
+
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            OutlinedButton(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp),
+                                border = BorderStroke(1.dp, colors.cardBorder),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
+                                onClick = {
+                                    scope.launch {
+                                        val result = credentialService.signInWithApple(activity = activity)
+                                        when (result) {
+                                            is AppleSignInResult.Success ->
+                                                settingsViewModel.signInWithApple(result.idToken, result.rawNonce)
+                                            is AppleSignInResult.Cancelled -> Unit
+                                            is AppleSignInResult.Error -> {
+                                                println("SettingsAuth: Apple sign-in failed: ${result.message}")
+                                                toastPresenter.show(getString(Res.string.sign_in_error))
+                                            }
+                                        }
+                                    }
+                                }
+                            ) {
+                                Text("\uF8FF", fontSize = fontSettings.scaled(16))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(stringResource(Res.string.sign_in_apple), fontSize = fontSettings.scaled(14))
+                            }
                         }
                     }
                     is AuthState.Authenticated -> {
@@ -702,7 +736,7 @@ fun SettingsScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 // ── Memozy Pro ──
                 val currentTier = LocalSubscriptionTier.current
@@ -715,7 +749,7 @@ fun SettingsScreen(
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
                 ) {
-                    Text("Memozy Pro", fontSize = fontSettings.scaled(14), fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(Res.string.subscription_title), fontSize = fontSettings.scaled(14), fontWeight = FontWeight.SemiBold)
                     if (currentTier.isPro) {
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(

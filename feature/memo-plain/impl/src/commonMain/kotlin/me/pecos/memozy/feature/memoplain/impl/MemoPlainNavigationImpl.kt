@@ -258,9 +258,17 @@ class MemoPlainNavigationImpl(
         }
 
         private fun buildWebPrompt(mode: SummaryMode, lang: String): String {
+            val style = when (mode) {
+                SummaryMode.SIMPLE -> SummaryStyle.SIMPLE
+                SummaryMode.DETAILED -> SummaryStyle.DETAILED
+            }
+            return buildWebPrompt(style, lang)
+        }
+
+        private fun buildWebPrompt(style: SummaryStyle, lang: String): String {
             val l = langInstruction(lang)
-            return when (mode) {
-                SummaryMode.SIMPLE -> """
+            return when (style) {
+                SummaryStyle.SIMPLE -> """
                     |이 웹페이지 내용을 ${l} 간결하게 요약해줘. 인사말이나 부가 설명 없이 아래 형식만 정확히 출력해:
                     |
                     |[한줄 요약]
@@ -272,7 +280,7 @@ class MemoPlainNavigationImpl(
                     |[핵심 내용]
                     |- 가장 중요한 내용 3~5개를 각 1줄로 정리
                 """.trimMargin()
-                SummaryMode.DETAILED -> """
+                SummaryStyle.DETAILED -> """
                     |이 웹페이지 내용을 ${l} 상세하게 요약해줘. 인사말이나 부가 설명 없이 아래 형식만 정확히 출력해:
                     |
                     |[한줄 요약]
@@ -293,6 +301,47 @@ class MemoPlainNavigationImpl(
                     |[핵심 인사이트]
                     |- 이 글에서 얻을 수 있는 주요 인사이트를 정리
                 """.trimMargin()
+                SummaryStyle.NOTE -> """
+                    |다음 웹페이지 내용을 ${l} 학습 노트 형태로 정리해줘. 인사말이나 부가 설명 없이 바로 시작해:
+                    |
+                    |주제별로 묶어서 개조식(- 기호)으로 간결하게 작성해.
+                    |굵게(**) 표시는 꼭 필요한 핵심 용어에만 최소한으로 사용해.
+                    |한 항목당 1줄, 복습할 때 빠르게 훑을 수 있는 형태로.
+                """.trimMargin()
+                SummaryStyle.LANGUAGE -> {
+                    val userLang = when (lang) {
+                        "en" -> "English"
+                        "ja" -> "日本語"
+                        else -> "한국어"
+                    }
+                    """
+                    |다음 웹페이지 내용을 언어 학습용으로 정리해줘.
+                    |사용자의 모국어는 ${userLang}이고, 페이지에 나오는 외국어를 학습하려는 목적이야.
+                    |절대 #, ##, **, *** 같은 마크다운 서식을 사용하지 마. 이모지와 일반 텍스트만 써.
+                    |인사말이나 부가 설명 없이 바로 아래 형식대로만 출력해:
+                    |
+                    |[핵심 표현 (10~15개)]
+                    |
+                    |페이지에서 나온 외국어 표현을 원문 그대로 적고, 바로 다음 줄에 ${userLang} 뜻을 자연스럽게 적어.
+                    |단어 단위 직역이 아니라 ${userLang} 화자가 같은 상황에서 실제로 쓸 표현으로.
+                    |표현과 표현 사이에는 빈 줄을 넣어.
+                    |
+                    |외국어 원문
+                    |${userLang} 뜻 (자연스러운 의역)
+                    |
+                    |[주요 문장 (5~10개)]
+                    |
+                    |페이지에서 나온 핵심 문장을 원문 그대로 적고, 다음 줄에 ${userLang} 해석을 적어.
+                    |각 문장 앞에 * 를 붙여. 문장과 문장 사이에는 빈 줄을 넣어.
+                    |
+                    |* 외국어 원문 문장
+                    |${userLang} 해석 (자연스러운 번역)
+                    |
+                    |[학습 포인트]
+                    |
+                    |문법, 뉘앙스, 직역과 의역의 차이, 사용 상황 등 학습에 도움되는 내용을 ${userLang}로 2~4줄 정리.
+                """.trimMargin()
+                }
             }
         }
     }
@@ -380,7 +429,8 @@ class MemoPlainNavigationImpl(
             }
             val dailyLimit = subscriptionTier.dailyAiLimit + adBonusCount
             val canUseAiQuota = dailyUsageCount < dailyLimit
-            val canUseAi = isLoggedIn && canUseAiQuota
+            // TEST: AI 한도 일시 해제 — 출시 전 원복 필요
+            val canUseAi = true // isLoggedIn && canUseAiQuota
             val canWatchAd = !subscriptionTier.isPro && dailyAdViewCount < MAX_DAILY_AD_VIEWS
             val remainingAdViews = MAX_DAILY_AD_VIEWS - dailyAdViewCount
             var showLimitBottomSheet by remember { mutableStateOf(false) }
@@ -714,6 +764,43 @@ class MemoPlainNavigationImpl(
                 webSummaryResult = webSummaryResult,
                 webSummaryError = webSummaryError,
                 webPageTitle = webPageTitle,
+                onWebSummaryStyleSelected = { style, url ->
+                    if (!canUseAi) {
+                        notifyAiBlocked()
+                        return@MemoScreen
+                    }
+                    currentSummarizeJob?.cancel()
+                    currentSummarizeJob = scope.launch {
+                        isWebSummarizing = true
+                        webSummaryError = null
+                        try {
+                            val content = webScrapeService.scrapeWebPage(url)
+                            if (content == null) {
+                                webSummaryError = "웹페이지를 불러올 수 없어요."
+                            } else {
+                                webPageTitle = content.title
+                                val webPrompt = buildWebPrompt(style, languageCode)
+                                val summary = retryOn503 {
+                                    aiApiService.generateContent(
+                                        "$webPrompt\n\n아래는 웹페이지 내용입니다:\n\n${content.text}"
+                                    )
+                                }
+                                webSummaryResult = summary
+                                aiUsageDao.insert(AiUsage(feature = FEATURE_WEB_SUMMARY))
+                            }
+                        } catch (e: Exception) {
+                            webSummaryError = when {
+                                e.message?.contains("503") == true || e.message?.contains("UNAVAILABLE") == true ->
+                                    "AI 서버가 일시적으로 바빠요. 잠시 후 다시 시도해주세요."
+                                e.message?.contains("timeout") == true || e.message?.contains("Timeout") == true ->
+                                    "응답 시간이 초과됐어요. 더 짧은 페이지를 시도해주세요."
+                                else -> "DEBUG: ${e::class.simpleName}: ${e.message}"
+                            }
+                        } finally {
+                            isWebSummarizing = false
+                        }
+                    }
+                },
                 onSummaryStyleSelected = { style, url ->
                     activeSummaryStyle = style
                     // 바텀시트에서 양식 선택 시 즉시 요약 실행

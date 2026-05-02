@@ -249,6 +249,7 @@ fun MemoScreen(
     webSummaryError: String? = null,
     webPageTitle: String? = null,
     onSummaryStyleSelected: ((SummaryStyle, String) -> Unit)? = null,
+    onWebSummaryStyleSelected: ((SummaryStyle, String) -> Unit)? = null,
     // Memozy AI — (actionName, currentTitle, currentBody)
     onAiPresetAction: ((String, String, String) -> Unit)? = null,
     onAiCustomSend: ((String, String, String) -> Unit)? = null,
@@ -307,6 +308,7 @@ fun MemoScreen(
     // 요약 결과 표시 상태
     var showSummary by remember { mutableStateOf(false) }
     var showSummaryStyleSheet by remember { mutableStateOf(false) }
+    var showWebSummaryStyleSheet by remember { mutableStateOf(false) }
     var selectedSummaryStyle by remember { mutableStateOf(SummaryStyle.SIMPLE) }
 
     // 요약 콘텐츠 접기/펼치기 상태 (summaryContent 별도 컬럼에서 로드)
@@ -580,6 +582,12 @@ fun MemoScreen(
                 // 제목 — 개행 시 내용으로 포커스 이동
                 val bodyFocusRequester = remember { FocusRequester() }
 
+                // 메모 진입 시 본문에 자동 포커스 + 키보드 표시 (노션 스타일) — 신규/편집 모두
+                LaunchedEffect(Unit) {
+                    kotlinx.coroutines.delay(100) // 컴포지션 안정화 대기
+                    try { bodyFocusRequester.requestFocus() } catch (_: Throwable) {}
+                }
+
                 BasicTextField(
                     value = nameText,
                     onValueChange = { newValue ->
@@ -745,7 +753,20 @@ fun MemoScreen(
                         onAskAi = if (onAiCustomSend != null) { {
                             showAiCustomInput = true
                         } } else null,
+                        onStyleSelect = { showWebSummaryStyleSheet = true },
                         colors = colors
+                    )
+                }
+
+                // 웹 요약 양식 선택 바텀시트
+                if (showWebSummaryStyleSheet) {
+                    SummaryStyleBottomSheet(
+                        onSelect = { style ->
+                            val url = savedWebUrl ?: return@SummaryStyleBottomSheet
+                            currentSummaryMode = style.summaryMode
+                            onWebSummaryStyleSelected?.invoke(style, url)
+                        },
+                        onDismiss = { showWebSummaryStyleSheet = false }
                     )
                 }
 
@@ -757,20 +778,20 @@ fun MemoScreen(
                     state = richTextState,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 150.dp)
+                        .heightIn(min = 200.dp)
                         .focusRequester(bodyFocusRequester),
                     textStyle = TextStyle(
                         fontSize = fontSettings.bodySize,
-                        lineHeight = (fontSettings.bodySize.value * 1.8f).sp,
+                        lineHeight = (fontSettings.bodySize.value * 1.5f).sp,
                         color = colors.textBody,
                         fontFamily = fontSettings.fontFamily,
                         lineHeightStyle = LineHeightStyle(
-                            alignment = LineHeightStyle.Alignment.Center,
+                            alignment = LineHeightStyle.Alignment.Top,
                             trim = LineHeightStyle.Trim.None
                         )
                     ),
                     decorationBox = { innerTextField ->
-                        Box(modifier = Modifier.heightIn(min = 150.dp)) {
+                        Box {
                             if (richTextState.annotatedString.text.isEmpty()) {
                                 Text(
                                     text = stringResource(Res.string.memo_content_placeholder),
@@ -782,6 +803,17 @@ fun MemoScreen(
                             innerTextField()
                         }
                     }
+                )
+
+                // 본문 아래 빈 공간도 탭하면 본문에 포커스
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 300.dp)
+                        .clickable(
+                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                            indication = null
+                        ) { bodyFocusRequester.requestFocus() }
                 )
 
                 // Memozy AI 응답 중 표시 (본문 내 인라인, X 없음)

@@ -40,6 +40,7 @@ import me.pecos.memozy.feature.core.resource.generated.resources.summary_card_we
 import me.pecos.memozy.feature.core.resource.generated.resources.summary_collapse
 import me.pecos.memozy.feature.core.resource.generated.resources.summary_copy
 import me.pecos.memozy.feature.core.resource.generated.resources.summary_expand
+import me.pecos.memozy.feature.core.resource.generated.resources.summarize
 import me.pecos.memozy.feature.core.resource.generated.resources.summary_mode_detailed
 import me.pecos.memozy.feature.core.resource.generated.resources.summary_mode_simple
 import me.pecos.memozy.feature.core.resource.generated.resources.web_summarizing
@@ -67,6 +68,7 @@ fun WebSummaryInlineCard(
     onResummarize: (SummaryMode) -> Unit,
     onDeleteSummary: (() -> Unit)? = null,
     onAskAi: (() -> Unit)? = null,
+    onStyleSelect: (() -> Unit)? = null,
     colors: AppColors
 ) {
     val fontSettings = LocalFontSettings.current
@@ -147,21 +149,14 @@ fun WebSummaryInlineCard(
                     Spacer(modifier = Modifier.width(3.dp))
                     Text(stringResource(Res.string.memo_copy), fontSize = fontSettings.scaled(10), color = colors.chipText, fontWeight = FontWeight.Medium)
                 }
-                if (onSummarize != null && summaryText == null) {
+                if (onStyleSelect != null && summaryText == null) {
                     Row(
-                        modifier = Modifier.weight(1f).clip(RoundedCornerShape(6.dp)).background(Color(0xFF2196F3).copy(alpha = 0.1f))
-                            .clickable { onSummarize(webUrl, SummaryMode.SIMPLE) }
+                        modifier = Modifier.weight(2f).clip(RoundedCornerShape(6.dp)).background(Color(0xFF2196F3).copy(alpha = 0.1f))
+                            .clickable { onStyleSelect() }
                             .padding(vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
-                    ) { Text(stringResource(Res.string.summary_mode_simple), fontSize = fontSettings.scaled(10), color = Color(0xFF2196F3), fontWeight = FontWeight.Medium) }
-                    Row(
-                        modifier = Modifier.weight(1f).clip(RoundedCornerShape(6.dp)).background(Color(0xFFFF9800).copy(alpha = 0.1f))
-                            .clickable { onSummarize(webUrl, SummaryMode.DETAILED) }
-                            .padding(vertical = 5.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) { Text(stringResource(Res.string.summary_mode_detailed), fontSize = fontSettings.scaled(10), color = Color(0xFFFF9800), fontWeight = FontWeight.Medium) }
+                    ) { Text(stringResource(Res.string.summarize), fontSize = fontSettings.scaled(10), color = Color(0xFF2196F3), fontWeight = FontWeight.Medium) }
                 }
             }
 
