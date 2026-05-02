@@ -90,7 +90,8 @@ class MemoPlainNavigationImpl(
     private val youtubeSummaryDao: YoutubeSummaryDao,
     private val captionService: YouTubeCaptionService,
     private val aiUsageDao: AiUsageDao,
-    private val webScrapeService: me.pecos.memozy.data.datasource.remote.ai.WebScrapeService
+    private val webScrapeService: me.pecos.memozy.data.datasource.remote.ai.WebScrapeService,
+    private val analyticsService: me.pecos.memozy.platform.analytics.AnalyticsService,
 ) : MemoPlainNavigation {
 
     // 화면 dispose 후에도 살아있어야 하는 저장 작업용 (싱글톤 라이프타임)
@@ -436,6 +437,9 @@ class MemoPlainNavigationImpl(
             var showLimitBottomSheet by remember { mutableStateOf(false) }
             val notifyAiBlocked: () -> Unit = {
                 if (!isLoggedIn) showLoginPrompt = true else showLimitBottomSheet = true
+                analyticsService.logEvent(
+                    me.pecos.memozy.platform.analytics.AnalyticsEvents.AI_LIMIT_REACHED,
+                )
             }
 
             // 이미지 OCR 처리
@@ -769,6 +773,10 @@ class MemoPlainNavigationImpl(
                         notifyAiBlocked()
                         return@MemoScreen
                     }
+                    analyticsService.logEvent(
+                        me.pecos.memozy.platform.analytics.AnalyticsEvents.WEB_SUMMARY_REQUESTED,
+                        mapOf(me.pecos.memozy.platform.analytics.AnalyticsParams.SUMMARY_STYLE to style.name),
+                    )
                     currentSummarizeJob?.cancel()
                     currentSummarizeJob = scope.launch {
                         isWebSummarizing = true
@@ -803,6 +811,10 @@ class MemoPlainNavigationImpl(
                 },
                 onSummaryStyleSelected = { style, url ->
                     activeSummaryStyle = style
+                    analyticsService.logEvent(
+                        me.pecos.memozy.platform.analytics.AnalyticsEvents.YOUTUBE_SUMMARY_REQUESTED,
+                        mapOf(me.pecos.memozy.platform.analytics.AnalyticsParams.SUMMARY_STYLE to style.name),
+                    )
                     // 바텀시트에서 양식 선택 시 즉시 요약 실행
                     currentSummarizeJob?.cancel()
                     currentSummarizeJob = scope.launch {
@@ -950,6 +962,9 @@ class MemoPlainNavigationImpl(
                 onDelete = if (memoId > 0) { id ->
                     scope.launch {
                         repository.deleteMemo(id)
+                        analyticsService.logEvent(
+                            me.pecos.memozy.platform.analytics.AnalyticsEvents.MEMO_DELETED,
+                        )
                         onNavigateToHome()
                     }
                 } else null,

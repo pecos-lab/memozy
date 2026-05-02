@@ -27,6 +27,7 @@ val viewModelModule = module {
             memoDao = get(),
             authRepository = get(),
             backupRepository = get(),
+            analyticsService = get(),
         )
     }
 

@@ -36,6 +36,7 @@ class SettingsViewModel(
     private val memoDao: MemoDao,
     private val authRepository: AuthRepository,
     private val backupRepository: BackupRepository,
+    private val analyticsService: me.pecos.memozy.platform.analytics.AnalyticsService,
 ) : ViewModel() {
 
     private val json = Json {
@@ -114,19 +115,41 @@ class SettingsViewModel(
 
     fun signInWithGoogle(idToken: String) {
         viewModelScope.launch {
-            authRepository.signInWithGoogle(idToken)
+            val result = authRepository.signInWithGoogle(idToken)
+            logSignInResult(result, provider = "google")
         }
     }
 
     fun signInWithApple(idToken: String, rawNonce: String) {
         viewModelScope.launch {
-            authRepository.signInWithApple(idToken, rawNonce)
+            val result = authRepository.signInWithApple(idToken, rawNonce)
+            logSignInResult(result, provider = "apple")
         }
     }
 
     fun signOut() {
         viewModelScope.launch {
             authRepository.signOut()
+            analyticsService.setUserId(null)
+            analyticsService.logEvent(me.pecos.memozy.platform.analytics.AnalyticsEvents.LOGOUT)
+        }
+    }
+
+    private fun logSignInResult(
+        result: Result<me.pecos.memozy.data.datasource.remote.auth.AuthUser>,
+        provider: String,
+    ) {
+        result.onSuccess { user ->
+            analyticsService.setUserId(user.id)
+            analyticsService.logEvent(
+                me.pecos.memozy.platform.analytics.AnalyticsEvents.LOGIN_SUCCEEDED,
+                mapOf(me.pecos.memozy.platform.analytics.AnalyticsParams.PROVIDER to provider),
+            )
+        }.onFailure {
+            analyticsService.logEvent(
+                me.pecos.memozy.platform.analytics.AnalyticsEvents.LOGIN_FAILED,
+                mapOf(me.pecos.memozy.platform.analytics.AnalyticsParams.PROVIDER to provider),
+            )
         }
     }
 

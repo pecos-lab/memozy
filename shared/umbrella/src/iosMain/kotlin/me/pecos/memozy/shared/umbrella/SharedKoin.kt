@@ -192,6 +192,7 @@ val sharedModule: Module = module {
             memoDao = get(),
             authRepository = get(),
             backupRepository = get(),
+            analyticsService = get(),
         )
     }
 }
