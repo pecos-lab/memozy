@@ -624,6 +624,27 @@ class MemoPlainNavigationImpl(
                 audioRecorder = null
                 isRecording = false
 
+                // Live STT 가 텍스트를 잘 받아왔으면 Gemini 호출 스킵 — 본문은 이미 채워져 있음
+                val liveText = liveTranscriptionService.confirmedText.value
+                if (liveText.isNotBlank()) {
+                    // 오디오 파일이 있으면 영구 저장 (audio playback 용), 없어도 그냥 진행
+                    if (audioFileStore.exists(audioCachePath) && audioFileStore.length(audioCachePath) >= 1024) {
+                        scope.launch {
+                            val nowLocal = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+                            fun Int.pad2(): String = toString().padStart(2, '0')
+                            val yy = (nowLocal.year % 100).pad2()
+                            val stamp = "$yy.${nowLocal.monthNumber.pad2()}.${nowLocal.dayOfMonth.pad2()} ${nowLocal.hour.pad2()}:${nowLocal.minute.pad2()}"
+                            val safeFileName = "$stamp 녹음".replace(":", "-").replace("/", "-")
+                            val permanentPath = audioFileStore.permanentPath(safeFileName)
+                            audioFileStore.copy(audioCachePath, permanentPath)
+                            audioFileStore.delete(audioCachePath)
+                            savedAudioPath = permanentPath
+                        }
+                    }
+                    scope.launch { aiUsageDao.insert(AiUsage(feature = FEATURE_TRANSCRIPTION)) }
+                    return
+                }
+
                 if (!audioFileStore.exists(audioCachePath) || audioFileStore.length(audioCachePath) < 1024) {
                     transcriptionError = "녹음이 너무 짧아요. 다시 시도해주세요."
                     audioFileStore.delete(audioCachePath)

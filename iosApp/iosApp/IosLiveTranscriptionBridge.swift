@@ -16,6 +16,7 @@ final class IosLiveTranscriptionBridge: LiveTranscriptionBridge {
     private var sessionConfirmedPrefix: String = ""
 
     func start(languageCode: String) {
+        NSLog("[LiveSTT] start lang=\(languageCode)")
         self.languageCode = languageCode
         self.stillListening = true
         self.sessionConfirmedPrefix = ""
@@ -24,11 +25,18 @@ final class IosLiveTranscriptionBridge: LiveTranscriptionBridge {
         SFSpeechRecognizer.requestAuthorization { [weak self] status in
             guard let self = self else { return }
             DispatchQueue.main.async {
+                NSLog("[LiveSTT] auth status raw=\(status.rawValue)")
                 switch status {
                 case .authorized:
+                    NSLog("[LiveSTT] authorized — beginning session")
                     self.beginSession()
-                case .denied, .restricted, .notDetermined:
-                    LiveTranscriptionRegistrar.shared.onError(message: "Speech permission not granted")
+                case .denied:
+                    NSLog("[LiveSTT] DENIED")
+                    LiveTranscriptionRegistrar.shared.onError(message: "Speech permission denied")
+                case .restricted:
+                    LiveTranscriptionRegistrar.shared.onError(message: "Speech recognition restricted")
+                case .notDetermined:
+                    LiveTranscriptionRegistrar.shared.onError(message: "Speech permission not determined")
                 @unknown default:
                     LiveTranscriptionRegistrar.shared.onError(message: "Unknown permission status")
                 }
@@ -42,23 +50,28 @@ final class IosLiveTranscriptionBridge: LiveTranscriptionBridge {
     }
 
     private func beginSession() {
+        NSLog("[LiveSTT] beginSession()")
         let locale = mapLocale(languageCode)
         guard let rec = SFSpeechRecognizer(locale: locale) else {
+            NSLog("[LiveSTT] recognizer init nil for \(locale.identifier)")
             LiveTranscriptionRegistrar.shared.onError(message: "Recognizer not available for \(locale.identifier)")
             return
         }
         guard rec.isAvailable else {
+            NSLog("[LiveSTT] recognizer.isAvailable = false")
             LiveTranscriptionRegistrar.shared.onError(message: "Recognizer temporarily unavailable")
             return
         }
         self.recognizer = rec
 
-        // AVAudioSession 설정
+        // AVAudioSession 설정 — 단순화 (default mode, 옵션 없음). AVAudioRecorder 와 호환되게.
         let session = AVAudioSession.sharedInstance()
         do {
-            try session.setCategory(.playAndRecord, mode: .measurement, options: .duckOthers)
+            try session.setCategory(.playAndRecord, mode: .default, options: [.allowBluetooth, .defaultToSpeaker])
             try session.setActive(true, options: .notifyOthersOnDeactivation)
+            NSLog("[LiveSTT] session set OK")
         } catch {
+            NSLog("[LiveSTT] session error: \(error.localizedDescription)")
             LiveTranscriptionRegistrar.shared.onError(message: "Audio session: \(error.localizedDescription)")
             return
         }
@@ -82,7 +95,9 @@ final class IosLiveTranscriptionBridge: LiveTranscriptionBridge {
         audioEngine.prepare()
         do {
             try audioEngine.start()
+            NSLog("[LiveSTT] audio engine started")
         } catch {
+            NSLog("[LiveSTT] engine start error: \(error.localizedDescription)")
             LiveTranscriptionRegistrar.shared.onError(message: "Audio engine: \(error.localizedDescription)")
             return
         }
@@ -92,6 +107,7 @@ final class IosLiveTranscriptionBridge: LiveTranscriptionBridge {
             guard let self = self else { return }
             if let result = result {
                 let text = result.bestTranscription.formattedString
+                NSLog("[LiveSTT] result text='\(text)' isFinal=\(result.isFinal)")
                 if result.isFinal {
                     // 한 세션 종료 — 누적 confirmed 로 이관
                     if !text.isEmpty {
