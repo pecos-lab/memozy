@@ -115,6 +115,7 @@ kotlin {
             implementation(projects.data.backup.api)
             implementation(projects.platform.billing.api)
             implementation(projects.platform.ads.api)
+            implementation(projects.platform.analytics.api)
             implementation(projects.platform.credential.api)
             implementation(projects.platform.intent.api)
             implementation(libs.haze)

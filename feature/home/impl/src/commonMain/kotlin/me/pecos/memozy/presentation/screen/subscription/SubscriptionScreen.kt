@@ -85,7 +85,22 @@ fun SubscriptionScreen(
     val fontSettings = LocalFontSettings.current
     val activity = LocalActivity.current
     val urlLauncher: UrlLauncher = koinInject()
+    val analyticsService: me.pecos.memozy.platform.analytics.AnalyticsService = koinInject()
     val isSystemDark = colors.screenBackground == Color(0xFF1C1C1E)
+
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        analyticsService.logEvent(
+            me.pecos.memozy.platform.analytics.AnalyticsEvents.SUBSCRIPTION_VIEWED,
+        )
+    }
+
+    androidx.compose.runtime.LaunchedEffect(purchaseState) {
+        if (purchaseState is PurchaseState.Success) {
+            analyticsService.logEvent(
+                me.pecos.memozy.platform.analytics.AnalyticsEvents.SUBSCRIPTION_PURCHASED,
+            )
+        }
+    }
 
     if (purchaseState is PurchaseState.Success) {
         AppPopup(

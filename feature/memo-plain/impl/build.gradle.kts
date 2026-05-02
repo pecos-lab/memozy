@@ -25,6 +25,7 @@ kotlin {
             implementation(projects.datasource.remote.ai.api)
             implementation(projects.platform.media.api)
             implementation(projects.platform.intent.api)
+            implementation(projects.platform.analytics.api)
             implementation(libs.haze)
             implementation(libs.koin.core)
             implementation(libs.koin.compose)

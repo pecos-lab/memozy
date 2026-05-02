@@ -13,6 +13,7 @@ val memoPlainModule = module {
             captionService = get(),
             aiUsageDao = get(),
             webScrapeService = get(),
+            analyticsService = get(),
         )
     }
 }
