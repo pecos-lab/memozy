@@ -629,14 +629,25 @@ fun MemoScreen(
                     }
                 )
 
+                // 녹음 라이브 영역 교체용 — Live STT 가 본문에 채운 영역. Gemini 결과 도착 시 이 anchor 뒤를 교체.
+                var pendingPolishAnchor by remember { mutableStateOf<String?>(null) }
+
                 // 녹음 결과를 본문에 삽입 + 제목 자동 설정
                 LaunchedEffect(transcriptionResult) {
                     if (transcriptionResult != null) {
-                        val current = richTextState.annotatedString.text
-                        val newText = if (current.isBlank()) transcriptionResult
-                        else "$current\n\n$transcriptionResult"
+                        val anchor = pendingPolishAnchor
+                        val newText = if (anchor != null) {
+                            // 라이브 영역 교체 (anchor 뒤를 Gemini 결과로)
+                            val sep = if (anchor.isEmpty() || anchor.endsWith(" ") || anchor.endsWith("\n")) "" else "\n\n"
+                            anchor + sep + transcriptionResult
+                        } else {
+                            // Live STT 안 쓴 경로 (구 흐름) — 단순 append
+                            val current = richTextState.annotatedString.text
+                            if (current.isBlank()) transcriptionResult else "$current\n\n$transcriptionResult"
+                        }
                         richTextState.setHtml(newText.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>"))
                         bodyText = newText
+                        pendingPolishAnchor = null
             
                         // 제목이 비어있으면 자동 설정
                         if (nameText.isBlank()) {
@@ -887,15 +898,17 @@ fun MemoScreen(
                 val liveConfirmed by liveService.confirmedText.collectAsState()
                 // 녹음 시작 시점의 본문 — 이 뒤에 confirmed + partial 이 실시간으로 추가됨
                 var bodyAnchor by remember { mutableStateOf<String?>(null) }
+                // pendingPolishAnchor 는 위쪽 (transcriptionResult LaunchedEffect 직전) 에서 선언됨 — 같은 변수 사용
 
                 LaunchedEffect(isRecording) {
                     if (isRecording) {
-                        bodyAnchor = richTextState.annotatedString.text
+                        val current = richTextState.annotatedString.text
+                        bodyAnchor = current
+                        pendingPolishAnchor = current
                     } else if (bodyAnchor != null) {
                         // 녹음 종료 — confirmed + partial 합쳐서 최종 텍스트로 (isFinal 안 떠도 partial 보존)
                         val anchor = bodyAnchor!!
                         val sep = if (anchor.isEmpty() || anchor.endsWith(" ") || anchor.endsWith("\n")) "" else " "
-                        // partial 이 confirmed 와 중복되면 (같은 세션 텍스트가 양쪽에 있을 때) confirmed 만 사용
                         val keepPartial = liveConfirmed.isEmpty() || !liveConfirmed.contains(livePartial)
                         val live = buildString {
                             if (liveConfirmed.isNotEmpty()) append(liveConfirmed)
@@ -909,6 +922,7 @@ fun MemoScreen(
                             richTextState.setText(finalText)
                         }
                         bodyAnchor = null
+                        // pendingPolishAnchor 는 Gemini 결과 도착 / timeout 까지 유지
                     }
                 }
 

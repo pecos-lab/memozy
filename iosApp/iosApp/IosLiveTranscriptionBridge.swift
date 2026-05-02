@@ -10,14 +10,17 @@ final class IosLiveTranscriptionBridge: LiveTranscriptionBridge {
     private let audioEngine = AVAudioEngine()
     private var request: SFSpeechAudioBufferRecognitionRequest?
     private var task: SFSpeechRecognitionTask?
+    private var audioFile: AVAudioFile?  // Gemini polish 용 WAV 파일
 
     private var stillListening = false
     private var languageCode: String = "ko"
     private var sessionConfirmedPrefix: String = ""
+    private var outputPath: String?
 
-    func start(languageCode: String) {
-        NSLog("[LiveSTT] start lang=\(languageCode)")
+    func start(languageCode: String, outputPath: String?) {
+        NSLog("[LiveSTT] start lang=\(languageCode) outputPath=\(outputPath ?? "nil")")
         self.languageCode = languageCode
+        self.outputPath = outputPath
         self.stillListening = true
         self.sessionConfirmedPrefix = ""
 
@@ -84,12 +87,29 @@ final class IosLiveTranscriptionBridge: LiveTranscriptionBridge {
         }
         self.request = req
 
-        // 오디오 엔진 — 인식 + 입력 노드 tap 설치
+        // 오디오 엔진 — 인식 + (옵션) WAV 파일 동시 캡처
         let inputNode = audioEngine.inputNode
         let recordingFormat = inputNode.outputFormat(forBus: 0)
         inputNode.removeTap(onBus: 0) // 안전: 기존 tap 정리
+
+        // Gemini polish 용 WAV 파일 셋업 (outputPath 있을 때만)
+        if let path = outputPath {
+            do {
+                let url = URL(fileURLWithPath: path)
+                self.audioFile = try AVAudioFile(forWriting: url, settings: recordingFormat.settings)
+                NSLog("[LiveSTT] audioFile opened at \(path)")
+            } catch {
+                NSLog("[LiveSTT] audioFile open failed: \(error.localizedDescription) — Gemini polish 비활성")
+                self.audioFile = nil
+            }
+        }
+
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self] buffer, _ in
             self?.request?.append(buffer)
+            // 동시에 파일 쓰기 — 인식과 똑같은 buffer 를 그대로 저장
+            if let file = self?.audioFile {
+                try? file.write(from: buffer)
+            }
         }
 
         audioEngine.prepare()
@@ -152,8 +172,11 @@ final class IosLiveTranscriptionBridge: LiveTranscriptionBridge {
         recognizer = nil
 
         if final {
+            // 파일 close (deinit 으로 flush)
+            audioFile = nil
             try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
             LiveTranscriptionRegistrar.shared.onIdle()
+            NSLog("[LiveSTT] session ended (final), audioFile closed")
         }
     }
 

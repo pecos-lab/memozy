@@ -8,7 +8,10 @@ import kotlinx.coroutines.flow.StateFlow
  * 60초 세션 한도는 Swift 측에서 자동 재시작으로 처리.
  */
 interface LiveTranscriptionBridge {
-    fun start(languageCode: String)
+    /**
+     * @param outputPath null 이면 인식만, 경로 주어지면 AVAudioEngine input tap 으로 WAV 도 동시 캡처
+     */
+    fun start(languageCode: String, outputPath: String?)
     fun stop()
 }
 
@@ -54,14 +57,14 @@ class IosLiveTranscriptionService : LiveTranscriptionService {
     override val confirmedText: StateFlow<String> = IosLiveTranscriptionState._confirmed
     override val state: StateFlow<TranscriptionState> = IosLiveTranscriptionState._state
 
-    override suspend fun start(languageCode: String) {
+    override suspend fun start(languageCode: String, outputPath: String?) {
         IosLiveTranscriptionState._partial.value = ""
         IosLiveTranscriptionState._confirmed.value = ""
         val b = LiveTranscriptionRegistrar.bridge
         if (b == null) {
             IosLiveTranscriptionState._state.value = TranscriptionState.Error("Bridge not registered")
         } else {
-            b.start(languageCode)
+            b.start(languageCode, outputPath)
         }
     }
 

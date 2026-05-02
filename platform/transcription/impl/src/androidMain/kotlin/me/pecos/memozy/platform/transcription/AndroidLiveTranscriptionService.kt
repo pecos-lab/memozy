@@ -31,7 +31,8 @@ internal class AndroidLiveTranscriptionService(
     override val confirmedText: StateFlow<String> = _confirmed
     override val state: StateFlow<TranscriptionState> = _state
 
-    override suspend fun start(languageCode: String) {
+    override suspend fun start(languageCode: String, outputPath: String?) {
+        // Android 는 별도 MediaRecorder (RecordingService) 가 파일 캡처 담당. outputPath 무시.
         this.languageCode = languageCode
         _partial.value = ""
         _confirmed.value = ""

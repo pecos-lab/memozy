@@ -17,7 +17,12 @@ interface LiveTranscriptionService {
     val confirmedText: StateFlow<String>
     val state: StateFlow<TranscriptionState>
 
-    suspend fun start(languageCode: String = "ko")
+    /**
+     * @param languageCode 인식 언어 (ko/en/ja)
+     * @param outputPath 인식과 동시에 audio 를 WAV 로 캡처할 경로 (null 이면 인식만)
+     *                   iOS 에서는 AVAudioEngine tap 으로 캡처. Android 는 무시 (별도 MediaRecorder 사용).
+     */
+    suspend fun start(languageCode: String = "ko", outputPath: String? = null)
     fun stop()
 }
 
