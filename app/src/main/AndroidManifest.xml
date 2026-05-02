@@ -5,6 +5,10 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- 녹음 Foreground Service (#206) — 화면 꺼져도 녹음 유지 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 
     <application
@@ -22,6 +26,12 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="${admobAppId}" />
+
+        <!-- 녹음 Foreground Service — 화면 off / 백그라운드에서도 녹음 유지 (#206) -->
+        <service
+            android:name="me.pecos.memozy.platform.media.RecordingService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
 
         <receiver
             android:name=".widget.MemoWidgetReceiver"
