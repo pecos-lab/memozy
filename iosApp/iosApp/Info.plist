@@ -22,6 +22,16 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<!-- privacy usage descriptions: iOS 는 키 누락 시 즉시 크래시.
+	     녹음 PR 진행 중 마이크 누락으로 첫 크래시 발생 → 인접 권한들도 함께 추가 (사진 / 카메라는 메모 이미지 첨부 흐름 대비). -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>음성 메모를 녹음하기 위해 마이크에 접근합니다.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>음성 메모를 텍스트로 변환하기 위해 음성 인식을 사용합니다.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>이미지를 메모에 첨부하거나 요약하기 위해 사진 라이브러리에 접근합니다.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>사진을 촬영하여 메모에 첨부하거나 요약하기 위해 카메라에 접근합니다.</string>
 	<key>GIDClientID</key>
 	<string>470786671712-ein20r5ogai99v056tqkforadbvl56fn.apps.googleusercontent.com</string>
 	<key>CFBundleURLTypes</key>

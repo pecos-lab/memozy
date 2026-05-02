@@ -38,35 +38,22 @@ private class AndroidAudioPlayer(sourcePath: String) : AudioPlayer {
     }
 }
 
+/**
+ * MediaRecorder 를 직접 들고있던 기존 구조 → RecordingService 위임으로 전환.
+ * 화면 꺼짐/백그라운드에서도 녹음 유지. start/stop 은 Service Intent 로 전달.
+ */
 private class AndroidAudioRecorder(private val context: Context) : AudioRecorder {
-    private var recorder: MediaRecorder? = null
-
     override fun start(outputPath: String) {
-        val rec = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            MediaRecorder(context)
-        } else {
-            @Suppress("DEPRECATION")
-            MediaRecorder()
-        }
-        rec.apply {
-            setAudioSource(MediaRecorder.AudioSource.MIC)
-            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            setAudioSamplingRate(16000)
-            setAudioEncodingBitRate(64000)
-            setOutputFile(outputPath)
-            prepare()
-            start()
-        }
-        recorder = rec
+        RecordingService.start(context, outputPath)
     }
 
     override fun stop() {
-        recorder?.stop()
+        RecordingService.stop(context)
     }
 
     override fun release() {
-        recorder?.release()
-        recorder = null
+        // 안전망: 호출자가 stop() 없이 release() 만 부르는 경우에도 Service 가 cleanup 되도록 STOP 재전송.
+        // RecordingService 의 STOP 핸들러는 idempotent (recorder == null 이면 noop 처리).
+        RecordingService.stop(context)
     }
 }

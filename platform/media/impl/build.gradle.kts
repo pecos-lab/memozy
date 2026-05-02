@@ -11,5 +11,9 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.platform.media.api)
         }
+        androidMain.dependencies {
+            implementation(libs.androidx.core.ktx)
+            implementation(libs.kotlinx.coroutines.core)
+        }
     }
 }
