@@ -37,9 +37,14 @@ internal class RecordingService : Service() {
                 }
             }
             ACTION_STOP -> {
+                if (recorder == null) {
+                    android.util.Log.i(TAG, "STOP received but recorder is null — already stopped or never started")
+                }
                 stopRecordingAndService()
             }
         }
+        // START_NOT_STICKY: 프로세스 종료 시 Service 자동 재시작 안 함.
+        // 이유: companion object 의 _state StateFlow 는 재시작 후 부정확하므로 상태 일관성 유지를 위해 명시적 재시작만 허용.
         return START_NOT_STICKY
     }
 
@@ -97,16 +102,19 @@ internal class RecordingService : Service() {
     private fun buildNotification(): Notification {
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "녹음",
-                NotificationManager.IMPORTANCE_LOW,
-            ).apply {
-                description = "메모 음성 녹음 진행 상태"
-                setSound(null, null)
-                enableVibration(false)
+            // 채널이 없을 때만 생성 — 매번 createNotificationChannel 호출 비용 회피
+            if (nm.getNotificationChannel(CHANNEL_ID) == null) {
+                val channel = NotificationChannel(
+                    CHANNEL_ID,
+                    "녹음",
+                    NotificationManager.IMPORTANCE_LOW,
+                ).apply {
+                    description = "메모 음성 녹음 진행 상태"
+                    setSound(null, null)
+                    enableVibration(false)
+                }
+                nm.createNotificationChannel(channel)
             }
-            nm.createNotificationChannel(channel)
         }
 
         val stopIntent = Intent(this, RecordingService::class.java).apply {
@@ -154,6 +162,7 @@ internal class RecordingService : Service() {
         private const val CHANNEL_ID = "memozy.recording"
         private const val NOTIFICATION_ID = 8801
         private const val REQUEST_STOP = 1
+        private const val TAG = "RecordingService"
 
         private val _state = MutableStateFlow<RecordingState>(RecordingState.Idle)
         val state: StateFlow<RecordingState> = _state
