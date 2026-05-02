@@ -91,13 +91,8 @@ class IosBillingService : BillingService {
 
     private fun loadProducts() {
         val ids = setOf(BillingService.SUB_PRO_MONTHLY, BillingService.SUB_PRO_YEARLY)
-        println("[Billing] loadProducts START — requesting ids=$ids")
         val delegate = ProductsDelegate(
-            onLoaded = { products, invalidIds ->
-                println("[Billing] products RESPONSE — loaded=${products.size}, invalid=$invalidIds")
-                products.forEach { p ->
-                    println("[Billing]  - product: id=${p.productIdentifier}, title=${p.localizedTitle}, price=${p.price}")
-                }
+            onLoaded = { products, _ ->
                 scope.launch {
                     products.forEach { productMap[it.productIdentifier] = it }
                     _subscriptionProducts.value = products
@@ -106,8 +101,7 @@ class IosBillingService : BillingService {
                 }
                 productsDelegate = null
             },
-            onError = { error ->
-                println("[Billing] products REQUEST FAILED: $error")
+            onError = { _ ->
                 productsDelegate = null
             }
         )

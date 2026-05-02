@@ -114,21 +114,13 @@ class SettingsViewModel(
 
     fun signInWithGoogle(idToken: String) {
         viewModelScope.launch {
-            val result = authRepository.signInWithGoogle(idToken)
-            result.onFailure { e ->
-                println("SettingsViewModel: Google Supabase sign-in failed: ${e.message}")
-                e.printStackTrace()
-            }
+            authRepository.signInWithGoogle(idToken)
         }
     }
 
     fun signInWithApple(idToken: String, rawNonce: String) {
         viewModelScope.launch {
-            val result = authRepository.signInWithApple(idToken, rawNonce)
-            result.onFailure { e ->
-                println("SettingsViewModel: Apple Supabase sign-in failed: ${e.message}")
-                e.printStackTrace()
-            }
+            authRepository.signInWithApple(idToken, rawNonce)
         }
     }
 

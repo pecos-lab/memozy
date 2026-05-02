@@ -45,37 +45,18 @@ class AuthServiceImpl(
         }
 
     override suspend fun signInWithGoogle(idToken: String): Result<AuthUser> = runCatching {
-        println("[AuthService] Google signIn START — idToken length=${idToken.length}")
-        try {
-            supabaseClient.auth.signInWith(IDToken) {
-                this.idToken = idToken
-                provider = Google
-            }
-            println("[AuthService] Google signIn SUCCESS — currentUser=${currentUser?.email}")
-        } catch (e: io.github.jan.supabase.exceptions.RestException) {
-            val errBody = try { e.error } catch (_: Throwable) { "(no error)" }
-            val description = try { e.description } catch (_: Throwable) { "(no desc)" }
-            println("[AuthService] Google signIn RestException — error=$errBody, description=$description, statusCode=${e.statusCode}")
-            throw e
-        } catch (e: Throwable) {
-            println("[AuthService] Google signIn THROW: ${e::class.simpleName} - ${e.message}")
-            throw e
+        supabaseClient.auth.signInWith(IDToken) {
+            this.idToken = idToken
+            provider = Google
         }
         currentUser ?: throw IllegalStateException("User not found after sign in")
     }
 
     override suspend fun signInWithApple(idToken: String, rawNonce: String): Result<AuthUser> = runCatching {
-        println("[AuthService] Apple signIn START — idToken length=${idToken.length}")
-        try {
-            supabaseClient.auth.signInWith(IDToken) {
-                this.idToken = idToken
-                this.nonce = rawNonce
-                provider = Apple
-            }
-            println("[AuthService] Apple signIn SUCCESS — currentUser=${currentUser?.email}")
-        } catch (e: Throwable) {
-            println("[AuthService] Apple signIn THROW: ${e::class.simpleName} - ${e.message}")
-            throw e
+        supabaseClient.auth.signInWith(IDToken) {
+            this.idToken = idToken
+            this.nonce = rawNonce
+            provider = Apple
         }
         currentUser ?: throw IllegalStateException("User not found after sign in")
     }
