@@ -28,13 +28,9 @@ final class IosLiveTranscriptionBridge: LiveTranscriptionBridge {
                 case .authorized:
                     self.beginSession()
                 case .denied, .restricted, .notDetermined:
-                    LiveTranscriptionRegistrar.shared.onState(
-                        state: TranscriptionStateError(message: "Speech permission not granted")
-                    )
+                    LiveTranscriptionRegistrar.shared.onError(message: "Speech permission not granted")
                 @unknown default:
-                    LiveTranscriptionRegistrar.shared.onState(
-                        state: TranscriptionStateError(message: "Unknown permission status")
-                    )
+                    LiveTranscriptionRegistrar.shared.onError(message: "Unknown permission status")
                 }
             }
         }
@@ -48,15 +44,11 @@ final class IosLiveTranscriptionBridge: LiveTranscriptionBridge {
     private func beginSession() {
         let locale = mapLocale(languageCode)
         guard let rec = SFSpeechRecognizer(locale: locale) else {
-            LiveTranscriptionRegistrar.shared.onState(
-                state: TranscriptionStateError(message: "Recognizer not available for \(locale.identifier)")
-            )
+            LiveTranscriptionRegistrar.shared.onError(message: "Recognizer not available for \(locale.identifier)")
             return
         }
         guard rec.isAvailable else {
-            LiveTranscriptionRegistrar.shared.onState(
-                state: TranscriptionStateError(message: "Recognizer temporarily unavailable")
-            )
+            LiveTranscriptionRegistrar.shared.onError(message: "Recognizer temporarily unavailable")
             return
         }
         self.recognizer = rec
@@ -67,9 +59,7 @@ final class IosLiveTranscriptionBridge: LiveTranscriptionBridge {
             try session.setCategory(.playAndRecord, mode: .measurement, options: .duckOthers)
             try session.setActive(true, options: .notifyOthersOnDeactivation)
         } catch {
-            LiveTranscriptionRegistrar.shared.onState(
-                state: TranscriptionStateError(message: "Audio session: \(error.localizedDescription)")
-            )
+            LiveTranscriptionRegistrar.shared.onError(message: "Audio session: \(error.localizedDescription)")
             return
         }
 
@@ -93,9 +83,7 @@ final class IosLiveTranscriptionBridge: LiveTranscriptionBridge {
         do {
             try audioEngine.start()
         } catch {
-            LiveTranscriptionRegistrar.shared.onState(
-                state: TranscriptionStateError(message: "Audio engine: \(error.localizedDescription)")
-            )
+            LiveTranscriptionRegistrar.shared.onError(message: "Audio engine: \(error.localizedDescription)")
             return
         }
 
@@ -128,14 +116,12 @@ final class IosLiveTranscriptionBridge: LiveTranscriptionBridge {
                         if self.stillListening { self.beginSession() }
                     }
                 } else {
-                    LiveTranscriptionRegistrar.shared.onState(
-                        state: TranscriptionStateError(message: error.localizedDescription)
-                    )
+                    LiveTranscriptionRegistrar.shared.onError(message: error.localizedDescription)
                 }
             }
         }
 
-        LiveTranscriptionRegistrar.shared.onState(state: TranscriptionStateListening())
+        LiveTranscriptionRegistrar.shared.onListening()
     }
 
     private func endSession(final: Bool) {
@@ -151,7 +137,7 @@ final class IosLiveTranscriptionBridge: LiveTranscriptionBridge {
 
         if final {
             try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-            LiveTranscriptionRegistrar.shared.onState(state: TranscriptionStateIdle())
+            LiveTranscriptionRegistrar.shared.onIdle()
         }
     }
 

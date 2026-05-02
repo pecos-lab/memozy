@@ -17,6 +17,7 @@ object LiveTranscriptionRegistrar {
 
     /**
      * Swift 가 인식 결과를 push 할 때 호출. Kotlin 의 StateFlow 갱신.
+     * sealed class 인스턴스 생성을 Swift 에 노출하지 않기 위해 편의 함수로 래핑.
      */
     fun onPartial(text: String) {
         IosLiveTranscriptionState._partial.value = text
@@ -29,8 +30,16 @@ object LiveTranscriptionRegistrar {
         IosLiveTranscriptionState._partial.value = ""
     }
 
-    fun onState(state: TranscriptionState) {
-        IosLiveTranscriptionState._state.value = state
+    fun onIdle() {
+        IosLiveTranscriptionState._state.value = TranscriptionState.Idle
+    }
+
+    fun onListening() {
+        IosLiveTranscriptionState._state.value = TranscriptionState.Listening
+    }
+
+    fun onError(message: String) {
+        IosLiveTranscriptionState._state.value = TranscriptionState.Error(message)
     }
 }
 
@@ -48,8 +57,12 @@ class IosLiveTranscriptionService : LiveTranscriptionService {
     override suspend fun start(languageCode: String) {
         IosLiveTranscriptionState._partial.value = ""
         IosLiveTranscriptionState._confirmed.value = ""
-        LiveTranscriptionRegistrar.bridge?.start(languageCode)
-            ?: run { IosLiveTranscriptionState._state.value = TranscriptionState.Error("Bridge not registered") }
+        val b = LiveTranscriptionRegistrar.bridge
+        if (b == null) {
+            IosLiveTranscriptionState._state.value = TranscriptionState.Error("Bridge not registered")
+        } else {
+            b.start(languageCode)
+        }
     }
 
     override fun stop() {
