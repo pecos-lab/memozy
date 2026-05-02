@@ -14,6 +14,7 @@ val memoPlainModule = module {
             aiUsageDao = get(),
             webScrapeService = get(),
             analyticsService = get(),
+            liveTranscriptionService = get(),
         )
     }
 }

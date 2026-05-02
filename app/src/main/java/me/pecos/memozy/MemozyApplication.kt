@@ -13,6 +13,7 @@ import me.pecos.memozy.data.repository.MemoRepository
 import me.pecos.memozy.widget.MemoWidgetReceiver
 import me.pecos.memozy.di.adsPlatformModule
 import me.pecos.memozy.di.analyticsPlatformModule
+import me.pecos.memozy.di.transcriptionPlatformModule
 import me.pecos.memozy.di.aiNetworkModule
 import me.pecos.memozy.di.authModule
 import me.pecos.memozy.di.backupModule
@@ -55,6 +56,7 @@ class MemozyApplication : Application() {
                 billingPlatformModule,
                 adsPlatformModule,
                 analyticsPlatformModule,
+                transcriptionPlatformModule,
                 credentialPlatformModule,
                 mediaPlatformModule,
                 htmlTextPlatformModule,

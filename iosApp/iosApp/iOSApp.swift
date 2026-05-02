@@ -13,6 +13,7 @@ struct iOSApp: App {
         SharedKoinKt.doInitKoin()
         GoogleSignInRegistrar.shared.handler = IosGoogleSignInBridge()
         AnalyticsRegistrar.shared.bridge = IosFirebaseAnalyticsBridge()
+        LiveTranscriptionRegistrar.shared.bridge = IosLiveTranscriptionBridge()
     }
 
     var body: some Scene {

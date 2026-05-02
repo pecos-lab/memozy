@@ -26,6 +26,7 @@ kotlin {
             implementation(projects.platform.media.api)
             implementation(projects.platform.intent.api)
             implementation(projects.platform.analytics.api)
+            implementation(projects.platform.transcription.api)
             implementation(libs.haze)
             implementation(libs.koin.core)
             implementation(libs.koin.compose)

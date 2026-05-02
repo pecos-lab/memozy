@@ -92,6 +92,7 @@ class MemoPlainNavigationImpl(
     private val aiUsageDao: AiUsageDao,
     private val webScrapeService: me.pecos.memozy.data.datasource.remote.ai.WebScrapeService,
     private val analyticsService: me.pecos.memozy.platform.analytics.AnalyticsService,
+    private val liveTranscriptionService: me.pecos.memozy.platform.transcription.LiveTranscriptionService,
 ) : MemoPlainNavigation {
 
     // 화면 dispose 후에도 살아있어야 하는 저장 작업용 (싱글톤 라이프타임)
@@ -588,6 +589,10 @@ class MemoPlainNavigationImpl(
                     recordingStartTime = Clock.System.now().toEpochMilliseconds()
                     isRecording = true
                     transcriptionError = null
+                    // 실시간 받아쓰기 동시 시작 — iOS 는 outputPath 받아 WAV 캡처. Android 는 무시 (RecordingService 가 캡처).
+                    scope.launch {
+                        try { liveTranscriptionService.start(languageCode, audioCachePath) } catch (_: Throwable) {}
+                    }
                 } catch (e: Exception) {
                     transcriptionError = "녹음을 시작할 수 없어요."
                 }
@@ -613,10 +618,36 @@ class MemoPlainNavigationImpl(
                 try {
                     audioRecorder?.apply { stop(); release() }
                 } catch (_: Exception) { }
+                // Live STT 동시 종료 — confirmedText 가 최종 텍스트
+                liveTranscriptionService.stop()
                 val durationSeconds = (Clock.System.now().toEpochMilliseconds() - recordingStartTime) / 1000
                 audioRecorder = null
                 isRecording = false
 
+                // Live STT 결과를 최종 — Gemini polish 제거 (Gemini 가 WAV 포맷 이슈로 hallucinate 발생)
+                // Live STT 텍스트가 있으면 그대로 본문에 남기고 종료. 파일은 audio playback 용으로 영구 저장.
+                val liveTextFinal = liveTranscriptionService.confirmedText.value.ifBlank {
+                    liveTranscriptionService.partialText.value
+                }
+                if (liveTextFinal.isNotBlank()) {
+                    if (audioFileStore.exists(audioCachePath) && audioFileStore.length(audioCachePath) >= 1024) {
+                        scope.launch {
+                            val nowLocal = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+                            fun Int.pad2(): String = toString().padStart(2, '0')
+                            val yy = (nowLocal.year % 100).pad2()
+                            val stamp = "$yy.${nowLocal.monthNumber.pad2()}.${nowLocal.dayOfMonth.pad2()} ${nowLocal.hour.pad2()}:${nowLocal.minute.pad2()}"
+                            val safeFileName = "$stamp 녹음".replace(":", "-").replace("/", "-")
+                            val permanentPath = audioFileStore.permanentPath(safeFileName)
+                            audioFileStore.copy(audioCachePath, permanentPath)
+                            audioFileStore.delete(audioCachePath)
+                            savedAudioPath = permanentPath
+                        }
+                    }
+                    scope.launch { aiUsageDao.insert(AiUsage(feature = FEATURE_TRANSCRIPTION)) }
+                    return
+                }
+
+                // Live STT 도 비어있고 파일도 없으면 에러
                 if (!audioFileStore.exists(audioCachePath) || audioFileStore.length(audioCachePath) < 1024) {
                     transcriptionError = "녹음이 너무 짧아요. 다시 시도해주세요."
                     audioFileStore.delete(audioCachePath)

@@ -38,7 +38,18 @@ import kotlinx.cinterop.ObjCObjectVar
  */
 class IosMediaService : MediaService {
     override fun createAudioPlayer(sourcePath: String): AudioPlayer = IosAudioPlayer(sourcePath)
-    override fun createAudioRecorder(): AudioRecorder = IosAudioRecorder()
+    /**
+     * iOS: 별도 AVAudioRecorder 사용 시 LiveTranscription 의 AVAudioEngine.inputNode tap 과 mic 점유 충돌.
+     * → no-op 으로 전환. 실시간 받아쓰기로 대체. 오디오 파일 캡처는 follow-up
+     * (AVAudioFile + AVAudioEngine.inputNode tap 으로 통합 캡처).
+     */
+    override fun createAudioRecorder(): AudioRecorder = NoopAudioRecorder
+}
+
+private object NoopAudioRecorder : AudioRecorder {
+    override fun start(outputPath: String) { println("[IosRecorder] no-op (LiveSTT 가 mic 사용)") }
+    override fun stop() {}
+    override fun release() {}
 }
 
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)

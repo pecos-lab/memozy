@@ -75,6 +75,7 @@ import androidx.compose.material.icons.filled.FormatStrikethrough
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -628,7 +629,7 @@ fun MemoScreen(
                     }
                 )
 
-                // 녹음 결과를 본문에 삽입 + 제목 자동 설정
+                // 녹음 결과를 본문에 삽입 + 제목 자동 설정 (Live STT 안 쓰는 구 경로용)
                 LaunchedEffect(transcriptionResult) {
                     if (transcriptionResult != null) {
                         val current = richTextState.annotatedString.text
@@ -880,7 +881,50 @@ fun MemoScreen(
                 var webErrorDismissed by remember { mutableStateOf(false) }
                 LaunchedEffect(webSummaryError) { if (webSummaryError != null) webErrorDismissed = false }
 
-                // 녹음 중
+                // 녹음 중 — Live STT partial + confirmed 본문에 실시간 반영 (노션 스타일)
+                val liveService: me.pecos.memozy.platform.transcription.LiveTranscriptionService = koinInject()
+                val livePartial by liveService.partialText.collectAsState()
+                val liveConfirmed by liveService.confirmedText.collectAsState()
+                // 녹음 시작 시점의 본문 — 이 뒤에 confirmed + partial 이 실시간으로 추가됨
+                var bodyAnchor by remember { mutableStateOf<String?>(null) }
+
+                LaunchedEffect(isRecording) {
+                    if (isRecording) {
+                        val current = richTextState.annotatedString.text
+                        bodyAnchor = current
+                    } else if (bodyAnchor != null) {
+                        // 녹음 종료 — confirmed + partial 합쳐서 최종 텍스트로 (isFinal 안 떠도 partial 보존)
+                        val anchor = bodyAnchor!!
+                        val sep = if (anchor.isEmpty() || anchor.endsWith(" ") || anchor.endsWith("\n")) "" else " "
+                        val keepPartial = liveConfirmed.isEmpty() || !liveConfirmed.contains(livePartial)
+                        val live = buildString {
+                            if (liveConfirmed.isNotEmpty()) append(liveConfirmed)
+                            if (keepPartial && livePartial.isNotEmpty()) {
+                                if (isNotEmpty()) append(' ')
+                                append(livePartial)
+                            }
+                        }
+                        val finalText = (anchor + sep + live).trimEnd()
+                        if (richTextState.annotatedString.text != finalText) {
+                            richTextState.setText(finalText)
+                        }
+                        bodyAnchor = null
+                        // pendingPolishAnchor 는 Gemini 결과 도착 / timeout 까지 유지
+                    }
+                }
+
+                // 녹음 중 partial 또는 confirmed 변경마다 본문 라이브 업데이트
+                LaunchedEffect(livePartial, liveConfirmed, isRecording) {
+                    val anchor = bodyAnchor ?: return@LaunchedEffect
+                    if (!isRecording) return@LaunchedEffect
+                    val sep = if (anchor.isEmpty() || anchor.endsWith(" ") || anchor.endsWith("\n")) "" else " "
+                    val live = listOf(liveConfirmed, livePartial).filter { it.isNotEmpty() }.joinToString(" ")
+                    val newText = anchor + sep + live
+                    if (richTextState.annotatedString.text != newText) {
+                        richTextState.setText(newText)
+                    }
+                }
+
                 if (isRecording) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {

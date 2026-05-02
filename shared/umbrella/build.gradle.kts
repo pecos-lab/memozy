@@ -70,6 +70,7 @@ kotlin {
             export(projects.data.repository.memo.api)
             export(projects.platform.credential.impl)
             export(projects.platform.analytics.impl)
+            export(projects.platform.transcription.impl)
         }
     }
 
@@ -113,6 +114,7 @@ kotlin {
             api(projects.platform.credential.impl)
             implementation(projects.platform.ads.impl)
             api(projects.platform.analytics.impl)
+            api(projects.platform.transcription.impl)
             implementation(projects.platform.billing.api)
             implementation(projects.platform.billing.impl)
             implementation(projects.platform.media.api)

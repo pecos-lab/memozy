@@ -45,6 +45,8 @@ import me.pecos.memozy.platform.ads.AdsService
 import me.pecos.memozy.platform.ads.IosAdsService
 import me.pecos.memozy.platform.analytics.AnalyticsService
 import me.pecos.memozy.platform.analytics.IosAnalyticsService
+import me.pecos.memozy.platform.transcription.IosLiveTranscriptionService
+import me.pecos.memozy.platform.transcription.LiveTranscriptionService
 import me.pecos.memozy.platform.billing.BillingService
 import me.pecos.memozy.platform.billing.IosBillingService
 import me.pecos.memozy.platform.credential.CredentialService
@@ -143,6 +145,9 @@ val sharedModule: Module = module {
 
     // Analytics — Swift 브릿지로 위임 (FirebaseAnalytics)
     single<AnalyticsService> { IosAnalyticsService() }
+
+    // Live Transcription — Swift 브릿지로 위임 (SFSpeechRecognizer)
+    single<LiveTranscriptionService> { IosLiveTranscriptionService() }
 
     // Billing (iOS — Wave 3-I #279 stub. StoreKit 실 결제 플로우는 follow-up)
     single<BillingService> { IosBillingService() }
