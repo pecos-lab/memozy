@@ -625,7 +625,10 @@ class MemoPlainNavigationImpl(
                 isRecording = false
 
                 // Live STT 가 텍스트를 잘 받아왔으면 Gemini 호출 스킵 — 본문은 이미 채워져 있음
-                val liveText = liveTranscriptionService.confirmedText.value
+                // isFinal 이 안 떠서 confirmed 가 비어있어도 partial 에 텍스트가 있을 수 있음
+                val confirmed = liveTranscriptionService.confirmedText.value
+                val partial = liveTranscriptionService.partialText.value
+                val liveText = if (confirmed.isNotBlank()) confirmed else partial
                 if (liveText.isNotBlank()) {
                     // 오디오 파일이 있으면 영구 저장 (audio playback 용), 없어도 그냥 진행
                     if (audioFileStore.exists(audioCachePath) && audioFileStore.length(audioCachePath) >= 1024) {

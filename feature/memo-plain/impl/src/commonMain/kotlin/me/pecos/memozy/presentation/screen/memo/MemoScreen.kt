@@ -892,10 +892,19 @@ fun MemoScreen(
                     if (isRecording) {
                         bodyAnchor = richTextState.annotatedString.text
                     } else if (bodyAnchor != null) {
-                        // 녹음 종료 — 최종 confirmed 만 남기고 partial 흔적 제거
+                        // 녹음 종료 — confirmed + partial 합쳐서 최종 텍스트로 (isFinal 안 떠도 partial 보존)
                         val anchor = bodyAnchor!!
                         val sep = if (anchor.isEmpty() || anchor.endsWith(" ") || anchor.endsWith("\n")) "" else " "
-                        val finalText = (anchor + sep + liveConfirmed).trimEnd()
+                        // partial 이 confirmed 와 중복되면 (같은 세션 텍스트가 양쪽에 있을 때) confirmed 만 사용
+                        val keepPartial = liveConfirmed.isEmpty() || !liveConfirmed.contains(livePartial)
+                        val live = buildString {
+                            if (liveConfirmed.isNotEmpty()) append(liveConfirmed)
+                            if (keepPartial && livePartial.isNotEmpty()) {
+                                if (isNotEmpty()) append(' ')
+                                append(livePartial)
+                            }
+                        }
+                        val finalText = (anchor + sep + live).trimEnd()
                         if (richTextState.annotatedString.text != finalText) {
                             richTextState.setText(finalText)
                         }
