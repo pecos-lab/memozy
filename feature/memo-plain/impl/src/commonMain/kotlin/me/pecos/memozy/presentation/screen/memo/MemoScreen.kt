@@ -75,6 +75,7 @@ import androidx.compose.material.icons.filled.FormatStrikethrough
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -880,16 +881,47 @@ fun MemoScreen(
                 var webErrorDismissed by remember { mutableStateOf(false) }
                 LaunchedEffect(webSummaryError) { if (webSummaryError != null) webErrorDismissed = false }
 
-                // 녹음 중
+                // 녹음 중 — Live STT partial + confirmed 표시
+                val liveService: me.pecos.memozy.platform.transcription.LiveTranscriptionService = koinInject()
+                val livePartial by liveService.partialText.collectAsState()
+                val liveConfirmed by liveService.confirmedText.collectAsState()
+                var lastInsertedConfirmed by remember { mutableStateOf("") }
+
+                // 새로 confirmed 된 부분만 본문에 자동 삽입 (중복 방지 위해 lastInsertedConfirmed 와 비교)
+                LaunchedEffect(liveConfirmed) {
+                    if (isRecording && liveConfirmed.length > lastInsertedConfirmed.length) {
+                        val delta = liveConfirmed.substring(lastInsertedConfirmed.length).trim()
+                        if (delta.isNotEmpty()) {
+                            val current = richTextState.annotatedString.text
+                            val sep = if (current.isEmpty() || current.endsWith(" ") || current.endsWith("\n")) "" else " "
+                            richTextState.setText(current + sep + delta)
+                        }
+                        lastInsertedConfirmed = liveConfirmed
+                    }
+                    if (!isRecording) lastInsertedConfirmed = ""
+                }
+
                 if (isRecording) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(modifier = Modifier.size(32.dp).clip(CircleShape).background(Color(0xFFE24B4A))
-                            .clickable { onStopRecording?.invoke() }, contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.Stop, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(modifier = Modifier.size(32.dp).clip(CircleShape).background(Color(0xFFE24B4A))
+                                .clickable { onStopRecording?.invoke() }, contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.Stop, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text("🔴 " + stringResource(Res.string.recording_tap_to_stop), fontSize = fontSettings.scaled(13), color = Color(0xFFE24B4A), fontWeight = FontWeight.SemiBold)
                         }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text("🔴 " + stringResource(Res.string.recording_tap_to_stop), fontSize = fontSettings.scaled(13), color = Color(0xFFE24B4A), fontWeight = FontWeight.SemiBold)
+                        // 진행 중 partial — 회색으로 미확정 표시
+                        if (livePartial.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = livePartial,
+                                fontSize = fontSettings.scaled(13),
+                                color = colors.textSecondary.copy(alpha = 0.6f),
+                                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                            )
+                        }
                     }
                 }
                 // 음성 변환 중

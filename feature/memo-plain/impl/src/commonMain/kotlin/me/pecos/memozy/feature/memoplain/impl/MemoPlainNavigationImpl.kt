@@ -92,6 +92,7 @@ class MemoPlainNavigationImpl(
     private val aiUsageDao: AiUsageDao,
     private val webScrapeService: me.pecos.memozy.data.datasource.remote.ai.WebScrapeService,
     private val analyticsService: me.pecos.memozy.platform.analytics.AnalyticsService,
+    private val liveTranscriptionService: me.pecos.memozy.platform.transcription.LiveTranscriptionService,
 ) : MemoPlainNavigation {
 
     // 화면 dispose 후에도 살아있어야 하는 저장 작업용 (싱글톤 라이프타임)
@@ -588,6 +589,10 @@ class MemoPlainNavigationImpl(
                     recordingStartTime = Clock.System.now().toEpochMilliseconds()
                     isRecording = true
                     transcriptionError = null
+                    // 실시간 받아쓰기 동시 시작 — partial 결과는 Compose 에서 collectAsState 로 표시
+                    scope.launch {
+                        try { liveTranscriptionService.start(languageCode) } catch (_: Throwable) {}
+                    }
                 } catch (e: Exception) {
                     transcriptionError = "녹음을 시작할 수 없어요."
                 }
@@ -613,6 +618,8 @@ class MemoPlainNavigationImpl(
                 try {
                     audioRecorder?.apply { stop(); release() }
                 } catch (_: Exception) { }
+                // Live STT 동시 종료 — confirmedText 가 최종 텍스트
+                liveTranscriptionService.stop()
                 val durationSeconds = (Clock.System.now().toEpochMilliseconds() - recordingStartTime) / 1000
                 audioRecorder = null
                 isRecording = false
