@@ -52,6 +52,8 @@ private class AndroidAudioRecorder(private val context: Context) : AudioRecorder
     }
 
     override fun release() {
-        // Service 가 stop 시점에 내부 MediaRecorder 를 release. 별도 작업 불필요.
+        // 안전망: 호출자가 stop() 없이 release() 만 부르는 경우에도 Service 가 cleanup 되도록 STOP 재전송.
+        // RecordingService 의 STOP 핸들러는 idempotent (recorder == null 이면 noop 처리).
+        RecordingService.stop(context)
     }
 }
