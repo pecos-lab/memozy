@@ -624,16 +624,32 @@ class MemoPlainNavigationImpl(
                 audioRecorder = null
                 isRecording = false
 
-                // 파일이 있으면 무조건 Gemini 호출 — Live STT 가 본문에 채운 텍스트를 더 정확한 Gemini 결과로 교체.
-                // 파일이 없거나 너무 짧으면 Live STT 텍스트만 유지 (이미 본문에 있음).
+                // Live STT 결과를 최종 — Gemini polish 제거 (Gemini 가 WAV 포맷 이슈로 hallucinate 발생)
+                // Live STT 텍스트가 있으면 그대로 본문에 남기고 종료. 파일은 audio playback 용으로 영구 저장.
+                val liveTextFinal = liveTranscriptionService.confirmedText.value.ifBlank {
+                    liveTranscriptionService.partialText.value
+                }
+                if (liveTextFinal.isNotBlank()) {
+                    if (audioFileStore.exists(audioCachePath) && audioFileStore.length(audioCachePath) >= 1024) {
+                        scope.launch {
+                            val nowLocal = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+                            fun Int.pad2(): String = toString().padStart(2, '0')
+                            val yy = (nowLocal.year % 100).pad2()
+                            val stamp = "$yy.${nowLocal.monthNumber.pad2()}.${nowLocal.dayOfMonth.pad2()} ${nowLocal.hour.pad2()}:${nowLocal.minute.pad2()}"
+                            val safeFileName = "$stamp 녹음".replace(":", "-").replace("/", "-")
+                            val permanentPath = audioFileStore.permanentPath(safeFileName)
+                            audioFileStore.copy(audioCachePath, permanentPath)
+                            audioFileStore.delete(audioCachePath)
+                            savedAudioPath = permanentPath
+                        }
+                    }
+                    scope.launch { aiUsageDao.insert(AiUsage(feature = FEATURE_TRANSCRIPTION)) }
+                    return
+                }
+
+                // Live STT 도 비어있고 파일도 없으면 에러
                 if (!audioFileStore.exists(audioCachePath) || audioFileStore.length(audioCachePath) < 1024) {
-                    // Live STT 텍스트가 본문에 이미 있으면 그대로 유지 (에러 표시 안 함)
-                    val liveText = liveTranscriptionService.confirmedText.value.ifBlank {
-                        liveTranscriptionService.partialText.value
-                    }
-                    if (liveText.isBlank()) {
-                        transcriptionError = "녹음이 너무 짧아요. 다시 시도해주세요."
-                    }
+                    transcriptionError = "녹음이 너무 짧아요. 다시 시도해주세요."
                     audioFileStore.delete(audioCachePath)
                     return
                 }
