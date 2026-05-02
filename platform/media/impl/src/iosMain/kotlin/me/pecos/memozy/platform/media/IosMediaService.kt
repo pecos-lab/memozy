@@ -91,12 +91,13 @@ private class IosAudioRecorder : AudioRecorder {
         }
 
         val url = NSURL.fileURLWithPath(outputPath)
+        // AAC 인코더가 모든 sampleRate/bitrate 조합 지원하지 않음.
+        // 16kHz + 64kbps mono 는 prepareToRecord 실패. 44.1kHz mono + AVAudioQualityHigh 로 안전하게.
         val settings = mapOf<Any?, Any>(
-            AVFormatIDKey to NSNumber(unsignedInt = kAudioFormatMPEG4AAC),
-            AVSampleRateKey to NSNumber(double = 16000.0),
+            AVFormatIDKey to NSNumber(int = kAudioFormatMPEG4AAC.toInt()),
+            AVSampleRateKey to NSNumber(double = 44100.0),
             AVNumberOfChannelsKey to NSNumber(int = 1),
-            AVEncoderBitRateKey to NSNumber(int = 64000),
-            AVEncoderAudioQualityKey to NSNumber(int = 64),
+            AVEncoderAudioQualityKey to NSNumber(int = 96), // .high
         )
 
         memScoped {
