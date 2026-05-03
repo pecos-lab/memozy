@@ -34,6 +34,7 @@ credentialManager = "1.5.0"
 googleIdIdentity = "1.1.1"
 sqliteBundled = "2.6.0"
 composeMultiplatform = "1.10.3"
+purchasesKmp = "2.10.2+17.55.1"
 
 [libraries]
 gradlePlugin-android = { module = "com.android.tools.build:gradle", version.ref = "agp" }
@@ -48,6 +49,8 @@ sqlite-bundled = { group = "androidx.sqlite", name = "sqlite-bundled", version.r
 kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinxDatetime" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "billingKtx" }
+purchases-kmp-core = { module = "com.revenuecat.purchases:purchases-kmp-core", version.ref = "purchasesKmp" }
+purchases-kmp-result = { module = "com.revenuecat.purchases:purchases-kmp-result", version.ref = "purchasesKmp" }
 play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
 haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
