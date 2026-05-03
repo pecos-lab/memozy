@@ -7,14 +7,13 @@ import com.revenuecat.purchases.kmp.ktx.awaitOfferings
 
 object RevenueCatPoc {
 
-    fun configure(apiKey: String) {
-        Purchases.logLevel = LogLevel.DEBUG
+    fun configure(apiKey: String, logLevel: LogLevel = LogLevel.ERROR) {
+        Purchases.logLevel = logLevel
         Purchases.configure(PurchasesConfiguration.Builder(apiKey = apiKey).build())
     }
 
     fun isConfigured(): Boolean = Purchases.isConfigured
 
-    suspend fun fetchCurrentOfferingId(): String =
-        runCatching { Purchases.sharedInstance.awaitOfferings().current?.identifier ?: "no-current" }
-            .getOrElse { "fetch-failed: ${it.message}" }
+    suspend fun fetchCurrentOfferingId(): Result<String?> =
+        runCatching { Purchases.sharedInstance.awaitOfferings().current?.identifier }
 }
