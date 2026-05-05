@@ -15,15 +15,49 @@ val localProperties = Properties().apply {
     if (file.exists()) load(file.inputStream())
 }
 
+val keystoreProperties = Properties().apply {
+    val file = rootProject.file("keystore.properties")
+    if (file.exists()) file.bufferedReader(Charsets.UTF_8).use { load(it) }
+}
+
+// 비밀번호는 keystore.properties 의 secretsFile 이 가리키는 외부 파일(예: Google Drive)에서 로드한다.
+// 로컬/리포지토리에 평문 비밀번호 사본을 남기지 않기 위함.
+val keystoreSecrets = Properties().apply {
+    val secretsPath = keystoreProperties.getProperty("secretsFile")
+    if (secretsPath != null) {
+        val file = rootProject.file(secretsPath)
+        if (file.exists()) file.bufferedReader(Charsets.UTF_8).use { load(it) }
+    }
+}
+
 android {
     buildFeatures {
         buildConfig = true
     }
 
+    lint {
+        disable += "ExtraTranslation"
+    }
+
+    signingConfigs {
+        create("release") {
+            val storeFilePath = keystoreProperties.getProperty("storeFile")
+            if (storeFilePath != null) {
+                storeFile = file(storeFilePath)
+                storePassword = keystoreSecrets.getProperty("storePassword")
+                    ?: keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreSecrets.getProperty("keyPassword")
+                    ?: keystoreProperties.getProperty("keyPassword")
+                storeType = keystoreProperties.getProperty("storeType", "JKS")
+            }
+        }
+    }
+
     defaultConfig {
         applicationId = "me.pecos.memozy"
-        versionCode = 3
-        versionName = "1.2603.0"
+        versionCode = 4
+        versionName = "1.2604.0"
 
         val admobAppId = localProperties.getProperty(
             "admob.app.id",
@@ -46,6 +80,7 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

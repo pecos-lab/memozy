@@ -7,6 +7,9 @@ build/
 .externalNativeBuild
 .cxx
 local.properties
+keystore.properties
+*.jks
+*.keystore
 .claude/settings.local.json
 .idea/
 .dev.vars
