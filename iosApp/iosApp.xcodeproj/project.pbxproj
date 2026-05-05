@@ -19,6 +19,7 @@
 		C885870F2FA5F29D00DC5BAB /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = C885870E2FA5F29D00DC5BAB /* FirebaseAnalytics */; };
 		C88587112FA5F2A900DC5BAB /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = C88587102FA5F2A900DC5BAB /* FirebaseCore */; };
 		C88587132FA60B0500DC5BAB /* IosLiveTranscriptionBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C88587122FA60B0500DC5BAB /* IosLiveTranscriptionBridge.swift */; };
+		C88587222FA700000000DC5BAB /* PurchasesHybridCommon in Frameworks */ = {isa = PBXBuildFile; productRef = C88587212FA700000000DC5BAB /* PurchasesHybridCommon */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -44,6 +45,7 @@
 				C88587002FA595DA00DC5BAB /* StoreKit.framework in Frameworks */,
 				C885870F2FA5F29D00DC5BAB /* FirebaseAnalytics in Frameworks */,
 				C88587042FA5AA7500DC5BAB /* GoogleSignIn in Frameworks */,
+				C88587222FA700000000DC5BAB /* PurchasesHybridCommon in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -138,6 +140,7 @@
 			packageReferences = (
 				C88587022FA5AA7500DC5BAB /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 				C885870B2FA5F04500DC5BAB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				C88587202FA700000000DC5BAB /* XCRemoteSwiftPackageReference "purchases-hybrid-common" */,
 			);
 			productRefGroup = AAAA00000000000000000004 /* Products */;
 			projectDirPath = "";
@@ -431,6 +434,14 @@
 				minimumVersion = 12.12.1;
 			};
 		};
+		C88587202FA700000000DC5BAB /* XCRemoteSwiftPackageReference "purchases-hybrid-common" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-hybrid-common";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 13.3.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -453,6 +464,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = C885870B2FA5F04500DC5BAB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseCore;
+		};
+		C88587212FA700000000DC5BAB /* PurchasesHybridCommon */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C88587202FA700000000DC5BAB /* XCRemoteSwiftPackageReference "purchases-hybrid-common" */;
+			productName = PurchasesHybridCommon;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
