@@ -5,6 +5,8 @@ import com.revenuecat.purchases.kmp.models.CustomerInfo
 import com.revenuecat.purchases.kmp.models.Package
 import com.revenuecat.purchases.kmp.models.Period
 import com.revenuecat.purchases.kmp.models.PeriodUnit
+import com.revenuecat.purchases.kmp.models.PurchasesErrorCode
+import com.revenuecat.purchases.kmp.models.PurchasesException
 import com.revenuecat.purchases.kmp.models.StoreProduct
 import com.revenuecat.purchases.kmp.result.awaitCustomerInfoResult
 import com.revenuecat.purchases.kmp.result.awaitGetProductsResult
@@ -204,13 +206,19 @@ class RevenueCatBillingService(
     }
 
     private fun handlePurchaseFailure(error: Throwable) {
-        // RC 에러 메시지에 "cancel" 포함 시 사용자 취소로 간주 (Idle 로 복귀).
-        // PurchasesError code 직접 매핑은 SDK 모델 분기 추가 시 follow-up.
-        val msg = error.message.orEmpty()
-        _purchaseState.value = if (msg.contains("cancel", ignoreCase = true)) {
-            PurchaseState.Idle
-        } else {
-            PurchaseState.Error(msg.ifEmpty { "구매 실패" })
+        val code = (error as? PurchasesException)?.error?.code
+        _purchaseState.value = when (code) {
+            PurchasesErrorCode.PurchaseCancelledError -> PurchaseState.Idle
+            PurchasesErrorCode.NetworkError,
+            PurchasesErrorCode.OfflineConnectionError -> PurchaseState.Error("네트워크 연결을 확인해주세요.")
+            PurchasesErrorCode.PaymentPendingError -> PurchaseState.Error("결제가 보류 중입니다. 잠시 후 다시 확인해주세요.")
+            PurchasesErrorCode.ProductNotAvailableForPurchaseError -> PurchaseState.Error("현재 구매할 수 없는 상품입니다.")
+            PurchasesErrorCode.PurchaseNotAllowedError -> PurchaseState.Error("구매가 허용되지 않은 계정입니다.")
+            PurchasesErrorCode.ProductAlreadyPurchasedError -> PurchaseState.Error("이미 구매한 상품입니다.")
+            PurchasesErrorCode.StoreProblemError -> PurchaseState.Error("스토어 연결 문제가 발생했습니다.")
+            PurchasesErrorCode.ReceiptAlreadyInUseError,
+            PurchasesErrorCode.ReceiptInUseByOtherSubscriberError -> PurchaseState.Error("다른 계정에서 사용 중인 구독입니다.")
+            else -> PurchaseState.Error(error.message.orEmpty().ifEmpty { "구매 실패" })
         }
     }
 
