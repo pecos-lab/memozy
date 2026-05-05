@@ -118,32 +118,35 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
-            // Apple 로 계속하기 — Apple HIG: 검정 배경 + 사과 로고. iOS 에서만 실제 동작 (Android 는 미구현 안내).
-            OutlinedButton(
-                onClick = {
-                    scope.launch {
-                        val result = credentialService.signInWithApple(activity = activity)
-                        when (result) {
-                            is AppleSignInResult.Success -> onAppleSignIn(result.idToken, result.rawNonce)
-                            is AppleSignInResult.Cancelled -> Unit
-                            is AppleSignInResult.Error -> {
-                                println("LoginScreen: Apple sign-in failed: ${result.message}")
-                                toastPresenter.show(getString(Res.string.sign_in_error))
+            // Apple 로 계속하기 — Apple HIG: 검정 배경 + 사과 로고. iOS 에서만 실제 동작.
+            // Android 는 OAuth Web flow (Custom Tabs) 미구현이라 버튼 자체를 숨김 (#330 Option C).
+            if (credentialService.isAppleSignInAvailable) {
+                OutlinedButton(
+                    onClick = {
+                        scope.launch {
+                            val result = credentialService.signInWithApple(activity = activity)
+                            when (result) {
+                                is AppleSignInResult.Success -> onAppleSignIn(result.idToken, result.rawNonce)
+                                is AppleSignInResult.Cancelled -> Unit
+                                is AppleSignInResult.Error -> {
+                                    println("LoginScreen: Apple sign-in failed: ${result.message}")
+                                    toastPresenter.show(getString(Res.string.sign_in_error))
+                                }
                             }
                         }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                border = BorderStroke(1.dp, colors.cardBorder),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
-            ) {
-                Text("\uF8FF", fontSize = fontSettings.scaled(16))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(Res.string.sign_in_apple), fontSize = fontSettings.scaled(14))
-            }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    border = BorderStroke(1.dp, colors.cardBorder),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
+                ) {
+                    Text("\uF8FF", fontSize = fontSettings.scaled(16))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(Res.string.sign_in_apple), fontSize = fontSettings.scaled(14))
+                }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             OutlinedButton(
                 onClick = onSkip,

@@ -431,8 +431,7 @@ class MemoPlainNavigationImpl(
             }
             val dailyLimit = subscriptionTier.dailyAiLimit + adBonusCount
             val canUseAiQuota = dailyUsageCount < dailyLimit
-            // TEST: AI 한도 일시 해제 — 출시 전 원복 필요
-            val canUseAi = true // isLoggedIn && canUseAiQuota
+            val canUseAi = isLoggedIn && canUseAiQuota
             val canWatchAd = !subscriptionTier.isPro && dailyAdViewCount < MAX_DAILY_AD_VIEWS
             val remainingAdViews = MAX_DAILY_AD_VIEWS - dailyAdViewCount
             var showLimitBottomSheet by remember { mutableStateOf(false) }
