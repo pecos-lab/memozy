@@ -51,15 +51,30 @@ android {
     }
 
     defaultConfig {
-        applicationId = "me.pecos.memozy"
-        versionCode = 4
-        versionName = "1.2604.0"
+        versionCode = 5
+        versionName = "1.2605.0"
 
         val admobAppId = localProperties.getProperty(
             "admob.app.id",
             "ca-app-pub-3940256099942544~3347511713"
         )
         manifestPlaceholders["admobAppId"] = admobAppId
+    }
+
+    // 두 Play Console listing 동시 운영을 위한 flavor:
+    //   memozy: 개발/내부 테스트용 (me.pecos.memozy 출시)
+    //   nota:   기존 출시 listing 유지용 (me.pecos.nota — Play Store applicationId 영구 고정)
+    // 빌드: ./gradlew :app:bundleMemozyRelease  /  ./gradlew :app:bundleNotaRelease
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("memozy") {
+            dimension = "distribution"
+            applicationId = "me.pecos.memozy"
+        }
+        create("nota") {
+            dimension = "distribution"
+            applicationId = "me.pecos.nota"
+        }
     }
     buildTypes {
         // AdMob 광고 단위 ID — local.properties 미지정 시 AdMob 공식 테스트 ID 사용 (계정 정지 위험 제로).
