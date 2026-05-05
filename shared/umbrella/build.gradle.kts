@@ -27,10 +27,12 @@ val generateIosSecrets by tasks.registering {
     val supabaseAnonKey = localProperties.getProperty("supabase.anon.key", "")
     val workerUrl = localProperties.getProperty("worker.url", "")
     val appSecretKey = localProperties.getProperty("app.secret.key", "")
+    val revenueCatApiKey = localProperties.getProperty("revenuecat.ios.api.key", "")
     inputs.property("supabaseUrl", supabaseUrl)
     inputs.property("supabaseAnonKey", supabaseAnonKey)
     inputs.property("workerUrl", workerUrl)
     inputs.property("appSecretKey", appSecretKey)
+    inputs.property("revenueCatApiKey", revenueCatApiKey)
     doLast {
         val packageDir = outputDir.get().asFile.resolve("me/pecos/memozy/shared/umbrella")
         packageDir.mkdirs()
@@ -48,6 +50,7 @@ val generateIosSecrets by tasks.registering {
                 const val supabaseAnonKey: String = "$supabaseAnonKey"
                 const val workerUrl: String = "$workerUrl"
                 const val appSecretKey: String = "$appSecretKey"
+                const val revenueCatApiKey: String = "$revenueCatApiKey"
             }
             """.trimIndent()
         )

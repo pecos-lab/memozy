@@ -48,7 +48,8 @@ import me.pecos.memozy.platform.analytics.IosAnalyticsService
 import me.pecos.memozy.platform.transcription.IosLiveTranscriptionService
 import me.pecos.memozy.platform.transcription.LiveTranscriptionService
 import me.pecos.memozy.platform.billing.BillingService
-import me.pecos.memozy.platform.billing.IosBillingService
+import me.pecos.memozy.platform.billing.RevenueCatBillingService
+import me.pecos.memozy.platform.billing.RevenueCatInitializer
 import me.pecos.memozy.platform.credential.CredentialService
 import me.pecos.memozy.platform.credential.IosCredentialService
 import me.pecos.memozy.platform.media.AudioFileStore
@@ -149,8 +150,8 @@ val sharedModule: Module = module {
     // Live Transcription — Swift 브릿지로 위임 (SFSpeechRecognizer)
     single<LiveTranscriptionService> { IosLiveTranscriptionService() }
 
-    // Billing (iOS — Wave 3-I #279 stub. StoreKit 실 결제 플로우는 follow-up)
-    single<BillingService> { IosBillingService() }
+    // Billing — RevenueCat 단일 구현. StoreKit/BillingClient 직접 호출 제거 (#294).
+    single<BillingService> { RevenueCatBillingService(authRepository = get()) }
 
     // Supabase + Auth + Backup (Wave 3-F #276 — IosStub 제거)
     single<SupabaseClient> {
@@ -203,6 +204,8 @@ val sharedModule: Module = module {
 }
 
 fun initKoin() {
+    // RevenueCat 은 Koin 보다 먼저 configure 되어야 BillingService 가 안전하게 동작함.
+    RevenueCatInitializer.configure(apiKey = IosSecrets.revenueCatApiKey, debug = false)
     startKoin {
         modules(sharedModule, memoPlainModule)
     }
