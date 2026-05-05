@@ -96,6 +96,18 @@
 }
 
 # ============================================================
+# SQLite Bundled Driver — JNI_OnLoad 에서 native 메서드를 정확한 클래스명/시그니처로
+# 찾아 등록하는데, R8 가 클래스명 난독화하면 등록 실패 → UnsatisfiedLinkError → 크래시.
+# 따라서 androidx.sqlite.driver.bundled.* 의 클래스 이름·native 메서드를 보존해야 함.
+# (실제 발견 사례: androidx.sqlite.driver.bundled.BundledSQLiteDriverKt.nativeThreadSafeMode)
+# ============================================================
+-keep class androidx.sqlite.** { *; }
+-keep class androidx.sqlite.driver.bundled.** { *; }
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+
+# ============================================================
 # AndroidX Glance (위젯)
 # ============================================================
 -keep class androidx.glance.** { *; }
