@@ -10,7 +10,6 @@
 		AAAA00000000000000000009 /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAAA00000000000000000007 /* iOSApp.swift */; };
 		AAAA0000000000000000000A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAAA00000000000000000008 /* ContentView.swift */; };
 		AAAA00000000000000000016 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AAAA00000000000000000015 /* Assets.xcassets */; };
-		C88587002FA595DA00DC5BAB /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C88586FF2FA595DA00DC5BAB /* StoreKit.framework */; };
 		C88587042FA5AA7500DC5BAB /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = C88587032FA5AA7500DC5BAB /* GoogleSignIn */; };
 		C88587062FA5AA7500DC5BAB /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = C88587052FA5AA7500DC5BAB /* GoogleSignInSwift */; };
 		C88587082FA5AB0400DC5BAB /* IosGoogleSignInBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C88587072FA5AB0400DC5BAB /* IosGoogleSignInBridge.swift */; };
@@ -27,7 +26,6 @@
 		AAAA00000000000000000007 /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
 		AAAA00000000000000000008 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		AAAA00000000000000000015 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		C88586FF2FA595DA00DC5BAB /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		C88587012FA5A2DB00DC5BAB /* iosApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iosApp.entitlements; sourceTree = "<group>"; };
 		C88587072FA5AB0400DC5BAB /* IosGoogleSignInBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IosGoogleSignInBridge.swift; sourceTree = "<group>"; };
 		C88587092FA5EEDE00DC5BAB /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
@@ -42,7 +40,6 @@
 			files = (
 				C88587062FA5AA7500DC5BAB /* GoogleSignInSwift in Frameworks */,
 				C88587112FA5F2A900DC5BAB /* FirebaseCore in Frameworks */,
-				C88587002FA595DA00DC5BAB /* StoreKit.framework in Frameworks */,
 				C885870F2FA5F29D00DC5BAB /* FirebaseAnalytics in Frameworks */,
 				C88587042FA5AA7500DC5BAB /* GoogleSignIn in Frameworks */,
 				C88587222FA700000000DC5BAB /* PurchasesHybridCommon in Frameworks */,
@@ -56,7 +53,6 @@
 			isa = PBXGroup;
 			children = (
 				AAAA00000000000000000003 /* iosApp */,
-				C88586FE2FA595DA00DC5BAB /* Frameworks */,
 				AAAA00000000000000000004 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -82,14 +78,6 @@
 				AAAA00000000000000000006 /* iosApp.app */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		C88586FE2FA595DA00DC5BAB /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				C88586FF2FA595DA00DC5BAB /* StoreKit.framework */,
-			);
-			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
