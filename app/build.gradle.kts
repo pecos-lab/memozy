@@ -51,8 +51,8 @@ android {
     }
 
     defaultConfig {
-        versionCode = 5
-        versionName = "1.2605.0"
+        versionCode = 6
+        versionName = "1.2605.1"
 
         val admobAppId = localProperties.getProperty(
             "admob.app.id",
