@@ -265,6 +265,9 @@
     <string name="subscription_current_plan">Current plan</string>
     <string name="subscription_manage">Manage subscription</string>
     <string name="subscription_restore">Restore purchases</string>
+    <string name="subscription_status_renews_at">Renews on %s</string>
+    <string name="subscription_status_expires_at">Expires on %s</string>
+    <string name="subscription_status_grace_period">Billing issue — please resolve by %s</string>
 
     <!-- Memozy AI -->
     <string name="memozy_ai">Memozy AI</string>
