@@ -35,10 +35,6 @@ android {
         buildConfig = true
     }
 
-    lint {
-        disable += "ExtraTranslation"
-    }
-
     signingConfigs {
         create("release") {
             val storeFilePath = keystoreProperties.getProperty("storeFile")
