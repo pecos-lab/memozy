@@ -2,6 +2,7 @@ package me.pecos.memozy.platform.billing
 
 import com.revenuecat.purchases.kmp.Purchases
 import com.revenuecat.purchases.kmp.models.CustomerInfo
+import com.revenuecat.purchases.kmp.models.EntitlementInfo
 import com.revenuecat.purchases.kmp.models.Package
 import com.revenuecat.purchases.kmp.models.Period
 import com.revenuecat.purchases.kmp.models.PeriodUnit
@@ -14,6 +15,8 @@ import com.revenuecat.purchases.kmp.result.awaitLogInResult
 import com.revenuecat.purchases.kmp.result.awaitLogOutResult
 import com.revenuecat.purchases.kmp.result.awaitOfferingsResult
 import com.revenuecat.purchases.kmp.result.awaitPurchaseResult
+import com.revenuecat.purchases.kmp.result.awaitRestoreResult
+import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -60,6 +63,9 @@ class RevenueCatBillingService(
 
     private val _subscriptionTier = MutableStateFlow(SubscriptionTier.FREE)
     override val subscriptionTier: StateFlow<SubscriptionTier> = _subscriptionTier.asStateFlow()
+
+    private val _subscriptionDetail = MutableStateFlow(SubscriptionDetail.Empty)
+    override val subscriptionDetail: StateFlow<SubscriptionDetail> = _subscriptionDetail.asStateFlow()
 
     override fun connect() {
         if (!Purchases.isConfigured) {
@@ -115,6 +121,22 @@ class RevenueCatBillingService(
 
     override fun queryExistingSubscriptions() {
         scope.launch { refreshCustomerInfo() }
+    }
+
+    override fun restorePurchases() {
+        if (!Purchases.isConfigured) {
+            _purchaseState.value = PurchaseState.Error("결제 서비스가 준비되지 않았습니다.")
+            return
+        }
+        _purchaseState.value = PurchaseState.Loading
+        scope.launch {
+            Purchases.sharedInstance.awaitRestoreResult()
+                .onSuccess { info ->
+                    applyCustomerInfo(info)
+                    _purchaseState.value = PurchaseState.Success
+                }
+                .onFailure { handlePurchaseFailure(it) }
+        }
     }
 
     override fun isProductAvailable(productId: String): Boolean =
@@ -198,10 +220,13 @@ class RevenueCatBillingService(
     }
 
     private fun applyCustomerInfo(info: CustomerInfo) {
-        _subscriptionTier.value = if (info.entitlements.active.containsKey(ENTITLEMENT_PRO)) {
-            SubscriptionTier.PRO
+        val proEntitlement = info.entitlements.active[ENTITLEMENT_PRO]
+        if (proEntitlement != null) {
+            _subscriptionTier.value = SubscriptionTier.PRO
+            _subscriptionDetail.value = proEntitlement.toSubscriptionDetail()
         } else {
-            SubscriptionTier.FREE
+            _subscriptionTier.value = SubscriptionTier.FREE
+            _subscriptionDetail.value = SubscriptionDetail.Empty
         }
     }
 
@@ -242,3 +267,12 @@ private fun Period.toIso8601(): String = when (unit) {
     PeriodUnit.YEAR -> "P${value}Y"
     PeriodUnit.UNKNOWN -> ""
 }
+
+private fun EntitlementInfo.toSubscriptionDetail(): SubscriptionDetail = SubscriptionDetail(
+    tier = SubscriptionTier.PRO,
+    productId = productIdentifier,
+    expiresAt = expirationDateMillis?.let { Instant.fromEpochMilliseconds(it) },
+    willRenew = willRenew,
+    // billingIssueDetectedAt 가 셋이고 entitlement 가 여전히 active → RC 가 grace period 처리 중.
+    inGracePeriod = billingIssueDetectedAtMillis != null && isActive,
+)

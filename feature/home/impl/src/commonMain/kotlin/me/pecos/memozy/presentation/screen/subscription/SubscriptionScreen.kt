@@ -52,13 +52,21 @@ import me.pecos.memozy.feature.core.resource.generated.resources.subscription_fe
 import me.pecos.memozy.feature.core.resource.generated.resources.subscription_manage
 import me.pecos.memozy.feature.core.resource.generated.resources.subscription_monthly
 import me.pecos.memozy.feature.core.resource.generated.resources.subscription_restore
+import me.pecos.memozy.feature.core.resource.generated.resources.subscription_status_expires_at
+import me.pecos.memozy.feature.core.resource.generated.resources.subscription_status_grace_period
+import me.pecos.memozy.feature.core.resource.generated.resources.subscription_status_renews_at
 import me.pecos.memozy.feature.core.resource.generated.resources.subscription_title
 import me.pecos.memozy.feature.core.resource.generated.resources.subscription_yearly
 import me.pecos.memozy.feature.core.resource.generated.resources.subscription_yearly_discount
 import me.pecos.memozy.platform.ads.AdsService
 import me.pecos.memozy.platform.billing.BillingService
 import me.pecos.memozy.platform.billing.PurchaseState
+import me.pecos.memozy.platform.billing.SubscriptionDetail
 import me.pecos.memozy.platform.intent.UrlLauncher
+import me.pecos.memozy.presentation.util.stringResourceFormatted
+import kotlin.time.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import me.pecos.memozy.presentation.components.AppPopup
@@ -79,6 +87,7 @@ fun SubscriptionScreen(
 ) {
     val subscriptionProducts by billingService.subscriptionProducts.collectAsState()
     val purchaseState by billingService.purchaseState.collectAsState()
+    val subscriptionDetail by billingService.subscriptionDetail.collectAsState()
     val currentTier = LocalSubscriptionTier.current
     val isLoggedIn = LocalIsLoggedIn.current
     val colors = LocalAppColors.current
@@ -190,6 +199,11 @@ fun SubscriptionScreen(
                                 .clip(RoundedCornerShape(6.dp))
                                 .background(colors.chipText.copy(alpha = 0.1f))
                                 .padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                        SubscriptionLifecycleStatus(
+                            detail = subscriptionDetail,
+                            textColor = colors.textSecondary,
+                            fontSize = fontSettings.scaled(12),
                         )
                     }
                 }
@@ -369,13 +383,47 @@ fun SubscriptionScreen(
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { billingService.queryExistingSubscriptions() }
+                    .clickable { billingService.restorePurchases() }
                     .padding(12.dp)
             )
 
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
+}
+
+@Composable
+private fun SubscriptionLifecycleStatus(
+    detail: SubscriptionDetail,
+    textColor: Color,
+    fontSize: androidx.compose.ui.unit.TextUnit,
+) {
+    val expiresAt = detail.expiresAt ?: return
+    val dateText = formatDate(expiresAt)
+    val statusText = when {
+        detail.inGracePeriod -> stringResourceFormatted(
+            Res.string.subscription_status_grace_period, dateText
+        )
+        detail.willRenew -> stringResourceFormatted(
+            Res.string.subscription_status_renews_at, dateText
+        )
+        else -> stringResourceFormatted(
+            Res.string.subscription_status_expires_at, dateText
+        )
+    }
+    Spacer(modifier = Modifier.height(6.dp))
+    Text(
+        text = statusText,
+        fontSize = fontSize,
+        color = textColor,
+    )
+}
+
+private fun formatDate(instant: Instant): String {
+    val date = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
+    val month = (date.month.ordinal + 1).toString().padStart(2, '0')
+    val day = date.day.toString().padStart(2, '0')
+    return "${date.year}-$month-$day"
 }
 
 @Composable

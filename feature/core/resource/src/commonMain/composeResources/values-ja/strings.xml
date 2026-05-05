@@ -265,6 +265,9 @@
     <string name="subscription_current_plan">現在のプラン</string>
     <string name="subscription_manage">サブスクリプション管理</string>
     <string name="subscription_restore">購入を復元</string>
+    <string name="subscription_status_renews_at">%sに自動更新</string>
+    <string name="subscription_status_expires_at">%sに期限切れ</string>
+    <string name="subscription_status_grace_period">決済の問題 — %sまでに解決してください</string>
 
     <!-- Memozy AI -->
     <string name="memozy_ai">Memozy AI</string>
