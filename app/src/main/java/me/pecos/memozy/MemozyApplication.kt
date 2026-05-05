@@ -28,6 +28,7 @@ import me.pecos.memozy.di.userRepositoryModule
 import me.pecos.memozy.di.viewModelModule
 import me.pecos.memozy.feature.memoplain.impl.di.memoPlainModule
 import me.pecos.memozy.platform.ads.AdsService
+import me.pecos.memozy.platform.billing.RevenueCatInitializer
 import me.pecos.memozy.platform.intent.di.platformIntentModule
 import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
@@ -40,6 +41,11 @@ class MemozyApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // RevenueCat 은 Koin 보다 먼저 configure 되어야 BillingService 가 안전하게 동작함.
+        RevenueCatInitializer.configure(
+            apiKey = BuildConfig.REVENUECAT_API_KEY,
+            debug = BuildConfig.DEBUG,
+        )
         startKoin {
             androidContext(this@MemozyApplication)
             workManagerFactory()
