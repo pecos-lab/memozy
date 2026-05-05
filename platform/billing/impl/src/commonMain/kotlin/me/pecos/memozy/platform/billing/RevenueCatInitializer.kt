@@ -18,6 +18,19 @@ object RevenueCatInitializer {
     fun configure(apiKey: String, debug: Boolean) {
         if (Purchases.isConfigured) return
         if (apiKey.isEmpty()) return
+
+        // RC SDK 는 release 빌드에서 `test_` prefix 키를 감지하면 안전 차원에서
+        // 강제로 앱을 종료시킨다 ("Wrong API Key" 다이얼로그 후 finish).
+        // RC 대시보드 셋업 + production `goog_*` 키 발급 전까진 release 빌드에서
+        // 초기화를 스킵해 앱을 살린다. 결제/구독 화면만 비활성, 그 외 기능은 정상.
+        if (!debug && apiKey.startsWith("test_")) {
+            println(
+                "[RevenueCat] Skipping init in release build with test API key. " +
+                    "Provision production key (goog_*) in local.properties before release."
+            )
+            return
+        }
+
         Purchases.logLevel = if (debug) LogLevel.DEBUG else LogLevel.ERROR
         Purchases.configure(
             PurchasesConfiguration.Builder(apiKey = apiKey).build()
