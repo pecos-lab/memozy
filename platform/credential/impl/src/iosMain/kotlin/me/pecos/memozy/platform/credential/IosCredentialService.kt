@@ -45,6 +45,8 @@ object GoogleSignInRegistrar {
 
 class IosCredentialService : CredentialService {
 
+    override val isAppleSignInAvailable: Boolean = true
+
     override suspend fun signInWithGoogle(
         activity: Any?,
         serverClientId: String,

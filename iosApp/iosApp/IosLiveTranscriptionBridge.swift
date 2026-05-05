@@ -3,6 +3,12 @@ import Speech
 import AVFoundation
 import Shared
 
+#if DEBUG
+private func dbg(_ msg: String) { NSLog("[LiveSTT] \(msg)") }
+#else
+private func dbg(_ msg: String) {}
+#endif
+
 /// SFSpeechRecognizer + AVAudioEngine 으로 실시간 받아쓰기.
 /// SFSpeech 세션은 ~60초 한도. 한 세션이 끝나면 (final result 또는 timeout) 즉시 새 세션 시작.
 final class IosLiveTranscriptionBridge: LiveTranscriptionBridge {
@@ -18,7 +24,7 @@ final class IosLiveTranscriptionBridge: LiveTranscriptionBridge {
     private var outputPath: String?
 
     func start(languageCode: String, outputPath: String?) {
-        NSLog("[LiveSTT] start lang=\(languageCode) outputPath=\(outputPath ?? "nil")")
+        dbg("start lang=\(languageCode) outputPath=\(outputPath ?? "nil")")
         self.languageCode = languageCode
         self.outputPath = outputPath
         self.stillListening = true
@@ -28,13 +34,13 @@ final class IosLiveTranscriptionBridge: LiveTranscriptionBridge {
         SFSpeechRecognizer.requestAuthorization { [weak self] status in
             guard let self = self else { return }
             DispatchQueue.main.async {
-                NSLog("[LiveSTT] auth status raw=\(status.rawValue)")
+                dbg("auth status raw=\(status.rawValue)")
                 switch status {
                 case .authorized:
-                    NSLog("[LiveSTT] authorized — beginning session")
+                    dbg("authorized — beginning session")
                     self.beginSession()
                 case .denied:
-                    NSLog("[LiveSTT] DENIED")
+                    dbg("DENIED")
                     LiveTranscriptionRegistrar.shared.onError(message: "Speech permission denied")
                 case .restricted:
                     LiveTranscriptionRegistrar.shared.onError(message: "Speech recognition restricted")
@@ -53,15 +59,15 @@ final class IosLiveTranscriptionBridge: LiveTranscriptionBridge {
     }
 
     private func beginSession() {
-        NSLog("[LiveSTT] beginSession()")
+        dbg("beginSession()")
         let locale = mapLocale(languageCode)
         guard let rec = SFSpeechRecognizer(locale: locale) else {
-            NSLog("[LiveSTT] recognizer init nil for \(locale.identifier)")
+            dbg("recognizer init nil for \(locale.identifier)")
             LiveTranscriptionRegistrar.shared.onError(message: "Recognizer not available for \(locale.identifier)")
             return
         }
         guard rec.isAvailable else {
-            NSLog("[LiveSTT] recognizer.isAvailable = false")
+            dbg("recognizer.isAvailable = false")
             LiveTranscriptionRegistrar.shared.onError(message: "Recognizer temporarily unavailable")
             return
         }
@@ -72,9 +78,9 @@ final class IosLiveTranscriptionBridge: LiveTranscriptionBridge {
         do {
             try session.setCategory(.playAndRecord, mode: .default, options: [.allowBluetooth, .defaultToSpeaker])
             try session.setActive(true, options: .notifyOthersOnDeactivation)
-            NSLog("[LiveSTT] session set OK")
+            dbg("session set OK")
         } catch {
-            NSLog("[LiveSTT] session error: \(error.localizedDescription)")
+            dbg("session error: \(error.localizedDescription)")
             LiveTranscriptionRegistrar.shared.onError(message: "Audio session: \(error.localizedDescription)")
             return
         }
@@ -97,9 +103,9 @@ final class IosLiveTranscriptionBridge: LiveTranscriptionBridge {
             do {
                 let url = URL(fileURLWithPath: path)
                 self.audioFile = try AVAudioFile(forWriting: url, settings: recordingFormat.settings)
-                NSLog("[LiveSTT] audioFile opened at \(path)")
+                dbg("audioFile opened at \(path)")
             } catch {
-                NSLog("[LiveSTT] audioFile open failed: \(error.localizedDescription) — Gemini polish 비활성")
+                dbg("audioFile open failed: \(error.localizedDescription) — Gemini polish 비활성")
                 self.audioFile = nil
             }
         }
@@ -115,9 +121,9 @@ final class IosLiveTranscriptionBridge: LiveTranscriptionBridge {
         audioEngine.prepare()
         do {
             try audioEngine.start()
-            NSLog("[LiveSTT] audio engine started")
+            dbg("audio engine started")
         } catch {
-            NSLog("[LiveSTT] engine start error: \(error.localizedDescription)")
+            dbg("engine start error: \(error.localizedDescription)")
             LiveTranscriptionRegistrar.shared.onError(message: "Audio engine: \(error.localizedDescription)")
             return
         }
@@ -127,7 +133,7 @@ final class IosLiveTranscriptionBridge: LiveTranscriptionBridge {
             guard let self = self else { return }
             if let result = result {
                 let text = result.bestTranscription.formattedString
-                NSLog("[LiveSTT] result text='\(text)' isFinal=\(result.isFinal)")
+                dbg("result text='\(text)' isFinal=\(result.isFinal)")
                 if result.isFinal {
                     // 한 세션 종료 — 누적 confirmed 로 이관
                     if !text.isEmpty {
@@ -176,7 +182,7 @@ final class IosLiveTranscriptionBridge: LiveTranscriptionBridge {
             audioFile = nil
             try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
             LiveTranscriptionRegistrar.shared.onIdle()
-            NSLog("[LiveSTT] session ended (final), audioFile closed")
+            dbg("session ended (final), audioFile closed")
         }
     }
 

@@ -15,6 +15,8 @@ internal class AndroidCredentialService(
 
     private val appContext = context.applicationContext
 
+    override val isAppleSignInAvailable: Boolean = false
+
     override suspend fun signInWithGoogle(
         activity: Any?,
         serverClientId: String,
