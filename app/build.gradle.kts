@@ -103,7 +103,7 @@ android {
             buildConfigField("String", "SUPABASE_ANON_KEY", "\"${localProperties.getProperty("supabase.prod.anon.key", "")}\"")
             buildConfigField("String", "ADMOB_REWARD_AD_UNIT_ID", "\"${localProperties.getProperty("admob.reward.ad.unit.id", testRewardAdUnitId)}\"")
             buildConfigField("String", "ADMOB_TEST_DEVICE_IDS", "\"${localProperties.getProperty("admob.test.device.ids", "")}\"")
-            buildConfigField("String", "REVENUECAT_API_KEY", "\"${localProperties.getProperty("revenuecat.android.api.key", "")}\"")
+            buildConfigField("String", "REVENUECAT_API_KEY", "\"${localProperties.getProperty("revenuecat.android.prod.api.key", "")}\"")
         }
     }
 }
