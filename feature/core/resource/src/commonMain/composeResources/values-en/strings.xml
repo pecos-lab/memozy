@@ -256,7 +256,7 @@
     <string name="subscription_desc">Use AI features more generously</string>
     <string name="subscription_monthly">Monthly</string>
     <string name="subscription_yearly">Yearly</string>
-    <string name="subscription_yearly_discount">30%% off</string>
+    <string name="subscription_yearly_discount">30% off</string>
     <string name="subscription_feature_youtube">YouTube summary</string>
     <string name="subscription_feature_web">Web page summary</string>
     <string name="subscription_feature_ocr">Photo summary</string>

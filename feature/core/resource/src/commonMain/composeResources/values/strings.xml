@@ -256,7 +256,7 @@
     <string name="subscription_desc">AI 기능을 더 넉넉하게 사용하세요</string>
     <string name="subscription_monthly">월간 구독</string>
     <string name="subscription_yearly">연간 구독</string>
-    <string name="subscription_yearly_discount">30%% 할인</string>
+    <string name="subscription_yearly_discount">30% 할인</string>
     <string name="subscription_feature_youtube">유튜브 요약</string>
     <string name="subscription_feature_web">웹페이지 요약</string>
     <string name="subscription_feature_ocr">사진 요약</string>
