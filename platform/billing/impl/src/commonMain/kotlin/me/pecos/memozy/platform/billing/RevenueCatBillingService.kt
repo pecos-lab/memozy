@@ -68,6 +68,7 @@ class RevenueCatBillingService(
     override val subscriptionDetail: StateFlow<SubscriptionDetail> = _subscriptionDetail.asStateFlow()
 
     override fun connect() {
+        println("[RC] connect() called — isConfigured=${Purchases.isConfigured}")
         if (!Purchases.isConfigured) {
             _isConnected.value = false
             return
@@ -133,7 +134,14 @@ class RevenueCatBillingService(
             Purchases.sharedInstance.awaitRestoreResult()
                 .onSuccess { info ->
                     applyCustomerInfo(info)
-                    _purchaseState.value = PurchaseState.Success
+                    // active entitlement 가 없으면 "Pro 활성화" 메시지는 misleading.
+                    // 복원할 활성 구독이 없다고 명확히 알림.
+                    val hasActivePro = info.entitlements.active[ENTITLEMENT_PRO] != null
+                    _purchaseState.value = if (hasActivePro) {
+                        PurchaseState.Success
+                    } else {
+                        PurchaseState.Error("복원할 활성 구독이 없습니다.")
+                    }
                 }
                 .onFailure { handlePurchaseFailure(it) }
         }
@@ -154,21 +162,42 @@ class RevenueCatBillingService(
     private fun startAuthSync() {
         authJob?.cancel()
         authJob = scope.launch {
+            println("[RC] startAuthSync: collection started")
             authRepository.authState
-                .map { state -> (state as? AuthState.Authenticated)?.user?.id }
+                .map { state ->
+                    println("[RC] authState raw: ${state::class.simpleName}")
+                    (state as? AuthState.Authenticated)?.user?.id
+                }
                 .distinctUntilChanged()
-                .collect { userId -> syncAppUserId(userId) }
+                .collect { userId ->
+                    println("[RC] authState mapped userId=$userId")
+                    syncAppUserId(userId)
+                }
         }
     }
 
     private suspend fun syncAppUserId(userId: String?) {
-        if (!Purchases.isConfigured) return
+        if (!Purchases.isConfigured) {
+            println("[RC] syncAppUserId skipped: Purchases not configured")
+            return
+        }
         if (userId != null) {
+            println("[RC] syncAppUserId: logIn($userId)")
             Purchases.sharedInstance.awaitLogInResult(userId)
-                .onSuccess { applyCustomerInfo(it.customerInfo) }
+                .onSuccess {
+                    println("[RC] logIn success — created=${it.created}")
+                    applyCustomerInfo(it.customerInfo)
+                }
+                .onFailure { error ->
+                    println("[RC] logIn failure: ${error.message}")
+                }
         } else {
+            println("[RC] syncAppUserId: logOut (anonymous)")
             Purchases.sharedInstance.awaitLogOutResult()
                 .onSuccess { applyCustomerInfo(it) }
+                .onFailure { error ->
+                    println("[RC] logOut failure: ${error.message}")
+                }
         }
     }
 
@@ -176,6 +205,11 @@ class RevenueCatBillingService(
         Purchases.sharedInstance.awaitOfferingsResult()
             .onSuccess { offerings ->
                 val current = offerings.current
+                println(
+                    "[RC] Offerings result: current.identifier=${current?.identifier}, " +
+                        "availablePackages.size=${current?.availablePackages?.size ?: 0}, " +
+                        "productIds=${current?.availablePackages?.map { it.storeProduct.id }}"
+                )
                 if (current == null) {
                     _subscriptionProducts.value = emptyList()
                     return@onSuccess
@@ -193,6 +227,9 @@ class RevenueCatBillingService(
                         billingPeriod = pkg.storeProduct.period?.toIso8601().orEmpty(),
                     )
                 }
+            }
+            .onFailure { error ->
+                println("[RC] Offerings failure: ${error.message}")
             }
     }
 
@@ -220,6 +257,11 @@ class RevenueCatBillingService(
     }
 
     private fun applyCustomerInfo(info: CustomerInfo) {
+        println(
+            "[RC] CustomerInfo applied: active=${info.entitlements.active.keys}, " +
+                "all=${info.entitlements.all.keys}, " +
+                "active['$ENTITLEMENT_PRO']=${info.entitlements.active[ENTITLEMENT_PRO]?.productIdentifier}"
+        )
         val proEntitlement = info.entitlements.active[ENTITLEMENT_PRO]
         if (proEntitlement != null) {
             _subscriptionTier.value = SubscriptionTier.PRO

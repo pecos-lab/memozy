@@ -311,8 +311,27 @@ fun SubscriptionScreen(
             }
 
             // ── 구독 상품 카드 ──
-            val monthly = subscriptionProducts.find { it.productId == BillingService.SUB_PRO_MONTHLY }
-            val yearly = subscriptionProducts.find { it.productId == BillingService.SUB_PRO_YEARLY }
+            // Google Play 는 storeProduct.id 를 "pro_monthly:monthly-base" 형태로 반환할 수 있음.
+            // BillingService.SUB_PRO_MONTHLY 는 base subscription product id ("pro_monthly") 라
+            // 정확히 == 비교하면 매칭 실패. startsWith 로 base plan suffix 까지 허용.
+            val monthly = subscriptionProducts.find { it.productId.startsWith(BillingService.SUB_PRO_MONTHLY) }
+            val yearly = subscriptionProducts.find { it.productId.startsWith(BillingService.SUB_PRO_YEARLY) }
+
+            if (monthly != null) {
+                SubscriptionCard(
+                    label = stringResource(Res.string.subscription_monthly),
+                    price = monthly.formattedPrice,
+                    isCurrentPlan = currentTier.isPro,
+                    onClick = {
+                        if (activity != null && !currentTier.isPro) {
+                            // 실제 storeProduct.id (예: "pro_monthly:monthly-base") 그대로 전달.
+                            // BillingService 의 subscriptionPackages 맵 키와 일치시켜야 lookup 성공.
+                            billingService.launchSubscriptionFlow(activity, monthly.productId)
+                        }
+                    }
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
             if (yearly != null) {
                 SubscriptionCard(
@@ -323,21 +342,7 @@ fun SubscriptionScreen(
                     isRecommended = true,
                     onClick = {
                         if (activity != null && !currentTier.isPro) {
-                            billingService.launchSubscriptionFlow(activity, BillingService.SUB_PRO_YEARLY)
-                        }
-                    }
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-
-            if (monthly != null) {
-                SubscriptionCard(
-                    label = stringResource(Res.string.subscription_monthly),
-                    price = monthly.formattedPrice,
-                    isCurrentPlan = currentTier.isPro,
-                    onClick = {
-                        if (activity != null && !currentTier.isPro) {
-                            billingService.launchSubscriptionFlow(activity, BillingService.SUB_PRO_MONTHLY)
+                            billingService.launchSubscriptionFlow(activity, yearly.productId)
                         }
                     }
                 )
