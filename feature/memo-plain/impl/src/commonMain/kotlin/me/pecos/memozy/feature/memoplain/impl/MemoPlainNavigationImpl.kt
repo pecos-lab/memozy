@@ -68,6 +68,7 @@ import me.pecos.memozy.platform.intent.AppPermission
 import me.pecos.memozy.platform.intent.PermissionService
 import me.pecos.memozy.platform.intent.PermissionStatus
 import me.pecos.memozy.platform.intent.SharedContentReader
+import me.pecos.memozy.platform.intent.ToastPresenter
 import me.pecos.memozy.platform.intent.percentDecodeUtf8
 import me.pecos.memozy.platform.media.AudioFileStore
 import me.pecos.memozy.platform.media.AudioRecorder
@@ -109,8 +110,36 @@ class MemoPlainNavigationImpl(
         private const val FEATURE_AI_ASSIST = "ai_assist"
         private const val MAX_DAILY_AD_VIEWS = 3
         private const val MAX_MEMO_CONTEXT_CHARS = 3000
-        private const val MEMOZY_AI_SYSTEM_ROLE = "너는 Memozy AI야. 메모지 앱의 AI 어시스턴트로, 사용자의 메모 작성을 돕는 게 너의 역할이야. 너의 이름은 'Memozy AI'이고, 다른 AI 서비스의 이름으로 자신을 소개하면 안 돼. 사용자가 '너 누구야?' 등 정체를 물어볼 때만 'Memozy AI입니다! 메모 작성을 도와드릴게요' 라고 답해. 그 외에는 자기소개 없이 바로 답변해. 인사말, 도입부('도와드릴게요', '해결책을 찾아볼게요', '물론이죠', '네!' 등) 없이 핵심 내용부터 바로 시작해."
+        private const val MEMOZY_AI_SYSTEM_ROLE = "너는 Memozy AI야. 메모지 앱의 AI 어시스턴트로, 사용자의 메모 작성을 돕는 게 너의 역할이야. 너의 이름은 'Memozy AI'이고, 다른 AI 서비스의 이름으로 자신을 소개하면 안 돼. 사용자가 '너 누구야?' 등 정체를 물어볼 때만 'Memozy AI입니다! 메모 작성을 도와드릴게요' 라고 답해. 그 외에는 자기소개 없이 바로 답변해. 도입부 인사('도와드릴게요', '물론이죠', '네!' 등)는 생략하고 본문부터 시작하되, 톤은 친근하고 다정하게(반말은 쓰지 마). 단답으로 끊지 말고 충분히 살을 붙여 꼼꼼하게 설명해 — 정의 → 배경/원리 → 예시 → 관련 맥락 순으로 자연스럽게 풀어줘. 사용자가 더 깊이 알고 싶을 만한 포인트가 있으면 슬쩍 짚어주는 것도 좋아."
         private const val NO_MARKDOWN_RULE = "마크다운 문법(**, ##, - 등)을 절대 사용하지 마. 순수 텍스트로만 답해."
+
+        // 메모 자체 조작 요청 시 AI 가 출력해야 하는 액션 명령 사양.
+        // 일반 질문 (정보/설명/의견) 은 평소처럼 텍스트로 답하고, 메모를 직접 수정하라는
+        // 요청에만 액션 명령을 단독으로 출력한다.
+        private val MEMOZY_AI_ACTION_RULES = """
+사용자가 메모 자체를 수정/조작하라고 요청하면 일반 텍스트 답변 대신 아래 액션 명령 중 하나만 정확한 형식으로, 다른 부가 텍스트 없이 출력해.
+
+지원 액션:
+[ACTION:CLEAR]                    — 본문 비우기
+[ACTION:BOLD_ALL]                 — 본문 전체 굵게
+[ACTION:ITALIC_ALL]               — 본문 전체 이탤릭
+[ACTION:UNDERLINE_ALL]            — 본문 전체 밑줄
+[ACTION:REPLACE]
+새 본문 내용 (여러 줄 가능)
+[/ACTION]                         — 본문을 통째로 교체 (번역/다듬기/정리 등)
+[ACTION:APPEND]
+끝에 추가할 내용
+[/ACTION]                         — 본문 끝에 새 내용 덧붙이기
+
+요청 → 액션 매핑 예시:
+"메모 지워줘" → [ACTION:CLEAR]
+"전체 볼드로 만들어줘" → [ACTION:BOLD_ALL]
+"이거 영어로 번역해서 본문 바꿔줘" → [ACTION:REPLACE] + (번역된 영어 본문) + [/ACTION]
+"오타 다듬어줘" → [ACTION:REPLACE] + (다듬은 본문) + [/ACTION]
+"맨 끝에 '내일 회의' 한 줄 추가" → [ACTION:APPEND] + 내일 회의 + [/ACTION]
+
+단, 일반 질문/설명/의견 요청에는 액션 명령을 쓰지 말고 평소처럼 친근한 텍스트로 답해.
+            """.trimIndent()
 
         private fun stripMarkdown(text: String): String = text
             .replace(Regex("""^\s*#{1,6}\s+""", RegexOption.MULTILINE), "")  // ### 제목
@@ -442,6 +471,12 @@ class MemoPlainNavigationImpl(
                 )
             }
 
+            // AI 사용 1회 차감. 화면 재진입 전까지 카운터 sync 를 위해 in-memory 도 같이 +1.
+            val consumeAiQuota: (String) -> Unit = { feature ->
+                dailyUsageCount++
+                scope.launch { aiUsageDao.insert(AiUsage(feature = feature)) }
+            }
+
             // 이미지 OCR 처리
             var imageOcrState by remember { mutableStateOf<SummaryState>(SummaryState.Idle) }
             val sharedContentReader: SharedContentReader = koinInject()
@@ -558,6 +593,22 @@ class MemoPlainNavigationImpl(
             var transcriptionResult by remember { mutableStateOf<String?>(null) }
             var transcriptionError by remember { mutableStateOf<String?>(null) }
             var savedAudioPath by remember { mutableStateOf<String?>(null) }
+            // 녹음 끝난 직후 사용자에게 "저장/닫기" 결정 받기 위한 pending state.
+            // 파일은 이미 permanent 로 옮겨져 안전 — 닫기 시에만 삭제.
+            var pendingAudioPath by remember { mutableStateOf<String?>(null) }
+            var pendingAudioDurationSeconds by remember { mutableStateOf(0L) }
+            // Web summary busy — 가드 검사용으로 다른 busy state 와 같은 위치에 선언
+            var isWebSummarizing by remember { mutableStateOf(false) }
+
+            val toastPresenter: ToastPresenter = koinInject()
+            // AI 기능 중복 실행 가드 — 어느 하나라도 진행 중이면 다른 entry point 차단
+            val isAnyAiBusy = isRecording || isTranscribing || isWebSummarizing ||
+                inlineSummaryState is SummaryState.Loading ||
+                inlineSummaryState is SummaryState.Streaming ||
+                isAiAssistLoading
+            val notifyAiBusy: () -> Unit = {
+                toastPresenter.show("다른 AI 작업이 진행 중이에요. 잠시 후 다시 시도해주세요.")
+            }
             // 에러/결과 메시지 3초 후 자동 해제
             LaunchedEffect(transcriptionError) {
                 if (transcriptionError != null) {
@@ -605,6 +656,14 @@ class MemoPlainNavigationImpl(
             }
 
             fun startRecording() {
+                if (isAnyAiBusy) {
+                    notifyAiBusy()
+                    return
+                }
+                if (!canUseAi) {
+                    notifyAiBlocked()
+                    return
+                }
                 transcriptionResult = null
                 if (permissionService.status(AppPermission.RECORD_AUDIO) == PermissionStatus.GRANTED) {
                     beginRecording()
@@ -623,6 +682,14 @@ class MemoPlainNavigationImpl(
                 audioRecorder = null
                 isRecording = false
 
+                // 녹음 도중 다른 AI 사용으로 한도 초과되면 transcription 차단.
+                // 녹음 캐시는 폐기 — 결과 보존 시 사용자가 잘못 이해할 수 있음.
+                if (!canUseAi) {
+                    audioFileStore.delete(audioCachePath)
+                    notifyAiBlocked()
+                    return
+                }
+
                 // Live STT 결과를 최종 — Gemini polish 제거 (Gemini 가 WAV 포맷 이슈로 hallucinate 발생)
                 // Live STT 텍스트가 있으면 그대로 본문에 남기고 종료. 파일은 audio playback 용으로 영구 저장.
                 val liveTextFinal = liveTranscriptionService.confirmedText.value.ifBlank {
@@ -640,9 +707,11 @@ class MemoPlainNavigationImpl(
                             audioFileStore.copy(audioCachePath, permanentPath)
                             audioFileStore.delete(audioCachePath)
                             savedAudioPath = permanentPath
+                            pendingAudioPath = permanentPath
+                            pendingAudioDurationSeconds = durationSeconds
                         }
                     }
-                    scope.launch { aiUsageDao.insert(AiUsage(feature = FEATURE_TRANSCRIPTION)) }
+                    consumeAiQuota(FEATURE_TRANSCRIPTION)
                     return
                 }
 
@@ -676,10 +745,12 @@ class MemoPlainNavigationImpl(
                             audioFileStore.copy(audioCachePath, permanentPath)
                             audioFileStore.delete(audioCachePath)
                             savedAudioPath = permanentPath
+                            pendingAudioPath = permanentPath
+                            pendingAudioDurationSeconds = durationSeconds
 
                             transcriptionResult = result
                             transcriptionError = null
-                            aiUsageDao.insert(AiUsage(feature = FEATURE_TRANSCRIPTION))
+                            consumeAiQuota(FEATURE_TRANSCRIPTION)
                         }
                     } catch (e: Exception) {
                         transcriptionError = "음성 변환에 실패했어요."
@@ -690,8 +761,7 @@ class MemoPlainNavigationImpl(
                 }
             }
 
-            // 웹 요약 상태
-            var isWebSummarizing by remember { mutableStateOf(false) }
+            // 웹 요약 상태 (isWebSummarizing 은 위쪽에 선언됨 — 가드용)
             var webSummaryResult by remember { mutableStateOf<String?>(null) }
             var webSummaryError by remember { mutableStateOf<String?>(null) }
             var webPageTitle by remember { mutableStateOf<String?>(null) }
@@ -751,6 +821,19 @@ class MemoPlainNavigationImpl(
                 transcriptionResult = transcriptionResult,
                 transcriptionError = transcriptionError,
                 audioPath = savedAudioPath,
+                pendingAudioPath = pendingAudioPath,
+                pendingAudioDurationSeconds = pendingAudioDurationSeconds,
+                onSaveRecording = {
+                    pendingAudioPath = null
+                },
+                onDiscardRecording = {
+                    val path = pendingAudioPath
+                    if (path != null) {
+                        scope.launch { audioFileStore.delete(path) }
+                    }
+                    savedAudioPath = null
+                    pendingAudioPath = null
+                },
                 onCancelSummarize = {
                     currentSummarizeJob?.cancel()
                     currentSummarizeJob = null
@@ -759,6 +842,10 @@ class MemoPlainNavigationImpl(
                     isTranscribing = false
                 },
                 onWebSummarize = { url, mode ->
+                    if (isAnyAiBusy) {
+                        notifyAiBusy()
+                        return@MemoScreen
+                    }
                     if (!canUseAi) {
                         notifyAiBlocked()
                         return@MemoScreen
@@ -779,7 +866,7 @@ class MemoPlainNavigationImpl(
                                     )
                                 }
                                 webSummaryResult = summary
-                                aiUsageDao.insert(AiUsage(feature = FEATURE_WEB_SUMMARY))
+                                consumeAiQuota(FEATURE_WEB_SUMMARY)
                             }
                         } catch (e: Exception) {
                             webSummaryError = when {
@@ -799,6 +886,10 @@ class MemoPlainNavigationImpl(
                 webSummaryError = webSummaryError,
                 webPageTitle = webPageTitle,
                 onWebSummaryStyleSelected = { style, url ->
+                    if (isAnyAiBusy) {
+                        notifyAiBusy()
+                        return@MemoScreen
+                    }
                     if (!canUseAi) {
                         notifyAiBlocked()
                         return@MemoScreen
@@ -824,7 +915,7 @@ class MemoPlainNavigationImpl(
                                     )
                                 }
                                 webSummaryResult = summary
-                                aiUsageDao.insert(AiUsage(feature = FEATURE_WEB_SUMMARY))
+                                consumeAiQuota(FEATURE_WEB_SUMMARY)
                             }
                         } catch (e: Exception) {
                             webSummaryError = when {
@@ -848,8 +939,12 @@ class MemoPlainNavigationImpl(
                     // 바텀시트에서 양식 선택 시 즉시 요약 실행
                     currentSummarizeJob?.cancel()
                     currentSummarizeJob = scope.launch {
+                        if (isAnyAiBusy) {
+                            notifyAiBusy()
+                            return@launch
+                        }
                         if (!canUseAi) {
-                            showLimitBottomSheet = true
+                            notifyAiBlocked()
                             return@launch
                         }
                         val videoId = extractVideoId(url)
@@ -886,8 +981,7 @@ class MemoPlainNavigationImpl(
                                 ))
                             }
                             inlineSummaryState = SummaryState.Success(summary)
-                            aiUsageDao.insert(AiUsage(feature = FEATURE_YOUTUBE_SUMMARY))
-                            dailyUsageCount++
+                            consumeAiQuota(FEATURE_YOUTUBE_SUMMARY)
                         } catch (e: Exception) {
                             inlineSummaryState = SummaryState.Error(e.message ?: "요약 실패")
                         }
@@ -909,8 +1003,12 @@ class MemoPlainNavigationImpl(
                     }
                     activeSummaryStyle = style
                     currentSummarizeJob = scope.launch {
+                        if (isAnyAiBusy) {
+                            notifyAiBusy()
+                            return@launch
+                        }
                         if (!canUseAi) {
-                            showLimitBottomSheet = true
+                            notifyAiBlocked()
                             return@launch
                         }
                         val videoId = extractVideoId(url)
@@ -951,8 +1049,7 @@ class MemoPlainNavigationImpl(
                             }
                             inlineSummaryState = SummaryState.Success(summary)
                             // 성공 시 사용 횟수 증가
-                            aiUsageDao.insert(AiUsage(feature = FEATURE_YOUTUBE_SUMMARY))
-                            dailyUsageCount++
+                            consumeAiQuota(FEATURE_YOUTUBE_SUMMARY)
                         } catch (e: Exception) {
                             val errorMsg = when {
                                 e.message?.contains("token count exceeds") == true ||
@@ -998,7 +1095,6 @@ class MemoPlainNavigationImpl(
                         onNavigateToHome()
                     }
                 } else null,
-                // Memozy AI
                 aiAssistStreamingText = aiAssistStreamingText,
                 isAiAssistLoading = isAiAssistLoading,
                 isAiCancelled = isAiCancelled,
@@ -1009,6 +1105,10 @@ class MemoPlainNavigationImpl(
                     isAiAssistLoading = false
                 },
                 onAiCustomSend = { userMessage, currentTitle, currentBody ->
+                    if (isAnyAiBusy) {
+                        notifyAiBusy()
+                        return@MemoScreen
+                    }
                     if (!canUseAi) {
                         notifyAiBlocked()
                         return@MemoScreen
@@ -1023,13 +1123,12 @@ class MemoPlainNavigationImpl(
                             val memoBody = if (plainBody.length > MAX_MEMO_CONTEXT_CHARS) {
                                 plainBody.take(2000) + "\n...(중략)...\n" + plainBody.takeLast(1000)
                             } else plainBody
-                            val systemRole = MEMOZY_AI_SYSTEM_ROLE
-                            val noMarkdownRule = NO_MARKDOWN_RULE
                             val prompt = buildString {
-                                appendLine(systemRole)
-                                appendLine("답변은 간결하고 핵심적으로.")
-                                appendLine("사용자가 현재 메모를 작성 중이니, 메모 내용이 있으면 참고해서 답해줘.")
-                                appendLine("메모와 관련 없는 질문이어도 자유롭게 답변해. 답변은 간결하게. $noMarkdownRule")
+                                appendLine(MEMOZY_AI_SYSTEM_ROLE)
+                                appendLine("사용자가 현재 메모를 작성 중이니, 메모 내용이 있으면 자연스럽게 참고해서 답해줘.")
+                                appendLine("메모와 관련 없는 질문이어도 자유롭게 답변하고, 살을 충분히 붙여 친근하게 풀어줘. $NO_MARKDOWN_RULE")
+                                appendLine()
+                                appendLine(MEMOZY_AI_ACTION_RULES)
                                 appendLine()
                                 if (memoBody.isNotBlank()) {
                                     appendLine("=== 현재 메모 ===")
@@ -1045,82 +1144,10 @@ class MemoPlainNavigationImpl(
                                 sb.append(delta)
                                 aiAssistStreamingText = stripMarkdown(sb.toString())
                             }
-                            // UI가 마지막 스트리밍 텍스트를 반영할 시간 확보
                             kotlinx.coroutines.yield()
                             kotlinx.coroutines.delay(50)
                             aiAssistStreamingText = null
-                            aiUsageDao.insert(AiUsage(feature = FEATURE_AI_ASSIST))
-                            dailyUsageCount++
-                        } catch (e: Exception) {
-                            aiAssistStreamingText = null
-                            if (e is kotlinx.coroutines.CancellationException) return@launch
-                        } finally {
-                            isAiAssistLoading = false
-                        }
-                    }
-                },
-                onAiPresetAction = { actionName, currentTitle, currentBody ->
-                    if (!canUseAi) {
-                        notifyAiBlocked()
-                        return@MemoScreen
-                    }
-                    aiAssistJob?.cancel()
-                    aiAssistJob = scope.launch {
-                        isAiAssistLoading = true
-                        isAiCancelled = false
-                        aiAssistStreamingText = ""
-                        try {
-                            val plainBody = currentBody.replace(Regex("<[^>]*>"), "").trim()
-                            val memoBody = if (plainBody.length > MAX_MEMO_CONTEXT_CHARS) {
-                                plainBody.take(2000) + "\n...(중략)...\n" + plainBody.takeLast(1000)
-                            } else plainBody
-                            if (memoBody.isBlank()) {
-                                aiAssistStreamingText = null
-                                return@launch
-                            }
-                            val systemRole = MEMOZY_AI_SYSTEM_ROLE
-                            val noMarkdownRule = NO_MARKDOWN_RULE
-                            val prompt = when (actionName) {
-                                "EXPLAIN" -> buildString {
-                                    appendLine(systemRole)
-                                    appendLine("아래 메모 내용을 이해하기 쉽게 풀어서 설명해줘. 어려운 용어가 있으면 쉬운 말로 바꿔줘.")
-                                    appendLine("설명문만 출력해. $noMarkdownRule")
-                                    appendLine()
-                                    appendLine("=== 메모 ===")
-                                    appendLine("제목: $currentTitle")
-                                    appendLine(memoBody)
-                                }
-                                "ORGANIZE" -> buildString {
-                                    appendLine(systemRole)
-                                    appendLine("아래 메모 내용을 깔끔하게 정리해줘. 구조화하고 가독성을 높여줘.")
-                                    appendLine("정리된 텍스트만 출력해. $noMarkdownRule")
-                                    appendLine()
-                                    appendLine("=== 메모 ===")
-                                    appendLine("제목: $currentTitle")
-                                    appendLine(memoBody)
-                                }
-                                "SUMMARIZE" -> buildString {
-                                    appendLine(systemRole)
-                                    appendLine("아래 메모 내용의 핵심만 간결하게 요약해줘. 원문의 1/3 이하로 줄여줘.")
-                                    appendLine("요약문만 출력해. $noMarkdownRule")
-                                    appendLine()
-                                    appendLine("=== 메모 ===")
-                                    appendLine("제목: $currentTitle")
-                                    appendLine(memoBody)
-                                }
-                                else -> return@launch
-                            }
-                            val sb = StringBuilder()
-                            aiApiService.generateContentStream(prompt).collect { delta ->
-                                sb.append(delta)
-                                aiAssistStreamingText = stripMarkdown(sb.toString())
-                            }
-                            // UI가 마지막 스트리밍 텍스트를 반영할 시간 확보
-                            kotlinx.coroutines.yield()
-                            kotlinx.coroutines.delay(50)
-                            aiAssistStreamingText = null
-                            aiUsageDao.insert(AiUsage(feature = FEATURE_AI_ASSIST))
-                            dailyUsageCount++
+                            consumeAiQuota(FEATURE_AI_ASSIST)
                         } catch (e: Exception) {
                             aiAssistStreamingText = null
                             if (e is kotlinx.coroutines.CancellationException) return@launch
