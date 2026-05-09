@@ -323,9 +323,9 @@ fun SubscriptionScreen(
                     price = monthly.formattedPrice,
                     isCurrentPlan = currentTier.isPro,
                     onClick = {
-                        if (activity != null && !currentTier.isPro) {
-                            // 실제 storeProduct.id (예: "pro_monthly:monthly-base") 그대로 전달.
-                            // BillingService 의 subscriptionPackages 맵 키와 일치시켜야 lookup 성공.
+                        // iOS 는 LocalActivity 가 null — RC SDK 가 activity 없이도 결제 시트 띄움.
+                        // launchSubscriptionFlow 내부에서 activity 파라미터를 사용하지 않음.
+                        if (!currentTier.isPro) {
                             billingService.launchSubscriptionFlow(activity, monthly.productId)
                         }
                     }
@@ -341,7 +341,7 @@ fun SubscriptionScreen(
                     isCurrentPlan = currentTier.isPro,
                     isRecommended = true,
                     onClick = {
-                        if (activity != null && !currentTier.isPro) {
+                        if (!currentTier.isPro) {
                             billingService.launchSubscriptionFlow(activity, yearly.productId)
                         }
                     }
@@ -374,9 +374,7 @@ fun SubscriptionScreen(
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable {
-                            urlLauncher.open("https://play.google.com/store/account/subscriptions")
-                        }
+                        .clickable { urlLauncher.openManageSubscriptions() }
                         .padding(12.dp)
                 )
             }
