@@ -51,6 +51,7 @@ import me.pecos.memozy.feature.home.api.HomeRoute
 import me.pecos.memozy.feature.memoplain.api.MemoPlainNavigation
 import me.pecos.memozy.feature.memoplain.api.MemoPlainRoute
 import me.pecos.memozy.platform.ads.AdsService
+import me.pecos.memozy.platform.billing.BillingService
 import me.pecos.memozy.presentation.components.FloatingNavPill
 import me.pecos.memozy.presentation.screen.donation.DonationScreen
 import me.pecos.memozy.presentation.screen.home.HomeScreen
@@ -63,7 +64,9 @@ import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
 import me.pecos.memozy.presentation.theme.LocalIsLoggedIn
 import me.pecos.memozy.presentation.theme.LocalRewardAdProvider
+import me.pecos.memozy.presentation.theme.LocalSubscriptionTier
 import me.pecos.memozy.presentation.theme.fontFamily
+import org.koin.compose.koinInject
 
 private const val ROUTE_DONATION = "donation"
 private const val ROUTE_SUBSCRIPTION = "subscription"
@@ -100,10 +103,16 @@ fun AppNavHost(
     val authState by settingsViewModel.authState.collectAsState()
     val isLoggedIn = authState is AuthState.Authenticated
 
+    // iOS 는 MainViewController 에서 LocalSubscriptionTier 를 provide 하지 않아 항상 FREE 로 보였음.
+    // commonMain 에서 BillingService 의 tier 를 직접 collect 해서 두 플랫폼 모두 일관 적용.
+    val billingService: BillingService = koinInject()
+    val currentTier by billingService.subscriptionTier.collectAsState()
+
     CompositionLocalProvider(
         LocalFontSettings provides fontSettings,
         LocalIsLoggedIn provides isLoggedIn,
         LocalRewardAdProvider provides adsService,
+        LocalSubscriptionTier provides currentTier,
     ) {
     AppThemeShell(isDarkTheme = isDarkTheme) {
         val appColors = LocalAppColors.current

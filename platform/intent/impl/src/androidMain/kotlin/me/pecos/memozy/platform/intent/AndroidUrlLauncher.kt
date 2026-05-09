@@ -32,4 +32,7 @@ class AndroidUrlLauncher(
             }.getOrDefault(false)
         }
     }
+
+    override fun openManageSubscriptions(): Boolean =
+        open("https://play.google.com/store/account/subscriptions")
 }

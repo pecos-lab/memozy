@@ -672,33 +672,36 @@ fun SettingsScreen(
                                 Text(stringResource(Res.string.sign_in_google), fontSize = fontSettings.scaled(14))
                             }
 
-                            Spacer(modifier = Modifier.height(6.dp))
+                            // Apple 로 계속하기 — iOS 만 노출. Android 는 OAuth Web flow 미구현이라 버튼 자체 숨김.
+                            if (credentialService.isAppleSignInAvailable) {
+                                Spacer(modifier = Modifier.height(6.dp))
 
-                            OutlinedButton(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp),
-                                border = BorderStroke(1.dp, colors.cardBorder),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
-                                onClick = {
-                                    scope.launch {
-                                        val result = credentialService.signInWithApple(activity = activity)
-                                        when (result) {
-                                            is AppleSignInResult.Success ->
-                                                settingsViewModel.signInWithApple(result.idToken, result.rawNonce)
-                                            is AppleSignInResult.Cancelled -> Unit
-                                            is AppleSignInResult.Error -> {
-                                                println("SettingsAuth: Apple sign-in failed: ${result.message}")
-                                                toastPresenter.show(getString(Res.string.sign_in_error))
+                                OutlinedButton(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp),
+                                    border = BorderStroke(1.dp, colors.cardBorder),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textTitle),
+                                    onClick = {
+                                        scope.launch {
+                                            val result = credentialService.signInWithApple(activity = activity)
+                                            when (result) {
+                                                is AppleSignInResult.Success ->
+                                                    settingsViewModel.signInWithApple(result.idToken, result.rawNonce)
+                                                is AppleSignInResult.Cancelled -> Unit
+                                                is AppleSignInResult.Error -> {
+                                                    println("SettingsAuth: Apple sign-in failed: ${result.message}")
+                                                    toastPresenter.show(getString(Res.string.sign_in_error))
+                                                }
                                             }
                                         }
                                     }
+                                ) {
+                                    Text("\uF8FF", fontSize = fontSettings.scaled(16))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(stringResource(Res.string.sign_in_apple), fontSize = fontSettings.scaled(14))
                                 }
-                            ) {
-                                Text("\uF8FF", fontSize = fontSettings.scaled(16))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(Res.string.sign_in_apple), fontSize = fontSettings.scaled(14))
                             }
                         }
                     }
