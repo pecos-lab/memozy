@@ -145,8 +145,6 @@ import me.pecos.memozy.presentation.screen.memo.components.SummaryStyleBottomShe
 import me.pecos.memozy.presentation.screen.memo.components.YouTubeSummaryInlineCard
 import me.pecos.memozy.presentation.screen.memo.components.YouTubeLinkBottomSheet
 import me.pecos.memozy.presentation.screen.memo.components.YouTubeUrlDialog
-import me.pecos.memozy.presentation.screen.memo.components.AiActionMenu
-import me.pecos.memozy.presentation.screen.memo.components.AiPresetAction
 import me.pecos.memozy.presentation.screen.memo.components.MemoActionBar
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
@@ -243,6 +241,10 @@ fun MemoScreen(
     transcriptionResult: String? = null,
     transcriptionError: String? = null,
     audioPath: String? = null,
+    pendingAudioPath: String? = null,
+    pendingAudioDurationSeconds: Long = 0L,
+    onSaveRecording: (() -> Unit)? = null,
+    onDiscardRecording: (() -> Unit)? = null,
     onWebSummarize: ((url: String, mode: SummaryMode) -> Unit)? = null,
     onCancelSummarize: (() -> Unit)? = null,
     isWebSummarizing: Boolean = false,
@@ -252,7 +254,6 @@ fun MemoScreen(
     onSummaryStyleSelected: ((SummaryStyle, String) -> Unit)? = null,
     onWebSummaryStyleSelected: ((SummaryStyle, String) -> Unit)? = null,
     // Memozy AI — (actionName, currentTitle, currentBody)
-    onAiPresetAction: ((String, String, String) -> Unit)? = null,
     onAiCustomSend: ((String, String, String) -> Unit)? = null,
     onAiCancel: (() -> Unit)? = null,
     isAiCancelled: Boolean = false,
@@ -362,44 +363,98 @@ fun MemoScreen(
         }
     }
 
-    // Memozy AI 스트리밍 → 본문 끝에 실시간 반영
+    // Memozy AI 스트리밍 → 본문 끝에 실시간 반영 (단, 액션 명령은 제외)
     var aiInsertAnchorHtml by remember { mutableStateOf("") }
     var aiInsertAnchorPlain by remember { mutableStateOf("") }
     var lastStreamedText by remember { mutableStateOf("") }
 
-    // aiAssistStreamingText 변경될 때마다 직접 반응
+    fun escHtml(s: String) = s
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace("\n", "<br>")
+
+    // 액션 명령 파싱: 단일형 ([ACTION:CLEAR] 등) 과 페이로드형 ([ACTION:REPLACE]\n...\n[/ACTION])
+    val singleActionRegex = Regex("""\A\s*\[ACTION:(CLEAR|BOLD_ALL|ITALIC_ALL|UNDERLINE_ALL)]\s*\z""")
+    val payloadActionRegex = Regex("""\A\s*\[ACTION:(REPLACE|APPEND)]\s*\n([\s\S]*?)\n\s*\[/ACTION]\s*\z""")
+
+    fun looksLikeAction(s: String): Boolean = s.trimStart().startsWith("[ACTION:")
+
+    fun executeAiAction(type: String, payload: String?) {
+        when (type) {
+            "CLEAR" -> {
+                richTextState.setHtml("")
+                bodyText = ""
+            }
+            "BOLD_ALL", "ITALIC_ALL", "UNDERLINE_ALL" -> {
+                val plain = richTextState.annotatedString.text
+                if (plain.isNotEmpty()) {
+                    val tag = when (type) {
+                        "BOLD_ALL" -> "strong"; "ITALIC_ALL" -> "em"; else -> "u"
+                    }
+                    richTextState.setHtml("<p><$tag>${escHtml(plain)}</$tag></p>")
+                    bodyText = richTextState.annotatedString.text
+                }
+            }
+            "REPLACE" -> {
+                val text = payload.orEmpty()
+                richTextState.setHtml("<p>${escHtml(text)}</p>")
+                bodyText = text
+            }
+            "APPEND" -> {
+                val text = payload.orEmpty()
+                val current = richTextState.annotatedString.text
+                val joined = if (current.isBlank()) text else "$current\n\n$text"
+                richTextState.setHtml("<p>${escHtml(joined)}</p>")
+                bodyText = joined
+            }
+        }
+    }
+
     LaunchedEffect(aiAssistStreamingText) {
         val streaming = aiAssistStreamingText
         if (streaming != null) {
             if (aiInsertAnchorHtml.isEmpty()) {
-                // 스트리밍 시작 — 앵커 저장 (1회)
                 aiInsertAnchorHtml = richTextState.toHtml()
                 aiInsertAnchorPlain = richTextState.annotatedString.text
                 lastStreamedText = ""
             }
-            // 스트리밍 중 — bodyText 업데이트
             if (streaming.isNotBlank()) {
                 lastStreamedText = streaming
-                val separator = if (aiInsertAnchorPlain.isBlank()) "" else "\n\n"
-                bodyText = aiInsertAnchorPlain + separator + streaming
+                // 액션 명령 진행 중이면 본문에 노출하지 않음 — 완료 시 일괄 실행
+                if (!looksLikeAction(streaming)) {
+                    val separator = if (aiInsertAnchorPlain.isBlank()) "" else "\n\n"
+                    bodyText = aiInsertAnchorPlain + separator + streaming
+                }
             }
         } else if (aiInsertAnchorHtml.isNotEmpty()) {
-            // 스트리밍 완료 또는 취소
             if (isAiCancelled) {
-                // 취소 — 본문 원복
                 richTextState.setHtml(aiInsertAnchorHtml)
                 bodyText = richTextState.annotatedString.text
             } else if (lastStreamedText.isNotBlank()) {
-                // 완료 — richTextState에 최종 결과 반영
-                val escapedAi = lastStreamedText.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
-                val anchorHtml = aiInsertAnchorHtml.trimEnd()
-                val finalHtml = if (anchorHtml.isBlank() || anchorHtml == "<p><br></p>") {
-                    "<p>$escapedAi</p>"
-                } else {
-                    "$anchorHtml<p><br></p><p>$escapedAi</p>"
+                val singleMatch = singleActionRegex.matchEntire(lastStreamedText)
+                val payloadMatch = payloadActionRegex.matchEntire(lastStreamedText)
+                when {
+                    singleMatch != null -> {
+                        // 액션 — 본문 그대로 두고 명령만 실행
+                        executeAiAction(singleMatch.groupValues[1], null)
+                    }
+                    payloadMatch != null -> {
+                        executeAiAction(payloadMatch.groupValues[1], payloadMatch.groupValues[2])
+                    }
+                    else -> {
+                        // 일반 텍스트 응답 — 본문 끝에 삽입 (기존 동작)
+                        val escapedAi = escHtml(lastStreamedText)
+                        val anchorHtml = aiInsertAnchorHtml.trimEnd()
+                        val finalHtml = if (anchorHtml.isBlank() || anchorHtml == "<p><br></p>") {
+                            "<p>$escapedAi</p>"
+                        } else {
+                            "$anchorHtml<p><br></p><p>$escapedAi</p>"
+                        }
+                        richTextState.setHtml(finalHtml)
+                        bodyText = richTextState.annotatedString.text
+                    }
                 }
-                richTextState.setHtml(finalHtml)
-                bodyText = richTextState.annotatedString.text
             }
             aiInsertAnchorHtml = ""
             aiInsertAnchorPlain = ""
@@ -468,11 +523,11 @@ fun MemoScreen(
     val colors = LocalAppColors.current  // ← CompositionLocal에서 현재 테마 색상 가져옴
     val fontSettings = LocalFontSettings.current
 
-    var showAiActionMenu by remember { mutableStateOf(false) }
     var showAiCustomInput by remember { mutableStateOf(false) }
-    // AI 액션 메뉴 / 기타 바텀시트 띄울 때 키보드 먼저 내리기 — IME 와 ModalBottomSheet 가 충돌해서
-    // 시트가 가려지거나 위치가 어긋나 보이는 문제 방지.
+    // AI 채팅 툴바 띄울 때 키보드 먼저 내리기 — IME 와 입력 툴바 위치 충돌 방지.
     val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+    // 본문 포커스 — AI 채팅 닫을 때 복원해서 키보드/툴바 유지
+    val bodyFocusRequester = remember { FocusRequester() }
 
     // containerColor 명시 → MaterialTheme.colorScheme.surface 무시
     Scaffold(
@@ -580,9 +635,6 @@ fun MemoScreen(
                     .verticalScroll(scrollState)
                     .padding(horizontal = 32.dp, vertical = 16.dp)
             ) {
-                // 제목 — 개행 시 내용으로 포커스 이동
-                val bodyFocusRequester = remember { FocusRequester() }
-
                 // 메모 진입 시 본문에 자동 포커스 + 키보드 표시 (노션 스타일) — 신규/편집 모두
                 LaunchedEffect(Unit) {
                     kotlinx.coroutines.delay(100) // 컴포지션 안정화 대기
@@ -805,6 +857,34 @@ fun MemoScreen(
                         }
                     }
                 )
+
+                // 녹음 후 저장 여부 확인 카드 — pendingAudioPath 가 있는 동안만 노출
+                if (pendingAudioPath != null && onSaveRecording != null && onDiscardRecording != null) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(colors.chipBackground.copy(alpha = 0.5f))
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        val mm = pendingAudioDurationSeconds / 60
+                        val ss = pendingAudioDurationSeconds % 60
+                        Text(
+                            text = "🎙 녹음 (${mm}:${ss.toString().padStart(2, '0')})",
+                            fontSize = fontSettings.scaled(14),
+                            color = colors.textBody,
+                            modifier = Modifier.weight(1f),
+                        )
+                        TextButton(onClick = onSaveRecording) {
+                            Text("저장", fontSize = fontSettings.scaled(13), color = colors.chipText)
+                        }
+                        TextButton(onClick = onDiscardRecording) {
+                            Text("닫기", fontSize = fontSettings.scaled(13), color = colors.textBody.copy(alpha = 0.6f))
+                        }
+                    }
+                }
 
                 // 본문 아래 빈 공간도 탭하면 본문에 포커스
                 Spacer(
@@ -1086,7 +1166,10 @@ fun MemoScreen(
                                 tint = colors.textBody.copy(alpha = 0.5f),
                                 modifier = Modifier
                                     .size(18.dp)
-                                    .clickable { showAiCustomInput = false }
+                                    .clickable {
+                                        try { bodyFocusRequester.requestFocus() } catch (_: Throwable) {}
+                                        showAiCustomInput = false
+                                    }
                             )
                         }
                     }
@@ -1120,10 +1203,13 @@ fun MemoScreen(
                                     onYoutubeDialogOpen = { showYoutubeDialog = true },
                                     onWebSummarize = onWebSummarize,
                                     onWebDialogOpen = { showWebDialog = true },
-                                    onAiAssistClick = if (onAiPresetAction != null) {
+                                    onAiAssistClick = if (onAiCustomSend != null) {
                                         {
-                                            focusManager.clearFocus()
-                                            showAiActionMenu = true
+                                            if (showAiCustomInput) {
+                                                // 닫을 때 본문 포커스 복원 — 키보드/툴바 유지
+                                                try { bodyFocusRequester.requestFocus() } catch (_: Throwable) {}
+                                            }
+                                            showAiCustomInput = !showAiCustomInput
                                         }
                                     } else null
                                 )
@@ -1136,22 +1222,7 @@ fun MemoScreen(
             }
         } // outer Column
 
-    // AI 액션 메뉴 팝업 — AnimatedVisibility 바깥에 배치 (���보드 내려가도 유지)
-    if (showAiActionMenu && onAiPresetAction != null) {
-        AiActionMenu(
-            onPresetSelected = { action ->
-                showAiActionMenu = false
-                if (action == AiPresetAction.CUSTOM) {
-                    showAiCustomInput = true
-                } else {
-                    onAiPresetAction(action.name, nameText, bodyText)
-                }
-            },
-            onDismiss = { showAiActionMenu = false }
-        )
-    }
-
-    // 웹 URL 입력 다이얼로그
+// 웹 URL 입력 다이얼로그
     if (showWebDialog && onWebSummarize != null) {
         WebUrlDialog(
             onDismiss = { showWebDialog = false },
