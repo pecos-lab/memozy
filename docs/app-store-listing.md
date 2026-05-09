@@ -63,9 +63,6 @@ URL만 붙여넣으면 자막을 추출하고 Gemini AI가 핵심 내용을 정�
 🎙 음성 메모 + 실시간 받아쓰기
 회의, 강의, 메모를 녹음하면서 실시간으로 텍스트로 변환합니다. 녹음 파일과 받아쓰기 결과가 함께 저장됩니다.
 
-📂 11가지 카테고리 분류
-업무 / 학습 / 일기 / 아이디어 등 카테고리로 분류해 관리하세요.
-
 ✏ 리치 텍스트 편집
 굵기, 색상, 정렬 등 서식 도구로 깔끔하게 정리합니다.
 
@@ -75,7 +72,7 @@ URL만 붙여넣으면 자막을 추출하고 Gemini AI가 핵심 내용을 정�
 
 ✨ Memozy Pro
 • 광고 제거
-• AI 요약 무제한
+• AI 요약 사용량 증가
 • 모든 프리미엄 기능 잠금 해제
 
 언제든 앱 내에서 구독 / 해지할 수 있습니다.
@@ -119,9 +116,6 @@ Paste a long article or blog URL — get the key points in seconds.
 🎙 Voice memos with live transcription
 Record meetings or lectures while watching real-time text appear on screen. Both audio and transcript are saved together.
 
-📂 11 categories
-Organise by work, study, journal, ideas, and more.
-
 ✏ Rich text editing
 Bold, colour, alignment — keep notes clean.
 
@@ -131,7 +125,7 @@ Bold, colour, alignment — keep notes clean.
 
 ✨ Memozy Pro
 • Remove ads
-• Unlimited AI summaries
+• More AI summaries
 • All premium features unlocked
 
 Subscribe or cancel anytime in the app.
@@ -180,9 +174,6 @@ URLを貼り付けるだけで、字幕を抽出してGemini AIが要点をメ�
 🎙 音声メモ+リアルタイム文字起こし
 会議や講義を録音しながら、リアルタイムでテキストに変換。録音ファイルと文字起こし結果を一緒に保存します。
 
-📂 11のカテゴリ
-仕事 / 学習 / 日記 / アイデア など、カテゴリで整理。
-
 ✏ リッチテキスト編集
 太字・色・整列など、書式ツールでスッキリ整理。
 
@@ -192,7 +183,7 @@ URLを貼り付けるだけで、字幕を抽出してGemini AIが要点をメ�
 
 ✨ Memozy Pro
 • 広告を削除
-• AI要約の回数無制限
+• AI要約の利用量が増加
 • すべてのプレミアム機能を開放
 
 アプリ内でいつでも購読・解約できます。
