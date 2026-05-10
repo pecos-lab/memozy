@@ -529,6 +529,14 @@ fun MemoScreen(
     // 본문 포커스 — AI 채팅 닫을 때 복원해서 키보드/툴바 유지
     val bodyFocusRequester = remember { FocusRequester() }
 
+    // 녹음 시작 직후 본문 포커스 즉시 복원 → IME 유지 (Android 마이크 권한·서비스 시작 흐름이 IME dismiss 시키는 부수효과 회피).
+    // 가드(notifyAiBlocked) 에 차단된 경우는 isRecording 이 false 그대로이므로 dialog/sheet 가 가려지지 않음.
+    LaunchedEffect(isRecording) {
+        if (isRecording) {
+            try { bodyFocusRequester.requestFocus() } catch (_: Throwable) {}
+        }
+    }
+
     // containerColor 명시 → MaterialTheme.colorScheme.surface 무시
     Scaffold(
         containerColor = colors.screenBackground,
@@ -1190,20 +1198,8 @@ fun MemoScreen(
                                     colors = colors,
                                     isNewMemo = isNewMemo,
                                     existingMemo = existingMemo,
-                                    // 녹음 시작/정지 시 본문 포커스 즉시 복원 → 키보드/툴바 펴진 상태 유지.
-                                    // (Android 마이크 권한·서비스 시작 흐름이 IME 를 dismiss 시키는 부수효과 회피)
-                                    onStartRecording = onStartRecording?.let { upstream ->
-                                        {
-                                            upstream()
-                                            try { bodyFocusRequester.requestFocus() } catch (_: Throwable) {}
-                                        }
-                                    },
-                                    onStopRecording = onStopRecording?.let { upstream ->
-                                        {
-                                            upstream()
-                                            try { bodyFocusRequester.requestFocus() } catch (_: Throwable) {}
-                                        }
-                                    },
+                                    onStartRecording = onStartRecording,
+                                    onStopRecording = onStopRecording,
                                     isRecording = isRecording,
                                     isTranscribing = isTranscribing,
                                     onYoutubeSummarize = onYoutubeSummarize,
