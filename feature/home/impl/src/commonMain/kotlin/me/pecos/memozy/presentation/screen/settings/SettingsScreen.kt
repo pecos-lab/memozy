@@ -132,6 +132,7 @@ import me.pecos.memozy.presentation.components.rememberOpenDocumentLauncher
 import me.pecos.memozy.presentation.theme.LocalActivity
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
+import me.pecos.memozy.presentation.util.getStringFormatted
 import me.pecos.memozy.presentation.util.stringResourceFormatted
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -196,7 +197,7 @@ fun SettingsScreen(
         when (val result = backupResult) {
             is BackupResult.Success -> {
                 toastPresenter.show(
-                    getString(Res.string.backup_success, result.message.toIntOrNull() ?: 0)
+                    getStringFormatted(Res.string.backup_success, result.message.toIntOrNull() ?: 0)
                 )
                 settingsViewModel.clearBackupResult()
             }
@@ -215,13 +216,13 @@ fun SettingsScreen(
         when (val state = cloudBackupState) {
             is CloudBackupState.UploadSuccess -> {
                 toastPresenter.show(
-                    getString(Res.string.cloud_backup_success, state.memoCount)
+                    getStringFormatted(Res.string.cloud_backup_success, state.memoCount)
                 )
                 settingsViewModel.clearCloudBackupState()
             }
             is CloudBackupState.RestoreSuccess -> {
                 toastPresenter.show(
-                    getString(Res.string.cloud_backup_restore_success, state.memoCount)
+                    getStringFormatted(Res.string.cloud_backup_restore_success, state.memoCount)
                 )
                 settingsViewModel.clearCloudBackupState()
             }

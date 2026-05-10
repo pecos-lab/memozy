@@ -529,6 +529,14 @@ fun MemoScreen(
     // 본문 포커스 — AI 채팅 닫을 때 복원해서 키보드/툴바 유지
     val bodyFocusRequester = remember { FocusRequester() }
 
+    // 녹음 시작 직후 본문 포커스 즉시 복원 → IME 유지 (Android 마이크 권한·서비스 시작 흐름이 IME dismiss 시키는 부수효과 회피).
+    // 가드(notifyAiBlocked) 에 차단된 경우는 isRecording 이 false 그대로이므로 dialog/sheet 가 가려지지 않음.
+    LaunchedEffect(isRecording) {
+        if (isRecording) {
+            try { bodyFocusRequester.requestFocus() } catch (_: Throwable) {}
+        }
+    }
+
     // containerColor 명시 → MaterialTheme.colorScheme.surface 무시
     Scaffold(
         containerColor = colors.screenBackground,
@@ -1085,9 +1093,10 @@ fun MemoScreen(
                 Spacer(modifier = Modifier.height(20.dp))
             }
 
-            // 서식 툴바 — 키보드 또는 AI 입력바 활성 시 표시
+            // 서식 툴바 — 키보드/AI 입력바/녹음·전사 중에 표시.
+            // 녹음·전사는 IME 가 일시 dismiss 되더라도 펴진 상태 유지 → 토글 흔들림 차단.
             AnimatedVisibility(
-                visible = isKeyboardVisible || showAiCustomInput || isAiAssistLoading,
+                visible = isKeyboardVisible || showAiCustomInput || isAiAssistLoading || isRecording || isTranscribing,
                 enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                 exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
             ) {
@@ -1103,9 +1112,12 @@ fun MemoScreen(
                     if (showAiCustomInput && onAiCustomSend != null) {
                         var aiInputText by remember { mutableStateOf("") }
                         val aiInputFocusRequester = remember { FocusRequester() }
+                        val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+                        // AI input 등장 시: 즉시 포커스 이전 + IME 강제 show 로 본문↔AI input 전환 동안 IME dismiss 차단.
+                        // 기존 16ms delay 만으로는 일부 디바이스에서 키보드/툴바 깜빡임이 남아 IME 명시 호출 보강.
                         LaunchedEffect(Unit) {
-                            kotlinx.coroutines.delay(100)
-                            aiInputFocusRequester.requestFocus()
+                            try { aiInputFocusRequester.requestFocus() } catch (_: Throwable) {}
+                            try { keyboardController?.show() } catch (_: Throwable) {}
                         }
                         Row(
                             modifier = Modifier
