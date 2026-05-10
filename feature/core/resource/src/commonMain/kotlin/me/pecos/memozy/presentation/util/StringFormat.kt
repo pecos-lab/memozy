@@ -2,18 +2,25 @@ package me.pecos.memozy.presentation.util
 
 import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 
 /**
  * format args(%d, %s)를 지원하는 stringResource 래퍼.
  *
- * Compose Multiplatform Resources 1.10.3의 stringResource(resource, vararg args) 오버로드가
- * 런타임에 format args를 치환하지 않고 리터럴로 노출하는 이슈가 있어 직접 Regex로 치환한다.
- * 리소스에서 사용 중인 포맷은 단일 %d 또는 %s 뿐이라 positional/%% escape는 지원하지 않는다.
+ * Compose Multiplatform Resources 1.10.3의 stringResource/getString(resource, vararg args)
+ * 오버로드가 런타임에 format args 를 치환하지 않고 리터럴로 노출하는 이슈가 있어 직접 Regex 로 치환한다.
+ * 리소스에서 사용 중인 포맷은 단일 %d 또는 %s 뿐이라 positional/%% escape 는 지원하지 않는다.
  */
 @Composable
 fun stringResourceFormatted(resource: StringResource, vararg args: Any): String {
     val template = stringResource(resource)
+    return applyFormatArgs(template, args)
+}
+
+/** suspend 컨텍스트 (LaunchedEffect 등) 용 — getString vararg 오버로드의 동일 이슈 우회. */
+suspend fun getStringFormatted(resource: StringResource, vararg args: Any): String {
+    val template = getString(resource)
     return applyFormatArgs(template, args)
 }
 
