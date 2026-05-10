@@ -1085,9 +1085,10 @@ fun MemoScreen(
                 Spacer(modifier = Modifier.height(20.dp))
             }
 
-            // 서식 툴바 — 키보드 또는 AI 입력바 활성 시 표시
+            // 서식 툴바 — 키보드/AI 입력바/녹음·전사 중에 표시.
+            // 녹음·전사는 IME 가 일시 dismiss 되더라도 펴진 상태 유지 → 토글 흔들림 차단.
             AnimatedVisibility(
-                visible = isKeyboardVisible || showAiCustomInput || isAiAssistLoading,
+                visible = isKeyboardVisible || showAiCustomInput || isAiAssistLoading || isRecording || isTranscribing,
                 enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                 exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
             ) {
@@ -1103,9 +1104,11 @@ fun MemoScreen(
                     if (showAiCustomInput && onAiCustomSend != null) {
                         var aiInputText by remember { mutableStateOf("") }
                         val aiInputFocusRequester = remember { FocusRequester() }
+                        // 1 프레임만 대기 후 즉시 포커스 이전 — 100ms delay 동안 IME 가 본문 ↔ AI input 사이에서
+                        // 떨어지며 발생하던 툴바 깜빡임 차단.
                         LaunchedEffect(Unit) {
-                            kotlinx.coroutines.delay(100)
-                            aiInputFocusRequester.requestFocus()
+                            kotlinx.coroutines.delay(16)
+                            try { aiInputFocusRequester.requestFocus() } catch (_: Throwable) {}
                         }
                         Row(
                             modifier = Modifier
@@ -1187,8 +1190,20 @@ fun MemoScreen(
                                     colors = colors,
                                     isNewMemo = isNewMemo,
                                     existingMemo = existingMemo,
-                                    onStartRecording = onStartRecording,
-                                    onStopRecording = onStopRecording,
+                                    // 녹음 시작/정지 시 본문 포커스 즉시 복원 → 키보드/툴바 펴진 상태 유지.
+                                    // (Android 마이크 권한·서비스 시작 흐름이 IME 를 dismiss 시키는 부수효과 회피)
+                                    onStartRecording = onStartRecording?.let { upstream ->
+                                        {
+                                            upstream()
+                                            try { bodyFocusRequester.requestFocus() } catch (_: Throwable) {}
+                                        }
+                                    },
+                                    onStopRecording = onStopRecording?.let { upstream ->
+                                        {
+                                            upstream()
+                                            try { bodyFocusRequester.requestFocus() } catch (_: Throwable) {}
+                                        }
+                                    },
                                     isRecording = isRecording,
                                     isTranscribing = isTranscribing,
                                     onYoutubeSummarize = onYoutubeSummarize,
