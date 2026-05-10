@@ -641,7 +641,11 @@ class MemoPlainNavigationImpl(
                     transcriptionError = null
                     // 실시간 받아쓰기 동시 시작 — iOS 는 outputPath 받아 WAV 캡처. Android 는 무시 (RecordingService 가 캡처).
                     scope.launch {
-                        try { liveTranscriptionService.start(languageCode, audioCachePath) } catch (_: Throwable) {}
+                        try {
+                            liveTranscriptionService.start(languageCode, audioCachePath)
+                        } catch (_: Throwable) {
+                            // Live STT 실패해도 녹음 자체는 계속 — 종료 시 Gemini 변환으로 fallback
+                        }
                     }
                 } catch (e: Exception) {
                     transcriptionError = "녹음을 시작할 수 없어요."
@@ -753,7 +757,7 @@ class MemoPlainNavigationImpl(
                             consumeAiQuota(FEATURE_TRANSCRIPTION)
                         }
                     } catch (e: Exception) {
-                        transcriptionError = "음성 변환에 실패했어요."
+                        transcriptionError = "음성 변환에 실패했어요. (${e::class.simpleName}: ${e.message})"
                         audioFileStore.delete(audioCachePath)
                     } finally {
                         isTranscribing = false

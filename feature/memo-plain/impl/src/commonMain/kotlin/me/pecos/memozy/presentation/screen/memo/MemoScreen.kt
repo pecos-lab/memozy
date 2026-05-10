@@ -1112,11 +1112,12 @@ fun MemoScreen(
                     if (showAiCustomInput && onAiCustomSend != null) {
                         var aiInputText by remember { mutableStateOf("") }
                         val aiInputFocusRequester = remember { FocusRequester() }
-                        // 1 프레임만 대기 후 즉시 포커스 이전 — 100ms delay 동안 IME 가 본문 ↔ AI input 사이에서
-                        // 떨어지며 발생하던 툴바 깜빡임 차단.
+                        val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+                        // AI input 등장 시: 즉시 포커스 이전 + IME 강제 show 로 본문↔AI input 전환 동안 IME dismiss 차단.
+                        // 기존 16ms delay 만으로는 일부 디바이스에서 키보드/툴바 깜빡임이 남아 IME 명시 호출 보강.
                         LaunchedEffect(Unit) {
-                            kotlinx.coroutines.delay(16)
                             try { aiInputFocusRequester.requestFocus() } catch (_: Throwable) {}
+                            try { keyboardController?.show() } catch (_: Throwable) {}
                         }
                         Row(
                             modifier = Modifier
