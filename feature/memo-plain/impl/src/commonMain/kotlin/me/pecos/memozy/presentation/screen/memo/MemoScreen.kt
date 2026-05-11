@@ -155,8 +155,9 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.platform.LocalDensity
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
@@ -563,6 +564,11 @@ fun MemoScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                // IME 가 dismiss 되어도 nav bar 영역까지 padding 유지 → 녹음 정지 버튼(툴바)이
+                // 시스템 nav bar 제스처 영역으로 미끄러져 클릭이 가로채이는 #357 회귀 차단.
+                // navigationBarsPadding → imePadding 순서로 체이닝하면 inset consumption 으로
+                // IME up 시 (nav + (ime-nav)) = ime, IME down 시 nav 만 적용되어 중복 padding 없음.
+                .navigationBarsPadding()
                 .imePadding()
         ) {
             // 상단 바

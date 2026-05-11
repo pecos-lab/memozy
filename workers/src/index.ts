@@ -16,7 +16,7 @@ const FALLBACK_MODELS = ["gemini-2.5-flash-lite", "gemini-1.5-flash"];
 
 function verifyAppAuth(req: Request, env: Env): Response | null {
   const apiKey = req.headers.get("x-app-key");
-  if (!apiKey || apiKey !== env.APP_SECRET_KEY) {
+  if (!apiKey || apiKey !== normalizeSecret(env.APP_SECRET_KEY)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
   return null;
@@ -74,12 +74,19 @@ async function supabaseRest(
 
 // --- Gemini helpers ---
 
+// Secret 들이 wrangler secret put 시 PowerShell 인코딩으로 BOM(U+FEFF)/공백을 포함하는 경우가
+// 있어 Gemini 가 "Invalid API key" 응답하는 회귀를 흡수.
+function normalizeSecret(s: string | undefined): string {
+  return (s ?? "").replace(/^﻿/, "").trim();
+}
+
 async function callGemini(
   env: Env,
   model: string,
   body: unknown
 ): Promise<Response> {
-  const url = `${GEMINI_BASE_URL}/models/${model}:generateContent?key=${env.GEMINI_API_KEY}`;
+  const apiKey = normalizeSecret(env.GEMINI_API_KEY);
+  const url = `${GEMINI_BASE_URL}/models/${model}:generateContent?key=${apiKey}`;
   return await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -92,7 +99,8 @@ async function callGeminiStream(
   model: string,
   body: unknown
 ): Promise<Response> {
-  const url = `${GEMINI_BASE_URL}/models/${model}:streamGenerateContent?alt=sse&key=${env.GEMINI_API_KEY}`;
+  const apiKey = normalizeSecret(env.GEMINI_API_KEY);
+  const url = `${GEMINI_BASE_URL}/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
   return await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -151,6 +159,105 @@ async function handleGeminiStream(req: Request, env: Env): Promise<Response> {
       "Cache-Control": "no-cache",
       "Connection": "keep-alive",
     },
+  });
+}
+
+// --- Gemini Live (bidirectional WebSocket proxy) ---
+
+// Cloudflare Worker `fetch` 는 wss:// 스킴 직접 못 받음 — https:// + Upgrade 헤더로 호출하면
+// Cloudflare 가 자동으로 WebSocket 으로 변환.
+const GEMINI_LIVE_WS_URL =
+  "https://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent";
+
+/**
+ * 실시간 음성 인식/통역용 Gemini Live API proxy.
+ *
+ * 클라이언트(앱) ← WebSocket → Worker ← WebSocket → Gemini Live API
+ *
+ * 인증은 표준 REST 핸들러와 동일하게 x-app-key 헤더 검사. 외부 Gemini wss 는
+ * GEMINI_API_KEY 를 query param 으로 주입 (Live API 사양).
+ *
+ * 양방향 raw passthrough — setup/realtimeInput/response 메시지 구조는 클라이언트에서 결정.
+ */
+async function handleGeminiLive(req: Request, env: Env): Promise<Response> {
+  const upgradeHeader = req.headers.get("Upgrade");
+  if (!upgradeHeader || upgradeHeader.toLowerCase() !== "websocket") {
+    return new Response("Expected Upgrade: websocket", { status: 426 });
+  }
+
+  // WebSocket handshake — 일부 client(특히 Ktor/OkHttp)가 custom header를 흘리는 경우가 있어
+  // query param `?k=` 도 인증 대안으로 허용.
+  const urlObj = new URL(req.url);
+  const queryKey = urlObj.searchParams.get("k");
+  const headerKey = req.headers.get("x-app-key");
+  const expected = normalizeSecret(env.APP_SECRET_KEY);
+  if (
+    (!queryKey || queryKey !== expected) &&
+    (!headerKey || headerKey !== expected)
+  ) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  // 외부 Gemini Live wss 연결 먼저 시도
+  const geminiUrl = `${GEMINI_LIVE_WS_URL}?key=${normalizeSecret(env.GEMINI_API_KEY)}`;
+  let geminiResp: Response;
+  try {
+    geminiResp = await fetch(geminiUrl, {
+      headers: { Upgrade: "websocket" },
+    });
+  } catch (e) {
+    return new Response(`Gemini Live connect failed: ${(e as Error).message}`, { status: 502 });
+  }
+
+  const externalWs = geminiResp.webSocket;
+  if (!externalWs) {
+    const body = await geminiResp.text().catch(() => "");
+    return new Response(`Gemini Live did not accept WebSocket (status=${geminiResp.status}): ${body}`, {
+      status: 502,
+    });
+  }
+
+  externalWs.accept();
+
+  // 클라이언트 측 WebSocketPair
+  const pair = new WebSocketPair();
+  const clientSide = pair[0];
+  const serverSide = pair[1];
+  serverSide.accept();
+
+  // app → Gemini
+  serverSide.addEventListener("message", (event) => {
+    try {
+      externalWs.send(event.data as ArrayBuffer | string);
+    } catch (e) {
+      try { serverSide.close(1011, "upstream send failed"); } catch {}
+    }
+  });
+  serverSide.addEventListener("close", (ev) => {
+    try { externalWs.close(ev.code, ev.reason); } catch {}
+  });
+  serverSide.addEventListener("error", () => {
+    try { externalWs.close(1011, "client error"); } catch {}
+  });
+
+  // Gemini → app
+  externalWs.addEventListener("message", (event) => {
+    try {
+      serverSide.send(event.data as ArrayBuffer | string);
+    } catch (e) {
+      try { externalWs.close(1011, "downstream send failed"); } catch {}
+    }
+  });
+  externalWs.addEventListener("close", (ev) => {
+    try { serverSide.close(ev.code, ev.reason); } catch {}
+  });
+  externalWs.addEventListener("error", () => {
+    try { serverSide.close(1011, "upstream error"); } catch {}
+  });
+
+  return new Response(null, {
+    status: 101,
+    webSocket: clientSide,
   });
 }
 
@@ -648,6 +755,12 @@ export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
     const pathname = url.pathname;
+
+    // Gemini Live WebSocket — 일반 routes 와 응답 형태가 달라 별도 분기.
+    // 인증은 handleGeminiLive 내부에서 query param + header 둘 다 허용.
+    if (pathname === "/gemini-live") {
+      return await handleGeminiLive(req, env);
+    }
 
     // Handle /backup/:id routes
     const backupIdMatch = pathname.match(/^\/backup\/([0-9a-f-]+)$/);
