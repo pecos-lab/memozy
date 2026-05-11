@@ -1,119 +1,79 @@
 package me.pecos.memozy.platform.transcription
 
 import android.content.Context
-import android.content.Intent
-import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.speech.RecognitionListener
-import android.speech.RecognizerIntent
-import android.speech.SpeechRecognizer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import me.pecos.memozy.platform.media.RecordingService
+import me.pecos.memozy.platform.media.RecordingState
 
-fun provideLiveTranscriptionService(context: Context): LiveTranscriptionService =
-    AndroidLiveTranscriptionService(context.applicationContext)
+fun provideLiveTranscriptionService(
+    context: Context,
+    workerUrl: String,
+    appKey: String,
+): LiveTranscriptionService =
+    AndroidLiveTranscriptionService(context.applicationContext, workerUrl, appKey)
 
+/**
+ * iOS 의 SFSpeechRecognizer + AVAudioEngine 패턴을 Android 에 맞춰 구현.
+ *
+ * 실제 음성 캡처는 [RecordingService] 가 mic 1개 클라이언트(AudioRecord)로 통합 수행.
+ * 실시간 STT 는 [GeminiLiveSession] 이 PCM 청크를 WebSocket 으로 Gemini Live API 에 stream.
+ *
+ * 결과(partial/confirmed) 는 RecordingService 의 companion StateFlow 를 그대로 노출.
+ */
 internal class AndroidLiveTranscriptionService(
-    private val context: Context,
+    @Suppress("UNUSED_PARAMETER") private val context: Context,
+    private val workerUrl: String,
+    private val appKey: String,
 ) : LiveTranscriptionService {
 
-    private val mainHandler = Handler(Looper.getMainLooper())
-    private var recognizer: SpeechRecognizer? = null
-    private var languageCode: String = "ko"
-    private var stillListening = false
+    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    private var session: GeminiLiveSession? = null
 
-    private val _partial = MutableStateFlow("")
-    private val _confirmed = MutableStateFlow("")
+    override val partialText: StateFlow<String> = RecordingService.partial
+    override val confirmedText: StateFlow<String> = RecordingService.confirmed
+
     private val _state = MutableStateFlow<TranscriptionState>(TranscriptionState.Idle)
-
-    override val partialText: StateFlow<String> = _partial
-    override val confirmedText: StateFlow<String> = _confirmed
     override val state: StateFlow<TranscriptionState> = _state
 
+    init {
+        scope.launch {
+            RecordingService.state.collect { rec ->
+                _state.value = when (rec) {
+                    is RecordingState.Idle -> TranscriptionState.Idle
+                    is RecordingState.Recording -> TranscriptionState.Listening
+                }
+            }
+        }
+    }
+
     override suspend fun start(languageCode: String, outputPath: String?) {
-        // Android 는 별도 MediaRecorder (RecordingService) 가 파일 캡처 담당. outputPath 무시.
-        this.languageCode = languageCode
-        _partial.value = ""
-        _confirmed.value = ""
-        stillListening = true
-        mainHandler.post { startSession() }
+        if (workerUrl.isBlank() || appKey.isBlank()) {
+            _state.value = TranscriptionState.Error("Worker URL / app key 미설정")
+            return
+        }
+        // 새 세션 — 기존 세션이 남아있으면 정리
+        session?.stop()
+        val prompt = buildSystemPrompt(languageCode)
+        session = GeminiLiveSession(workerUrl, appKey).apply { start(prompt) }
     }
 
     override fun stop() {
-        stillListening = false
-        mainHandler.post {
-            recognizer?.stopListening()
-            recognizer?.destroy()
-            recognizer = null
-            // partial 에 남아있는 텍스트도 confirmed 로 이관
-            if (_partial.value.isNotEmpty()) {
-                _confirmed.value = (_confirmed.value + " " + _partial.value).trim()
-                _partial.value = ""
-            }
-            _state.value = TranscriptionState.Idle
-        }
+        session?.stop()
+        session = null
     }
 
-    private fun startSession() {
-        recognizer?.destroy()
-        val rec = SpeechRecognizer.createSpeechRecognizer(context)
-        rec.setRecognitionListener(buildListener())
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, mapLocale(languageCode))
-            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-            putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, false)
+    private fun buildSystemPrompt(languageCode: String): String {
+        val langName = when (languageCode) {
+            "ko" -> "한국어"
+            "en" -> "영어"
+            "ja" -> "일본어"
+            else -> languageCode
         }
-        rec.startListening(intent)
-        recognizer = rec
-        _state.value = TranscriptionState.Listening
-    }
-
-    private fun buildListener() = object : RecognitionListener {
-        override fun onReadyForSpeech(params: Bundle?) {}
-        override fun onBeginningOfSpeech() {}
-        override fun onRmsChanged(rmsdB: Float) {}
-        override fun onBufferReceived(buffer: ByteArray?) {}
-        override fun onEndOfSpeech() {}
-
-        override fun onPartialResults(partialResults: Bundle?) {
-            val text = partialResults
-                ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                ?.firstOrNull().orEmpty()
-            if (text.isNotEmpty()) _partial.value = text
-        }
-
-        override fun onResults(results: Bundle?) {
-            val text = results
-                ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                ?.firstOrNull().orEmpty()
-            if (text.isNotEmpty()) {
-                _confirmed.value = (_confirmed.value + " " + text).trim()
-                _partial.value = ""
-            }
-            // 사용자가 아직 정지 안 했으면 자동 재시작
-            if (stillListening) {
-                mainHandler.post { startSession() }
-            }
-        }
-
-        override fun onError(error: Int) {
-            // 음성 무음 / 네트워크 등 — 단순히 재시작 시도
-            if (stillListening && error != SpeechRecognizer.ERROR_CLIENT) {
-                mainHandler.postDelayed({ if (stillListening) startSession() }, 100)
-            } else {
-                _state.value = TranscriptionState.Error("error_code=$error")
-            }
-        }
-
-        override fun onEvent(eventType: Int, params: Bundle?) {}
-    }
-
-    private fun mapLocale(code: String): String = when (code) {
-        "ko" -> "ko-KR"
-        "en" -> "en-US"
-        "ja" -> "ja-JP"
-        else -> code
+        return "사용자가 발화한 $langName 음성을 정확히 받아쓰기만 하세요. 별도 응답이나 추가 텍스트는 출력하지 마세요."
     }
 }

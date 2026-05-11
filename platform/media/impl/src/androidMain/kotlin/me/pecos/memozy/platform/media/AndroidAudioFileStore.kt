@@ -46,6 +46,6 @@ class AndroidAudioFileStore(
 
     private companion object {
         const val AUDIO_SUBDIR = "audio"
-        const val AUDIO_EXT = "m4a"
+        const val AUDIO_EXT = "wav"
     }
 }

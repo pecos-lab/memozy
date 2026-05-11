@@ -84,7 +84,7 @@ fun AudioPlayerBar(
             ) { Icon(if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp)) }
             Spacer(modifier = Modifier.width(10.dp))
             Text("🎙️ ${memoTitle.ifBlank { stringResource(Res.string.recording_file) }}", fontSize = fontSettings.scaled(14), color = colors.textBody, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), maxLines = 1)
-            val downloadsTarget = audioFileStore.downloadsPath("memozy_${Clock.System.now().toEpochMilliseconds()}.m4a")
+            val downloadsTarget = audioFileStore.downloadsPath("memozy_${Clock.System.now().toEpochMilliseconds()}.wav")
             if (downloadsTarget != null) {
                 Icon(Icons.Default.Download, contentDescription = null, tint = colors.textSecondary,
                     modifier = Modifier.size(20.dp).clickable {
