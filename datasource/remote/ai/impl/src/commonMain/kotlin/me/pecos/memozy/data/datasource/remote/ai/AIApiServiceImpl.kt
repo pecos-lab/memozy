@@ -19,6 +19,8 @@ import me.pecos.memozy.data.datasource.remote.ai.model.GeminiPart
 import me.pecos.memozy.data.datasource.remote.ai.model.GenerationConfig
 import me.pecos.memozy.data.datasource.remote.ai.model.GeminiRequest
 import me.pecos.memozy.data.datasource.remote.ai.model.GeminiResponse
+import me.pecos.memozy.data.datasource.remote.ai.model.WhisperRequest
+import me.pecos.memozy.data.datasource.remote.ai.model.WhisperResponse
 
 class AIApiServiceImpl(
     private val httpClient: HttpClient,
@@ -109,28 +111,19 @@ class AIApiServiceImpl(
     }
 
     override suspend fun transcribeAudio(audioBase64: String, mimeType: String, durationSeconds: Long): String {
-        // 출시 빌드 (#354) 까지 사용하던 단순 prompt. 더 엄격하게 다듬으면 LLM 이 negative
-        // prompt anti-pattern 으로 fabrication 패턴에 더 끌려가는 회귀가 관찰됨 (커밋
-        // fa72f01 → 9aeecf5 회귀 추적). 단순한 게 답.
-        val prompt = "이 오디오를 한국어로 받아쓰기해줘. 텍스트만 출력하고 다른 설명은 하지 마."
-
-        val request = GeminiRequest(
-            contents = listOf(
-                GeminiContent(
-                    parts = listOf(
-                        GeminiPart(
-                            inlineData = GeminiInlineData(
-                                mimeType = mimeType,
-                                data = audioBase64,
-                            )
-                        ),
-                        GeminiPart(text = prompt),
-                    )
-                )
-            )
+        // Whisper API 로 받아쓰기 — Gemini 2.5 Flash 의 짧은-audio fabrication
+        // ("톡쏘는 정치 김혜영입니다", "음성 피싱 예방 서비스" 류) 회피.
+        // Worker `/whisper-transcribe` 가 OpenAI multipart 호출 프록시.
+        val request = WhisperRequest(
+            audioBase64 = audioBase64,
+            mimeType = mimeType,
+            language = "ko",
         )
-
-        return executeRequest(request)
+        val response: WhisperResponse = httpClient.post("whisper-transcribe") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }.body()
+        return response.text
     }
 
     override suspend fun describeImage(imageBase64: String, mimeType: String): String {

@@ -6,6 +6,7 @@ export interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_KEY: string;
   SUPABASE_JWT_SECRET: string;
+  OPENAI_API_KEY?: string;
 }
 
 const AI_GATEWAY_URL = "https://gateway.ai.cloudflare.com/v1/fd6859f0e7b0f6307cfa850af2324d90/memozy/google-ai-studio";
@@ -632,11 +633,63 @@ async function handleBackupDelete(req: Request, env: Env, backupId: string): Pro
   return new Response(null, { status: 204 });
 }
 
+// --- Whisper transcribe (OpenAI) ---
+
+// Gemini 2.5 Flash 가 짧은/약한 한국어 audio 에 fabrication (예: "톡쏘는 정치 김혜영입니다",
+// "음성 피싱 예방 서비스") 하던 문제 — Whisper 로 교체. Whisper 는 안 들리는 audio 에
+// 빈 문자열 또는 신뢰도 낮은 응답을 주고, fabricate 패턴이 거의 없음.
+async function handleWhisperTranscribe(req: Request, env: Env): Promise<Response> {
+  // wrangler secret put 시 PowerShell 인코딩으로 BOM/공백 섞이는 경우 흡수.
+  const key = (env.OPENAI_API_KEY ?? "").replace(/^﻿/, "").trim();
+  if (!key) {
+    return Response.json({ error: "OPENAI_API_KEY not configured" }, { status: 500 });
+  }
+
+  const body = await req.json<{ audioBase64?: string; mimeType?: string; language?: string }>();
+  const audioBase64 = body.audioBase64 ?? "";
+  const mimeType = body.mimeType ?? "audio/mp4";
+  const language = body.language ?? "ko";
+
+  if (!audioBase64) {
+    return Response.json({ error: "audioBase64 required" }, { status: 400 });
+  }
+
+  // base64 → Uint8Array → Blob (Whisper API multipart 용)
+  const bin = atob(audioBase64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+
+  const ext = mimeType.includes("wav") ? "wav" : mimeType.includes("mp4") ? "m4a" : "audio";
+  const blob = new Blob([bytes], { type: mimeType });
+
+  const form = new FormData();
+  form.append("file", blob, `audio.${ext}`);
+  form.append("model", "whisper-1");
+  form.append("language", language);
+  form.append("response_format", "text");
+
+  const res = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}` },
+    body: form,
+  });
+
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => "");
+    return Response.json({ error: `Whisper ${res.status}: ${errBody}` }, { status: res.status });
+  }
+
+  // response_format=text → text/plain body
+  const text = (await res.text()).trim();
+  return Response.json({ text });
+}
+
 // --- Router ---
 
 const routes: Record<string, { method: string; handler: (req: Request, env: Env) => Promise<Response> }> = {
   "/gemini-generate": { method: "POST", handler: handleGeminiGenerate },
   "/gemini-stream": { method: "POST", handler: handleGeminiStream },
+  "/whisper-transcribe": { method: "POST", handler: handleWhisperTranscribe },
   "/youtube-captions": { method: "GET", handler: handleYoutubeCaptions },
   "/youtube-title": { method: "GET", handler: handleYoutubeTitle },
   "/web-scrape": { method: "POST", handler: handleWebScrape },

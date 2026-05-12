@@ -57,3 +57,16 @@ data class GeminiInlineData(
     val mimeType: String,
     val data: String, // base64 encoded
 )
+
+// Worker `/whisper-transcribe` 요청/응답 — OpenAI Whisper 프록시
+@Serializable
+data class WhisperRequest(
+    val audioBase64: String,
+    val mimeType: String,
+    val language: String = "ko",
+)
+
+@Serializable
+data class WhisperResponse(
+    val text: String,
+)
