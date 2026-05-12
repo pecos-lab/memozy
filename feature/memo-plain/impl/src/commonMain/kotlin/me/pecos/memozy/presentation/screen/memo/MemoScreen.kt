@@ -241,6 +241,8 @@ fun MemoScreen(
     isTranscribing: Boolean = false,
     transcriptionResult: String? = null,
     transcriptionError: String? = null,
+    livePartialText: String = "",
+    liveConfirmedText: String = "",
     audioPath: String? = null,
     pendingAudioPath: String? = null,
     pendingAudioDurationSeconds: Long = 0L,
@@ -717,6 +719,59 @@ fun MemoScreen(
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
+
+                // 실시간 받아쓰기 — YouTube 요약 인라인 카드와 동일한 톤 (cardBackground / 12dp rounded).
+                if (isRecording) {
+                    val hasLive = liveConfirmedText.isNotEmpty() || livePartialText.isNotEmpty()
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(colors.cardBackground)
+                            .padding(12.dp),
+                    ) {
+                        Column {
+                            // 헤더 — 마이크 아이콘 + "녹음 중" 라벨 (YT 카드의 상단 정보 줄과 같은 톤)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFFE24B4A))
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    "받아쓰기",
+                                    fontSize = fontSettings.scaled(11),
+                                    color = colors.textSecondary,
+                                    fontWeight = FontWeight.Medium,
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            if (hasLive) {
+                                val annotated = androidx.compose.ui.text.buildAnnotatedString {
+                                    withStyle(androidx.compose.ui.text.SpanStyle(color = colors.textBody)) {
+                                        append(liveConfirmedText)
+                                    }
+                                    if (livePartialText.isNotEmpty()) {
+                                        if (liveConfirmedText.isNotEmpty()) append(" ")
+                                        withStyle(androidx.compose.ui.text.SpanStyle(color = colors.textSecondary)) {
+                                            append(livePartialText)
+                                        }
+                                    }
+                                }
+                                Text(annotated, fontSize = fontSettings.scaled(14), lineHeight = 20.sp)
+                            } else {
+                                Text(
+                                    "말씀해 주세요…",
+                                    fontSize = fontSettings.scaled(13),
+                                    color = colors.textSecondary.copy(alpha = 0.7f),
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
 
                 // 초기 내용 로드 — 본문만 setHtml
                 var contentInitialized by remember { mutableStateOf(false) }

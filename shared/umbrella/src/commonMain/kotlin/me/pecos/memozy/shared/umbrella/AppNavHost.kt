@@ -183,6 +183,9 @@ fun AppNavHost(
                     onBack = {
                         navController.popBackStack(HomeRoute.MAIN, inclusive = false)
                     },
+                    onNavigateToSubscription = {
+                        navController.navigate(ROUTE_SUBSCRIPTION)
+                    },
                 )
             }
 

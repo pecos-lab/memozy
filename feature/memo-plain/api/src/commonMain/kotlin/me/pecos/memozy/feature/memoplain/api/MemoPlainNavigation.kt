@@ -9,6 +9,7 @@ interface MemoPlainNavigation {
     fun registerGraph(
         navGraphBuilder: NavGraphBuilder,
         onNavigateToHome: () -> Unit,
-        onBack: () -> Unit
+        onBack: () -> Unit,
+        onNavigateToSubscription: () -> Unit = {},
     )
 }

@@ -381,7 +381,8 @@ class MemoPlainNavigationImpl(
     override fun registerGraph(
         navGraphBuilder: NavGraphBuilder,
         onNavigateToHome: () -> Unit,
-        onBack: () -> Unit
+        onBack: () -> Unit,
+        onNavigateToSubscription: () -> Unit,
     ) {
         navGraphBuilder.composable(
             MemoPlainRoute.MEMO,
@@ -631,16 +632,24 @@ class MemoPlainNavigationImpl(
             var recordingStartTime by remember { mutableStateOf(0L) }
             val audioCachePath = remember { audioFileStore.cachePath("recording.m4a") }
 
+            // Live STT 실시간 텍스트 — 녹음 중 화면에 즉시 반영
+            val livePartialText by liveTranscriptionService.partialText.collectAsState()
+            val liveConfirmedText by liveTranscriptionService.confirmedText.collectAsState()
+
             fun beginRecording() {
                 try {
+                    // LiveTranscriptionService 가 마이크 단독 소유 + 파일 저장 + 실시간 STT 통합.
+                    // iOS AVAudioEngine, Android AudioRecord+SpeechRecognizer(pipe) 패턴 동일.
+                    // AudioRecorder.start() 는 양 플랫폼 모두 Noop — mic 충돌 회피.
                     val recorder = mediaService.createAudioRecorder()
                     recorder.start(audioCachePath)
                     audioRecorder = recorder
                     recordingStartTime = Clock.System.now().toEpochMilliseconds()
                     isRecording = true
                     transcriptionError = null
-                    // Live STT 는 사용하지 않음 — Android 14+ mic 점유 회귀 + Gemini fallback hallucination
-                    // 문제로, 녹음 종료 후 Gemini transcribeAudio 단일 경로로 통일 (#357/#359 후속).
+                    scope.launch {
+                        liveTranscriptionService.start(languageCode, audioCachePath)
+                    }
                 } catch (e: Exception) {
                     transcriptionError = "녹음을 시작할 수 없어요."
                 }
@@ -671,6 +680,8 @@ class MemoPlainNavigationImpl(
             }
 
             fun stopRecordingAndTranscribe() {
+                // Live STT 정지 — 마지막 partial 이 confirmed 로 flush 됨.
+                liveTranscriptionService.stop()
                 try {
                     audioRecorder?.apply { stop(); release() }
                 } catch (_: Exception) { }
@@ -685,44 +696,75 @@ class MemoPlainNavigationImpl(
                     return
                 }
 
-                // 녹음 파일 자체가 비정상이면 차단
-                if (!audioFileStore.exists(audioCachePath) || audioFileStore.length(audioCachePath) < 1024) {
-                    transcriptionError = "녹음이 너무 짧아요. 다시 시도해주세요."
-                    audioFileStore.delete(audioCachePath)
-                    return
-                }
-
                 isTranscribing = true
                 scope.launch {
                     try {
-                        val audioBytes = audioFileStore.readBytes(audioCachePath)
-                        @OptIn(ExperimentalEncodingApi::class)
-                        val base64 = Base64.Default.encode(audioBytes)
-                        val resultRaw = aiApiService.transcribeAudio(base64, "audio/mp4", durationSeconds)
-                        val result = resultRaw.trim().trim('"', '\'', '`').trim()
-                        // hallucination 차단은 prompt 단에서 처리. 클라이언트는 빈 결과 / prompt echo 만 차단.
-                        val looksLikePromptEcho = result.contains("받아쓰기해줘") || result.contains("받아쓰기 텍스트만")
-                        if (looksLikePromptEcho || result.isBlank()) {
-                            transcriptionError = "음성이 감지되지 않았어요. 다시 시도해주세요."
-                            transcriptionResult = null
-                            audioFileStore.delete(audioCachePath)
-                        } else {
-                            // 오디오 파일을 영구 저장소로 이동 (제목과 동일한 파일명)
-                            val nowLocal = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-                            fun Int.pad2(): String = toString().padStart(2, '0')
-                            val yy = (nowLocal.year % 100).pad2()
-                            val stamp = "$yy.${nowLocal.monthNumber.pad2()}.${nowLocal.dayOfMonth.pad2()} ${nowLocal.hour.pad2()}:${nowLocal.minute.pad2()}"
-                            val safeFileName = "$stamp 녹음".replace(":", "-").replace("/", "-")
-                            val permanentPath = audioFileStore.permanentPath(safeFileName)
-                            audioFileStore.copy(audioCachePath, permanentPath)
-                            audioFileStore.delete(audioCachePath)
-                            savedAudioPath = permanentPath
-                            pendingAudioPath = permanentPath
-                            pendingAudioDurationSeconds = durationSeconds
+                        // 1) 서비스가 인코더 EOS 처리하고 파일을 닫을 시간 + 마지막 STT 결과가 도착할 시간을 대기.
+                        // 길게 잡되, confirmed text 가 도착하면 일찍 끝낼 수 있음.
+                        var waited = 0
+                        while (waited < 2000 && liveTranscriptionService.confirmedText.value.isBlank()) {
+                            kotlinx.coroutines.delay(100)
+                            waited += 100
+                        }
+                        // 마지막 partial → confirmed flush 시간 추가 100ms
+                        kotlinx.coroutines.delay(150)
+
+                        val liveText = liveTranscriptionService.confirmedText.value.trim()
+                        val fileExists = audioFileStore.exists(audioCachePath) && audioFileStore.length(audioCachePath) >= 1024
+
+                        if (liveText.isNotBlank()) {
+                            // iOS / API 33+ Android — Live STT 결과 그대로 사용. Gemini fabrication 회피.
+                            val result = liveText
+
+                            if (fileExists) {
+                                val nowLocal = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+                                fun Int.pad2(): String = toString().padStart(2, '0')
+                                val yy = (nowLocal.year % 100).pad2()
+                                val stamp = "$yy.${nowLocal.monthNumber.pad2()}.${nowLocal.dayOfMonth.pad2()} ${nowLocal.hour.pad2()}:${nowLocal.minute.pad2()}"
+                                val safeFileName = "$stamp 녹음".replace(":", "-").replace("/", "-")
+                                val permanentPath = audioFileStore.permanentPath(safeFileName)
+                                audioFileStore.copy(audioCachePath, permanentPath)
+                                audioFileStore.delete(audioCachePath)
+                                savedAudioPath = permanentPath
+                                pendingAudioPath = permanentPath
+                                pendingAudioDurationSeconds = durationSeconds
+                            }
 
                             transcriptionResult = result
                             transcriptionError = null
                             consumeAiQuota(FEATURE_TRANSCRIPTION)
+                        } else if (fileExists) {
+                            // Live STT 가 비어있을 때만 (API < 33 / SpeechRecognizer 미가용) Gemini fallback.
+                            val audioBytes = audioFileStore.readBytes(audioCachePath)
+                            @OptIn(ExperimentalEncodingApi::class)
+                            val base64 = Base64.Default.encode(audioBytes)
+                            val resultRaw = aiApiService.transcribeAudio(base64, "audio/mp4", durationSeconds)
+                            val result = resultRaw.trim().trim('"', '\'', '`').trim()
+                            val looksLikePromptEcho = result.contains("받아쓰기해줘") || result.contains("받아쓰기 텍스트만")
+                            if (looksLikePromptEcho || result.isBlank()) {
+                                transcriptionError = "음성이 감지되지 않았어요. 다시 시도해주세요."
+                                transcriptionResult = null
+                                audioFileStore.delete(audioCachePath)
+                            } else {
+                                val nowLocal = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+                                fun Int.pad2(): String = toString().padStart(2, '0')
+                                val yy = (nowLocal.year % 100).pad2()
+                                val stamp = "$yy.${nowLocal.monthNumber.pad2()}.${nowLocal.dayOfMonth.pad2()} ${nowLocal.hour.pad2()}:${nowLocal.minute.pad2()}"
+                                val safeFileName = "$stamp 녹음".replace(":", "-").replace("/", "-")
+                                val permanentPath = audioFileStore.permanentPath(safeFileName)
+                                audioFileStore.copy(audioCachePath, permanentPath)
+                                audioFileStore.delete(audioCachePath)
+                                savedAudioPath = permanentPath
+                                pendingAudioPath = permanentPath
+                                pendingAudioDurationSeconds = durationSeconds
+
+                                transcriptionResult = result
+                                transcriptionError = null
+                                consumeAiQuota(FEATURE_TRANSCRIPTION)
+                            }
+                        } else {
+                            transcriptionError = "녹음이 너무 짧아요. 다시 시도해주세요."
+                            audioFileStore.delete(audioCachePath)
                         }
                     } catch (e: Exception) {
                         transcriptionError = "음성 변환에 실패했어요. (${e::class.simpleName}: ${e.message})"
@@ -792,6 +834,8 @@ class MemoPlainNavigationImpl(
                 isTranscribing = isTranscribing,
                 transcriptionResult = transcriptionResult,
                 transcriptionError = transcriptionError,
+                livePartialText = livePartialText,
+                liveConfirmedText = liveConfirmedText,
                 audioPath = savedAudioPath,
                 pendingAudioPath = pendingAudioPath,
                 pendingAudioDurationSeconds = pendingAudioDurationSeconds,
@@ -1160,7 +1204,10 @@ class MemoPlainNavigationImpl(
                             }
                         }
                     },
-                    onUpgrade = { showLimitBottomSheet = false },
+                    onUpgrade = {
+                        showLimitBottomSheet = false
+                        onNavigateToSubscription()
+                    },
                     onDismiss = { showLimitBottomSheet = false },
                     isPlatformSupported = isAdPlatformSupported,
                 )

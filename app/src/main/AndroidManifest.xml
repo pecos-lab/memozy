@@ -27,9 +27,9 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="${admobAppId}" />
 
-        <!-- 녹음 Foreground Service — 화면 off / 백그라운드에서도 녹음 유지 (#206) -->
+        <!-- 녹음 + Live STT 통합 Foreground Service — 화면 off / 백그라운드에서도 녹음 유지 (#206) -->
         <service
-            android:name="me.pecos.memozy.platform.media.RecordingService"
+            android:name="me.pecos.memozy.platform.transcription.RecordingService"
             android:exported="false"
             android:foregroundServiceType="microphone" />
 
