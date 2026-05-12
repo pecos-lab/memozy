@@ -55,11 +55,9 @@ internal class RecordingService : Service() {
         startForegroundCompat()
 
         recorder = createRecorder().apply {
-            // VOICE_RECOGNITION 은 STT 최적화 audio stream (noise suppression 약함, 음성 우선).
-            // Android 14+ 에서 MediaRecorder.MIC + SpeechRecognizer 동시 점유 시 STT 가
-            // 빈 결과 뱉던 회귀 (#357/#359 맥락) 회피 시도 — VOICE_RECOGNITION 이 audio
-            // capture priority 상 SpeechRecognizer 와 공존 가능성 ↑.
-            setAudioSource(MediaRecorder.AudioSource.VOICE_RECOGNITION)
+            // MIC — Live STT 제거 후 mic 점유 충돌 우려 없음. VOICE_RECOGNITION 은 noise
+            // suppression / AGC 가 음성을 과도하게 깎아내 Gemini transcribe 정확도 ↓.
+            setAudioSource(MediaRecorder.AudioSource.MIC)
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
             setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
             setAudioSamplingRate(16000)
