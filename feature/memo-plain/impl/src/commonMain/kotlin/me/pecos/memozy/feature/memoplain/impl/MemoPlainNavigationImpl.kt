@@ -685,13 +685,6 @@ class MemoPlainNavigationImpl(
                     return
                 }
 
-                // 너무 짧은 녹음은 LLM 이 hallucinate 하기 쉬워서 차단 (1.5초 미만).
-                if (durationSeconds < 2) {
-                    transcriptionError = "녹음이 너무 짧아요. 다시 시도해주세요."
-                    audioFileStore.delete(audioCachePath)
-                    return
-                }
-
                 // 녹음 파일 자체가 비정상이면 차단
                 if (!audioFileStore.exists(audioCachePath) || audioFileStore.length(audioCachePath) < 1024) {
                     transcriptionError = "녹음이 너무 짧아요. 다시 시도해주세요."
@@ -707,15 +700,9 @@ class MemoPlainNavigationImpl(
                         val base64 = Base64.Default.encode(audioBytes)
                         val resultRaw = aiApiService.transcribeAudio(base64, "audio/mp4", durationSeconds)
                         val result = resultRaw.trim().trim('"', '\'', '`').trim()
-                        // hallucination 차단:
-                        // (1) Gemini가 프롬프트 그대로 반환
-                        // (2) 빈 결과
-                        // (3) 짧은 audio에 비해 결과가 비정상적으로 김 (1초당 음절 6개 이상)
-                        //     → 짧은 무음/잡음에 한국 콘텐츠 fabricate 하는 패턴 차단
-                        val looksLikePromptEcho = result.contains("받아쓰기") || result.contains("텍스트만 출력")
-                        val tooLongForDuration = durationSeconds > 0 &&
-                            result.length.toDouble() / durationSeconds.toDouble() > 6.0
-                        if (looksLikePromptEcho || result.isBlank() || tooLongForDuration) {
+                        // hallucination 차단은 prompt 단에서 처리. 클라이언트는 빈 결과 / prompt echo 만 차단.
+                        val looksLikePromptEcho = result.contains("받아쓰기해줘") || result.contains("받아쓰기 텍스트만")
+                        if (looksLikePromptEcho || result.isBlank()) {
                             transcriptionError = "음성이 감지되지 않았어요. 다시 시도해주세요."
                             transcriptionResult = null
                             audioFileStore.delete(audioCachePath)
