@@ -13,4 +13,3 @@ mode = "smart"
 #   SUPABASE_URL
 #   SUPABASE_SERVICE_KEY
 #   SUPABASE_JWT_SECRET
-#   OPENAI_API_KEY              — Whisper transcribe (녹음 받아쓰기). Gemini 짧은-audio fabrication 회피.
