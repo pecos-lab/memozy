@@ -639,14 +639,8 @@ class MemoPlainNavigationImpl(
                     recordingStartTime = Clock.System.now().toEpochMilliseconds()
                     isRecording = true
                     transcriptionError = null
-                    // 실시간 받아쓰기 동시 시작 — iOS 는 outputPath 받아 WAV 캡처. Android 는 무시 (RecordingService 가 캡처).
-                    scope.launch {
-                        try {
-                            liveTranscriptionService.start(languageCode, audioCachePath)
-                        } catch (_: Throwable) {
-                            // Live STT 실패해도 녹음 자체는 계속 — 종료 시 Gemini 변환으로 fallback
-                        }
-                    }
+                    // Live STT 는 사용하지 않음 — Android 14+ mic 점유 회귀 + Gemini fallback hallucination
+                    // 문제로, 녹음 종료 후 Gemini transcribeAudio 단일 경로로 통일 (#357/#359 후속).
                 } catch (e: Exception) {
                     transcriptionError = "녹음을 시작할 수 없어요."
                 }
@@ -680,46 +674,25 @@ class MemoPlainNavigationImpl(
                 try {
                     audioRecorder?.apply { stop(); release() }
                 } catch (_: Exception) { }
-                // Live STT 동시 종료 — confirmedText 가 최종 텍스트
-                liveTranscriptionService.stop()
                 val durationSeconds = (Clock.System.now().toEpochMilliseconds() - recordingStartTime) / 1000
                 audioRecorder = null
                 isRecording = false
 
                 // 녹음 도중 다른 AI 사용으로 한도 초과되면 transcription 차단.
-                // 녹음 캐시는 폐기 — 결과 보존 시 사용자가 잘못 이해할 수 있음.
                 if (!canUseAi) {
                     audioFileStore.delete(audioCachePath)
                     notifyAiBlocked()
                     return
                 }
 
-                // Live STT 결과를 최종 — Gemini polish 제거 (Gemini 가 WAV 포맷 이슈로 hallucinate 발생)
-                // Live STT 텍스트가 있으면 그대로 본문에 남기고 종료. 파일은 audio playback 용으로 영구 저장.
-                val liveTextFinal = liveTranscriptionService.confirmedText.value.ifBlank {
-                    liveTranscriptionService.partialText.value
-                }
-                if (liveTextFinal.isNotBlank()) {
-                    if (audioFileStore.exists(audioCachePath) && audioFileStore.length(audioCachePath) >= 1024) {
-                        scope.launch {
-                            val nowLocal = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-                            fun Int.pad2(): String = toString().padStart(2, '0')
-                            val yy = (nowLocal.year % 100).pad2()
-                            val stamp = "$yy.${nowLocal.monthNumber.pad2()}.${nowLocal.dayOfMonth.pad2()} ${nowLocal.hour.pad2()}:${nowLocal.minute.pad2()}"
-                            val safeFileName = "$stamp 녹음".replace(":", "-").replace("/", "-")
-                            val permanentPath = audioFileStore.permanentPath(safeFileName)
-                            audioFileStore.copy(audioCachePath, permanentPath)
-                            audioFileStore.delete(audioCachePath)
-                            savedAudioPath = permanentPath
-                            pendingAudioPath = permanentPath
-                            pendingAudioDurationSeconds = durationSeconds
-                        }
-                    }
-                    consumeAiQuota(FEATURE_TRANSCRIPTION)
+                // 너무 짧은 녹음은 LLM 이 hallucinate 하기 쉬워서 차단 (1.5초 미만).
+                if (durationSeconds < 2) {
+                    transcriptionError = "녹음이 너무 짧아요. 다시 시도해주세요."
+                    audioFileStore.delete(audioCachePath)
                     return
                 }
 
-                // Live STT 도 비어있고 파일도 없으면 에러
+                // 녹음 파일 자체가 비정상이면 차단
                 if (!audioFileStore.exists(audioCachePath) || audioFileStore.length(audioCachePath) < 1024) {
                     transcriptionError = "녹음이 너무 짧아요. 다시 시도해주세요."
                     audioFileStore.delete(audioCachePath)
@@ -732,9 +705,17 @@ class MemoPlainNavigationImpl(
                         val audioBytes = audioFileStore.readBytes(audioCachePath)
                         @OptIn(ExperimentalEncodingApi::class)
                         val base64 = Base64.Default.encode(audioBytes)
-                        val result = aiApiService.transcribeAudio(base64, "audio/mp4", durationSeconds)
-                        // Gemini가 프롬프트를 그대로 반환하는 경우 필터링
-                        if (result.contains("받아쓰기") || result.contains("텍스트만 출력") || result.isBlank()) {
+                        val resultRaw = aiApiService.transcribeAudio(base64, "audio/mp4", durationSeconds)
+                        val result = resultRaw.trim().trim('"', '\'', '`').trim()
+                        // hallucination 차단:
+                        // (1) Gemini가 프롬프트 그대로 반환
+                        // (2) 빈 결과
+                        // (3) 짧은 audio에 비해 결과가 비정상적으로 김 (1초당 음절 6개 이상)
+                        //     → 짧은 무음/잡음에 한국 콘텐츠 fabricate 하는 패턴 차단
+                        val looksLikePromptEcho = result.contains("받아쓰기") || result.contains("텍스트만 출력")
+                        val tooLongForDuration = durationSeconds > 0 &&
+                            result.length.toDouble() / durationSeconds.toDouble() > 6.0
+                        if (looksLikePromptEcho || result.isBlank() || tooLongForDuration) {
                             transcriptionError = "음성이 감지되지 않았어요. 다시 시도해주세요."
                             transcriptionResult = null
                             audioFileStore.delete(audioCachePath)
