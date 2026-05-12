@@ -109,17 +109,10 @@ class AIApiServiceImpl(
     }
 
     override suspend fun transcribeAudio(audioBase64: String, mimeType: String, durationSeconds: Long): String {
-        val prompt = """
-            이 한국어 오디오를 받아쓰기해줘.
-
-            규칙:
-            - 들리는 음성을 자연스러운 한국어 문장으로 그대로 옮긴다. 들린 내용은 빠뜨리지 않는다.
-            - 진짜로 무음/잡음만 있거나 사람 음성이 전혀 없으면 빈 문자열("")만 반환한다.
-            - 실제로 들리지 않은 내용은 절대 만들어내지 마라. 특히 "구독 좋아요 부탁드립니다", "톡쏘는 정치", 뉴스 헤드라인, 광고 멘트 같은 흔한 fabrication 절대 금지.
-            - 다른 설명·해설·따옴표 없이 받아쓰기 텍스트만 출력한다.
-
-            오디오 길이: ${durationSeconds}초
-        """.trimIndent()
+        // 출시 빌드 (#354) 까지 사용하던 단순 prompt. 더 엄격하게 다듬으면 LLM 이 negative
+        // prompt anti-pattern 으로 fabrication 패턴에 더 끌려가는 회귀가 관찰됨 (커밋
+        // fa72f01 → 9aeecf5 회귀 추적). 단순한 게 답.
+        val prompt = "이 오디오를 한국어로 받아쓰기해줘. 텍스트만 출력하고 다른 설명은 하지 마."
 
         val request = GeminiRequest(
             contents = listOf(
