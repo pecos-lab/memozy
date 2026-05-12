@@ -629,8 +629,7 @@ class MemoPlainNavigationImpl(
             val permissionService: PermissionService = koinInject()
             var audioRecorder by remember { mutableStateOf<AudioRecorder?>(null) }
             var recordingStartTime by remember { mutableStateOf(0L) }
-            // RecordingService 가 PCM 16-bit/16kHz/mono WAV 로 저장.
-            val audioCachePath = remember { audioFileStore.cachePath("recording.wav") }
+            val audioCachePath = remember { audioFileStore.cachePath("recording.m4a") }
 
             fun beginRecording() {
                 try {
@@ -733,8 +732,7 @@ class MemoPlainNavigationImpl(
                         val audioBytes = audioFileStore.readBytes(audioCachePath)
                         @OptIn(ExperimentalEncodingApi::class)
                         val base64 = Base64.Default.encode(audioBytes)
-                        // RecordingService 가 WAV(PCM 16-bit/16kHz/mono) 로 저장하므로 MIME 도 audio/wav.
-                        val result = aiApiService.transcribeAudio(base64, "audio/wav", durationSeconds)
+                        val result = aiApiService.transcribeAudio(base64, "audio/mp4", durationSeconds)
                         // Gemini가 프롬프트를 그대로 반환하는 경우 필터링
                         if (result.contains("받아쓰기") || result.contains("텍스트만 출력") || result.isBlank()) {
                             transcriptionError = "음성이 감지되지 않았어요. 다시 시도해주세요."
