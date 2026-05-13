@@ -19,6 +19,9 @@ val memoDatabaseModule = module {
             .create()
             .addMigrations(*ALL_MEMO_MIGRATIONS)
             .addCallback(MEMO_PREPOPULATE_CALLBACK)
+            // TODO(release 전 반드시 제거): v20 schema export 미일치로 인한 schema mismatch 즉사 회피.
+            // 정상 빌드 + schemas/20.json 생성된 환경이면 마이그레이션이 정상 작동하므로 이 줄 삭제할 것.
+            .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
     }
 

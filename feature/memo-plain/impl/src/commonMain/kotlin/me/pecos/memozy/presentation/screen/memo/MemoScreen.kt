@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -57,6 +58,7 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -243,6 +245,11 @@ fun MemoScreen(
     transcriptionError: String? = null,
     livePartialText: String = "",
     liveConfirmedText: String = "",
+    // 녹음 정지 후에도 라이브 카드를 그대로 유지 — 카드 헤더가 제목, 본문이 녹음 텍스트.
+    recordedCardTitle: String? = null,
+    recordedCardText: String? = null,
+    onDismissRecordedCard: (() -> Unit)? = null,
+    onUpdateRecordedCardText: ((String) -> Unit)? = null,
     audioPath: String? = null,
     pendingAudioPath: String? = null,
     pendingAudioDurationSeconds: Long = 0L,
@@ -475,7 +482,7 @@ fun MemoScreen(
     }
     fun safeStyles(): String? = richTextState.toHtml().takeIf { it.isNotBlank() }
 
-    val canAutoSave = nameText.isNotBlank() || bodyText.isNotBlank() || summaryEntries.isNotEmpty() || webSummaryText != null || savedYoutubeUrl != null || savedWebUrl != null
+    val canAutoSave = nameText.isNotBlank() || bodyText.isNotBlank() || summaryEntries.isNotEmpty() || webSummaryText != null || savedYoutubeUrl != null || savedWebUrl != null || !recordedCardText.isNullOrBlank() || audioPath != null
 
     // ON_PAUSE / onDispose 라이프사이클 저장 — 화면 이탈 시에만 저장 (snapshotFlow 제거)
     // rememberUpdatedState 로 saveAction 자체를 매 컴포지션 갱신해서 stale closure 방지.
@@ -494,6 +501,7 @@ fun MemoScreen(
             && savedYoutubeUrl == currentExistingMemo.youtubeUrl
             && savedWebUrl == currentExistingMemo.webUrl
             && categoryIndex == expectedCategoryIndex
+            && recordedCardText == currentExistingMemo.recordingTranscript
         ) return@save
         cb(MemoUiState(
             id = currentExistingMemo.id,
@@ -504,7 +512,8 @@ fun MemoScreen(
             youtubeUrl = savedYoutubeUrl,
             summaryContent = newSummary,
             isSummaryExpanded = if (savedWebUrl != null) isWebSummaryExpanded else isSummaryExpanded,
-            webUrl = savedWebUrl
+            webUrl = savedWebUrl,
+            recordingTranscript = recordedCardText
         ))
     })
     if (onAutoSave != null) {
@@ -697,31 +706,17 @@ fun MemoScreen(
                     }
                 )
 
-                // 녹음 결과를 본문에 삽입 + 제목 자동 설정 (Live STT 안 쓰는 구 경로용)
-                LaunchedEffect(transcriptionResult) {
-                    if (transcriptionResult != null) {
-                        val current = richTextState.annotatedString.text
-                        val newText = if (current.isBlank()) transcriptionResult
-                        else "$current\n\n$transcriptionResult"
-                        richTextState.setHtml(newText.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>"))
-                        bodyText = newText
-            
-                        // 제목이 비어있으면 자동 설정
-                        if (nameText.isBlank()) {
-                            val now = kotlin.time.Clock.System.now()
-                                .toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault())
-                            fun Int.pad2(): String = toString().padStart(2, '0')
-                            val yy = (now.year % 100).pad2()
-                            val formatted = "$yy.${now.monthNumber.pad2()}.${now.dayOfMonth.pad2()} ${now.hour.pad2()}:${now.minute.pad2()}"
-                            nameText = "$formatted 녹음"
-                        }
-                    }
-                }
+                // 녹음 결과는 본문/제목에 자동 삽입하지 않음 — 카드 내부 표시 + (사용자가) 수정 버튼으로 본문 통합.
+                // (이전엔 LaunchedEffect(transcriptionResult) 가 본문/제목에 삽입했으나 카드 단독 표시 흐름으로 변경)
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // 실시간 받아쓰기 — YouTube 요약 인라인 카드와 동일한 톤 (cardBackground / 12dp rounded).
-                if (isRecording) {
+                // 녹음 카드 — 녹음 중에는 라이브 STT, 정지 후에는 동일 카드 유지하되 헤더가 제목으로.
+                val showRecordedCard = !isRecording && !recordedCardText.isNullOrBlank()
+                // 인라인 편집 상태 — 수정 버튼 토글. recordedCardText 가 바뀌면 편집 텍스트도 동기화.
+                var isEditingRecordedCard by remember { mutableStateOf(false) }
+                var editingRecordedText by remember(recordedCardText) { mutableStateOf(recordedCardText.orEmpty()) }
+                if (isRecording || showRecordedCard) {
                     val hasLive = liveConfirmedText.isNotEmpty() || livePartialText.isNotEmpty()
                     Box(
                         modifier = Modifier
@@ -731,45 +726,117 @@ fun MemoScreen(
                             .padding(12.dp),
                     ) {
                         Column {
-                            // 헤더 — 마이크 아이콘 + "녹음 중" 라벨 (YT 카드의 상단 정보 줄과 같은 톤)
+                            // 헤더 — 녹음 중: 빨간 닷 + "녹음 중" (버튼 없음).
+                            //        정지 후: 제목 ("26.05.13 12:02 녹음") + 우측 [수정] [닫기] 버튼.
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(6.dp)
-                                        .clip(CircleShape)
-                                        .background(Color(0xFFE24B4A))
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    "받아쓰기",
-                                    fontSize = fontSettings.scaled(11),
-                                    color = colors.textSecondary,
-                                    fontWeight = FontWeight.Medium,
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            if (hasLive) {
-                                val annotated = androidx.compose.ui.text.buildAnnotatedString {
-                                    withStyle(androidx.compose.ui.text.SpanStyle(color = colors.textBody)) {
-                                        append(liveConfirmedText)
+                                if (isRecording) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(6.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFFE24B4A))
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        "녹음 중",
+                                        fontSize = fontSettings.scaled(11),
+                                        color = colors.textSecondary,
+                                        fontWeight = FontWeight.Medium,
+                                    )
+                                } else {
+                                    Text(
+                                        recordedCardTitle.orEmpty(),
+                                        fontSize = fontSettings.scaled(11),
+                                        color = colors.textSecondary,
+                                        fontWeight = FontWeight.Medium,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                    IconButton(
+                                        onClick = {
+                                            if (isEditingRecordedCard) {
+                                                // 편집 종료 — 변경 사항 외부에 반영
+                                                onUpdateRecordedCardText?.invoke(editingRecordedText)
+                                            }
+                                            isEditingRecordedCard = !isEditingRecordedCard
+                                        },
+                                        modifier = Modifier.size(28.dp),
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isEditingRecordedCard) Icons.Filled.Check else Icons.Filled.Edit,
+                                            contentDescription = if (isEditingRecordedCard) "완료" else "수정",
+                                            tint = colors.textSecondary,
+                                            modifier = Modifier.size(16.dp),
+                                        )
                                     }
-                                    if (livePartialText.isNotEmpty()) {
-                                        if (liveConfirmedText.isNotEmpty()) append(" ")
-                                        withStyle(androidx.compose.ui.text.SpanStyle(color = colors.textSecondary)) {
-                                            append(livePartialText)
-                                        }
+                                    IconButton(
+                                        onClick = { onDismissRecordedCard?.invoke() },
+                                        modifier = Modifier.size(28.dp),
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Close,
+                                            contentDescription = "닫기",
+                                            tint = colors.textSecondary,
+                                            modifier = Modifier.size(16.dp),
+                                        )
                                     }
                                 }
-                                Text(annotated, fontSize = fontSettings.scaled(14), lineHeight = 20.sp)
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            if (isRecording) {
+                                if (hasLive) {
+                                    val annotated = androidx.compose.ui.text.buildAnnotatedString {
+                                        withStyle(androidx.compose.ui.text.SpanStyle(color = colors.textBody)) {
+                                            append(liveConfirmedText)
+                                        }
+                                        if (livePartialText.isNotEmpty()) {
+                                            if (liveConfirmedText.isNotEmpty()) append(" ")
+                                            withStyle(androidx.compose.ui.text.SpanStyle(color = colors.textSecondary)) {
+                                                append(livePartialText)
+                                            }
+                                        }
+                                    }
+                                    Text(annotated, fontSize = fontSettings.scaled(14), lineHeight = 20.sp)
+                                } else {
+                                    Text(
+                                        "말씀해 주세요…",
+                                        fontSize = fontSettings.scaled(13),
+                                        color = colors.textSecondary.copy(alpha = 0.7f),
+                                    )
+                                }
+                            } else if (isEditingRecordedCard) {
+                                OutlinedTextField(
+                                    value = editingRecordedText,
+                                    onValueChange = { editingRecordedText = it },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    textStyle = androidx.compose.ui.text.TextStyle(
+                                        fontSize = fontSettings.scaled(14),
+                                        lineHeight = 20.sp,
+                                        color = colors.textBody,
+                                    ),
+                                )
                             } else {
                                 Text(
-                                    "말씀해 주세요…",
-                                    fontSize = fontSettings.scaled(13),
-                                    color = colors.textSecondary.copy(alpha = 0.7f),
+                                    recordedCardText.orEmpty(),
+                                    fontSize = fontSettings.scaled(14),
+                                    lineHeight = 20.sp,
+                                    color = colors.textBody,
                                 )
                             }
                         }
                     }
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
+                // 오디오 플레이어 카드 (재생 / 다운 / 공유 / 닫기) — 녹음 카드 바로 아래 배치.
+                var audioChipDismissed by remember { mutableStateOf(false) }
+                val effectiveAudioPath = audioPath ?: existingMemo.audioPath
+                if (effectiveAudioPath != null && audioFileStore.exists(effectiveAudioPath) && !audioChipDismissed) {
+                    AudioPlayerBar(
+                        audioPath = effectiveAudioPath,
+                        memoTitle = nameText,
+                        colors = colors,
+                        onDismiss = { audioChipDismissed = true }
+                    )
                     Spacer(modifier = Modifier.height(12.dp))
                 }
 
@@ -927,33 +994,7 @@ fun MemoScreen(
                     }
                 )
 
-                // 녹음 후 저장 여부 확인 카드 — pendingAudioPath 가 있는 동안만 노출
-                if (pendingAudioPath != null && onSaveRecording != null && onDiscardRecording != null) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(colors.chipBackground.copy(alpha = 0.5f))
-                            .padding(horizontal = 14.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        val mm = pendingAudioDurationSeconds / 60
-                        val ss = pendingAudioDurationSeconds % 60
-                        Text(
-                            text = "🎙 녹음 (${mm}:${ss.toString().padStart(2, '0')})",
-                            fontSize = fontSettings.scaled(14),
-                            color = colors.textBody,
-                            modifier = Modifier.weight(1f),
-                        )
-                        TextButton(onClick = onSaveRecording) {
-                            Text("저장", fontSize = fontSettings.scaled(13), color = colors.chipText)
-                        }
-                        TextButton(onClick = onDiscardRecording) {
-                            Text("닫기", fontSize = fontSettings.scaled(13), color = colors.textBody.copy(alpha = 0.6f))
-                        }
-                    }
-                }
+                // 이전에 있던 "녹음 (0:08) 저장 닫기" 수동 확인 카드 제거 — 자동저장으로 통합.
 
                 // 본문 아래 빈 공간도 탭하면 본문에 포커스
                 Spacer(
@@ -1096,18 +1137,7 @@ fun MemoScreen(
                 }
 
                 // (SummaryCard는 본문 위 인라인 카드로 통합됨)
-
-                // 오디오 재생 바 (서식 툴바 아래)
-                var audioChipDismissed by remember { mutableStateOf(false) }
-                val effectiveAudioPath = audioPath ?: existingMemo.audioPath
-                if (effectiveAudioPath != null && audioFileStore.exists(effectiveAudioPath) && !audioChipDismissed) {
-                    AudioPlayerBar(
-                        audioPath = effectiveAudioPath,
-                        memoTitle = nameText,
-                        colors = colors,
-                        onDismiss = { audioChipDismissed = true }
-                    )
-                }
+                // AudioPlayerBar 는 녹음 카드 바로 밑으로 이동됨 — 여기에는 없음.
 
                 Spacer(modifier = Modifier.height(20.dp))
             }

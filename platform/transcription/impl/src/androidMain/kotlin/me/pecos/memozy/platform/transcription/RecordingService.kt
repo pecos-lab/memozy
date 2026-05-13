@@ -28,7 +28,7 @@ import android.speech.SpeechRecognizer
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import java.io.FileOutputStream
+import java.io.OutputStream
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -71,9 +71,12 @@ internal class RecordingService : Service() {
 
     private val mainHandler = Handler(Looper.getMainLooper())
     private var recognizer: SpeechRecognizer? = null
-    private var pipeWrite: ParcelFileDescriptor? = null
+    // pipeWrite (ParcelFileDescriptor) 와 pipeOut (FileOutputStream(pfd.fileDescriptor)) 는
+    // 동일 fd 를 공유 → 둘 다 close 하면 double-close on same fd → 다른 thread 가 그 fd 를
+    // 다른 리소스로 재할당하면 SIGSEGV. AutoCloseOutputStream 이 PFD ownership 을 흡수해서
+    // single close. write 측은 pipeOut 하나로 통합 관리.
     private var pipeRead: ParcelFileDescriptor? = null
-    private var pipeOut: FileOutputStream? = null
+    private var pipeOut: OutputStream? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -158,8 +161,8 @@ internal class RecordingService : Service() {
             try {
                 val pipe = ParcelFileDescriptor.createPipe()
                 pipeRead = pipe[0]
-                pipeWrite = pipe[1]
-                pipeOut = FileOutputStream(pipe[1].fileDescriptor)
+                // AutoCloseOutputStream 이 write 측 PFD 의 ownership 을 가져감 — close 한 번에 fd 깔끔 해제.
+                pipeOut = ParcelFileDescriptor.AutoCloseOutputStream(pipe[1])
                 pipeWriterThread = HandlerThread("rec-pipe").apply { start() }
                 Handler(pipeWriterThread!!.looper).post { pipeWriterLoop() }
                 mainHandler.post { startRecognizerSession() }
@@ -236,8 +239,11 @@ internal class RecordingService : Service() {
         }
         android.util.Log.i(TAG, "captureLoop end — total bytes=$totalBytes muxerStarted=$muxerStarted")
         try { feedEncoderEos() } catch (e: Exception) { android.util.Log.w(TAG, "EOS err", e) }
+        android.util.Log.d(TAG, "captureLoop: EOS fed")
         try { drainEncoder(endOfStream = true) } catch (e: Exception) { android.util.Log.w(TAG, "drain EOS err", e) }
+        android.util.Log.d(TAG, "captureLoop: EOS drained")
         // cleanup 은 main thread 에서 — service lifecycle 메서드 안전 호출 보장.
+        android.util.Log.d(TAG, "captureLoop: posting cleanup to main")
         mainHandler.post { cleanup() }
     }
 
@@ -378,12 +384,17 @@ internal class RecordingService : Service() {
         try {
             val rec = SpeechRecognizer.createSpeechRecognizer(this)
             rec.setRecognitionListener(buildListener(myToken))
+            // EXTRA_AUDIO_SOURCE 에 ParcelFileDescriptor 를 넘기면 SpeechRecognizer 가
+            // ownership 을 가져가서 자기가 close 함. 우리가 또 close 하면 native
+            // double-close → SIGSEGV. dup() 으로 별도 fd 를 만들어 SR 에게 주고,
+            // pipeRead 는 우리가 계속 보유 (재시작 세션 때도 다시 dup 해서 넘김).
+            val dupForSr = read.dup()
             val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE, mapLocale(languageCode))
                 putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
                 if (Build.VERSION.SDK_INT >= 33) {
-                    putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE, read)
+                    putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE, dupForSr)
                     putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE_CHANNEL_COUNT, 1)
                     putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE_ENCODING, AudioFormat.ENCODING_PCM_16BIT)
                     putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE_SAMPLING_RATE, SAMPLE_RATE)
@@ -470,13 +481,21 @@ internal class RecordingService : Service() {
     }
 
     private fun stopCaptureAndService() {
+        android.util.Log.i(TAG, "stopCaptureAndService start")
         // partial 에 남은 텍스트도 confirmed 로 이관 (마지막 단어 손실 방지)
         if (_partialText.value.isNotEmpty()) {
             _confirmedText.value = (_confirmedText.value + " " + _partialText.value).trim()
             _partialText.value = ""
         }
         running.set(false)
-        // captureLoop 가 EOS 처리 + cleanup() 호출
+        // SpeechRecognizer 콜백 race 차단 — 토큰 무효화 (실제 destroy 는 cleanup 에서).
+        // Samsung 등 일부 디바이스에서 cancel() + destroy() 를 native side 가 처리 중일 때 호출하면
+        // SIGSEGV. pipe write 측을 먼저 close 해서 SR 이 EOF 보고 자체적으로 idle 전이하도록 유도하면
+        // 이후 destroy() 호출이 안전해짐. AutoCloseOutputStream 이라 fd close 도 single.
+        recognizerSessionToken++
+        try { pipeOut?.close() } catch (_: Exception) {}
+        pipeOut = null
+        android.util.Log.i(TAG, "stopCaptureAndService end — pipe write closed; captureLoop will drain + cleanup")
     }
 
     private var cleanedUp = false
@@ -486,6 +505,17 @@ internal class RecordingService : Service() {
         cleanedUp = true
         android.util.Log.i(TAG, "cleanup start")
 
+        // capture thread 종료를 먼저 보장 — 다른 native 객체와 동시 접근 막기 위함.
+        // captureLoop 가 mainHandler.post { cleanup() } 직전 EOS drain 까진 끝낸 상태지만,
+        // looper 자체는 아직 살아있을 수 있어 quitSafely + join 으로 완전 종료 확인.
+        try { captureThread?.quitSafely() } catch (_: Exception) {}
+        try { captureThread?.join(500) } catch (_: Exception) {}
+        captureThread = null
+        android.util.Log.d(TAG, "cleanup: captureThread done")
+
+        // SpeechRecognizer: stopCaptureAndService 에서 pipe write 측 close 했으므로
+        // SR 는 이미 EOF 처리 + idle 상태일 가능성 높음. cancel() 은 일부 디바이스(Samsung)에서
+        // native crash 유발 → destroy() 만 호출. token 은 이미 stopCaptureAndService 에서 무효화됨.
         try { recognizer?.destroy() } catch (e: Exception) { android.util.Log.w(TAG, "recognizer.destroy err", e) }
         recognizer = null
         android.util.Log.d(TAG, "cleanup: recognizer done")
@@ -499,11 +529,17 @@ internal class RecordingService : Service() {
         audioRecord = null
         android.util.Log.d(TAG, "cleanup: audioRecord done")
 
-        // encoder.stop 은 MediaCodec 이 RUNNING 상태가 아니면 ISE — flushing or executing 둘 다 OK.
+        // encoder: flush → stop → release 순서. flush 가 pending buffer 비워서
+        // stop 시점 native 측 자료구조 정리가 안전해짐 (일부 디바이스 SIGSEGV 회피).
+        try { encoder?.flush() } catch (e: Exception) { android.util.Log.w(TAG, "encoder.flush err", e) }
         try { encoder?.stop() } catch (e: Exception) { android.util.Log.w(TAG, "encoder.stop err", e) }
         try { encoder?.release() } catch (e: Exception) { android.util.Log.w(TAG, "encoder.release err", e) }
         encoder = null
         android.util.Log.d(TAG, "cleanup: encoder done")
+
+        // encoder release 와 muxer stop 사이 짧은 대기 — 일부 디바이스에서 native 측
+        // codec 핸들 회수가 늦어 muxer stop 과 race 가 나는 케이스가 보고됨.
+        try { Thread.sleep(20) } catch (_: InterruptedException) {}
 
         val muxOk = muxerStarted
         try { if (muxerStarted) muxer?.stop() } catch (e: Exception) { android.util.Log.w(TAG, "muxer.stop err", e) }
@@ -521,12 +557,9 @@ internal class RecordingService : Service() {
         pipeQueue.clear()
         closePipe()
         try { pipeWriterThread?.quitSafely() } catch (_: Exception) {}
+        try { pipeWriterThread?.join(300) } catch (_: Exception) {}
         pipeWriterThread = null
         android.util.Log.d(TAG, "cleanup: pipe done")
-
-        try { captureThread?.quitSafely() } catch (_: Exception) {}
-        captureThread = null
-        android.util.Log.d(TAG, "cleanup: captureThread done")
 
         _state.value = RecordingState.Idle
         try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (e: Exception) { android.util.Log.w(TAG, "stopForeground err", e) }
@@ -537,8 +570,7 @@ internal class RecordingService : Service() {
     private fun closePipe() {
         try { pipeOut?.close() } catch (_: Exception) {}
         pipeOut = null
-        try { pipeWrite?.close() } catch (_: Exception) {}
-        pipeWrite = null
+        // pipeRead: SR 에는 dup() 으로 전달했으므로 우리 PFD 는 단일 owner. close 안전.
         try { pipeRead?.close() } catch (_: Exception) {}
         pipeRead = null
     }

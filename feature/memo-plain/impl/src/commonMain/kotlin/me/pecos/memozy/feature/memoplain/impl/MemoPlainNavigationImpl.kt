@@ -598,6 +598,29 @@ class MemoPlainNavigationImpl(
             // 파일은 이미 permanent 로 옮겨져 안전 — 닫기 시에만 삭제.
             var pendingAudioPath by remember { mutableStateOf<String?>(null) }
             var pendingAudioDurationSeconds by remember { mutableStateOf(0L) }
+            // 녹음 정지 후에도 라이브 카드를 카드 형태로 유지 — 헤더가 제목, 본문이 녹음 텍스트.
+            var recordedCardTitle by remember { mutableStateOf<String?>(null) }
+            var recordedCardText by remember { mutableStateOf<String?>(null) }
+            // 메모 다시 열 때 entity 의 recordingTranscript 가 있으면 카드 복원.
+            // 제목은 메모의 createdAt 으로 stamp 생성 (별도 필드 없이 자연스럽게).
+            LaunchedEffect(finalMemo.id, finalMemo.recordingTranscript) {
+                try {
+                    if (!finalMemo.recordingTranscript.isNullOrBlank() && recordedCardText.isNullOrBlank()) {
+                        recordedCardText = finalMemo.recordingTranscript
+                        val createdAt = if (finalMemo.createdAt > 0) finalMemo.createdAt else Clock.System.now().toEpochMilliseconds()
+                        val nowLocal = kotlin.time.Instant.fromEpochMilliseconds(createdAt)
+                            .toLocalDateTime(TimeZone.currentSystemDefault())
+                        fun Int.pad2(): String = toString().padStart(2, '0')
+                        val yy = (nowLocal.year % 100).pad2()
+                        val stamp = "$yy.${nowLocal.monthNumber.pad2()}.${nowLocal.dayOfMonth.pad2()} ${nowLocal.hour.pad2()}:${nowLocal.minute.pad2()}"
+                        recordedCardTitle = "$stamp 녹음"
+                    }
+                } catch (e: Throwable) {
+                    // 복원 실패해도 화면은 죽으면 안 됨 — 단순 폴백
+                    recordedCardText = finalMemo.recordingTranscript
+                    recordedCardTitle = "녹음"
+                }
+            }
             // Web summary busy — 가드 검사용으로 다른 busy state 와 같은 위치에 선언
             var isWebSummarizing by remember { mutableStateOf(false) }
 
@@ -647,6 +670,9 @@ class MemoPlainNavigationImpl(
                     recordingStartTime = Clock.System.now().toEpochMilliseconds()
                     isRecording = true
                     transcriptionError = null
+                    // 새 녹음 시작 시 이전 녹음 카드 초기화
+                    recordedCardTitle = null
+                    recordedCardText = null
                     scope.launch {
                         liveTranscriptionService.start(languageCode, audioCachePath)
                     }
@@ -709,18 +735,28 @@ class MemoPlainNavigationImpl(
                         // 마지막 partial → confirmed flush 시간 추가 100ms
                         kotlinx.coroutines.delay(150)
 
-                        val liveText = liveTranscriptionService.confirmedText.value.trim()
+                        // 카드에 보였던 모든 텍스트가 본문에 들어가도록 confirmed + partial 둘 다 머지.
+                        // SR 이 cancel 되는 시점 race 로 마지막 partial 이 confirmed 로 flush 안 된 케이스 대비.
+                        val confirmed = liveTranscriptionService.confirmedText.value.trim()
+                        val partial = liveTranscriptionService.partialText.value.trim()
+                        val liveText = when {
+                            confirmed.isEmpty() -> partial
+                            partial.isEmpty() -> confirmed
+                            partial.startsWith(confirmed) -> partial  // partial 이 confirmed 의 연속이면 partial 만
+                            else -> "$confirmed $partial"
+                        }.trim()
                         val fileExists = audioFileStore.exists(audioCachePath) && audioFileStore.length(audioCachePath) >= 1024
 
                         if (liveText.isNotBlank()) {
                             // iOS / API 33+ Android — Live STT 결과 그대로 사용. Gemini fabrication 회피.
                             val result = liveText
 
+                            val nowLocal = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+                            fun Int.pad2(): String = toString().padStart(2, '0')
+                            val yy = (nowLocal.year % 100).pad2()
+                            val stamp = "$yy.${nowLocal.monthNumber.pad2()}.${nowLocal.dayOfMonth.pad2()} ${nowLocal.hour.pad2()}:${nowLocal.minute.pad2()}"
+
                             if (fileExists) {
-                                val nowLocal = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-                                fun Int.pad2(): String = toString().padStart(2, '0')
-                                val yy = (nowLocal.year % 100).pad2()
-                                val stamp = "$yy.${nowLocal.monthNumber.pad2()}.${nowLocal.dayOfMonth.pad2()} ${nowLocal.hour.pad2()}:${nowLocal.minute.pad2()}"
                                 val safeFileName = "$stamp 녹음".replace(":", "-").replace("/", "-")
                                 val permanentPath = audioFileStore.permanentPath(safeFileName)
                                 audioFileStore.copy(audioCachePath, permanentPath)
@@ -729,6 +765,10 @@ class MemoPlainNavigationImpl(
                                 pendingAudioPath = permanentPath
                                 pendingAudioDurationSeconds = durationSeconds
                             }
+
+                            // 카드 영구 표시: 헤더 = "{stamp} 녹음", 본문 = 녹음 텍스트
+                            recordedCardTitle = "$stamp 녹음"
+                            recordedCardText = result
 
                             transcriptionResult = result
                             transcriptionError = null
@@ -757,6 +797,10 @@ class MemoPlainNavigationImpl(
                                 savedAudioPath = permanentPath
                                 pendingAudioPath = permanentPath
                                 pendingAudioDurationSeconds = durationSeconds
+
+                                // 카드 영구 표시 (Gemini fallback 경로도 동일 처리)
+                                recordedCardTitle = "$stamp 녹음"
+                                recordedCardText = result
 
                                 transcriptionResult = result
                                 transcriptionError = null
@@ -836,6 +880,15 @@ class MemoPlainNavigationImpl(
                 transcriptionError = transcriptionError,
                 livePartialText = livePartialText,
                 liveConfirmedText = liveConfirmedText,
+                recordedCardTitle = recordedCardTitle,
+                recordedCardText = recordedCardText,
+                onDismissRecordedCard = {
+                    recordedCardTitle = null
+                    recordedCardText = null
+                },
+                onUpdateRecordedCardText = { newText ->
+                    recordedCardText = newText
+                },
                 audioPath = savedAudioPath,
                 pendingAudioPath = pendingAudioPath,
                 pendingAudioDurationSeconds = pendingAudioDurationSeconds,
@@ -1225,7 +1278,8 @@ class MemoPlainNavigationImpl(
         youtubeUrl = youtubeUrl,
         summaryContent = summaryContent,
         isSummaryExpanded = isSummaryExpanded,
-        webUrl = webUrl
+        webUrl = webUrl,
+        recordingTranscript = recordingTranscript
     )
 
     // 503 에러 시 최대 3회 재시도 (exponential backoff)
