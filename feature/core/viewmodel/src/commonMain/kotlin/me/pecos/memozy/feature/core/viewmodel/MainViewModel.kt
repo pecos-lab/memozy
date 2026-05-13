@@ -116,7 +116,8 @@ fun MemoUiState.toMemo(): Memo = Memo(
     reminderAt = this.reminderAt,
     summaryContent = this.summaryContent,
     isSummaryExpanded = this.isSummaryExpanded,
-    webUrl = this.webUrl
+    webUrl = this.webUrl,
+    recordingTranscript = this.recordingTranscript
 )
 
 fun Memo.toUiState(): MemoUiState = MemoUiState(
@@ -138,5 +139,6 @@ fun Memo.toUiState(): MemoUiState = MemoUiState(
     reminderAt = this.reminderAt,
     summaryContent = this.summaryContent,
     isSummaryExpanded = this.isSummaryExpanded,
-    webUrl = this.webUrl
+    webUrl = this.webUrl,
+    recordingTranscript = this.recordingTranscript
 )

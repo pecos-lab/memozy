@@ -109,6 +109,9 @@ class AIApiServiceImpl(
     }
 
     override suspend fun transcribeAudio(audioBase64: String, mimeType: String, durationSeconds: Long): String {
+        // 출시 빌드 (#354) 까지 사용하던 단순 prompt. 더 엄격하게 다듬으면 LLM 이 negative
+        // prompt anti-pattern 으로 fabrication 패턴에 더 끌려가는 회귀가 관찰됨 (커밋
+        // fa72f01 → 9aeecf5 회귀 추적). 단순한 게 답.
         val prompt = "이 오디오를 한국어로 받아쓰기해줘. 텍스트만 출력하고 다른 설명은 하지 마."
 
         val request = GeminiRequest(

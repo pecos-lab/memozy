@@ -88,7 +88,6 @@ android {
             buildConfigField("String", "ADMOB_REWARD_AD_UNIT_ID", "\"${localProperties.getProperty("admob.reward.ad.unit.id", testRewardAdUnitId)}\"")
             buildConfigField("String", "ADMOB_TEST_DEVICE_IDS", "\"${localProperties.getProperty("admob.test.device.ids", "")}\"")
             buildConfigField("String", "REVENUECAT_API_KEY", "\"${localProperties.getProperty("revenuecat.android.api.key", "")}\"")
-            buildConfigField("String", "VOSK_MODEL_URL", "\"${localProperties.getProperty("vosk.model.url", "")}\"")
         }
         release {
             isMinifyEnabled = true
@@ -105,7 +104,6 @@ android {
             buildConfigField("String", "ADMOB_REWARD_AD_UNIT_ID", "\"${localProperties.getProperty("admob.reward.ad.unit.id", testRewardAdUnitId)}\"")
             buildConfigField("String", "ADMOB_TEST_DEVICE_IDS", "\"${localProperties.getProperty("admob.test.device.ids", "")}\"")
             buildConfigField("String", "REVENUECAT_API_KEY", "\"${localProperties.getProperty("revenuecat.android.prod.api.key", "")}\"")
-            buildConfigField("String", "VOSK_MODEL_URL", "\"${localProperties.getProperty("vosk.model.prod.url", localProperties.getProperty("vosk.model.url", ""))}\"")
         }
     }
 }

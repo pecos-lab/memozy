@@ -381,7 +381,8 @@ class MemoPlainNavigationImpl(
     override fun registerGraph(
         navGraphBuilder: NavGraphBuilder,
         onNavigateToHome: () -> Unit,
-        onBack: () -> Unit
+        onBack: () -> Unit,
+        onNavigateToSubscription: () -> Unit,
     ) {
         navGraphBuilder.composable(
             MemoPlainRoute.MEMO,
@@ -597,6 +598,29 @@ class MemoPlainNavigationImpl(
             // 파일은 이미 permanent 로 옮겨져 안전 — 닫기 시에만 삭제.
             var pendingAudioPath by remember { mutableStateOf<String?>(null) }
             var pendingAudioDurationSeconds by remember { mutableStateOf(0L) }
+            // 녹음 정지 후에도 라이브 카드를 카드 형태로 유지 — 헤더가 제목, 본문이 녹음 텍스트.
+            var recordedCardTitle by remember { mutableStateOf<String?>(null) }
+            var recordedCardText by remember { mutableStateOf<String?>(null) }
+            // 메모 다시 열 때 entity 의 recordingTranscript 가 있으면 카드 복원.
+            // 제목은 메모의 createdAt 으로 stamp 생성 (별도 필드 없이 자연스럽게).
+            LaunchedEffect(finalMemo.id, finalMemo.recordingTranscript) {
+                try {
+                    if (!finalMemo.recordingTranscript.isNullOrBlank() && recordedCardText.isNullOrBlank()) {
+                        recordedCardText = finalMemo.recordingTranscript
+                        val createdAt = if (finalMemo.createdAt > 0) finalMemo.createdAt else Clock.System.now().toEpochMilliseconds()
+                        val nowLocal = kotlin.time.Instant.fromEpochMilliseconds(createdAt)
+                            .toLocalDateTime(TimeZone.currentSystemDefault())
+                        fun Int.pad2(): String = toString().padStart(2, '0')
+                        val yy = (nowLocal.year % 100).pad2()
+                        val stamp = "$yy.${nowLocal.monthNumber.pad2()}.${nowLocal.dayOfMonth.pad2()} ${nowLocal.hour.pad2()}:${nowLocal.minute.pad2()}"
+                        recordedCardTitle = "$stamp 녹음"
+                    }
+                } catch (e: Throwable) {
+                    // 복원 실패해도 화면은 죽으면 안 됨 — 단순 폴백
+                    recordedCardText = finalMemo.recordingTranscript
+                    recordedCardTitle = "녹음"
+                }
+            }
             // Web summary busy — 가드 검사용으로 다른 busy state 와 같은 위치에 선언
             var isWebSummarizing by remember { mutableStateOf(false) }
 
@@ -629,24 +653,28 @@ class MemoPlainNavigationImpl(
             val permissionService: PermissionService = koinInject()
             var audioRecorder by remember { mutableStateOf<AudioRecorder?>(null) }
             var recordingStartTime by remember { mutableStateOf(0L) }
-            // RecordingService 가 PCM 16-bit/16kHz/mono WAV 로 저장.
-            val audioCachePath = remember { audioFileStore.cachePath("recording.wav") }
+            val audioCachePath = remember { audioFileStore.cachePath("recording.m4a") }
+
+            // Live STT 실시간 텍스트 — 녹음 중 화면에 즉시 반영
+            val livePartialText by liveTranscriptionService.partialText.collectAsState()
+            val liveConfirmedText by liveTranscriptionService.confirmedText.collectAsState()
 
             fun beginRecording() {
                 try {
+                    // LiveTranscriptionService 가 마이크 단독 소유 + 파일 저장 + 실시간 STT 통합.
+                    // iOS AVAudioEngine, Android AudioRecord+SpeechRecognizer(pipe) 패턴 동일.
+                    // AudioRecorder.start() 는 양 플랫폼 모두 Noop — mic 충돌 회피.
                     val recorder = mediaService.createAudioRecorder()
                     recorder.start(audioCachePath)
                     audioRecorder = recorder
                     recordingStartTime = Clock.System.now().toEpochMilliseconds()
                     isRecording = true
                     transcriptionError = null
-                    // 실시간 받아쓰기 동시 시작 — iOS 는 outputPath 받아 WAV 캡처. Android 는 무시 (RecordingService 가 캡처).
+                    // 새 녹음 시작 시 이전 녹음 카드 초기화
+                    recordedCardTitle = null
+                    recordedCardText = null
                     scope.launch {
-                        try {
-                            liveTranscriptionService.start(languageCode, audioCachePath)
-                        } catch (_: Throwable) {
-                            // Live STT 실패해도 녹음 자체는 계속 — 종료 시 Gemini 변환으로 fallback
-                        }
+                        liveTranscriptionService.start(languageCode, audioCachePath)
                     }
                 } catch (e: Exception) {
                     transcriptionError = "녹음을 시작할 수 없어요."
@@ -678,85 +706,109 @@ class MemoPlainNavigationImpl(
             }
 
             fun stopRecordingAndTranscribe() {
+                // Live STT 정지 — 마지막 partial 이 confirmed 로 flush 됨.
+                liveTranscriptionService.stop()
                 try {
                     audioRecorder?.apply { stop(); release() }
                 } catch (_: Exception) { }
-                // Live STT 동시 종료 — confirmedText 가 최종 텍스트
-                liveTranscriptionService.stop()
                 val durationSeconds = (Clock.System.now().toEpochMilliseconds() - recordingStartTime) / 1000
                 audioRecorder = null
                 isRecording = false
 
                 // 녹음 도중 다른 AI 사용으로 한도 초과되면 transcription 차단.
-                // 녹음 캐시는 폐기 — 결과 보존 시 사용자가 잘못 이해할 수 있음.
                 if (!canUseAi) {
                     audioFileStore.delete(audioCachePath)
                     notifyAiBlocked()
                     return
                 }
 
-                // Live STT 결과를 최종 — Gemini polish 제거 (Gemini 가 WAV 포맷 이슈로 hallucinate 발생)
-                // Live STT 텍스트가 있으면 그대로 본문에 남기고 종료. 파일은 audio playback 용으로 영구 저장.
-                val liveTextFinal = liveTranscriptionService.confirmedText.value.ifBlank {
-                    liveTranscriptionService.partialText.value
-                }
-                if (liveTextFinal.isNotBlank()) {
-                    if (audioFileStore.exists(audioCachePath) && audioFileStore.length(audioCachePath) >= 1024) {
-                        scope.launch {
-                            val nowLocal = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-                            fun Int.pad2(): String = toString().padStart(2, '0')
-                            val yy = (nowLocal.year % 100).pad2()
-                            val stamp = "$yy.${nowLocal.monthNumber.pad2()}.${nowLocal.dayOfMonth.pad2()} ${nowLocal.hour.pad2()}:${nowLocal.minute.pad2()}"
-                            val safeFileName = "$stamp 녹음".replace(":", "-").replace("/", "-")
-                            val permanentPath = audioFileStore.permanentPath(safeFileName)
-                            audioFileStore.copy(audioCachePath, permanentPath)
-                            audioFileStore.delete(audioCachePath)
-                            savedAudioPath = permanentPath
-                            pendingAudioPath = permanentPath
-                            pendingAudioDurationSeconds = durationSeconds
-                        }
-                    }
-                    consumeAiQuota(FEATURE_TRANSCRIPTION)
-                    return
-                }
-
-                // Live STT 도 비어있고 파일도 없으면 에러
-                if (!audioFileStore.exists(audioCachePath) || audioFileStore.length(audioCachePath) < 1024) {
-                    transcriptionError = "녹음이 너무 짧아요. 다시 시도해주세요."
-                    audioFileStore.delete(audioCachePath)
-                    return
-                }
-
                 isTranscribing = true
                 scope.launch {
                     try {
-                        val audioBytes = audioFileStore.readBytes(audioCachePath)
-                        @OptIn(ExperimentalEncodingApi::class)
-                        val base64 = Base64.Default.encode(audioBytes)
-                        // RecordingService 가 WAV(PCM 16-bit/16kHz/mono) 로 저장하므로 MIME 도 audio/wav.
-                        val result = aiApiService.transcribeAudio(base64, "audio/wav", durationSeconds)
-                        // Gemini가 프롬프트를 그대로 반환하는 경우 필터링
-                        if (result.contains("받아쓰기") || result.contains("텍스트만 출력") || result.isBlank()) {
-                            transcriptionError = "음성이 감지되지 않았어요. 다시 시도해주세요."
-                            transcriptionResult = null
-                            audioFileStore.delete(audioCachePath)
-                        } else {
-                            // 오디오 파일을 영구 저장소로 이동 (제목과 동일한 파일명)
+                        // 1) 서비스가 인코더 EOS 처리하고 파일을 닫을 시간 + 마지막 STT 결과가 도착할 시간을 대기.
+                        // 길게 잡되, confirmed text 가 도착하면 일찍 끝낼 수 있음.
+                        var waited = 0
+                        while (waited < 2000 && liveTranscriptionService.confirmedText.value.isBlank()) {
+                            kotlinx.coroutines.delay(100)
+                            waited += 100
+                        }
+                        // 마지막 partial → confirmed flush 시간 추가 100ms
+                        kotlinx.coroutines.delay(150)
+
+                        // 카드에 보였던 모든 텍스트가 본문에 들어가도록 confirmed + partial 둘 다 머지.
+                        // SR 이 cancel 되는 시점 race 로 마지막 partial 이 confirmed 로 flush 안 된 케이스 대비.
+                        val confirmed = liveTranscriptionService.confirmedText.value.trim()
+                        val partial = liveTranscriptionService.partialText.value.trim()
+                        val liveText = when {
+                            confirmed.isEmpty() -> partial
+                            partial.isEmpty() -> confirmed
+                            partial.startsWith(confirmed) -> partial  // partial 이 confirmed 의 연속이면 partial 만
+                            else -> "$confirmed $partial"
+                        }.trim()
+                        val fileExists = audioFileStore.exists(audioCachePath) && audioFileStore.length(audioCachePath) >= 1024
+
+                        if (liveText.isNotBlank()) {
+                            // iOS / API 33+ Android — Live STT 결과 그대로 사용. Gemini fabrication 회피.
+                            val result = liveText
+
                             val nowLocal = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
                             fun Int.pad2(): String = toString().padStart(2, '0')
                             val yy = (nowLocal.year % 100).pad2()
                             val stamp = "$yy.${nowLocal.monthNumber.pad2()}.${nowLocal.dayOfMonth.pad2()} ${nowLocal.hour.pad2()}:${nowLocal.minute.pad2()}"
-                            val safeFileName = "$stamp 녹음".replace(":", "-").replace("/", "-")
-                            val permanentPath = audioFileStore.permanentPath(safeFileName)
-                            audioFileStore.copy(audioCachePath, permanentPath)
-                            audioFileStore.delete(audioCachePath)
-                            savedAudioPath = permanentPath
-                            pendingAudioPath = permanentPath
-                            pendingAudioDurationSeconds = durationSeconds
+
+                            if (fileExists) {
+                                val safeFileName = "$stamp 녹음".replace(":", "-").replace("/", "-")
+                                val permanentPath = audioFileStore.permanentPath(safeFileName)
+                                audioFileStore.copy(audioCachePath, permanentPath)
+                                audioFileStore.delete(audioCachePath)
+                                savedAudioPath = permanentPath
+                                pendingAudioPath = permanentPath
+                                pendingAudioDurationSeconds = durationSeconds
+                            }
+
+                            // 카드 영구 표시: 헤더 = "{stamp} 녹음", 본문 = 녹음 텍스트
+                            recordedCardTitle = "$stamp 녹음"
+                            recordedCardText = result
 
                             transcriptionResult = result
                             transcriptionError = null
                             consumeAiQuota(FEATURE_TRANSCRIPTION)
+                        } else if (fileExists) {
+                            // Live STT 가 비어있을 때만 (API < 33 / SpeechRecognizer 미가용) Gemini fallback.
+                            val audioBytes = audioFileStore.readBytes(audioCachePath)
+                            @OptIn(ExperimentalEncodingApi::class)
+                            val base64 = Base64.Default.encode(audioBytes)
+                            val resultRaw = aiApiService.transcribeAudio(base64, "audio/mp4", durationSeconds)
+                            val result = resultRaw.trim().trim('"', '\'', '`').trim()
+                            val looksLikePromptEcho = result.contains("받아쓰기해줘") || result.contains("받아쓰기 텍스트만")
+                            if (looksLikePromptEcho || result.isBlank()) {
+                                transcriptionError = "음성이 감지되지 않았어요. 다시 시도해주세요."
+                                transcriptionResult = null
+                                audioFileStore.delete(audioCachePath)
+                            } else {
+                                val nowLocal = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+                                fun Int.pad2(): String = toString().padStart(2, '0')
+                                val yy = (nowLocal.year % 100).pad2()
+                                val stamp = "$yy.${nowLocal.monthNumber.pad2()}.${nowLocal.dayOfMonth.pad2()} ${nowLocal.hour.pad2()}:${nowLocal.minute.pad2()}"
+                                val safeFileName = "$stamp 녹음".replace(":", "-").replace("/", "-")
+                                val permanentPath = audioFileStore.permanentPath(safeFileName)
+                                audioFileStore.copy(audioCachePath, permanentPath)
+                                audioFileStore.delete(audioCachePath)
+                                savedAudioPath = permanentPath
+                                pendingAudioPath = permanentPath
+                                pendingAudioDurationSeconds = durationSeconds
+
+                                // 카드 영구 표시 (Gemini fallback 경로도 동일 처리)
+                                recordedCardTitle = "$stamp 녹음"
+                                recordedCardText = result
+
+                                transcriptionResult = result
+                                transcriptionError = null
+                                consumeAiQuota(FEATURE_TRANSCRIPTION)
+                            }
+                        } else {
+                            transcriptionError = "녹음이 너무 짧아요. 다시 시도해주세요."
+                            audioFileStore.delete(audioCachePath)
                         }
                     } catch (e: Exception) {
                         transcriptionError = "음성 변환에 실패했어요. (${e::class.simpleName}: ${e.message})"
@@ -826,6 +878,17 @@ class MemoPlainNavigationImpl(
                 isTranscribing = isTranscribing,
                 transcriptionResult = transcriptionResult,
                 transcriptionError = transcriptionError,
+                livePartialText = livePartialText,
+                liveConfirmedText = liveConfirmedText,
+                recordedCardTitle = recordedCardTitle,
+                recordedCardText = recordedCardText,
+                onDismissRecordedCard = {
+                    recordedCardTitle = null
+                    recordedCardText = null
+                },
+                onUpdateRecordedCardText = { newText ->
+                    recordedCardText = newText
+                },
                 audioPath = savedAudioPath,
                 pendingAudioPath = pendingAudioPath,
                 pendingAudioDurationSeconds = pendingAudioDurationSeconds,
@@ -1194,7 +1257,10 @@ class MemoPlainNavigationImpl(
                             }
                         }
                     },
-                    onUpgrade = { showLimitBottomSheet = false },
+                    onUpgrade = {
+                        showLimitBottomSheet = false
+                        onNavigateToSubscription()
+                    },
                     onDismiss = { showLimitBottomSheet = false },
                     isPlatformSupported = isAdPlatformSupported,
                 )
@@ -1212,7 +1278,8 @@ class MemoPlainNavigationImpl(
         youtubeUrl = youtubeUrl,
         summaryContent = summaryContent,
         isSummaryExpanded = isSummaryExpanded,
-        webUrl = webUrl
+        webUrl = webUrl,
+        recordingTranscript = recordingTranscript
     )
 
     // 503 에러 시 최대 3회 재시도 (exponential backoff)

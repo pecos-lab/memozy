@@ -1,79 +1,41 @@
 package me.pecos.memozy.platform.transcription
 
 import android.content.Context
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
-import me.pecos.memozy.platform.media.RecordingService
-import me.pecos.memozy.platform.media.RecordingState
 
-fun provideLiveTranscriptionService(
-    context: Context,
-    workerUrl: String,
-    appKey: String,
-): LiveTranscriptionService =
-    AndroidLiveTranscriptionService(context.applicationContext, workerUrl, appKey)
+fun provideLiveTranscriptionService(context: Context): LiveTranscriptionService =
+    AndroidLiveTranscriptionService(context.applicationContext)
 
 /**
- * iOS 의 SFSpeechRecognizer + AVAudioEngine 패턴을 Android 에 맞춰 구현.
+ * iOS LiveTranscriptionBridge 와 동일한 책임: 마이크 + 실시간 STT + 파일 저장 통합.
  *
- * 실제 음성 캡처는 [RecordingService] 가 mic 1개 클라이언트(AudioRecord)로 통합 수행.
- * 실시간 STT 는 [GeminiLiveSession] 이 PCM 청크를 WebSocket 으로 Gemini Live API 에 stream.
- *
- * 결과(partial/confirmed) 는 RecordingService 의 companion StateFlow 를 그대로 노출.
+ * 실제 작업은 [RecordingService] 가 담당 (AudioRecord → SpeechRecognizer pipe + AAC 인코더).
+ * 이 클래스는 commonMain interface 를 RecordingService 의 companion StateFlow 에 연결하는 얇은 wrapper.
  */
 internal class AndroidLiveTranscriptionService(
-    @Suppress("UNUSED_PARAMETER") private val context: Context,
-    private val workerUrl: String,
-    private val appKey: String,
+    private val context: Context,
 ) : LiveTranscriptionService {
 
-    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-    private var session: GeminiLiveSession? = null
-
-    override val partialText: StateFlow<String> = RecordingService.partial
-    override val confirmedText: StateFlow<String> = RecordingService.confirmed
+    override val partialText: StateFlow<String> = RecordingService.partialText
+    override val confirmedText: StateFlow<String> = RecordingService.confirmedText
 
     private val _state = MutableStateFlow<TranscriptionState>(TranscriptionState.Idle)
     override val state: StateFlow<TranscriptionState> = _state
 
-    init {
-        scope.launch {
-            RecordingService.state.collect { rec ->
-                _state.value = when (rec) {
-                    is RecordingState.Idle -> TranscriptionState.Idle
-                    is RecordingState.Recording -> TranscriptionState.Listening
-                }
-            }
-        }
-    }
-
     override suspend fun start(languageCode: String, outputPath: String?) {
-        if (workerUrl.isBlank() || appKey.isBlank()) {
-            _state.value = TranscriptionState.Error("Worker URL / app key 미설정")
+        if (outputPath == null) {
+            // outputPath 없이는 RecordingService 가 안 돌아감 — caller 가 반드시 경로 제공해야 함.
+            _state.value = TranscriptionState.Error("outputPath required")
             return
         }
-        // 새 세션 — 기존 세션이 남아있으면 정리
-        session?.stop()
-        val prompt = buildSystemPrompt(languageCode)
-        session = GeminiLiveSession(workerUrl, appKey).apply { start(prompt) }
+        RecordingService.resetLiveText()
+        RecordingService.start(context, outputPath, languageCode)
+        _state.value = TranscriptionState.Listening
     }
 
     override fun stop() {
-        session?.stop()
-        session = null
-    }
-
-    private fun buildSystemPrompt(languageCode: String): String {
-        val langName = when (languageCode) {
-            "ko" -> "한국어"
-            "en" -> "영어"
-            "ja" -> "일본어"
-            else -> languageCode
-        }
-        return "사용자가 발화한 $langName 음성을 정확히 받아쓰기만 하세요. 별도 응답이나 추가 텍스트는 출력하지 마세요."
+        RecordingService.stop(context)
+        _state.value = TranscriptionState.Idle
     }
 }
