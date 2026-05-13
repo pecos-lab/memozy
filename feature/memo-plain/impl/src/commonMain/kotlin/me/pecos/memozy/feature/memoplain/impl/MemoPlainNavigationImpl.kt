@@ -556,7 +556,8 @@ class MemoPlainNavigationImpl(
                             youtubeUrl = it.youtubeUrl,
                             summaryContent = it.summaryContent,
                             isSummaryExpanded = it.isSummaryExpanded,
-                            webUrl = it.webUrl
+                            webUrl = it.webUrl,
+                            recordingTranscript = it.recordingTranscript
                         )
                     }
                     memoLoaded = true
@@ -601,6 +602,14 @@ class MemoPlainNavigationImpl(
             // 녹음 정지 후에도 라이브 카드를 카드 형태로 유지 — 헤더가 제목, 본문이 녹음 텍스트.
             var recordedCardTitle by remember { mutableStateOf<String?>(null) }
             var recordedCardText by remember { mutableStateOf<String?>(null) }
+            // 번역 녹음 — 소스/타겟 언어 선택. null 이면 일반 녹음.
+            var showTranslationDialog by remember { mutableStateOf(false) }
+            var translationSourceLang by remember { mutableStateOf<String?>(null) }
+            var translationTargetLang by remember { mutableStateOf<String?>(null) }
+            // 녹음 시작 시 사용할 언어 — 번역 녹음이면 소스 언어, 아니면 앱 언어.
+            // beginRecording 안에서 매번 갱신해서 일반/번역 흐름 분기.
+            var activeRecordingSourceLang by remember { mutableStateOf<String?>(null) }
+            var activeRecordingTargetLang by remember { mutableStateOf<String?>(null) }
             // 메모 다시 열 때 entity 의 recordingTranscript 가 있으면 카드 복원.
             // 제목은 메모의 createdAt 으로 stamp 생성 (별도 필드 없이 자연스럽게).
             LaunchedEffect(finalMemo.id, finalMemo.recordingTranscript) {
@@ -673,8 +682,9 @@ class MemoPlainNavigationImpl(
                     // 새 녹음 시작 시 이전 녹음 카드 초기화
                     recordedCardTitle = null
                     recordedCardText = null
+                    val effectiveLang = activeRecordingSourceLang ?: languageCode
                     scope.launch {
-                        liveTranscriptionService.start(languageCode, audioCachePath)
+                        liveTranscriptionService.start(effectiveLang, audioCachePath)
                     }
                 } catch (e: Exception) {
                     transcriptionError = "녹음을 시작할 수 없어요."
@@ -749,7 +759,28 @@ class MemoPlainNavigationImpl(
 
                         if (liveText.isNotBlank()) {
                             // iOS / API 33+ Android — Live STT 결과 그대로 사용. Gemini fabrication 회피.
-                            val result = liveText
+                            // 번역 모드면 STT 결과를 Gemini 로 번역해서 [원문 \n\n 번역] 합쳐서 표시.
+                            val sourceLangSnap = activeRecordingSourceLang
+                            val targetLangSnap = activeRecordingTargetLang
+                            val isTranslation = sourceLangSnap != null && targetLangSnap != null && sourceLangSnap != targetLangSnap
+                            val result = if (isTranslation) {
+                                try {
+                                    val targetName = languageDisplayName(targetLangSnap!!)
+                                    val translation = retryOn503 {
+                                        aiApiService.generateContent(
+                                            "Translate the following text to $targetName. " +
+                                                "Output ONLY the translation as plain text — no quotes, no explanations, no language tags.\n\n" +
+                                                "Text:\n$liveText"
+                                        )
+                                    }.trim().trim('"', '\'', '`').trim()
+                                    if (translation.isNotBlank()) {
+                                        "$liveText\n\n[${languageDisplayName(targetLangSnap)}]\n$translation"
+                                    } else liveText
+                                } catch (e: Throwable) {
+                                    transcriptionError = "번역 실패: ${e.message ?: e::class.simpleName}"
+                                    liveText
+                                }
+                            } else liveText
 
                             val nowLocal = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
                             fun Int.pad2(): String = toString().padStart(2, '0')
@@ -766,8 +797,9 @@ class MemoPlainNavigationImpl(
                                 pendingAudioDurationSeconds = durationSeconds
                             }
 
-                            // 카드 영구 표시: 헤더 = "{stamp} 녹음", 본문 = 녹음 텍스트
-                            recordedCardTitle = "$stamp 녹음"
+                            // 카드 영구 표시: 헤더는 번역 모드면 "번역", 일반이면 "녹음".
+                            val typeLabel = if (isTranslation) "번역" else "녹음"
+                            recordedCardTitle = "$stamp $typeLabel"
                             recordedCardText = result
 
                             transcriptionResult = result
@@ -780,7 +812,13 @@ class MemoPlainNavigationImpl(
                             val base64 = Base64.Default.encode(audioBytes)
                             val resultRaw = aiApiService.transcribeAudio(base64, "audio/mp4", durationSeconds)
                             val result = resultRaw.trim().trim('"', '\'', '`').trim()
-                            val looksLikePromptEcho = result.contains("받아쓰기해줘") || result.contains("받아쓰기 텍스트만")
+                            // Gemini 가 빈/짧은 오디오 받으면 transcribe prompt 를 그대로 echo 하는 케이스가 있어
+                            // 카드에 prompt 문구가 노출되던 버그 차단. 한국어 prompt 의 흔한 토큰을 폭넓게 검사.
+                            val looksLikePromptEcho = result.contains("받아쓰기")
+                                || result.contains("텍스트만 출력")
+                                || result.contains("다른 설명은 하지")
+                                || result.contains("다른설명은 하지")
+                                || result.contains("오디오를")
                             if (looksLikePromptEcho || result.isBlank()) {
                                 transcriptionError = "음성이 감지되지 않았어요. 다시 시도해주세요."
                                 transcriptionResult = null
@@ -851,6 +889,8 @@ class MemoPlainNavigationImpl(
                                 || memoWithAudio.summaryContent != null
                                 || memoWithAudio.youtubeUrl != null
                                 || memoWithAudio.webUrl != null
+                                || !memoWithAudio.recordingTranscript.isNullOrBlank()
+                                || memoWithAudio.audioPath != null
                             ) {
                                 val newId = repository.addMemo(memoWithAudio.toEntity())
                                 savedMemoId = newId.toInt()
@@ -870,10 +910,15 @@ class MemoPlainNavigationImpl(
                     if (!canUseAi) {
                         notifyAiBlocked()
                     } else {
+                        // 일반 녹음: 번역 모드 해제.
+                        activeRecordingSourceLang = null
+                        activeRecordingTargetLang = null
                         startRecording()
                     }
                 },
                 onStopRecording = { stopRecordingAndTranscribe() },
+                // onStartRecording 진입(마이크 버튼) — 일반 녹음이므로 번역 lang 초기화.
+                // 번역 녹음은 별도로 onOpenTranslationDialog → 확인 시 startRecording 직접 호출.
                 isRecording = isRecording,
                 isTranscribing = isTranscribing,
                 transcriptionResult = transcriptionResult,
@@ -882,6 +927,12 @@ class MemoPlainNavigationImpl(
                 liveConfirmedText = liveConfirmedText,
                 recordedCardTitle = recordedCardTitle,
                 recordedCardText = recordedCardText,
+                onOpenTranslationDialog = {
+                    // 기본값: "내 언어" = 앱 설정 언어 (자동), "번역할 언어" = 비어있음 (사용자 선택)
+                    translationSourceLang = languageCode
+                    translationTargetLang = null
+                    showTranslationDialog = true
+                },
                 onDismissRecordedCard = {
                     recordedCardTitle = null
                     recordedCardText = null
@@ -1240,6 +1291,22 @@ class MemoPlainNavigationImpl(
                 )
             }
 
+            if (showTranslationDialog) {
+                me.pecos.memozy.presentation.screen.memo.components.TranslationLanguageDialog(
+                    sourceLang = translationSourceLang,
+                    targetLang = translationTargetLang,
+                    onSourceLangSelected = { translationSourceLang = it },
+                    onTargetLangSelected = { translationTargetLang = it },
+                    onDismiss = { showTranslationDialog = false },
+                    onConfirm = {
+                        activeRecordingSourceLang = translationSourceLang
+                        activeRecordingTargetLang = translationTargetLang
+                        showTranslationDialog = false
+                        if (!canUseAi) notifyAiBlocked() else startRecording()
+                    },
+                )
+            }
+
             if (showLimitBottomSheet) {
                 val isAdPlatformSupported = rewardAdProvider?.isPlatformSupported != false
                 AiLimitBottomSheet(
@@ -1266,6 +1333,14 @@ class MemoPlainNavigationImpl(
                 )
             }
         }
+    }
+
+    private fun languageDisplayName(code: String): String = when (code) {
+        "ko" -> "한국어"
+        "en" -> "영어"
+        "ja" -> "일본어"
+        "zh" -> "중국어"
+        else -> code
     }
 
     private fun MemoUiState.toEntity() = Memo(

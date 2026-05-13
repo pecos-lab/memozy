@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.SmartDisplay
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -37,6 +38,8 @@ fun MemoActionBar(
     onStopRecording: (() -> Unit)?,
     isRecording: Boolean,
     isTranscribing: Boolean,
+    // 번역 녹음 — 시작 시 언어 선택 팝업 열기
+    onOpenTranslationDialog: (() -> Unit)? = null,
     // 유튜브
     onYoutubeSummarize: ((String, SummaryMode) -> Unit)?,
     isSummarizing: Boolean,
@@ -72,6 +75,26 @@ fun MemoActionBar(
                     imageVector = if (isRecording) Icons.Default.Stop else Icons.Default.Mic,
                     contentDescription = null,
                     tint = if (isRecording) Color.White else colors.chipText,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
+        // 🌐 번역 녹음 — 마이크 옆에 배치. 녹음/전사 중에는 비활성.
+        if (onOpenTranslationDialog != null) {
+            Box(
+                modifier = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp))
+                    .background(
+                        if (isRecording || isTranscribing) colors.chipBackground.copy(alpha = 0.3f)
+                        else colors.chipBackground.copy(alpha = 0.4f)
+                    )
+                    .clickable(enabled = !isRecording && !isTranscribing) { onOpenTranslationDialog() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Translate,
+                    contentDescription = "번역 녹음",
+                    tint = colors.chipText,
                     modifier = Modifier.size(20.dp)
                 )
             }

@@ -97,7 +97,8 @@ fun MemoCardItem(
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = memo.content.htmlToPlainText()
-                    .ifBlank { parseSummaryEntries(memo.summaryContent).firstOrNull()?.content?.take(200) ?: "" },
+                    .ifBlank { parseSummaryEntries(memo.summaryContent).firstOrNull()?.content?.take(200).orEmpty() }
+                    .ifBlank { memo.recordingTranscript?.take(200).orEmpty() },
                 color = colors.textBody,
                 fontFamily = fontSettings.fontFamily,
                 fontSize = fontSettings.bodySize,

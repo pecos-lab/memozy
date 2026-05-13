@@ -278,4 +278,15 @@
     <string name="ai_input_placeholder">Ask Memozy AI anything</string>
     <string name="ai_insert_to_memo">Add to memo</string>
     <string name="ai_loading">AI is responding…</string>
+
+    <!-- Translation / Recording -->
+    <string name="recording_now">Recording</string>
+    <string name="speak_now_placeholder">Speak now…</string>
+    <string name="realtime_translation">Real-time Translation</string>
+    <string name="my_language">My language</string>
+    <string name="target_language">Target language</string>
+    <string name="select_language">Select a language</string>
+    <string name="translation_same_language_warning">Cannot translate when both languages are the same.</string>
+    <string name="memo_recording_suffix">Recording</string>
+    <string name="memo_translation_suffix">Translation</string>
 </resources>

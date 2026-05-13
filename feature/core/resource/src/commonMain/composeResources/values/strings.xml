@@ -282,4 +282,15 @@
     <string name="ai_input_placeholder">Memozy AI에게 물어보세요</string>
     <string name="ai_insert_to_memo">메모에 추가</string>
     <string name="ai_loading">AI 응답 중…</string>
+
+    <!-- Translation / Recording -->
+    <string name="recording_now">녹음 중</string>
+    <string name="speak_now_placeholder">말씀해 주세요…</string>
+    <string name="realtime_translation">실시간 번역</string>
+    <string name="my_language">내 언어</string>
+    <string name="target_language">번역할 언어</string>
+    <string name="select_language">언어를 선택하세요</string>
+    <string name="translation_same_language_warning">두 언어가 동일하면 번역할 수 없어요.</string>
+    <string name="memo_recording_suffix">녹음</string>
+    <string name="memo_translation_suffix">번역</string>
 </resources>
