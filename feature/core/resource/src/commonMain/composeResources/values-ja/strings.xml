@@ -278,4 +278,15 @@
     <string name="ai_input_placeholder">Memozy AIに何でも聞いてください</string>
     <string name="ai_insert_to_memo">メモに追加</string>
     <string name="ai_loading">AI応答中…</string>
+
+    <!-- Translation / Recording -->
+    <string name="recording_now">録音中</string>
+    <string name="speak_now_placeholder">話してください…</string>
+    <string name="realtime_translation">リアルタイム翻訳</string>
+    <string name="my_language">私の言語</string>
+    <string name="target_language">翻訳先の言語</string>
+    <string name="select_language">言語を選択してください</string>
+    <string name="translation_same_language_warning">同じ言語同士では翻訳できません。</string>
+    <string name="memo_recording_suffix">録音</string>
+    <string name="memo_translation_suffix">翻訳</string>
 </resources>

@@ -117,6 +117,8 @@ import me.pecos.memozy.feature.core.resource.generated.resources.Res
 import me.pecos.memozy.feature.core.resource.generated.resources.ai_input_placeholder
 import me.pecos.memozy.feature.core.resource.generated.resources.ai_loading
 import me.pecos.memozy.feature.core.resource.generated.resources.cancel
+import me.pecos.memozy.feature.core.resource.generated.resources.recording_now
+import me.pecos.memozy.feature.core.resource.generated.resources.speak_now_placeholder
 import me.pecos.memozy.feature.core.resource.generated.resources.category_budget
 import me.pecos.memozy.feature.core.resource.generated.resources.category_exercise
 import me.pecos.memozy.feature.core.resource.generated.resources.category_general
@@ -241,6 +243,7 @@ fun MemoScreen(
     onStopRecording: (() -> Unit)? = null,
     isRecording: Boolean = false,
     isTranscribing: Boolean = false,
+    onOpenTranslationDialog: (() -> Unit)? = null,
     transcriptionResult: String? = null,
     transcriptionError: String? = null,
     livePartialText: String = "",
@@ -645,7 +648,7 @@ fun MemoScreen(
                     color = colors.chipText,
                     modifier = Modifier
                         .clickable {
-                            onSave(MemoUiState(id = existingMemo.id, name = nameText, categoryId = categoryIndex + 1, content = safeContent(), styles = safeStyles(), youtubeUrl = savedYoutubeUrl, summaryContent = safeSummaryContent(), isSummaryExpanded = if (savedWebUrl != null) isWebSummaryExpanded else isSummaryExpanded, webUrl = savedWebUrl))
+                            onSave(MemoUiState(id = existingMemo.id, name = nameText, categoryId = categoryIndex + 1, content = safeContent(), styles = safeStyles(), youtubeUrl = savedYoutubeUrl, summaryContent = safeSummaryContent(), isSummaryExpanded = if (savedWebUrl != null) isWebSummaryExpanded else isSummaryExpanded, webUrl = savedWebUrl, recordingTranscript = recordedCardText))
                         }
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 )
@@ -706,8 +709,13 @@ fun MemoScreen(
                     }
                 )
 
-                // 녹음 결과는 본문/제목에 자동 삽입하지 않음 — 카드 내부 표시 + (사용자가) 수정 버튼으로 본문 통합.
-                // (이전엔 LaunchedEffect(transcriptionResult) 가 본문/제목에 삽입했으나 카드 단독 표시 흐름으로 변경)
+                // 녹음 결과는 본문에 자동 삽입하지 않음 — 카드 내부 표시.
+                // 다만 메모 제목이 비어있으면 카드 헤더 stamp ("26.05.13 12:02 번역") 를 제목으로 자동 설정.
+                LaunchedEffect(recordedCardTitle) {
+                    if (!recordedCardTitle.isNullOrBlank() && nameText.isBlank()) {
+                        nameText = recordedCardTitle
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -716,6 +724,14 @@ fun MemoScreen(
                 // 인라인 편집 상태 — 수정 버튼 토글. recordedCardText 가 바뀌면 편집 텍스트도 동기화.
                 var isEditingRecordedCard by remember { mutableStateOf(false) }
                 var editingRecordedText by remember(recordedCardText) { mutableStateOf(recordedCardText.orEmpty()) }
+                // 오디오 — 녹음 카드 안에 통합 또는 단독 표시 결정.
+                var audioChipDismissed by remember { mutableStateOf(false) }
+                val effectiveAudioPath = audioPath ?: existingMemo.audioPath
+                val hasAudio = effectiveAudioPath != null
+                    && audioFileStore.exists(effectiveAudioPath)
+                    && !audioChipDismissed
+                val showAudioInsideCard = !isRecording && showRecordedCard && hasAudio
+                val showAudioStandalone = !isRecording && !showRecordedCard && hasAudio
                 if (isRecording || showRecordedCard) {
                     val hasLive = liveConfirmedText.isNotEmpty() || livePartialText.isNotEmpty()
                     Box(
@@ -738,7 +754,7 @@ fun MemoScreen(
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        "녹음 중",
+                                        stringResource(Res.string.recording_now),
                                         fontSize = fontSettings.scaled(11),
                                         color = colors.textSecondary,
                                         fontWeight = FontWeight.Medium,
@@ -798,7 +814,7 @@ fun MemoScreen(
                                     Text(annotated, fontSize = fontSettings.scaled(14), lineHeight = 20.sp)
                                 } else {
                                     Text(
-                                        "말씀해 주세요…",
+                                        stringResource(Res.string.speak_now_placeholder),
                                         fontSize = fontSettings.scaled(13),
                                         color = colors.textSecondary.copy(alpha = 0.7f),
                                     )
@@ -822,15 +838,25 @@ fun MemoScreen(
                                     color = colors.textBody,
                                 )
                             }
+                            // 오디오 sub-section — 텍스트와 같은 카드 안에. 자체 X 버튼으로 독립 dismiss 가능.
+                            if (showAudioInsideCard && effectiveAudioPath != null) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                HorizontalDivider(color = colors.textSecondary.copy(alpha = 0.2f))
+                                Spacer(modifier = Modifier.height(8.dp))
+                                AudioPlayerBar(
+                                    audioPath = effectiveAudioPath,
+                                    memoTitle = nameText,
+                                    colors = colors,
+                                    onDismiss = { audioChipDismissed = true }
+                                )
+                            }
                         }
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                 }
 
-                // 오디오 플레이어 카드 (재생 / 다운 / 공유 / 닫기) — 녹음 카드 바로 아래 배치.
-                var audioChipDismissed by remember { mutableStateOf(false) }
-                val effectiveAudioPath = audioPath ?: existingMemo.audioPath
-                if (effectiveAudioPath != null && audioFileStore.exists(effectiveAudioPath) && !audioChipDismissed) {
+                // 텍스트(transcript) 없이 오디오만 있는 케이스 (기존 녹음 메모 재열기) — 단독 표시.
+                if (showAudioStandalone && effectiveAudioPath != null) {
                     AudioPlayerBar(
                         audioPath = effectiveAudioPath,
                         memoTitle = nameText,
@@ -1252,6 +1278,7 @@ fun MemoScreen(
                                     onStopRecording = onStopRecording,
                                     isRecording = isRecording,
                                     isTranscribing = isTranscribing,
+                                    onOpenTranslationDialog = onOpenTranslationDialog,
                                     onYoutubeSummarize = onYoutubeSummarize,
                                     isSummarizing = isSummarizing,
                                     isWebSummarizing = isWebSummarizing,

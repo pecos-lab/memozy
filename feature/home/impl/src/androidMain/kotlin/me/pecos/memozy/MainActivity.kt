@@ -192,7 +192,8 @@ class MainActivity : ComponentActivity() {
             ) {
             OverrideNightMode(isDarkTheme = isDarkTheme) {
                 CompositionLocalProvider(
-                    LocalFontSettings provides fontSettings
+                    LocalFontSettings provides fontSettings,
+                    me.pecos.memozy.presentation.theme.LocalLanguageCode provides selectedLanguage.code,
                 ) {
                     AppThemeShell(isDarkTheme = isDarkTheme) {
                     val currentTypography = MaterialTheme.typography

@@ -101,7 +101,8 @@ fun AppPopup(
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
                 .clip(RoundedCornerShape(20.dp))
-                .background(colors.cardBackground)
+                // Wanted Popup 가이드 — 일관된 흰색 배경 (light/dark 동일).
+                .background(Color.White)
                 .padding(innerPadding)
         ) {
             // ── Navigation ────────────────────────────────────────────────────
