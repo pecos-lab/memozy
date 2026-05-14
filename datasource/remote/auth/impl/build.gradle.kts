@@ -11,6 +11,7 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.datasource.remote.auth.api)
             implementation(libs.supabase.auth)
+            implementation(libs.supabase.postgrest)
             implementation(libs.kotlinx.coroutines.core)
         }
     }

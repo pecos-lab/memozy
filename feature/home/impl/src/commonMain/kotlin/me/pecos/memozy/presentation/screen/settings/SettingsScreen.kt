@@ -90,8 +90,20 @@ import me.pecos.memozy.feature.core.resource.generated.resources.sign_in_error
 import me.pecos.memozy.feature.core.resource.generated.resources.sign_in_apple
 import me.pecos.memozy.feature.core.resource.generated.resources.sign_in_google
 import me.pecos.memozy.feature.core.resource.generated.resources.sign_in_loading
+import me.pecos.memozy.feature.core.resource.generated.resources.account_delete
+import me.pecos.memozy.feature.core.resource.generated.resources.account_delete_confirm_message
+import me.pecos.memozy.feature.core.resource.generated.resources.account_delete_confirm_title
+import me.pecos.memozy.feature.core.resource.generated.resources.account_delete_error_message
+import me.pecos.memozy.feature.core.resource.generated.resources.account_delete_error_title
+import me.pecos.memozy.feature.core.resource.generated.resources.account_delete_final_message
+import me.pecos.memozy.feature.core.resource.generated.resources.account_delete_final_title
+import me.pecos.memozy.feature.core.resource.generated.resources.account_delete_in_progress
+import me.pecos.memozy.feature.core.resource.generated.resources.account_delete_success_message
+import me.pecos.memozy.feature.core.resource.generated.resources.account_delete_success_title
+import me.pecos.memozy.feature.core.resource.generated.resources.confirm
 import me.pecos.memozy.feature.core.resource.generated.resources.sign_out
 import me.pecos.memozy.feature.core.resource.generated.resources.sign_out_confirm
+import me.pecos.memozy.feature.core.viewmodel.settings.AccountDeleteState
 import me.pecos.memozy.feature.core.resource.generated.resources.subscription_current_plan
 import me.pecos.memozy.feature.core.resource.generated.resources.subscription_title
 import me.pecos.memozy.feature.core.resource.generated.resources.theme_dark
@@ -157,6 +169,9 @@ fun SettingsScreen(
     var showRestoreDialog by remember { mutableStateOf(false) }
     var showSignOutDialog by remember { mutableStateOf(false) }
     var showCloudRestoreConfirm by remember { mutableStateOf(false) }
+    var showAccountDeleteConfirm by remember { mutableStateOf(false) }
+    var showAccountDeleteFinal by remember { mutableStateOf(false) }
+    val accountDeleteState by settingsViewModel.accountDeleteState.collectAsState()
 
     val selectedLanguage by settingsViewModel.selectedLanguage.collectAsState()
     val selectedTheme by settingsViewModel.selectedTheme.collectAsState()
@@ -497,6 +512,99 @@ fun SettingsScreen(
         }
     }
 
+    // ── 계정 삭제: 1단계 확인 ────────────────────────────────────────
+    if (showAccountDeleteConfirm) {
+        AppPopup(
+            onDismissRequest = { showAccountDeleteConfirm = false },
+            title = stringResource(Res.string.account_delete_confirm_title),
+            navigation = PopupNavigation.EMPHASIZED,
+            size = PopupSize.MEDIUM,
+            actionArea = PopupActionArea.NEUTRAL,
+            primaryButtonText = stringResource(Res.string.account_delete),
+            isPrimaryDestructive = true,
+            onPrimaryClick = {
+                showAccountDeleteConfirm = false
+                showAccountDeleteFinal = true
+            },
+            secondaryButtonText = stringResource(Res.string.cancel),
+            onSecondaryClick = { showAccountDeleteConfirm = false }
+        ) {
+            Text(stringResource(Res.string.account_delete_confirm_message), color = colors.textBody)
+        }
+    }
+
+    // ── 계정 삭제: 2단계 최종 확인 ───────────────────────────────────
+    if (showAccountDeleteFinal) {
+        AppPopup(
+            onDismissRequest = { showAccountDeleteFinal = false },
+            title = stringResource(Res.string.account_delete_final_title),
+            navigation = PopupNavigation.EMPHASIZED,
+            size = PopupSize.MEDIUM,
+            actionArea = PopupActionArea.NEUTRAL,
+            primaryButtonText = stringResource(Res.string.account_delete),
+            isPrimaryDestructive = true,
+            onPrimaryClick = {
+                showAccountDeleteFinal = false
+                settingsViewModel.deleteAccount()
+            },
+            secondaryButtonText = stringResource(Res.string.cancel),
+            onSecondaryClick = { showAccountDeleteFinal = false }
+        ) {
+            Text(stringResource(Res.string.account_delete_final_message), color = colors.textBody)
+        }
+    }
+
+    // ── 계정 삭제: 진행 / 결과 모달 ─────────────────────────────────
+    when (val s = accountDeleteState) {
+        AccountDeleteState.InProgress -> {
+            AppPopup(
+                onDismissRequest = { },
+                title = stringResource(Res.string.account_delete_in_progress),
+                navigation = PopupNavigation.EMPHASIZED,
+                size = PopupSize.MEDIUM,
+                actionArea = PopupActionArea.NONE,
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = colors.chipText,
+                    )
+                }
+            }
+        }
+        AccountDeleteState.Success -> {
+            AppPopup(
+                onDismissRequest = { settingsViewModel.clearAccountDeleteState() },
+                title = stringResource(Res.string.account_delete_success_title),
+                navigation = PopupNavigation.EMPHASIZED,
+                size = PopupSize.MEDIUM,
+                actionArea = PopupActionArea.CANCEL,
+                primaryButtonText = stringResource(Res.string.confirm),
+                onPrimaryClick = { settingsViewModel.clearAccountDeleteState() },
+            ) {
+                Text(stringResource(Res.string.account_delete_success_message), color = colors.textBody)
+            }
+        }
+        is AccountDeleteState.Error -> {
+            AppPopup(
+                onDismissRequest = { settingsViewModel.clearAccountDeleteState() },
+                title = stringResource(Res.string.account_delete_error_title),
+                navigation = PopupNavigation.EMPHASIZED,
+                size = PopupSize.MEDIUM,
+                actionArea = PopupActionArea.CANCEL,
+                primaryButtonText = stringResource(Res.string.confirm),
+                onPrimaryClick = { settingsViewModel.clearAccountDeleteState() },
+            ) {
+                Text(stringResource(Res.string.account_delete_error_message), color = colors.textBody)
+            }
+        }
+        AccountDeleteState.Idle -> Unit
+    }
+
     if (showClearDialog) {
         AppPopup(
             onDismissRequest = { showClearDialog = false },
@@ -719,14 +827,30 @@ fun SettingsScreen(
                                 fontSize = fontSettings.scaled(13),
                                 color = colors.textBody,
                             )
-                            Text(
-                                text = stringResource(Res.string.sign_out),
-                                fontSize = fontSettings.scaled(12),
-                                color = colors.textSecondary,
-                                modifier = Modifier
-                                    .clickable { showSignOutDialog = true }
-                                    .padding(8.dp)
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = stringResource(Res.string.sign_out),
+                                    fontSize = fontSettings.scaled(12),
+                                    color = colors.textSecondary,
+                                    modifier = Modifier
+                                        .clickable { showSignOutDialog = true }
+                                        .padding(8.dp)
+                                )
+                                Text(
+                                    text = "·",
+                                    fontSize = fontSettings.scaled(12),
+                                    color = colors.textSecondary,
+                                )
+                                // App Store Guideline 5.1.1(v) — 계정 삭제 진입점.
+                                Text(
+                                    text = stringResource(Res.string.account_delete),
+                                    fontSize = fontSettings.scaled(12),
+                                    color = Color(0xFFE24B4A),
+                                    modifier = Modifier
+                                        .clickable { showAccountDeleteConfirm = true }
+                                        .padding(8.dp)
+                                )
+                            }
                         }
                         // 마지막 백업 시간 표시 (이메일 아래)
                         lastBackupTime?.let { time ->

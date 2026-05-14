@@ -206,6 +206,16 @@
     <string name="sign_in_error">Sign in failed</string>
     <string name="sign_out_confirm">Are you sure you want to sign out?</string>
     <string name="sign_in_loading">Signing in…</string>
+    <string name="account_delete">Delete account</string>
+    <string name="account_delete_confirm_title">Delete your account?</string>
+    <string name="account_delete_confirm_message">Your account and all cloud data (memos, categories, backups, chat history) will be permanently deleted.\nThis action cannot be undone.</string>
+    <string name="account_delete_final_title">Are you absolutely sure?</string>
+    <string name="account_delete_final_message">This is permanent. You can sign up again with the same email later, but your existing data will be lost forever.\nContinue?</string>
+    <string name="account_delete_in_progress">Deleting your account…</string>
+    <string name="account_delete_success_title">Account deleted</string>
+    <string name="account_delete_success_message">Your account and cloud data have been removed. Thanks for using Memozy.</string>
+    <string name="account_delete_error_title">Deletion failed</string>
+    <string name="account_delete_error_message">Please try again later or contact pecos6246@gmail.com.</string>
     <string name="login_subtitle">Keep your memos safe with cloud backup</string>
     <string name="login_skip">Start without account</string>
 

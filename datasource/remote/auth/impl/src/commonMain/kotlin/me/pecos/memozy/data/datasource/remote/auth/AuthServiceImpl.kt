@@ -6,6 +6,7 @@ import io.github.jan.supabase.auth.providers.Apple
 import io.github.jan.supabase.auth.providers.Google
 import io.github.jan.supabase.auth.providers.builtin.IDToken
 import io.github.jan.supabase.auth.status.SessionStatus
+import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -63,6 +64,15 @@ class AuthServiceImpl(
 
     override suspend fun signOut() {
         supabaseClient.auth.signOut()
+    }
+
+    override suspend fun deleteAccount(): Result<Unit> = runCatching {
+        // SECURITY DEFINER RPC — 본인 계정 + ON DELETE CASCADE 로 묶인 모든 행 삭제.
+        supabaseClient.postgrest.rpc("delete_user_account")
+        // auth.users 가 사라지면 세션도 무효화되지만, 클라이언트 토큰 캐시는 명시적으로 비워야
+        // SessionStatus 가 즉시 NotAuthenticated 로 전환된다.
+        runCatching { supabaseClient.auth.signOut() }
+        Unit
     }
 
     override fun getAccessToken(): String? =

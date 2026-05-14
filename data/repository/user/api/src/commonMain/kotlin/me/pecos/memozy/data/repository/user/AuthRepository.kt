@@ -11,5 +11,6 @@ interface AuthRepository {
     suspend fun signInWithGoogle(idToken: String): Result<AuthUser>
     suspend fun signInWithApple(idToken: String, rawNonce: String): Result<AuthUser>
     suspend fun signOut()
+    suspend fun deleteAccount(): Result<Unit>
     fun getAccessToken(): String?
 }
