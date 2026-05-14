@@ -180,6 +180,13 @@
     <string name="trash_days_left">Permanently deleted in %d days</string>
     <string name="trash_soon_delete">Permanently deleted soon</string>
 
+    <!-- AI Consent (App Store Guideline 5.1.1(i)/5.1.2(i)) -->
+    <string name="ai_consent_title">AI feature consent</string>
+    <string name="ai_consent_description">Memozy\'s summarization, transcription, and image recognition features send your text, audio, and images to third-party AI services (Google Gemini, Cloudflare Workers, Supadata) for processing.\n\nWhat is sent:\n• Text, URLs, or captions to summarize\n• Audio recordings for transcription\n• Attached images for OCR or description\n\nIf you decline, AI features will be disabled. You can still create and save regular memos.\nSee our Privacy Policy for full details.</string>
+    <string name="ai_consent_agree">Agree and continue</string>
+    <string name="ai_consent_decline">Decline</string>
+    <string name="ai_consent_required_toast">AI features require consent to send data</string>
+
     <!-- Multi-select -->
     <string name="select">Select</string>
     <string name="selected_count">%d selected</string>

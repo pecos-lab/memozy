@@ -23,9 +23,15 @@ import me.pecos.memozy.data.datasource.remote.ai.model.GeminiResponse
 class AIApiServiceImpl(
     private val httpClient: HttpClient,
     private val json: Json,
+    private val consentChecker: AiConsentChecker,
 ) : AIApiService {
 
+    private fun requireConsent() {
+        if (!consentChecker.isConsentGiven()) throw AIException.ConsentRequiredException()
+    }
+
     override suspend fun generateContent(prompt: String): String {
+        requireConsent()
         val request = GeminiRequest(
             contents = listOf(
                 GeminiContent(
@@ -38,6 +44,7 @@ class AIApiServiceImpl(
     }
 
     override suspend fun generateContentWithVideo(prompt: String, videoUrl: String): String {
+        requireConsent()
         val request = GeminiRequest(
             contents = listOf(
                 GeminiContent(
@@ -65,6 +72,7 @@ class AIApiServiceImpl(
         )
 
     private fun generateContentStreamInternal(prompt: String, config: GenerationConfig): Flow<String> = flow {
+        requireConsent()
         val request = GeminiRequest(
             contents = listOf(
                 GeminiContent(
@@ -109,6 +117,7 @@ class AIApiServiceImpl(
     }
 
     override suspend fun transcribeAudio(audioBase64: String, mimeType: String, durationSeconds: Long): String {
+        requireConsent()
         // 출시 빌드 (#354) 까지 사용하던 단순 prompt. 더 엄격하게 다듬으면 LLM 이 negative
         // prompt anti-pattern 으로 fabrication 패턴에 더 끌려가는 회귀가 관찰됨 (커밋
         // fa72f01 → 9aeecf5 회귀 추적). 단순한 게 답.
@@ -134,6 +143,7 @@ class AIApiServiceImpl(
     }
 
     override suspend fun describeImage(imageBase64: String, mimeType: String): String {
+        requireConsent()
         val prompt = "이 이미지의 텍스트를 모두 추출해줘. 텍스트가 없으면 이미지 내용을 간결하게 설명해줘. 텍스트만 출력하고 다른 설명은 하지 마."
 
         val request = GeminiRequest(
