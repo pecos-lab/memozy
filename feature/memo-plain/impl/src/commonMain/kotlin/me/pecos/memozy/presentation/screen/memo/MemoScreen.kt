@@ -159,8 +159,10 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.platform.LocalDensity
 import dev.chrisbanes.haze.HazeStyle
@@ -580,10 +582,10 @@ fun MemoScreen(
                 .padding(innerPadding)
                 // IME 가 dismiss 되어도 nav bar 영역까지 padding 유지 → 녹음 정지 버튼(툴바)이
                 // 시스템 nav bar 제스처 영역으로 미끄러져 클릭이 가로채이는 #357 회귀 차단.
-                // navigationBarsPadding → imePadding 순서로 체이닝하면 inset consumption 으로
-                // IME up 시 (nav + (ime-nav)) = ime, IME down 시 nav 만 적용되어 중복 padding 없음.
-                .navigationBarsPadding()
-                .imePadding()
+                // union 은 각 edge 의 max 를 적용 → IME up: ime > nav → ime,
+                // IME down: nav > 0 → nav. iOS Compose Multiplatform 에서 inset consumption
+                // chain 이 정상 동작하지 않아 키보드 위 빈 공간이 생기던 회귀 차단 (#363).
+                .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
         ) {
             // 상단 바
             Row(
