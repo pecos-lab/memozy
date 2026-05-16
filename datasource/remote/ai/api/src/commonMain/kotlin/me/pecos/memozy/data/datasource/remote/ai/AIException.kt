@@ -16,4 +16,7 @@ sealed class AIException(message: String, cause: Throwable? = null) : Exception(
 
     class UnknownException(message: String, cause: Throwable? = null) :
         AIException(message, cause)
+
+    class ConsentRequiredException :
+        AIException("AI feature requires user consent before sending data to third-party services.")
 }

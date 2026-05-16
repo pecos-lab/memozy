@@ -180,6 +180,13 @@
     <string name="trash_days_left">%d日後に完全削除</string>
     <string name="trash_soon_delete">まもなく完全削除</string>
 
+    <!-- AI Consent (App Store Guideline 5.1.1(i)/5.1.2(i)) -->
+    <string name="ai_consent_title">AI機能の使用に同意</string>
+    <string name="ai_consent_description">Memozyの要約・音声書き起こし・画像認識機能は、入力されたテキスト・音声・画像を第三者AIサービス（Google Gemini、Cloudflare Workers、Supadata）に送信して処理します。\n\n送信されるデータ:\n• 要約対象のテキスト・URL・字幕\n• 録音された音声（書き起こし用）\n• 添付画像（OCR・説明用）\n\n同意しない場合、AI機能は無効になります。通常のメモ作成・保存はそのままご利用いただけます。\n詳細はプライバシーポリシーをご確認ください。</string>
+    <string name="ai_consent_agree">同意して使用</string>
+    <string name="ai_consent_decline">同意しない</string>
+    <string name="ai_consent_required_toast">AI機能を使うにはデータ送信への同意が必要です</string>
+
     <!-- Multi-select -->
     <string name="select">選択</string>
     <string name="selected_count">%d件選択</string>
@@ -270,6 +277,10 @@
     <string name="subscription_status_renews_at">%sに自動更新</string>
     <string name="subscription_status_expires_at">%sに期限切れ</string>
     <string name="subscription_status_grace_period">決済の問題 — %sまでに解決してください</string>
+
+    <!-- Login Prompt -->
+    <string name="login_prompt_title">ログインが必要です</string>
+    <string name="login_prompt_message">AI要約機能はログイン後にご利用いただけます。\n設定 &gt; アカウントからログインできます。</string>
 
     <!-- Memozy AI -->
     <string name="memozy_ai">Memozy AI</string>

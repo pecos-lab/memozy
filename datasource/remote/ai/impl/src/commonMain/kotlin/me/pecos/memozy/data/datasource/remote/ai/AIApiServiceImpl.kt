@@ -23,9 +23,15 @@ import me.pecos.memozy.data.datasource.remote.ai.model.GeminiResponse
 class AIApiServiceImpl(
     private val httpClient: HttpClient,
     private val json: Json,
+    private val consentChecker: AiConsentChecker,
 ) : AIApiService {
 
+    private fun requireConsent() {
+        if (!consentChecker.isConsentGiven()) throw AIException.ConsentRequiredException()
+    }
+
     override suspend fun generateContent(prompt: String): String {
+        requireConsent()
         val request = GeminiRequest(
             contents = listOf(
                 GeminiContent(
@@ -38,6 +44,7 @@ class AIApiServiceImpl(
     }
 
     override suspend fun generateContentWithVideo(prompt: String, videoUrl: String): String {
+        requireConsent()
         val request = GeminiRequest(
             contents = listOf(
                 GeminiContent(
@@ -64,51 +71,56 @@ class AIApiServiceImpl(
             else GenerationConfig.THINKING_DISABLED
         )
 
-    private fun generateContentStreamInternal(prompt: String, config: GenerationConfig): Flow<String> = flow {
-        val request = GeminiRequest(
-            contents = listOf(
-                GeminiContent(
-                    parts = listOf(GeminiPart(text = prompt))
-                )
-            ),
-            generationConfig = config
-        )
+    private fun generateContentStreamInternal(prompt: String, config: GenerationConfig): Flow<String> {
+        // collect 시점이 아니라 Flow 생성 시점에 fail-fast — 다른 AI 호출 일관성.
+        requireConsent()
+        return flow {
+            val request = GeminiRequest(
+                contents = listOf(
+                    GeminiContent(
+                        parts = listOf(GeminiPart(text = prompt))
+                    )
+                ),
+                generationConfig = config
+            )
 
-        var hasContent = false
-        httpClient.preparePost("gemini-stream") {
-            contentType(ContentType.Application.Json)
-            setBody(request)
-        }.execute { response ->
-            val channel = response.bodyAsChannel()
-            while (!channel.isClosedForRead) {
-                val line = channel.readUTF8Line() ?: break
-                if (line.startsWith("data: ")) {
-                    val jsonStr = line.removePrefix("data: ").trim()
-                    if (jsonStr.isNotEmpty()) {
-                        try {
-                            val chunk = json.decodeFromString<GeminiResponse>(jsonStr)
-                            val text = chunk.candidates
-                                ?.firstOrNull()
-                                ?.content
-                                ?.parts
-                                ?.firstOrNull()
-                                ?.text
-                            if (text != null) {
-                                hasContent = true
-                                emit(text) // 델타만 emit (O(n) 최적화)
-                            }
-                        } catch (_: Exception) { }
+            var hasContent = false
+            httpClient.preparePost("gemini-stream") {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }.execute { response ->
+                val channel = response.bodyAsChannel()
+                while (!channel.isClosedForRead) {
+                    val line = channel.readUTF8Line() ?: break
+                    if (line.startsWith("data: ")) {
+                        val jsonStr = line.removePrefix("data: ").trim()
+                        if (jsonStr.isNotEmpty()) {
+                            try {
+                                val chunk = json.decodeFromString<GeminiResponse>(jsonStr)
+                                val text = chunk.candidates
+                                    ?.firstOrNull()
+                                    ?.content
+                                    ?.parts
+                                    ?.firstOrNull()
+                                    ?.text
+                                if (text != null) {
+                                    hasContent = true
+                                    emit(text) // 델타만 emit (O(n) 최적화)
+                                }
+                            } catch (_: Exception) { }
+                        }
                     }
                 }
             }
-        }
 
-        if (!hasContent) {
-            throw AIException.UnknownException("Empty streaming response from Gemini")
+            if (!hasContent) {
+                throw AIException.UnknownException("Empty streaming response from Gemini")
+            }
         }
     }
 
     override suspend fun transcribeAudio(audioBase64: String, mimeType: String, durationSeconds: Long): String {
+        requireConsent()
         // 출시 빌드 (#354) 까지 사용하던 단순 prompt. 더 엄격하게 다듬으면 LLM 이 negative
         // prompt anti-pattern 으로 fabrication 패턴에 더 끌려가는 회귀가 관찰됨 (커밋
         // fa72f01 → 9aeecf5 회귀 추적). 단순한 게 답.
@@ -134,6 +146,7 @@ class AIApiServiceImpl(
     }
 
     override suspend fun describeImage(imageBase64: String, mimeType: String): String {
+        requireConsent()
         val prompt = "이 이미지의 텍스트를 모두 추출해줘. 텍스트가 없으면 이미지 내용을 간결하게 설명해줘. 텍스트만 출력하고 다른 설명은 하지 마."
 
         val request = GeminiRequest(

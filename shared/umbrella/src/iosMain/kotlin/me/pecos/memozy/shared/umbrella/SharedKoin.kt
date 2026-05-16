@@ -19,6 +19,7 @@ import me.pecos.memozy.data.datasource.local.chat.ChatMessageDao
 import me.pecos.memozy.data.datasource.local.chat.ChatSessionDao
 import me.pecos.memozy.data.datasource.remote.ai.AIApiService
 import me.pecos.memozy.data.datasource.remote.ai.AIApiServiceImpl
+import me.pecos.memozy.data.datasource.remote.ai.AiConsentChecker
 import me.pecos.memozy.data.datasource.remote.ai.WebScrapeService
 import me.pecos.memozy.data.datasource.remote.ai.WebScrapeServiceImpl
 import me.pecos.memozy.data.datasource.remote.ai.YouTubeCaptionService
@@ -39,6 +40,7 @@ import me.pecos.memozy.feature.memoplain.api.MemoPlainNavigation
 import me.pecos.memozy.feature.memoplain.impl.di.memoPlainModule
 import me.pecos.memozy.feature.core.viewmodel.settings.FileUriBridge
 import me.pecos.memozy.feature.core.viewmodel.settings.IosFileUriBridge
+import me.pecos.memozy.feature.core.viewmodel.settings.AiConsentKeys
 import me.pecos.memozy.feature.core.viewmodel.settings.NSUserDefaultsPreferencesProvider
 import me.pecos.memozy.feature.core.viewmodel.settings.PreferencesProvider
 import me.pecos.memozy.platform.ads.AdsService
@@ -119,7 +121,14 @@ val sharedModule: Module = module {
         )
     }
     single<HttpClient>(YouTubeHttpClient) { createYouTubeHttpClient() }
-    single<AIApiService> { AIApiServiceImpl(get(), get()) }
+    single<AiConsentChecker> {
+        val prefs = get<PreferencesProvider>()
+        object : AiConsentChecker {
+            override fun isConsentGiven(): Boolean =
+                prefs.getBoolean(AiConsentKeys.GIVEN, false)
+        }
+    }
+    single<AIApiService> { AIApiServiceImpl(get(), get(), get()) }
     single<YouTubeCaptionService> { YouTubeCaptionServiceImpl(get(), get()) }
     single<WebScrapeService> { WebScrapeServiceImpl(get(), get()) }
 

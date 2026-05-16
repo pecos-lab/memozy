@@ -152,15 +152,10 @@ import me.pecos.memozy.presentation.screen.memo.components.YouTubeUrlDialog
 import me.pecos.memozy.presentation.screen.memo.components.MemoActionBar
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.platform.LocalDensity
 import dev.chrisbanes.haze.HazeStyle
@@ -557,8 +552,13 @@ fun MemoScreen(
         containerColor = colors.screenBackground,
         contentWindowInsets = WindowInsets(0)
     ) { innerPadding ->
-        val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
+        val density = LocalDensity.current
+        val imeBottom = WindowInsets.ime.getBottom(density)
+        val navBottom = WindowInsets.navigationBars.getBottom(density)
         val isKeyboardVisible = imeBottom > 0
+        // iOS Compose Multiplatform 에서 windowInsetsPadding/imePadding 이 키보드 변동에
+        // 실시간 재구성되지 않는 회귀 (#363) — 직접 px → dp 변환해서 padding 으로 적용.
+        val bottomInsetDp = with(density) { maxOf(imeBottom, navBottom).toDp() }
         val hazeState = rememberHazeState()
         val isSystemDark = colors.screenBackground == Color(0xFF1C1C1E)
         val glassStyle = remember(isSystemDark) {
@@ -580,10 +580,9 @@ fun MemoScreen(
                 .padding(innerPadding)
                 // IME 가 dismiss 되어도 nav bar 영역까지 padding 유지 → 녹음 정지 버튼(툴바)이
                 // 시스템 nav bar 제스처 영역으로 미끄러져 클릭이 가로채이는 #357 회귀 차단.
-                // navigationBarsPadding → imePadding 순서로 체이닝하면 inset consumption 으로
-                // IME up 시 (nav + (ime-nav)) = ime, IME down 시 nav 만 적용되어 중복 padding 없음.
-                .navigationBarsPadding()
-                .imePadding()
+                // bottomInsetDp = max(ime, nav) — Modifier.padding 으로 직접 적용해서
+                // iOS Compose Multiplatform 의 windowInsetsPadding 재구성 회귀 우회 (#363).
+                .padding(bottom = bottomInsetDp)
         ) {
             // 상단 바
             Row(
@@ -1170,11 +1169,9 @@ fun MemoScreen(
 
             // 서식 툴바 — 키보드/AI 입력바/녹음·전사 중에 표시.
             // 녹음·전사는 IME 가 일시 dismiss 되더라도 펴진 상태 유지 → 토글 흔들림 차단.
-            AnimatedVisibility(
-                visible = isKeyboardVisible || showAiCustomInput || isAiAssistLoading || isRecording || isTranscribing,
-                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
-            ) {
+            // AnimatedVisibility 제거: iOS Compose Multiplatform 에서 slide 애니메이션이
+            // 컨테이너 높이를 잘못 reserve 해 흰 cover 가 5배로 부풀어오르던 회귀 (#363).
+            if (isKeyboardVisible || showAiCustomInput || isAiAssistLoading || isRecording || isTranscribing) {
                 val keyboardBarBorder = if (isSystemDark) Color(0xFF3A3A3C) else Color(0xFFBFC1C6)
                 Column(
                     modifier = Modifier
