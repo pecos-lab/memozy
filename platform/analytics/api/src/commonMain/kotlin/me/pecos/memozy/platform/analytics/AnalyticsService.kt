@@ -18,6 +18,8 @@ object AnalyticsEvents {
     const val LOGIN_SUCCEEDED = "login_succeeded"
     const val LOGIN_FAILED = "login_failed"
     const val LOGOUT = "logout"
+    const val ACCOUNT_DELETED = "account_deleted"
+    const val ACCOUNT_DELETE_FAILED = "account_delete_failed"
 
     const val SUBSCRIPTION_VIEWED = "subscription_viewed"
     const val SUBSCRIPTION_PURCHASED = "subscription_purchased"

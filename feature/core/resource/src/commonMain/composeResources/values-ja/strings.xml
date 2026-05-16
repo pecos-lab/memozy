@@ -213,6 +213,16 @@
     <string name="sign_in_error">ログインに失敗しました</string>
     <string name="sign_out_confirm">ログアウトしますか？</string>
     <string name="sign_in_loading">ログイン中…</string>
+    <string name="account_delete">アカウント削除</string>
+    <string name="account_delete_confirm_title">アカウントを削除しますか？</string>
+    <string name="account_delete_confirm_message">アカウントとクラウドに保存されたすべてのデータ（メモ・カテゴリ・バックアップ・チャット履歴など）が完全に削除されます。\nこの操作は取り消せません。</string>
+    <string name="account_delete_final_title">本当に削除しますか？</string>
+    <string name="account_delete_final_message">削除後の復旧はできません。同じメールアドレスで再登録は可能ですが、既存のデータは戻りません。\n続けますか？</string>
+    <string name="account_delete_in_progress">アカウントを削除しています…</string>
+    <string name="account_delete_success_title">アカウントを削除しました</string>
+    <string name="account_delete_success_message">ご利用ありがとうございました。アカウントとクラウドデータは削除されました。</string>
+    <string name="account_delete_error_title">削除に失敗しました</string>
+    <string name="account_delete_error_message">時間をおいて再試行するか、pecos6246@gmail.com までお問い合わせください。</string>
     <string name="login_subtitle">クラウドバックアップでメモを安全に保管</string>
     <string name="login_skip">アカウントなしで始める</string>
 

@@ -25,5 +25,7 @@ class AuthRepositoryImpl(
 
     override suspend fun signOut() = authService.signOut()
 
+    override suspend fun deleteAccount(): Result<Unit> = authService.deleteAccount()
+
     override fun getAccessToken(): String? = authService.getAccessToken()
 }

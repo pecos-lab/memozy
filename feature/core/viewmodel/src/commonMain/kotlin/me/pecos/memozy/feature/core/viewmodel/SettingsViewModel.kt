@@ -17,6 +17,7 @@ import me.pecos.memozy.data.datasource.remote.auth.AuthState
 import me.pecos.memozy.data.repository.MemoRepository
 import me.pecos.memozy.data.repository.model.MemoFormat
 import me.pecos.memozy.data.repository.user.AuthRepository
+import me.pecos.memozy.feature.core.viewmodel.settings.AccountDeleteState
 import me.pecos.memozy.feature.core.viewmodel.settings.AppFontFamily
 import me.pecos.memozy.feature.core.viewmodel.settings.BackupResult
 import me.pecos.memozy.feature.core.viewmodel.settings.CloudBackupState
@@ -83,6 +84,13 @@ class SettingsViewModel(
     private val _lastBackupTime = MutableStateFlow<String?>(null)
     val lastBackupTime: StateFlow<String?> = _lastBackupTime
 
+    /**
+     * App Store Guideline 5.1.1(v) — 계정 삭제 진행 상태.
+     * Idle → InProgress → (Success | Error) 후 호출 측에서 [clearAccountDeleteState] 로 리셋.
+     */
+    private val _accountDeleteState = MutableStateFlow<AccountDeleteState>(AccountDeleteState.Idle)
+    val accountDeleteState: StateFlow<AccountDeleteState> = _accountDeleteState
+
     fun selectLanguage(language: Language) {
         _selectedLanguage.value = language
         preferences.putString(KEY_LANGUAGE, language.code)
@@ -133,6 +141,38 @@ class SettingsViewModel(
             analyticsService.setUserId(null)
             analyticsService.logEvent(me.pecos.memozy.platform.analytics.AnalyticsEvents.LOGOUT)
         }
+    }
+
+    /**
+     * App Store Guideline 5.1.1(v) — 계정 + 관련 데이터 영구 삭제.
+     * 1) Supabase RPC `delete_user_account` (SECURITY DEFINER) 로 auth.users 행 삭제
+     *    → public.* 테이블 ON DELETE CASCADE 로 클라우드 데이터 자동 정리
+     * 2) 로컬 메모 DB 도 clear (기기에 남아있던 캐시 / 동기화 잔재 제거)
+     * 3) analytics user id 비우기
+     */
+    fun deleteAccount() {
+        viewModelScope.launch {
+            _accountDeleteState.value = AccountDeleteState.InProgress
+            val result = authRepository.deleteAccount()
+            result.onSuccess {
+                runCatching { repository.clearAllMemos() }
+                analyticsService.setUserId(null)
+                analyticsService.logEvent(me.pecos.memozy.platform.analytics.AnalyticsEvents.ACCOUNT_DELETED)
+                _accountDeleteState.value = AccountDeleteState.Success
+            }.onFailure { e ->
+                analyticsService.logEvent(
+                    me.pecos.memozy.platform.analytics.AnalyticsEvents.ACCOUNT_DELETE_FAILED,
+                    mapOf(
+                        me.pecos.memozy.platform.analytics.AnalyticsParams.ERROR_MESSAGE to (e.message ?: "unknown"),
+                    ),
+                )
+                _accountDeleteState.value = AccountDeleteState.Error(e.message)
+            }
+        }
+    }
+
+    fun clearAccountDeleteState() {
+        _accountDeleteState.value = AccountDeleteState.Idle
     }
 
     private fun logSignInResult(

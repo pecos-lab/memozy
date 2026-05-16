@@ -213,6 +213,16 @@
     <string name="sign_in_error">로그인에 실패했습니다</string>
     <string name="sign_out_confirm">로그아웃하시겠습니까?</string>
     <string name="sign_in_loading">로그인 중…</string>
+    <string name="account_delete">계정 삭제</string>
+    <string name="account_delete_confirm_title">계정을 삭제할까요?</string>
+    <string name="account_delete_confirm_message">계정과 클라우드에 저장된 모든 데이터(메모, 카테고리, 백업, 채팅 기록 등)가 영구 삭제됩니다.\n이 작업은 되돌릴 수 없어요.</string>
+    <string name="account_delete_final_title">정말 삭제하시겠어요?</string>
+    <string name="account_delete_final_message">삭제 후에는 복구할 수 없습니다. 동일한 이메일로 다시 가입할 수는 있지만 기존 데이터는 모두 사라집니다.\n계속하시겠어요?</string>
+    <string name="account_delete_in_progress">계정을 삭제하는 중…</string>
+    <string name="account_delete_success_title">계정이 삭제되었습니다</string>
+    <string name="account_delete_success_message">이용해 주셔서 감사합니다. 계정과 클라우드 데이터가 모두 삭제되었어요.</string>
+    <string name="account_delete_error_title">삭제에 실패했습니다</string>
+    <string name="account_delete_error_message">잠시 후 다시 시도하거나 pecos6246@gmail.com 으로 문의해 주세요.</string>
     <string name="login_subtitle">클라우드 백업으로 메모를 안전하게 보관하세요</string>
     <string name="login_skip">연결 없이 시작</string>
 
