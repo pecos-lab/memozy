@@ -1,3 +1,4 @@
+import org.gradle.api.file.DirectoryProperty
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 import java.util.Properties
@@ -128,4 +129,24 @@ kotlin {
             implementation(libs.supabase.postgrest)
         }
     }
+}
+
+// CMP 1.10.3 + Gradle 9.3.1 호환 — SyncComposeResourcesForIosTask 의 outputDir 가
+// Xcode env 미감지 시 wiring 안 되어 Gradle strict validation 에 걸리는 회귀 우회.
+// 클래스가 internal 이라 reflection 으로 outputDir 프로퍼티 접근 + default 주입.
+// Xcode 빌드 시에는 plugin 이 실제 BUILT_PRODUCTS_DIR 로 덮어쓰므로 default 만 제공.
+afterEvaluate {
+    tasks.findByName("syncComposeResourcesForIos")?.let { task ->
+        try {
+            val outputDirProp = task::class.java.methods
+                .firstOrNull { it.name == "getOutputDir" && it.parameterCount == 0 }
+                ?.invoke(task) as? DirectoryProperty
+            outputDirProp?.set(
+                layout.buildDirectory.dir("compose/cmp-ios-resources/${task.name}")
+            )
+            logger.lifecycle("CMP outputDir wired for ${task.name} → ${outputDirProp?.orNull?.asFile?.path}")
+        } catch (e: Throwable) {
+            logger.warn("Failed to set outputDir on ${task.name}: ${e.message}")
+        }
+    } ?: logger.warn("syncComposeResourcesForIos task not found in afterEvaluate")
 }
