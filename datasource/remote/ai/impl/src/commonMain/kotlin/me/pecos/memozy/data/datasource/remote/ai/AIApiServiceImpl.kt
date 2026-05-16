@@ -71,8 +71,10 @@ class AIApiServiceImpl(
             else GenerationConfig.THINKING_DISABLED
         )
 
-    private fun generateContentStreamInternal(prompt: String, config: GenerationConfig): Flow<String> = flow {
+    private fun generateContentStreamInternal(prompt: String, config: GenerationConfig): Flow<String> {
+        // collect 시점이 아니라 Flow 생성 시점에 fail-fast — 다른 AI 호출 일관성.
         requireConsent()
+        return flow {
         val request = GeminiRequest(
             contents = listOf(
                 GeminiContent(
@@ -113,6 +115,7 @@ class AIApiServiceImpl(
 
         if (!hasContent) {
             throw AIException.UnknownException("Empty streaming response from Gemini")
+        }
         }
     }
 
