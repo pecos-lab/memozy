@@ -278,6 +278,10 @@
     <string name="subscription_status_expires_at">Expires on %s</string>
     <string name="subscription_status_grace_period">Billing issue — please resolve by %s</string>
 
+    <!-- Login Prompt -->
+    <string name="login_prompt_title">Sign-in required</string>
+    <string name="login_prompt_message">AI summarization requires sign-in.\nYou can sign in from Settings &gt; Account.</string>
+
     <!-- Memozy AI -->
     <string name="memozy_ai">Memozy AI</string>
     <string name="ai_action_explain">Explain in simple terms</string>

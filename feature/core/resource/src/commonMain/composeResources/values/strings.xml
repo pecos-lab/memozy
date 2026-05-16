@@ -280,7 +280,7 @@
 
     <!-- Login Prompt -->
     <string name="login_prompt_title">로그인이 필요해요</string>
-    <string name="login_prompt_message">AI 요약 기능을 사용하려면 Google 계정으로 로그인해주세요.\n설정 > 계정에서 로그인할 수 있어요.</string>
+    <string name="login_prompt_message">AI 요약 기능은 로그인 후 사용할 수 있어요.\n설정 > 계정에서 로그인할 수 있어요.</string>
 
     <!-- Memozy AI -->
     <string name="memozy_ai">Memozy AI</string>

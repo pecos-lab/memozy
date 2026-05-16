@@ -278,6 +278,10 @@
     <string name="subscription_status_expires_at">%sに期限切れ</string>
     <string name="subscription_status_grace_period">決済の問題 — %sまでに解決してください</string>
 
+    <!-- Login Prompt -->
+    <string name="login_prompt_title">ログインが必要です</string>
+    <string name="login_prompt_message">AI要約機能はログイン後にご利用いただけます。\n設定 &gt; アカウントからログインできます。</string>
+
     <!-- Memozy AI -->
     <string name="memozy_ai">Memozy AI</string>
     <string name="ai_action_explain">分かりやすく説明して</string>
