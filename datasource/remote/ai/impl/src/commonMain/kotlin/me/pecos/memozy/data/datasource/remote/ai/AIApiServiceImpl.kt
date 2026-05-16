@@ -75,47 +75,47 @@ class AIApiServiceImpl(
         // collect 시점이 아니라 Flow 생성 시점에 fail-fast — 다른 AI 호출 일관성.
         requireConsent()
         return flow {
-        val request = GeminiRequest(
-            contents = listOf(
-                GeminiContent(
-                    parts = listOf(GeminiPart(text = prompt))
-                )
-            ),
-            generationConfig = config
-        )
+            val request = GeminiRequest(
+                contents = listOf(
+                    GeminiContent(
+                        parts = listOf(GeminiPart(text = prompt))
+                    )
+                ),
+                generationConfig = config
+            )
 
-        var hasContent = false
-        httpClient.preparePost("gemini-stream") {
-            contentType(ContentType.Application.Json)
-            setBody(request)
-        }.execute { response ->
-            val channel = response.bodyAsChannel()
-            while (!channel.isClosedForRead) {
-                val line = channel.readUTF8Line() ?: break
-                if (line.startsWith("data: ")) {
-                    val jsonStr = line.removePrefix("data: ").trim()
-                    if (jsonStr.isNotEmpty()) {
-                        try {
-                            val chunk = json.decodeFromString<GeminiResponse>(jsonStr)
-                            val text = chunk.candidates
-                                ?.firstOrNull()
-                                ?.content
-                                ?.parts
-                                ?.firstOrNull()
-                                ?.text
-                            if (text != null) {
-                                hasContent = true
-                                emit(text) // 델타만 emit (O(n) 최적화)
-                            }
-                        } catch (_: Exception) { }
+            var hasContent = false
+            httpClient.preparePost("gemini-stream") {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }.execute { response ->
+                val channel = response.bodyAsChannel()
+                while (!channel.isClosedForRead) {
+                    val line = channel.readUTF8Line() ?: break
+                    if (line.startsWith("data: ")) {
+                        val jsonStr = line.removePrefix("data: ").trim()
+                        if (jsonStr.isNotEmpty()) {
+                            try {
+                                val chunk = json.decodeFromString<GeminiResponse>(jsonStr)
+                                val text = chunk.candidates
+                                    ?.firstOrNull()
+                                    ?.content
+                                    ?.parts
+                                    ?.firstOrNull()
+                                    ?.text
+                                if (text != null) {
+                                    hasContent = true
+                                    emit(text) // 델타만 emit (O(n) 최적화)
+                                }
+                            } catch (_: Exception) { }
+                        }
                     }
                 }
             }
-        }
 
-        if (!hasContent) {
-            throw AIException.UnknownException("Empty streaming response from Gemini")
-        }
+            if (!hasContent) {
+                throw AIException.UnknownException("Empty streaming response from Gemini")
+            }
         }
     }
 
