@@ -145,13 +145,21 @@ afterEvaluate {
     }
     matched.forEach { task ->
         try {
-            val outputDirProp = task::class.java.methods
+            val getter = task::class.java.methods
                 .firstOrNull { it.name == "getOutputDir" && it.parameterCount == 0 }
-                ?.invoke(task) as? DirectoryProperty
-            outputDirProp?.set(
+            if (getter == null) {
+                logger.warn("CMP getOutputDir 메서드 누락 — CMP API 변경 가능, ${task.name} skip")
+                return@forEach
+            }
+            val outputDirProp = getter.invoke(task) as? DirectoryProperty
+            if (outputDirProp == null) {
+                logger.warn("CMP outputDir 반환 타입 mismatch — CMP API 변경 가능, ${task.name} skip")
+                return@forEach
+            }
+            outputDirProp.set(
                 layout.buildDirectory.dir("compose/cmp-ios-resources/${task.name}")
             )
-            logger.lifecycle("CMP outputDir wired for ${task.name} → ${outputDirProp?.orNull?.asFile?.path}")
+            logger.lifecycle("CMP outputDir wired for ${task.name} → ${outputDirProp.orNull?.asFile?.path}")
         } catch (e: Throwable) {
             logger.warn("Failed to set outputDir on ${task.name}: ${e.message}")
         }
