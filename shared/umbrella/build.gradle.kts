@@ -136,7 +136,14 @@ kotlin {
 // 클래스가 internal 이라 reflection 으로 outputDir 프로퍼티 접근 + default 주입.
 // Xcode 빌드 시에는 plugin 이 실제 BUILT_PRODUCTS_DIR 로 덮어쓰므로 default 만 제공.
 afterEvaluate {
-    tasks.findByName("syncComposeResourcesForIos")?.let { task ->
+    // prefix 매칭 — 단일 syncComposeResourcesForIos 외에 syncComposeResourcesForIosArm64 /
+    // syncComposeResourcesForIosX64 / syncComposeResourcesForIosSimulatorArm64 등 per-target
+    // variant 가 있어도 모두 처리.
+    val matched = tasks.filter { it.name.startsWith("syncComposeResourcesForIos") }
+    if (matched.isEmpty()) {
+        logger.warn("syncComposeResourcesForIos* task not found in afterEvaluate")
+    }
+    matched.forEach { task ->
         try {
             val outputDirProp = task::class.java.methods
                 .firstOrNull { it.name == "getOutputDir" && it.parameterCount == 0 }
@@ -148,5 +155,5 @@ afterEvaluate {
         } catch (e: Throwable) {
             logger.warn("Failed to set outputDir on ${task.name}: ${e.message}")
         }
-    } ?: logger.warn("syncComposeResourcesForIos task not found in afterEvaluate")
+    }
 }
