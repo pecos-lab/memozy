@@ -826,12 +826,16 @@ fun SettingsScreen(
                                 text = state.user.email ?: "",
                                 fontSize = fontSettings.scaled(13),
                                 color = colors.textBody,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp),
                             )
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
                                     text = stringResource(Res.string.sign_out),
                                     fontSize = fontSettings.scaled(12),
                                     color = colors.textSecondary,
+                                    softWrap = false,
                                     modifier = Modifier
                                         .clickable { showSignOutDialog = true }
                                         .padding(8.dp)
@@ -846,6 +850,7 @@ fun SettingsScreen(
                                     text = stringResource(Res.string.account_delete),
                                     fontSize = fontSettings.scaled(12),
                                     color = Color(0xFFE24B4A),
+                                    softWrap = false,
                                     modifier = Modifier
                                         .clickable { showAccountDeleteConfirm = true }
                                         .padding(8.dp)
