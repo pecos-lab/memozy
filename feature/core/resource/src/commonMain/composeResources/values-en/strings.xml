@@ -180,6 +180,13 @@
     <string name="trash_days_left">Permanently deleted in %d days</string>
     <string name="trash_soon_delete">Permanently deleted soon</string>
 
+    <!-- AI Consent (App Store Guideline 5.1.1(i)/5.1.2(i)) -->
+    <string name="ai_consent_title">AI feature consent</string>
+    <string name="ai_consent_description">Memozy\'s summarization, transcription, and image recognition features send your text, audio, and images to third-party AI services (Google Gemini, Cloudflare Workers, Supadata) for processing.\n\nWhat is sent:\n• Text, URLs, or captions to summarize\n• Audio recordings for transcription\n• Attached images for OCR or description\n\nIf you decline, AI features will be disabled. You can still create and save regular memos.\nSee our Privacy Policy for full details.</string>
+    <string name="ai_consent_agree">Agree and continue</string>
+    <string name="ai_consent_decline">Decline</string>
+    <string name="ai_consent_required_toast">AI features require consent to send data</string>
+
     <!-- Multi-select -->
     <string name="select">Select</string>
     <string name="selected_count">%d selected</string>
@@ -275,9 +282,15 @@
     <string name="subscription_current_plan">Current plan</string>
     <string name="subscription_manage">Manage subscription</string>
     <string name="subscription_restore">Restore purchases</string>
+    <string name="subscription_terms_of_use">Terms of Use (EULA)</string>
+    <string name="subscription_privacy_policy">Privacy Policy</string>
     <string name="subscription_status_renews_at">Renews on %s</string>
     <string name="subscription_status_expires_at">Expires on %s</string>
     <string name="subscription_status_grace_period">Billing issue — please resolve by %s</string>
+
+    <!-- Login Prompt -->
+    <string name="login_prompt_title">Sign-in required</string>
+    <string name="login_prompt_message">AI summarization requires sign-in.\nYou can sign in from Settings &gt; Account.</string>
 
     <!-- Memozy AI -->
     <string name="memozy_ai">Memozy AI</string>

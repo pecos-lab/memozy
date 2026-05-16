@@ -46,12 +46,14 @@ import me.pecos.memozy.data.datasource.remote.auth.AuthState
 import me.pecos.memozy.feature.core.viewmodel.MainViewModel
 import me.pecos.memozy.feature.core.viewmodel.SettingsViewModel
 import me.pecos.memozy.feature.core.viewmodel.TrashViewModel
+import me.pecos.memozy.feature.core.viewmodel.settings.PreferencesProvider
 import me.pecos.memozy.feature.core.viewmodel.settings.ThemeMode
 import me.pecos.memozy.feature.home.api.HomeRoute
 import me.pecos.memozy.feature.memoplain.api.MemoPlainNavigation
 import me.pecos.memozy.feature.memoplain.api.MemoPlainRoute
 import me.pecos.memozy.platform.ads.AdsService
 import me.pecos.memozy.platform.billing.BillingService
+import me.pecos.memozy.presentation.components.AiConsentGate
 import me.pecos.memozy.presentation.components.FloatingNavPill
 import me.pecos.memozy.presentation.screen.donation.DonationScreen
 import me.pecos.memozy.presentation.screen.home.HomeScreen
@@ -188,6 +190,9 @@ fun AppNavHost(
                     },
                 )
             }
+
+            // App Store Guideline 5.1.1(i)/5.1.2(i) — 첫 진입 시 AI 데이터 전송 사전 동의 모달.
+            AiConsentGate(prefs = koinInject<PreferencesProvider>())
 
             if (showBottomNav) {
                 Row(

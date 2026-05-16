@@ -20,6 +20,9 @@ import me.pecos.memozy.feature.core.resource.generated.resources.Res
 import me.pecos.memozy.feature.core.resource.generated.resources.confirm
 import me.pecos.memozy.feature.core.resource.generated.resources.login_prompt_message
 import me.pecos.memozy.feature.core.resource.generated.resources.login_prompt_title
+import me.pecos.memozy.feature.core.resource.generated.resources.ai_consent_title
+import me.pecos.memozy.feature.core.resource.generated.resources.ai_consent_required_toast
+import me.pecos.memozy.feature.core.viewmodel.settings.AiConsentKeys
 import org.jetbrains.compose.resources.stringResource
 import me.pecos.memozy.presentation.screen.memo.SummaryMode
 import me.pecos.memozy.presentation.screen.memo.SummaryStyle
@@ -444,6 +447,13 @@ class MemoPlainNavigationImpl(
             val isLoggedIn = LocalIsLoggedIn.current
             var showLoginPrompt by remember { mutableStateOf(false) }
 
+            // AI 데이터 전송 동의 — 거부 상태면 AI 기능 자체를 차단하고 안내 다이얼로그.
+            // 매번 prefs 를 읽어서 다른 화면에서 토글되더라도 다음 진입 시 반영되게 함.
+            var consentGiven by remember {
+                mutableStateOf(preferencesProvider.getBoolean(AiConsentKeys.GIVEN, false))
+            }
+            var showConsentRequired by remember { mutableStateOf(false) }
+
             // AI 사용량 체크 (티어별 일일 한도)
             val subscriptionTier = LocalSubscriptionTier.current
             val rewardAdProvider = LocalRewardAdProvider.current
@@ -458,15 +468,21 @@ class MemoPlainNavigationImpl(
                 // adBonusCount 는 in-memory 라 화면 재진입 시 사라지지만 광고 시청은 DB 에 남으므로
                 // 광고 본 횟수만큼 보너스를 복원해서 일관성 유지.
                 adBonusCount = dailyAdViewCount
+                // 화면 재진입 시 동의 상태도 다시 읽음 (AiConsentGate 가 새로 결정되었을 수 있음).
+                consentGiven = preferencesProvider.getBoolean(AiConsentKeys.GIVEN, false)
             }
             val dailyLimit = subscriptionTier.dailyAiLimit + adBonusCount
             val canUseAiQuota = dailyUsageCount < dailyLimit
-            val canUseAi = isLoggedIn && canUseAiQuota
+            val canUseAi = isLoggedIn && consentGiven && canUseAiQuota
             val canWatchAd = !subscriptionTier.isPro && dailyAdViewCount < MAX_DAILY_AD_VIEWS
             val remainingAdViews = MAX_DAILY_AD_VIEWS - dailyAdViewCount
             var showLimitBottomSheet by remember { mutableStateOf(false) }
             val notifyAiBlocked: () -> Unit = {
-                if (!isLoggedIn) showLoginPrompt = true else showLimitBottomSheet = true
+                when {
+                    !isLoggedIn -> showLoginPrompt = true
+                    !consentGiven -> showConsentRequired = true
+                    else -> showLimitBottomSheet = true
+                }
                 analyticsService.logEvent(
                     me.pecos.memozy.platform.analytics.AnalyticsEvents.AI_LIMIT_REACHED,
                 )
@@ -1285,6 +1301,19 @@ class MemoPlainNavigationImpl(
                     text = { Text(stringResource(Res.string.login_prompt_message)) },
                     confirmButton = {
                         TextButton(onClick = { showLoginPrompt = false }) {
+                            Text(stringResource(Res.string.confirm))
+                        }
+                    }
+                )
+            }
+
+            if (showConsentRequired) {
+                AlertDialog(
+                    onDismissRequest = { showConsentRequired = false },
+                    title = { Text(stringResource(Res.string.ai_consent_title)) },
+                    text = { Text(stringResource(Res.string.ai_consent_required_toast)) },
+                    confirmButton = {
+                        TextButton(onClick = { showConsentRequired = false }) {
                             Text(stringResource(Res.string.confirm))
                         }
                     }
