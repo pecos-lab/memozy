@@ -135,6 +135,12 @@ kotlin {
 // Xcode env 미감지 시 wiring 안 되어 Gradle strict validation 에 걸리는 회귀 우회.
 // 클래스가 internal 이라 reflection 으로 outputDir 프로퍼티 접근 + default 주입.
 // Xcode 빌드 시에는 plugin 이 실제 BUILT_PRODUCTS_DIR 로 덮어쓰므로 default 만 제공.
+//
+// TODO(#363): 임시 workaround. 다음 조건 충족 시 블록 전체 제거:
+//   1) CMP > 1.10.3 (outputDir 가 default value 를 갖도록 plugin 수정 시), 또는
+//   2) Gradle < 9 다운그레이드 (strict property validation 미적용).
+// 업그레이드 시: 본 블록 삭제 후 ./gradlew :shared:umbrella:embedAndSignAppleFrameworkForXcode
+// 가 outputDir 에러 없이 통과하는지 검증.
 afterEvaluate {
     // prefix 매칭 — 단일 syncComposeResourcesForIos 외에 syncComposeResourcesForIosArm64 /
     // syncComposeResourcesForIosX64 / syncComposeResourcesForIosSimulatorArm64 등 per-target
