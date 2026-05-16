@@ -36,6 +36,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import me.pecos.memozy.feature.core.resource.generated.resources.Res
 import me.pecos.memozy.feature.core.resource.generated.resources.close
@@ -51,7 +52,9 @@ import me.pecos.memozy.feature.core.resource.generated.resources.subscription_fe
 import me.pecos.memozy.feature.core.resource.generated.resources.subscription_feature_youtube
 import me.pecos.memozy.feature.core.resource.generated.resources.subscription_manage
 import me.pecos.memozy.feature.core.resource.generated.resources.subscription_monthly
+import me.pecos.memozy.feature.core.resource.generated.resources.subscription_privacy_policy
 import me.pecos.memozy.feature.core.resource.generated.resources.subscription_restore
+import me.pecos.memozy.feature.core.resource.generated.resources.subscription_terms_of_use
 import me.pecos.memozy.feature.core.resource.generated.resources.subscription_status_expires_at
 import me.pecos.memozy.feature.core.resource.generated.resources.subscription_status_grace_period
 import me.pecos.memozy.feature.core.resource.generated.resources.subscription_status_renews_at
@@ -390,10 +393,53 @@ fun SubscriptionScreen(
                     .padding(12.dp)
             )
 
+            // App Store Review Guideline 3.1.2(c): 결제 화면 내부에 EULA + Privacy Policy 노출 필수.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(Res.string.subscription_terms_of_use),
+                    fontSize = fontSettings.scaled(12),
+                    color = colors.textSecondary,
+                    textAlign = TextAlign.Center,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .clickable { urlLauncher.open(LEGAL_TERMS_OF_USE_URL) }
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                )
+                Text(
+                    text = "·",
+                    fontSize = fontSettings.scaled(12),
+                    color = colors.textSecondary,
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                )
+                Text(
+                    text = stringResource(Res.string.subscription_privacy_policy),
+                    fontSize = fontSettings.scaled(12),
+                    color = colors.textSecondary,
+                    textAlign = TextAlign.Center,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .clickable { urlLauncher.open(LEGAL_PRIVACY_POLICY_URL) }
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                )
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
+
+private const val LEGAL_TERMS_OF_USE_URL =
+    "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
+private const val LEGAL_PRIVACY_POLICY_URL =
+    "https://pecos.me/memozy/site/privacy.html"
 
 @Composable
 private fun SubscriptionLifecycleStatus(
