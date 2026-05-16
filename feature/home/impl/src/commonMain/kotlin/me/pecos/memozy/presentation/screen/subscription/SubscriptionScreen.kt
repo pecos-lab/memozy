@@ -36,6 +36,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import me.pecos.memozy.feature.core.resource.generated.resources.Res
 import me.pecos.memozy.feature.core.resource.generated.resources.close
@@ -405,9 +406,11 @@ fun SubscriptionScreen(
                     fontSize = fontSettings.scaled(12),
                     color = colors.textSecondary,
                     textAlign = TextAlign.Center,
+                    textDecoration = TextDecoration.Underline,
                     modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
                         .clickable { urlLauncher.open(LEGAL_TERMS_OF_USE_URL) }
-                        .padding(8.dp)
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
                 )
                 Text(
                     text = "·",
@@ -420,9 +423,11 @@ fun SubscriptionScreen(
                     fontSize = fontSettings.scaled(12),
                     color = colors.textSecondary,
                     textAlign = TextAlign.Center,
+                    textDecoration = TextDecoration.Underline,
                     modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
                         .clickable { urlLauncher.open(LEGAL_PRIVACY_POLICY_URL) }
-                        .padding(8.dp)
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
                 )
             }
 
