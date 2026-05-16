@@ -152,11 +152,6 @@ import me.pecos.memozy.presentation.screen.memo.components.YouTubeUrlDialog
 import me.pecos.memozy.presentation.screen.memo.components.MemoActionBar
 import me.pecos.memozy.presentation.theme.LocalAppColors
 import me.pecos.memozy.presentation.theme.LocalFontSettings
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
@@ -1174,11 +1169,9 @@ fun MemoScreen(
 
             // 서식 툴바 — 키보드/AI 입력바/녹음·전사 중에 표시.
             // 녹음·전사는 IME 가 일시 dismiss 되더라도 펴진 상태 유지 → 토글 흔들림 차단.
-            AnimatedVisibility(
-                visible = isKeyboardVisible || showAiCustomInput || isAiAssistLoading || isRecording || isTranscribing,
-                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
-            ) {
+            // AnimatedVisibility 제거: iOS Compose Multiplatform 에서 slide 애니메이션이
+            // 컨테이너 높이를 잘못 reserve 해 흰 cover 가 5배로 부풀어오르던 회귀 (#363).
+            if (isKeyboardVisible || showAiCustomInput || isAiAssistLoading || isRecording || isTranscribing) {
                 val keyboardBarBorder = if (isSystemDark) Color(0xFF3A3A3C) else Color(0xFFBFC1C6)
                 Column(
                     modifier = Modifier
