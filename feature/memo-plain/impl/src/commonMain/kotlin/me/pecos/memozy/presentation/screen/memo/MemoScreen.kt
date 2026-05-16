@@ -161,8 +161,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.union
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.platform.LocalDensity
 import dev.chrisbanes.haze.HazeStyle
@@ -559,8 +557,13 @@ fun MemoScreen(
         containerColor = colors.screenBackground,
         contentWindowInsets = WindowInsets(0)
     ) { innerPadding ->
-        val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
+        val density = LocalDensity.current
+        val imeBottom = WindowInsets.ime.getBottom(density)
+        val navBottom = WindowInsets.navigationBars.getBottom(density)
         val isKeyboardVisible = imeBottom > 0
+        // iOS Compose Multiplatform 에서 windowInsetsPadding/imePadding 이 키보드 변동에
+        // 실시간 재구성되지 않는 회귀 (#363) — 직접 px → dp 변환해서 padding 으로 적용.
+        val bottomInsetDp = with(density) { maxOf(imeBottom, navBottom).toDp() }
         val hazeState = rememberHazeState()
         val isSystemDark = colors.screenBackground == Color(0xFF1C1C1E)
         val glassStyle = remember(isSystemDark) {
@@ -582,10 +585,9 @@ fun MemoScreen(
                 .padding(innerPadding)
                 // IME 가 dismiss 되어도 nav bar 영역까지 padding 유지 → 녹음 정지 버튼(툴바)이
                 // 시스템 nav bar 제스처 영역으로 미끄러져 클릭이 가로채이는 #357 회귀 차단.
-                // union 은 각 edge 의 max 를 적용 → IME up: ime > nav → ime,
-                // IME down: nav > 0 → nav. iOS Compose Multiplatform 에서 inset consumption
-                // chain 이 정상 동작하지 않아 키보드 위 빈 공간이 생기던 회귀 차단 (#363).
-                .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
+                // bottomInsetDp = max(ime, nav) — Modifier.padding 으로 직접 적용해서
+                // iOS Compose Multiplatform 의 windowInsetsPadding 재구성 회귀 우회 (#363).
+                .padding(bottom = bottomInsetDp)
         ) {
             // 상단 바
             Row(
