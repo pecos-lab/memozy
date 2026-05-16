@@ -177,6 +177,87 @@
             <p><a href="mailto:pecos6246@gmail.com">pecos6246@gmail.com</a></p>
         </section>
 
+        <!-- ============= 日本語 ============= -->
+        <section class="locale" lang="ja">
+            <h2>プライバシーポリシー</h2>
+            <p class="meta">施行日: 2026年5月9日 · 最終更新: 2026年5月9日</p>
+
+            <p>Memozy(以下「本サービス」)は、ユーザーのプライバシーを尊重し、関連法令を遵守します。本ポリシーでは、Memozy iOS / Android アプリが収集・利用するデータ、利用目的、第三者への委託、保存期間、ユーザーの権利について説明します。</p>
+
+            <h3>1. 運営者</h3>
+            <ul>
+                <li>運営者: pecos-lab(個人開発者)</li>
+                <li>メール: <a href="mailto:pecos6246@gmail.com">pecos6246@gmail.com</a></li>
+            </ul>
+
+            <h3>2. 収集するデータ</h3>
+            <table>
+                <thead>
+                    <tr><th>項目</th><th>収集タイミング</th><th>利用目的</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>メールアドレス、氏名</td><td>Apple / Google ログイン</td><td>アカウント識別、クラウドバックアップ</td></tr>
+                    <tr><td>メモ本文、添付画像、音声ファイル</td><td>ユーザー入力</td><td>ローカル保存 + ログイン時のクラウドバックアップ</td></tr>
+                    <tr><td>要約リクエストのテキスト / URL</td><td>要約機能の利用時</td><td>AI 要約処理</td></tr>
+                    <tr><td>サブスクリプション状態、購入履歴</td><td>有料プラン利用時</td><td>サブスクリプションの検証、返金 / 復元</td></tr>
+                    <tr><td>広告識別子(IDFA / AAID)</td><td>無料プラン利用時</td><td>広告配信</td></tr>
+                    <tr><td>イベントログ、画面遷移、機能利用</td><td>アプリ利用中に自動取得</td><td>サービス改善(匿名統計)</td></tr>
+                    <tr><td>クラッシュレポート(スタックトレース、デバイス機種)</td><td>クラッシュ発生時に自動取得</td><td>不具合修正</td></tr>
+                    <tr><td>マイク音声</td><td>録音 / 文字起こし時</td><td>オンデバイス処理。テキスト変換以外には保存しません。</td></tr>
+                </tbody>
+            </table>
+
+            <h3>3. 第三者への委託</h3>
+            <p>以下のサービスに一部データの処理を委託しています。各社のプライバシーポリシーが適用されます。</p>
+            <table>
+                <thead><tr><th>委託先</th><th>処理内容</th></tr></thead>
+                <tbody>
+                    <tr><td>Supabase</td><td>認証、メモのクラウドバックアップ、サブスクリプションキャッシュ</td></tr>
+                    <tr><td>Google Cloud(Gemini API)</td><td>AI 要約処理(リクエストテキスト)</td></tr>
+                    <tr><td>Google AdMob</td><td>無料プランの広告配信(広告 ID)</td></tr>
+                    <tr><td>Google Firebase</td><td>匿名利用統計(Analytics)、クラッシュレポート(Crashlytics)</td></tr>
+                    <tr><td>Apple Sign-In</td><td>アカウント識別(氏名 / リレーメール)</td></tr>
+                    <tr><td>Google Sign-In</td><td>アカウント識別(氏名 / メール)</td></tr>
+                    <tr><td>RevenueCat</td><td>サブスクリプション状態の同期</td></tr>
+                    <tr><td>Cloudflare Workers</td><td>Web ページ本文抽出のプロキシ</td></tr>
+                    <tr><td>Supadata</td><td>YouTube 字幕の抽出</td></tr>
+                    <tr><td>Apple App Store / Google Play</td><td>サブスクリプション課金処理</td></tr>
+                </tbody>
+            </table>
+
+            <h3>4. 保存期間</h3>
+            <ul>
+                <li>アカウント情報 / メモ: 退会または削除リクエストまで</li>
+                <li>匿名利用統計: 最大 14 か月</li>
+                <li>クラッシュログ: 90 日</li>
+                <li>サブスクリプション課金記録: 関連法令に基づき 5 年以上(電子商取引法、税法)</li>
+            </ul>
+
+            <h3>5. ユーザーの権利</h3>
+            <p>ユーザーはいつでも以下の権利を行使できます:</p>
+            <ul>
+                <li>本人情報の閲覧 / 訂正 / 削除請求</li>
+                <li>処理停止の請求</li>
+                <li>同意の撤回(アプリ内ログアウト / アカウント削除 / サブスクリプション解約)</li>
+            </ul>
+            <p>上記の権利行使は <a href="mailto:pecos6246@gmail.com">pecos6246@gmail.com</a> までご連絡ください。本人確認後、速やかに対応します。</p>
+
+            <h3>6. 国外移転</h3>
+            <p>上記の第三者サービスの一部は米国などの海外にサーバーを運用しています。標準契約条項(SCC)等を通じて適切な保護措置を講じます。</p>
+
+            <h3>7. 児童に関する情報</h3>
+            <p>本サービスは 13 歳未満(または居住国の法定年齢未満)のユーザーを対象としておらず、当該ユーザーの情報を意図的に収集しません。</p>
+
+            <h3>8. セキュリティ</h3>
+            <p>通信区間は TLS で暗号化し、クラウド保存時は Supabase Row Level Security により本人データのみアクセス可能となるように分離します。</p>
+
+            <h3>9. 変更の告知</h3>
+            <p>重要な変更は、アプリ内または本ページにおいて少なくとも 7 日前に告知します。</p>
+
+            <h3>10. お問い合わせ</h3>
+            <p><a href="mailto:pecos6246@gmail.com">pecos6246@gmail.com</a></p>
+        </section>
+
         <footer>© 2026 pecos-lab</footer>
     </main>
 </body>
