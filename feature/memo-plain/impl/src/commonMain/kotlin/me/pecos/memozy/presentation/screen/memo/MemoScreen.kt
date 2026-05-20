@@ -662,10 +662,14 @@ fun MemoScreen(
                     .verticalScroll(scrollState)
                     .padding(horizontal = 32.dp, vertical = 16.dp)
             ) {
-                // 메모 진입 시 본문에 자동 포커스 + 키보드 표시 (노션 스타일) — 신규/편집 모두
+                // 메모 진입 시 본문 자동 포커스 + 키보드 표시 — 신규/빈 메모만 (#375).
+                // 기존 내용이 있으면 사용자가 본문을 먼저 읽을 수 있도록 자동 포커스 스킵.
                 LaunchedEffect(Unit) {
-                    kotlinx.coroutines.delay(100) // 컴포지션 안정화 대기
-                    try { bodyFocusRequester.requestFocus() } catch (_: Throwable) {}
+                    val hasExistingContent = existingMemo.content.isNotBlank() || existingMemo.name.isNotBlank()
+                    if (!hasExistingContent) {
+                        kotlinx.coroutines.delay(100) // 컴포지션 안정화 대기
+                        try { bodyFocusRequester.requestFocus() } catch (_: Throwable) {}
+                    }
                 }
 
                 BasicTextField(
