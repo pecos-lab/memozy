@@ -81,6 +81,10 @@ fun FormattingToolbar(
                 .pointerInput(Unit) { detectTapGestures(onPress = { richTextState.toggleSpanStyle(SpanStyle(textDecoration = TextDecoration.LineThrough)); tryAwaitRelease() }) },
             contentAlignment = Alignment.Center
         ) { Icon(Icons.Default.FormatStrikethrough, contentDescription = null, tint = activeTint, modifier = Modifier.size(20.dp)) }
+    }
+}Input(Unit) { detectTapGestures(onPress = { richTextState.toggleSpanStyle(SpanStyle(textDecoration = TextDecoration.LineThrough)); tryAwaitRelease() }) },
+            contentAlignment = Alignment.Center
+        ) { Icon(Icons.Default.FormatStrikethrough, contentDescription = null, tint = activeTint, modifier = Modifier.size(20.dp)) }
 
         Box(
             modifier = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp))
