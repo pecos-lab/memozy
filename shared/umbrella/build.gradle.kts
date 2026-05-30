@@ -133,8 +133,14 @@ kotlin {
 
 // CMP 1.10.3 + Gradle 9.3.1 호환 — SyncComposeResourcesForIosTask 의 outputDir 가
 // Xcode env 미감지 시 wiring 안 되어 Gradle strict validation 에 걸리는 회귀 우회.
-// 클래스가 internal 이라 reflection 으로 outputDir 프로퍼티 접근 + default 주입.
-// Xcode 빌드 시에는 plugin 이 실제 BUILT_PRODUCTS_DIR 로 덮어쓰므로 default 만 제공.
+// 클래스가 internal 이라 reflection 으로 outputDir 프로퍼티 접근 + fallback 주입.
+//
+// .convention() 사용 — Xcode 빌드 시 plugin 이 BUILT_PRODUCTS_DIR 로 .set() 하면
+// convention 은 무시되고 plugin 값이 우선. 일반 gradle 호출 (Xcode env 부재)
+// 에서만 convention 이 적용돼 strict validation 통과.
+// 과거에 .set() 으로 했을 때 plugin 의 BUILT_PRODUCTS_DIR 세팅까지 덮어써
+// app bundle 에 compose-resources 가 누락 → 첫 stringResource() 호출 시
+// MissingResourceException → SIGABRT (iPad 심사 build 10 launch crash 원인).
 //
 // TODO(#363): 임시 workaround. 다음 조건 충족 시 블록 전체 제거:
 //   1) CMP > 1.10.3 (outputDir 가 default value 를 갖도록 plugin 수정 시), 또는
@@ -162,10 +168,10 @@ afterEvaluate {
                 logger.warn("CMP outputDir 반환 타입 mismatch — CMP API 변경 가능, ${task.name} skip")
                 return@forEach
             }
-            outputDirProp.set(
+            outputDirProp.convention(
                 layout.buildDirectory.dir("compose/cmp-ios-resources/${task.name}")
             )
-            logger.lifecycle("CMP outputDir wired for ${task.name} → ${outputDirProp.orNull?.asFile?.path}")
+            logger.lifecycle("CMP outputDir convention wired for ${task.name}")
         } catch (e: Throwable) {
             logger.warn("Failed to set outputDir on ${task.name}: ${e.message}")
         }
