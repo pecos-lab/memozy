@@ -198,6 +198,16 @@ fun SettingsScreen(
         }
     }
 
+    // Supabase 인증 결과 surface — 실패 시 토스트.
+    // (App Store build 11 거절 대응: native auth 성공 후 침묵 실패 방지)
+    LaunchedEffect(Unit) {
+        settingsViewModel.signInEvents.collect { event ->
+            if (event is SettingsViewModel.SignInEvent.Failure) {
+                toastPresenter.show(getString(Res.string.sign_in_error))
+            }
+        }
+    }
+
     // SAF launchers (expect/actual 경유 — iOS 는 후속 구현)
     val launchExport = rememberCreateDocumentLauncher(
         mimeType = "application/json",
@@ -765,13 +775,8 @@ fun SettingsScreen(
                                             serverClientId = GOOGLE_WEB_CLIENT_ID,
                                         )
                                         when (result) {
-                                            is GoogleSignInResult.Success -> {
-                                                val authResult = settingsViewModel.signInWithGoogle(result.idToken)
-                                                authResult.onFailure { e ->
-                                                    println("SettingsAuth: Supabase Google sign-in failed: ${e.message}")
-                                                    toastPresenter.show(getString(Res.string.sign_in_error))
-                                                }
-                                            }
+                                            // Supabase 응답 결과는 signInEvents 구독자가 토스트 처리.
+                                            is GoogleSignInResult.Success -> settingsViewModel.signInWithGoogle(result.idToken)
                                             is GoogleSignInResult.Cancelled -> Unit
                                             is GoogleSignInResult.Error -> {
                                                 println("SettingsAuth: Sign-in failed: ${result.message}")
@@ -801,13 +806,8 @@ fun SettingsScreen(
                                         scope.launch {
                                             val result = credentialService.signInWithApple(activity = activity)
                                             when (result) {
-                                                is AppleSignInResult.Success -> {
-                                                    val authResult = settingsViewModel.signInWithApple(result.idToken, result.rawNonce)
-                                                    authResult.onFailure { e ->
-                                                        println("SettingsAuth: Supabase Apple sign-in failed: ${e.message}")
-                                                        toastPresenter.show(getString(Res.string.sign_in_error))
-                                                    }
-                                                }
+                                                // Supabase 응답 결과는 signInEvents 구독자가 토스트 처리.
+                                                is AppleSignInResult.Success -> settingsViewModel.signInWithApple(result.idToken, result.rawNonce)
                                                 is AppleSignInResult.Cancelled -> Unit
                                                 is AppleSignInResult.Error -> {
                                                     println("SettingsAuth: Apple sign-in failed: ${result.message}")

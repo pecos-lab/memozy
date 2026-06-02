@@ -4,9 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -91,6 +94,26 @@ class SettingsViewModel(
     private val _accountDeleteState = MutableStateFlow<AccountDeleteState>(AccountDeleteState.Idle)
     val accountDeleteState: StateFlow<AccountDeleteState> = _accountDeleteState
 
+    /**
+     * native 인증 후 Supabase 응답 결과를 일회성 이벤트로 노출.
+     * UI 는 이 stream 을 collect 해서 성공 시 navigate, 실패 시 toast 표시.
+     *
+     * 도입 배경 (App Store build 11 거절 — Guideline 2.1(a)):
+     * native Sign in with Apple/Google 성공 후 Supabase 인증이 실패해도
+     * 사용자에게 아무 피드백이 없어 reviewer 가 "successful 표시 후 화면 그대로"
+     * 로 인식. ViewModel 의 fire-and-forget 패턴은 유지하되 결과를
+     * Flow 로 surface 해서 UI 가 반응할 수 있도록 함.
+     */
+    sealed interface SignInEvent {
+        val provider: String
+
+        data class Success(override val provider: String) : SignInEvent
+        data class Failure(override val provider: String, val cause: Throwable?) : SignInEvent
+    }
+
+    private val _signInEvents = MutableSharedFlow<SignInEvent>(extraBufferCapacity = 1)
+    val signInEvents: SharedFlow<SignInEvent> = _signInEvents.asSharedFlow()
+
     fun selectLanguage(language: Language) {
         _selectedLanguage.value = language
         preferences.putString(KEY_LANGUAGE, language.code)
@@ -121,23 +144,29 @@ class SettingsViewModel(
         _backupResult.value = BackupResult.Idle
     }
 
-    // Supabase 응답까지 await — caller 가 실패 시 toast 등으로 사용자에게 알리도록 Result 노출.
-    // App Store build 11 거절 (Guideline 2.1(a)) 원인: native 인증 성공 후 Supabase 호출 실패가
-    // UI 로 surface 안 되어 reviewer 가 "successful 표시 후 화면 그대로" 로 인식.
-    suspend fun signInWithGoogle(idToken: String): Result<me.pecos.memozy.data.datasource.remote.auth.AuthUser> {
-        val result = authRepository.signInWithGoogle(idToken)
-        logSignInResult(result, provider = "google")
-        return result
+    fun signInWithGoogle(idToken: String) {
+        viewModelScope.launch {
+            val result = authRepository.signInWithGoogle(idToken)
+            logSignInResult(result, provider = "google")
+            _signInEvents.tryEmit(toSignInEvent(result, provider = "google"))
+        }
     }
 
-    suspend fun signInWithApple(
-        idToken: String,
-        rawNonce: String,
-    ): Result<me.pecos.memozy.data.datasource.remote.auth.AuthUser> {
-        val result = authRepository.signInWithApple(idToken, rawNonce)
-        logSignInResult(result, provider = "apple")
-        return result
+    fun signInWithApple(idToken: String, rawNonce: String) {
+        viewModelScope.launch {
+            val result = authRepository.signInWithApple(idToken, rawNonce)
+            logSignInResult(result, provider = "apple")
+            _signInEvents.tryEmit(toSignInEvent(result, provider = "apple"))
+        }
     }
+
+    private fun toSignInEvent(
+        result: Result<me.pecos.memozy.data.datasource.remote.auth.AuthUser>,
+        provider: String,
+    ): SignInEvent = result.fold(
+        onSuccess = { SignInEvent.Success(provider) },
+        onFailure = { SignInEvent.Failure(provider, it) },
+    )
 
     fun signOut() {
         viewModelScope.launch {
