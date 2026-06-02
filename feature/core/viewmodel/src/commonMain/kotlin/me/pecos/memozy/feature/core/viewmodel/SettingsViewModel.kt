@@ -121,18 +121,22 @@ class SettingsViewModel(
         _backupResult.value = BackupResult.Idle
     }
 
-    fun signInWithGoogle(idToken: String) {
-        viewModelScope.launch {
-            val result = authRepository.signInWithGoogle(idToken)
-            logSignInResult(result, provider = "google")
-        }
+    // Supabase 응답까지 await — caller 가 실패 시 toast 등으로 사용자에게 알리도록 Result 노출.
+    // App Store build 11 거절 (Guideline 2.1(a)) 원인: native 인증 성공 후 Supabase 호출 실패가
+    // UI 로 surface 안 되어 reviewer 가 "successful 표시 후 화면 그대로" 로 인식.
+    suspend fun signInWithGoogle(idToken: String): Result<me.pecos.memozy.data.datasource.remote.auth.AuthUser> {
+        val result = authRepository.signInWithGoogle(idToken)
+        logSignInResult(result, provider = "google")
+        return result
     }
 
-    fun signInWithApple(idToken: String, rawNonce: String) {
-        viewModelScope.launch {
-            val result = authRepository.signInWithApple(idToken, rawNonce)
-            logSignInResult(result, provider = "apple")
-        }
+    suspend fun signInWithApple(
+        idToken: String,
+        rawNonce: String,
+    ): Result<me.pecos.memozy.data.datasource.remote.auth.AuthUser> {
+        val result = authRepository.signInWithApple(idToken, rawNonce)
+        logSignInResult(result, provider = "apple")
+        return result
     }
 
     fun signOut() {

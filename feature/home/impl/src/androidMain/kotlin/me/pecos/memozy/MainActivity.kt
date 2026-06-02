@@ -37,6 +37,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -307,16 +309,19 @@ class MainActivity : ComponentActivity() {
                                 popExitTransition = { fadeOut(tween(150)) }
                             ) {
                                 composable(HomeRoute.LOGIN) {
+                                    val loginScope = rememberCoroutineScope()
                                     LoginScreen(
                                         onSignIn = { idToken ->
-                                            settingsViewModel.signInWithGoogle(idToken)
+                                            // fire-and-forget 보존 — Supabase 응답 대기 없이 즉시 navigate.
+                                            // 실패 시 Settings 의 auth 영역에서 다시 시도 가능.
+                                            loginScope.launch { settingsViewModel.signInWithGoogle(idToken) }
                                             preferencesProvider.putBoolean("onboarding_done", true)
                                             navController.navigate(HomeRoute.MAIN) {
                                                 popUpTo(HomeRoute.LOGIN) { inclusive = true }
                                             }
                                         },
                                         onAppleSignIn = { idToken, rawNonce ->
-                                            settingsViewModel.signInWithApple(idToken, rawNonce)
+                                            loginScope.launch { settingsViewModel.signInWithApple(idToken, rawNonce) }
                                             preferencesProvider.putBoolean("onboarding_done", true)
                                             navController.navigate(HomeRoute.MAIN) {
                                                 popUpTo(HomeRoute.LOGIN) { inclusive = true }

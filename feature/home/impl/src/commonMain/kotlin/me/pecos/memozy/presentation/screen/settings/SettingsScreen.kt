@@ -765,8 +765,13 @@ fun SettingsScreen(
                                             serverClientId = GOOGLE_WEB_CLIENT_ID,
                                         )
                                         when (result) {
-                                            is GoogleSignInResult.Success ->
-                                                settingsViewModel.signInWithGoogle(result.idToken)
+                                            is GoogleSignInResult.Success -> {
+                                                val authResult = settingsViewModel.signInWithGoogle(result.idToken)
+                                                authResult.onFailure { e ->
+                                                    println("SettingsAuth: Supabase Google sign-in failed: ${e.message}")
+                                                    toastPresenter.show(getString(Res.string.sign_in_error))
+                                                }
+                                            }
                                             is GoogleSignInResult.Cancelled -> Unit
                                             is GoogleSignInResult.Error -> {
                                                 println("SettingsAuth: Sign-in failed: ${result.message}")
@@ -796,8 +801,13 @@ fun SettingsScreen(
                                         scope.launch {
                                             val result = credentialService.signInWithApple(activity = activity)
                                             when (result) {
-                                                is AppleSignInResult.Success ->
-                                                    settingsViewModel.signInWithApple(result.idToken, result.rawNonce)
+                                                is AppleSignInResult.Success -> {
+                                                    val authResult = settingsViewModel.signInWithApple(result.idToken, result.rawNonce)
+                                                    authResult.onFailure { e ->
+                                                        println("SettingsAuth: Supabase Apple sign-in failed: ${e.message}")
+                                                        toastPresenter.show(getString(Res.string.sign_in_error))
+                                                    }
+                                                }
                                                 is AppleSignInResult.Cancelled -> Unit
                                                 is AppleSignInResult.Error -> {
                                                     println("SettingsAuth: Apple sign-in failed: ${result.message}")
