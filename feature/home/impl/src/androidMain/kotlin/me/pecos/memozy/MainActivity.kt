@@ -32,11 +32,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
+import android.widget.Toast
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import me.pecos.memozy.feature.core.resource.generated.resources.Res
+import me.pecos.memozy.feature.core.resource.generated.resources.sign_in_error
+import org.jetbrains.compose.resources.getString
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -307,20 +312,36 @@ class MainActivity : ComponentActivity() {
                                 popExitTransition = { fadeOut(tween(150)) }
                             ) {
                                 composable(HomeRoute.LOGIN) {
+                                    // ViewModel 의 SignInEvent 를 구독해서 성공 시 navigate / 실패 시 토스트.
+                                    // 이전엔 인증 token 받자마자 무조건 navigate 했지만 Supabase 실패 시
+                                    // 사용자는 Home 에 가서도 비로그인 상태였음 — UI 와 실제 상태 불일치.
+                                    val ctx = LocalContext.current
+                                    LaunchedEffect(Unit) {
+                                        settingsViewModel.signInEvents.collect { event ->
+                                            when (event) {
+                                                is SettingsViewModel.SignInEvent.Success -> {
+                                                    preferencesProvider.putBoolean("onboarding_done", true)
+                                                    navController.navigate(HomeRoute.MAIN) {
+                                                        popUpTo(HomeRoute.LOGIN) { inclusive = true }
+                                                    }
+                                                }
+                                                is SettingsViewModel.SignInEvent.Failure -> {
+                                                    Toast.makeText(
+                                                        ctx,
+                                                        getString(Res.string.sign_in_error),
+                                                        Toast.LENGTH_SHORT,
+                                                    ).show()
+                                                    // LoginScreen 유지 — 사용자가 재시도 가능
+                                                }
+                                            }
+                                        }
+                                    }
                                     LoginScreen(
                                         onSignIn = { idToken ->
                                             settingsViewModel.signInWithGoogle(idToken)
-                                            preferencesProvider.putBoolean("onboarding_done", true)
-                                            navController.navigate(HomeRoute.MAIN) {
-                                                popUpTo(HomeRoute.LOGIN) { inclusive = true }
-                                            }
                                         },
                                         onAppleSignIn = { idToken, rawNonce ->
                                             settingsViewModel.signInWithApple(idToken, rawNonce)
-                                            preferencesProvider.putBoolean("onboarding_done", true)
-                                            navController.navigate(HomeRoute.MAIN) {
-                                                popUpTo(HomeRoute.LOGIN) { inclusive = true }
-                                            }
                                         },
                                         onSkip = {
                                             preferencesProvider.putBoolean("onboarding_done", true)
