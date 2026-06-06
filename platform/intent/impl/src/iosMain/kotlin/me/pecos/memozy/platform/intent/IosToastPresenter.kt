@@ -7,8 +7,11 @@ import platform.UIKit.NSTextAlignmentCenter
 import platform.UIKit.UIApplication
 import platform.UIKit.UIColor
 import platform.UIKit.UILabel
+import platform.UIKit.UISceneActivationStateForegroundActive
 import platform.UIKit.UIView
 import platform.UIKit.UIViewController
+import platform.UIKit.UIWindow
+import platform.UIKit.UIWindowScene
 import platform.darwin.DISPATCH_TIME_NOW
 import platform.darwin.NSEC_PER_SEC
 import platform.darwin.dispatch_after
@@ -58,11 +61,22 @@ class IosToastPresenter : ToastPresenter {
         }
     }
 
+    // Multi-scene 환경에서 UIApplication.keyWindow 가 nil → 토스트가 detached UIWindow 에 붙어
+    // 화면에 안 보임 (#381 토스트 노출 fix 가 iPad 에서 작동 안 한 원인).
     private fun topViewController(): UIViewController? {
-        var vc = UIApplication.sharedApplication.keyWindow?.rootViewController
+        var vc = findActiveWindow()?.rootViewController
         while (vc?.presentedViewController != null) {
             vc = vc.presentedViewController
         }
         return vc
+    }
+
+    private fun findActiveWindow(): UIWindow? {
+        val windowScenes = UIApplication.sharedApplication.connectedScenes.filterIsInstance<UIWindowScene>()
+        val activeScene = windowScenes.firstOrNull { it.activationState == UISceneActivationStateForegroundActive }
+            ?: windowScenes.firstOrNull()
+            ?: return null
+        val windows = activeScene.windows.filterIsInstance<UIWindow>()
+        return windows.firstOrNull { it.isKeyWindow() } ?: windows.firstOrNull()
     }
 }

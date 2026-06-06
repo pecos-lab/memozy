@@ -25,7 +25,9 @@ import platform.Foundation.create
 import platform.Security.SecRandomCopyBytes
 import platform.Security.kSecRandomDefault
 import platform.UIKit.UIApplication
+import platform.UIKit.UISceneActivationStateForegroundActive
 import platform.UIKit.UIWindow
+import platform.UIKit.UIWindowScene
 import platform.darwin.NSObject
 import kotlin.coroutines.resume
 
@@ -141,8 +143,22 @@ private class AppleSignInHandler(
 
     override fun presentationAnchorForAuthorizationController(
         controller: ASAuthorizationController,
-    ): ASPresentationAnchor =
-        UIApplication.sharedApplication.keyWindow ?: UIWindow()
+    ): ASPresentationAnchor = resolvePresentationAnchor()
+}
+
+// Info.plist 의 UIApplicationSupportsMultipleScenes=true 환경에서
+// UIApplication.keyWindow 는 항상 nil → ASAuthorizationController 가 detached UIWindow 에
+// 모달을 띄워 사용자가 다이얼로그를 못 봄 (App Store 거절 #381/#382 의 직접 원인).
+private fun resolvePresentationAnchor(): ASPresentationAnchor =
+    findActiveWindow() ?: UIWindow()
+
+private fun findActiveWindow(): UIWindow? {
+    val windowScenes = UIApplication.sharedApplication.connectedScenes.filterIsInstance<UIWindowScene>()
+    val activeScene = windowScenes.firstOrNull { it.activationState == UISceneActivationStateForegroundActive }
+        ?: windowScenes.firstOrNull()
+        ?: return null
+    val windows = activeScene.windows.filterIsInstance<UIWindow>()
+    return windows.firstOrNull { it.isKeyWindow() } ?: windows.firstOrNull()
 }
 
 @OptIn(ExperimentalForeignApi::class)
