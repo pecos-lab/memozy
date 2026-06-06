@@ -116,14 +116,19 @@ private class AppleSignInHandler(
     ) {
         val credential = didCompleteWithAuthorization.credential as? ASAuthorizationAppleIDCredential
         val tokenData = credential?.identityToken
-        val tokenString = if (tokenData != null) {
-            NSString.create(data = tokenData, encoding = NSUTF8StringEncoding) as? String
+        // `as? String` 은 Kotlin 런타임 타입체크 → NSString 은 kotlin.String 의 인스턴스가 아니라
+        // 항상 null 반환 (App Store 거절 #382 의 핵심 원인). `as String?` 직접 캐스트는
+        // ObjC↔Kotlin 브리지를 발동시켜 NSString 의 문자열 내용으로 변환된다 (IosFileUriBridge 동일 패턴).
+        val tokenString: String? = if (tokenData != null) {
+            @Suppress("UNCHECKED_CAST")
+            NSString.create(data = tokenData, encoding = NSUTF8StringEncoding) as String?
         } else null
         val cb = callback ?: return
         callback = null
-        if (tokenString != null) {
+        if (!tokenString.isNullOrEmpty()) {
             cb(AppleSignInResult.Success(idToken = tokenString, rawNonce = rawNonce))
         } else {
+            println("[AppleSignIn] identityToken extraction failed: tokenData=$tokenData tokenString=$tokenString")
             cb(AppleSignInResult.Error("Apple credential did not contain identityToken"))
         }
     }
