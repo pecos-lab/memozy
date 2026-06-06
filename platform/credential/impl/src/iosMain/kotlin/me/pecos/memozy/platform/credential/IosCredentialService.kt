@@ -137,13 +137,26 @@ private class AppleSignInHandler(
         if (didCompleteWithError.code == ASAuthorizationErrorCanceled) {
             cb(AppleSignInResult.Cancelled)
         } else {
-            cb(AppleSignInResult.Error(didCompleteWithError.localizedDescription))
+            // 진단: domain/code/userInfo 까지 로그 — App Store 거절 #382 추적용
+            println(
+                "[AppleSignIn] didCompleteWithError " +
+                    "domain=${didCompleteWithError.domain} " +
+                    "code=${didCompleteWithError.code} " +
+                    "desc=${didCompleteWithError.localizedDescription} " +
+                    "userInfo=${didCompleteWithError.userInfo}"
+            )
+            cb(AppleSignInResult.Error("[${didCompleteWithError.code}] ${didCompleteWithError.localizedDescription}"))
         }
     }
 
     override fun presentationAnchorForAuthorizationController(
         controller: ASAuthorizationController,
-    ): ASPresentationAnchor = resolvePresentationAnchor()
+    ): ASPresentationAnchor {
+        val anchor = resolvePresentationAnchor()
+        // 진단: 어떤 윈도우가 anchor 로 쓰였는지 확인 — detached UIWindow 폴백 발생 시 즉시 식별
+        println("[AppleSignIn] presentationAnchor=$anchor isKeyWindow=${(anchor as? UIWindow)?.isKeyWindow()}")
+        return anchor
+    }
 }
 
 // Info.plist 의 UIApplicationSupportsMultipleScenes=true 환경에서
