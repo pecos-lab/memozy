@@ -25,7 +25,9 @@ import platform.Foundation.create
 import platform.Security.SecRandomCopyBytes
 import platform.Security.kSecRandomDefault
 import platform.UIKit.UIApplication
+import platform.UIKit.UISceneActivationStateForegroundActive
 import platform.UIKit.UIWindow
+import platform.UIKit.UIWindowScene
 import platform.darwin.NSObject
 import kotlin.coroutines.resume
 
@@ -114,14 +116,19 @@ private class AppleSignInHandler(
     ) {
         val credential = didCompleteWithAuthorization.credential as? ASAuthorizationAppleIDCredential
         val tokenData = credential?.identityToken
-        val tokenString = if (tokenData != null) {
-            NSString.create(data = tokenData, encoding = NSUTF8StringEncoding) as? String
+        // `as? String` 은 Kotlin 런타임 타입체크 → NSString 은 kotlin.String 의 인스턴스가 아니라
+        // 항상 null 반환 (App Store 거절 #382 의 핵심 원인). `as String?` 직접 캐스트는
+        // ObjC↔Kotlin 브리지를 발동시켜 NSString 의 문자열 내용으로 변환된다 (IosFileUriBridge 동일 패턴).
+        val tokenString: String? = if (tokenData != null) {
+            @Suppress("UNCHECKED_CAST")
+            NSString.create(data = tokenData, encoding = NSUTF8StringEncoding) as String?
         } else null
         val cb = callback ?: return
         callback = null
-        if (tokenString != null) {
+        if (!tokenString.isNullOrEmpty()) {
             cb(AppleSignInResult.Success(idToken = tokenString, rawNonce = rawNonce))
         } else {
+            println("[AppleSignIn] identityToken extraction failed: tokenData=$tokenData tokenString=$tokenString")
             cb(AppleSignInResult.Error("Apple credential did not contain identityToken"))
         }
     }
@@ -135,14 +142,41 @@ private class AppleSignInHandler(
         if (didCompleteWithError.code == ASAuthorizationErrorCanceled) {
             cb(AppleSignInResult.Cancelled)
         } else {
-            cb(AppleSignInResult.Error(didCompleteWithError.localizedDescription))
+            // 진단: domain/code/userInfo 까지 로그 — App Store 거절 #382 추적용
+            println(
+                "[AppleSignIn] didCompleteWithError " +
+                    "domain=${didCompleteWithError.domain} " +
+                    "code=${didCompleteWithError.code} " +
+                    "desc=${didCompleteWithError.localizedDescription} " +
+                    "userInfo=${didCompleteWithError.userInfo}"
+            )
+            cb(AppleSignInResult.Error("[${didCompleteWithError.code}] ${didCompleteWithError.localizedDescription}"))
         }
     }
 
     override fun presentationAnchorForAuthorizationController(
         controller: ASAuthorizationController,
-    ): ASPresentationAnchor =
-        UIApplication.sharedApplication.keyWindow ?: UIWindow()
+    ): ASPresentationAnchor {
+        val anchor = resolvePresentationAnchor()
+        // 진단: 어떤 윈도우가 anchor 로 쓰였는지 확인 — detached UIWindow 폴백 발생 시 즉시 식별
+        println("[AppleSignIn] presentationAnchor=$anchor isKeyWindow=${(anchor as? UIWindow)?.isKeyWindow()}")
+        return anchor
+    }
+}
+
+// Info.plist 의 UIApplicationSupportsMultipleScenes=true 환경에서
+// UIApplication.keyWindow 는 항상 nil → ASAuthorizationController 가 detached UIWindow 에
+// 모달을 띄워 사용자가 다이얼로그를 못 봄 (App Store 거절 #381/#382 의 직접 원인).
+private fun resolvePresentationAnchor(): ASPresentationAnchor =
+    findActiveWindow() ?: UIWindow()
+
+private fun findActiveWindow(): UIWindow? {
+    val windowScenes = UIApplication.sharedApplication.connectedScenes.filterIsInstance<UIWindowScene>()
+    val activeScene = windowScenes.firstOrNull { it.activationState == UISceneActivationStateForegroundActive }
+        ?: windowScenes.firstOrNull()
+        ?: return null
+    val windows = activeScene.windows.filterIsInstance<UIWindow>()
+    return windows.firstOrNull { it.isKeyWindow() } ?: windows.firstOrNull()
 }
 
 @OptIn(ExperimentalForeignApi::class)
