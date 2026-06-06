@@ -9,7 +9,6 @@ import platform.UIKit.UIColor
 import platform.UIKit.UILabel
 import platform.UIKit.UISceneActivationStateForegroundActive
 import platform.UIKit.UIView
-import platform.UIKit.UIViewController
 import platform.UIKit.UIWindow
 import platform.UIKit.UIWindowScene
 import platform.darwin.DISPATCH_TIME_NOW
@@ -20,21 +19,25 @@ import platform.darwin.dispatch_time
 
 @OptIn(ExperimentalForeignApi::class)
 class IosToastPresenter : ToastPresenter {
+    // SwiftUI 루트(UIHostingController.view)에 UIKit subview 직접 추가는 거부됨
+    // ("Adding 'UILabel' as a subview of UIHostingController.view is not supported"
+    //  콘솔 경고 + 실제 표시 안 됨 — #381 토스트 가 안 보였던 진짜 원인).
+    // 윈도우에 직접 addSubview 하면 SwiftUI 계층 밖이라 안전하게 위에 떠 있는다.
     override fun show(text: String, duration: ToastDuration) {
-        val parent = topViewController()?.view ?: return
+        val window = findActiveWindow() ?: return
         val seconds = when (duration) {
             ToastDuration.Short -> 2.0
             ToastDuration.Long -> 4.0
         }
 
-        val (parentWidth, parentHeight) = parent.bounds.useContents { size.width to size.height }
+        val (windowWidth, windowHeight) = window.bounds.useContents { size.width to size.height }
         val horizontalPadding = 20.0
         val bottomInset = 100.0
         val height = 48.0
         val frame = CGRectMake(
             horizontalPadding,
-            parentHeight - height - bottomInset,
-            parentWidth - horizontalPadding * 2,
+            windowHeight - height - bottomInset,
+            windowWidth - horizontalPadding * 2,
             height,
         )
 
@@ -48,7 +51,7 @@ class IosToastPresenter : ToastPresenter {
         label.clipsToBounds = true
         label.alpha = 0.0
 
-        parent.addSubview(label)
+        window.addSubview(label)
         UIView.animateWithDuration(0.2) { label.alpha = 1.0 }
 
         val delay = dispatch_time(DISPATCH_TIME_NOW, (seconds * NSEC_PER_SEC.toDouble()).toLong())
@@ -59,16 +62,6 @@ class IosToastPresenter : ToastPresenter {
                 completion = { _ -> label.removeFromSuperview() },
             )
         }
-    }
-
-    // Multi-scene 환경에서 UIApplication.keyWindow 가 nil → 토스트가 detached UIWindow 에 붙어
-    // 화면에 안 보임 (#381 토스트 노출 fix 가 iPad 에서 작동 안 한 원인).
-    private fun topViewController(): UIViewController? {
-        var vc = findActiveWindow()?.rootViewController
-        while (vc?.presentedViewController != null) {
-            vc = vc.presentedViewController
-        }
-        return vc
     }
 
     private fun findActiveWindow(): UIWindow? {
